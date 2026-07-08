@@ -1,0 +1,136 @@
+/* Partner Directory — scoped styles (forest/gold/cream, editorial) */
+
+.dir-wrap { max-width: 1120px; margin: 0 auto; padding: 0 22px; }
+
+/* ---- slim header ---- */
+.dir-header {
+  position: sticky; top: 0; z-index: 40;
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: saturate(120%) blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+.dir-header .row { display: flex; align-items: center; gap: 18px; height: 64px; }
+.dir-brand { font-family: var(--serif); font-weight: 600; font-size: 19px;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--ink); text-decoration: none; }
+.dir-brand img { height: 30px; width: auto; display: block; margin-bottom: 4px; }
+.dir-brand small { display: block; font-family: var(--sans); font-size: 9.5px;
+  letter-spacing: .22em; color: var(--muted); font-weight: 500; }
+.dir-nav { margin-left: auto; display: flex; align-items: center; gap: 20px; }
+.dir-nav a { color: var(--text); text-decoration: none; font-size: 14px; font-weight: 500; }
+.dir-nav a:hover { color: var(--ink); }
+.dir-nav .ghost { color: var(--muted); }
+
+/* ---- hero ---- */
+.dir-hero { padding: 54px 0 28px; }
+.dir-hero .eyebrow { font-size: 12px; letter-spacing: .2em; text-transform: uppercase;
+  color: var(--gold-deep); font-weight: 600; }
+.dir-hero h1 { font-family: var(--serif); font-weight: 600; color: var(--ink);
+  font-size: clamp(30px, 4.6vw, 46px); line-height: 1.06; margin: 12px 0 14px; letter-spacing: -.01em; }
+.dir-hero p { max-width: 620px; color: var(--muted); font-size: 17px; line-height: 1.6; }
+.dir-hero .cta-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 22px; }
+
+/* ---- kind filter pills ---- */
+.kind-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 26px 0 8px; }
+.kind-pill { border: 1px solid var(--line); border-radius: 999px; padding: 8px 16px;
+  font-size: 13.5px; font-weight: 600; color: var(--text); text-decoration: none; background: #fff; }
+.kind-pill[data-active="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+/* ---- partner cards ---- */
+.dir-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 18px; margin: 22px 0 40px; }
+.pcard { background: #fff; border: 1px solid var(--line); border-radius: 16px;
+  overflow: hidden; text-decoration: none; color: inherit; display: flex; flex-direction: column;
+  transition: box-shadow .2s, transform .2s; }
+.pcard:hover { box-shadow: 0 16px 40px -24px rgba(16,42,30,.4); transform: translateY(-2px); }
+.pcard .thumb { aspect-ratio: 16/10; background: #ece7db center/cover no-repeat; }
+.pcard .body { padding: 16px 18px 18px; }
+.pcard .kind { font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--gold-deep); font-weight: 700; }
+.pcard h3 { font-family: var(--serif); font-size: 20px; color: var(--ink); margin: 6px 0 4px; }
+.pcard .meta { font-size: 13px; color: var(--muted); }
+.pcard .count { margin-top: 10px; font-size: 12.5px; color: var(--text); font-weight: 600; }
+
+/* ---- empty state ---- */
+.dir-empty { text-align: center; padding: 56px 20px; border: 1px dashed var(--line);
+  border-radius: 16px; color: var(--muted); background: #fff; }
+.dir-empty h3 { font-family: var(--serif); color: var(--ink); font-size: 22px; margin-bottom: 8px; }
+
+/* ---- profile page ---- */
+.profile-head { display: flex; gap: 18px; align-items: flex-start; padding: 36px 0 10px; }
+.profile-logo { width: 84px; height: 84px; border-radius: 16px; object-fit: cover;
+  border: 1px solid var(--line); background: #ece7db; flex: none; }
+.profile-head h1 { font-family: var(--serif); font-size: clamp(26px,4vw,38px); color: var(--ink); }
+.listing-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 16px; }
+.listing-card { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: #fff; }
+.listing-card .lmedia { aspect-ratio: 16/10; background: #ece7db center/cover no-repeat; }
+.listing-card .lbody { padding: 13px 15px 15px; }
+.listing-card h4 { font-family: var(--serif); font-size: 18px; color: var(--ink); margin-bottom: 3px; }
+.listing-card .price { color: var(--gold-deep); font-weight: 700; font-size: 15px; }
+.svc-row { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; background: #fff;
+  display: flex; justify-content: space-between; gap: 14px; align-items: baseline; }
+.svc-row .fee { color: var(--gold-deep); font-weight: 700; white-space: nowrap; }
+
+/* ---- disclaimer ---- */
+.disclaimer { margin: 30px 0; padding: 14px 16px; border-left: 3px solid var(--gold);
+  background: #fff; border-radius: 0 10px 10px 0; font-size: 12.5px; color: var(--muted);
+  line-height: 1.55; }
+.disclaimer strong { color: var(--ink); }
+
+/* ---- forms (auth + dashboard) ---- */
+.dir-form { max-width: 460px; margin: 40px auto; background: #fff; border: 1px solid var(--line);
+  border-radius: 18px; padding: 30px 28px; }
+.dir-form.wide { max-width: 860px; }
+.dir-form h1 { font-family: var(--serif); font-size: 28px; color: var(--ink); margin-bottom: 4px; }
+.dir-form .lede { color: var(--muted); font-size: 14.5px; margin-bottom: 20px; }
+.dform-field { margin-bottom: 15px; display: flex; flex-direction: column; gap: 6px; }
+.dform-field label { font-size: 13px; font-weight: 600; color: var(--ink); }
+.dform-field input, .dform-field textarea, .dform-field select {
+  border: 1px solid var(--line); border-radius: 10px; padding: 11px 13px; font: inherit;
+  font-size: 15px; background: var(--paper); color: var(--text); width: 100%; }
+.dform-field input:focus, .dform-field textarea:focus, .dform-field select:focus {
+  outline: none; border-color: var(--gold); background: #fff; }
+.kind-choose { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 16px; }
+.kind-choose button { border: 1px solid var(--line); background: var(--paper); border-radius: 12px;
+  padding: 14px 10px; cursor: pointer; text-align: center; font: inherit; }
+.kind-choose button[data-on="true"] { border-color: var(--ink); background: #fff;
+  box-shadow: 0 0 0 2px var(--ink) inset; }
+.kind-choose b { display: block; color: var(--ink); font-family: var(--serif); font-size: 16px; }
+.kind-choose span { font-size: 11.5px; color: var(--muted); }
+.dform-err { background: #fbeaea; color: #8d2020; border-radius: 10px; padding: 10px 13px;
+  font-size: 13.5px; margin-bottom: 14px; }
+.dform-ok { background: #e8f3ec; color: #1c5638; border-radius: 10px; padding: 10px 13px;
+  font-size: 13.5px; margin-bottom: 14px; }
+.dform-alt { text-align: center; margin-top: 16px; font-size: 13.5px; color: var(--muted); }
+.dform-alt a { color: var(--ink); font-weight: 600; }
+
+/* ---- dashboard ---- */
+.dash-status { border-radius: 12px; padding: 12px 16px; font-size: 13.5px; margin-bottom: 20px; }
+.dash-status[data-s="pending"] { background: #fbf4e3; color: #7a5a14; border: 1px solid #efdca7; }
+.dash-status[data-s="approved"] { background: #e8f3ec; color: #1c5638; border: 1px solid #bfe0cc; }
+.dash-status[data-s="suspended"] { background: #fbeaea; color: #8d2020; border: 1px solid #eecaca; }
+.dash-section { margin: 26px 0; }
+.dash-section h2 { font-family: var(--serif); font-size: 22px; color: var(--ink); margin-bottom: 4px; }
+.item-row { display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  border: 1px solid var(--line); border-radius: 12px; padding: 12px 15px; background: #fff; margin-bottom: 10px; }
+.thumbs { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.thumbs .t { width: 64px; height: 48px; border-radius: 8px; object-fit: cover; border: 1px solid var(--line); }
+.row-actions { display: flex; gap: 8px; }
+.link-btn { background: none; border: none; color: var(--muted); cursor: pointer; font: inherit;
+  font-size: 13px; text-decoration: underline; }
+.link-btn.danger { color: #a23; }
+
+/* ---- footer ---- */
+.dir-foot { border-top: 1px solid var(--line); margin-top: 40px; padding: 26px 0 50px; }
+.dir-foot a { color: var(--ink); font-weight: 600; text-decoration: none; }
+.dir-foot p { color: var(--muted); font-size: 13px; margin-top: 6px; }
+
+@media (max-width: 560px) {
+  .kind-choose { grid-template-columns: 1fr; }
+  .dir-wrap { overflow-x: clip; }
+  .dir-header .row { flex-wrap: wrap; height: auto; min-height: 58px; gap: 10px 14px; padding: 9px 0; }
+  .dir-brand { font-size: 17px; }
+  .dir-nav { gap: 12px; }
+  .dir-nav .hide-sm { display: none; }
+  .dir-hero { padding: 36px 0 22px; }
+  .dir-hero p { font-size: 15.5px; }
+}
