@@ -61,11 +61,30 @@
   border: 1px solid var(--line); background: #ece7db; flex: none; }
 .profile-head h1 { font-family: var(--serif); font-size: clamp(26px,4vw,38px); color: var(--ink); }
 .listing-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 16px; }
-.listing-card { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: #fff; }
+.listing-card { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: #fff;
+  cursor: pointer; transition: box-shadow .2s, transform .2s; }
+.listing-card:hover, .listing-card:focus-visible { box-shadow: 0 16px 40px -24px rgba(16,42,30,.4); transform: translateY(-2px); }
 .listing-card .lmedia { aspect-ratio: 16/10; background: #ece7db center/cover no-repeat; }
 .listing-card .lbody { padding: 13px 15px 15px; }
 .listing-card h4 { font-family: var(--serif); font-size: 18px; color: var(--ink); margin-bottom: 3px; }
 .listing-card .price { color: var(--gold-deep); font-weight: 700; font-size: 15px; }
+
+/* ---- listing detail modal ---- */
+.listing-modal-overlay { position: fixed; inset: 0; z-index: 300; background: rgba(18,16,12,.55);
+  backdrop-filter: blur(6px); display: flex; align-items: flex-start; justify-content: center;
+  padding: 32px 18px; overflow-y: auto; }
+.listing-modal { position: relative; background: #fff; border-radius: 20px; max-width: 620px; width: 100%;
+  margin: auto; overflow: hidden; box-shadow: 0 40px 90px -30px rgba(0,0,0,.6); }
+.listing-modal-close { position: absolute; top: 12px; right: 12px; z-index: 1; width: 36px; height: 36px;
+  border-radius: 50%; border: none; background: rgba(18,16,12,.55); color: #fff; font-size: 1.2rem;
+  line-height: 1; cursor: pointer; display: grid; place-items: center; }
+.listing-modal-media img { display: block; width: 100%; aspect-ratio: 16/10; object-fit: cover; }
+.listing-modal-thumbs { display: flex; gap: 8px; padding: 10px; overflow-x: auto; }
+.listing-modal-thumbs .lmt { flex: none; width: 56px; height: 42px; border-radius: 8px; border: 2px solid transparent;
+  background: #ece7db center/cover no-repeat; cursor: pointer; padding: 0; }
+.listing-modal-thumbs .lmt.sel { border-color: var(--gold-deep); }
+.listing-modal-body { padding: 20px 22px 24px; }
+.listing-modal-body h3 { font-family: var(--serif); font-size: 22px; color: var(--ink); margin-bottom: 4px; }
 .svc-row { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; background: #fff;
   display: flex; justify-content: space-between; gap: 14px; align-items: baseline; }
 .svc-row .fee { color: var(--gold-deep); font-weight: 700; white-space: nowrap; }

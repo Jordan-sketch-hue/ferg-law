@@ -143,7 +143,7 @@ export default function Home() {
             <div className="serv reveal">
               <img
                 className="serv-media"
-                src="/img/re-consult.png"
+                src="/img/re-consult.jpg"
                 data-edit-img="images.serviceImg1"
                 alt="A couple outside their new Kingston property"
                 loading="lazy"
@@ -180,7 +180,7 @@ export default function Home() {
             <div className="serv reveal">
               <img
                 className="serv-media"
-                src="/img/family-estate.png"
+                src="/img/family-estate.jpg"
                 data-edit-img="images.serviceImg2"
                 alt="A family meeting their attorney about wills and estate planning"
                 loading="lazy"
@@ -197,7 +197,7 @@ export default function Home() {
             <div className="serv reveal">
               <img
                 className="serv-media"
-                src="/img/divorce.png"
+                src="/img/divorce.jpg"
                 data-edit-img="images.serviceImg3"
                 alt="A couple navigating separation"
                 loading="lazy"
@@ -261,6 +261,7 @@ export default function Home() {
               src="/img/founder.jpg"
               data-edit-img="images.founderPhoto"
               alt="Owen K. Ferguson, JP – Founder &amp; Principal Attorney-at-Law"
+              loading="lazy"
             />
             <div className="about-badge">
               <span className="ab-k" data-edit="about.badgeRole">
@@ -330,6 +331,7 @@ export default function Home() {
                 src="/img/p-discover.jpg"
                 data-edit-img="images.process1"
                 alt="Client booking a consultation"
+                loading="lazy"
               />
               <div className="s-n" data-edit="process.steps.0.n">Step 01</div>
               <h3 data-edit="process.steps.0.title">Check Your Readiness</h3>
@@ -346,6 +348,7 @@ export default function Home() {
                 src="/img/p-verify.jpg"
                 data-edit-img="images.process2"
                 alt="Find a trusted professional"
+                loading="lazy"
               />
               <div className="s-n" data-edit="process.steps.1.n">Step 02</div>
               <h3 data-edit="process.steps.1.title">Find Your Team</h3>
@@ -362,6 +365,7 @@ export default function Home() {
                 src="/img/p-engage.jpg"
                 data-edit-img="images.process3"
                 alt="Read the explainers"
+                loading="lazy"
               />
               <div className="s-n" data-edit="process.steps.2.n">Step 03</div>
               <h3 data-edit="process.steps.2.title">Understand the Process</h3>
@@ -383,6 +387,7 @@ export default function Home() {
                 src="/img/p-track.jpg"
                 data-edit-img="images.process4"
                 alt="Book a consultation with Ferguson Law"
+                loading="lazy"
               />
               <div className="s-n" data-edit="process.steps.3.n">Step 04</div>
               <h3 data-edit="process.steps.3.title">Book Your Consultation</h3>
@@ -434,6 +439,7 @@ export default function Home() {
                 data-edit-img="images.founderPhotoDark"
                 alt="Owen K. Ferguson, JP"
                 style={{width:"132px",height:"132px",objectFit:"cover",borderRadius:"15px",objectPosition:"center top"}}
+                loading="lazy"
               />
               <div>
                 <span className="k">Principal Attorney-at-Law</span>
@@ -455,6 +461,7 @@ export default function Home() {
           src="/img/couple-kingston-wide.jpg"
           data-edit-img="images.humanBandBg"
           alt="A Jamaican couple outside their new Kingston property"
+          loading="lazy"
         />
         <div className="scrim"></div>
         <div className="wrap">
@@ -488,6 +495,7 @@ export default function Home() {
                 src="/img/owen-portrait-vertical.jpg"
                 data-edit-img="images.gallery2"
                 alt="Attorney-at-Law – Ferguson Law"
+                loading="lazy"
               />
               <div className="cap">
                 <span className="k">Your attorney</span>
@@ -499,6 +507,7 @@ export default function Home() {
                 src="/img/couple-kingston-portrait.jpg"
                 data-edit-img="images.gallery1"
                 alt="Real estate agent showing a property"
+                loading="lazy"
               />
               <div className="cap">
                 <span className="k">Real estate agent</span>
@@ -510,6 +519,7 @@ export default function Home() {
                 src="/img/finance-consult.jpg"
                 data-edit-img="images.gallery3"
                 alt="Banker or loan officer – mortgage approval"
+                loading="lazy"
               />
               <div className="cap">
                 <span className="k">Banker · Loan officer</span>
@@ -518,9 +528,10 @@ export default function Home() {
             </a>
             <div className="gphoto reveal">
               <img
-                src="/img/home-welcome-porch.png"
+                src="/img/home-welcome-porch.jpg"
                 data-edit-img="images.gallery4"
                 alt="Surveyor and valuator on site"
+                loading="lazy"
               />
               <div className="cap">
                 <span className="k">Surveyor · Valuator</span>
@@ -574,6 +585,7 @@ export default function Home() {
                   src="/img/couple-signing.jpg"
                   data-edit-img="images.avatar1"
                   alt="Marcus R."
+                  loading="lazy"
                 />
                 <div>
                   <div className="nm" data-edit="stories.items.0.name">
@@ -597,6 +609,7 @@ export default function Home() {
                   src="/img/step-assess.jpg"
                   data-edit-img="images.avatar2"
                   alt="Keisha L."
+                  loading="lazy"
                 />
                 <div>
                   <div className="nm" data-edit="stories.items.1.name">
@@ -620,6 +633,7 @@ export default function Home() {
                   src="/img/family-moving-in.jpg"
                   data-edit-img="images.avatar3"
                   alt="Andre & Shanice"
+                  loading="lazy"
                 />
                 <div>
                   <div className="nm" data-edit="stories.items.2.name">
@@ -642,6 +656,7 @@ export default function Home() {
           src="/img/jamaica-coast.jpg"
           data-edit-img="images.coastBandBg"
           alt="Jamaica's north coast meeting turquoise water"
+          loading="lazy"
         />
         <div className="scrim" aria-hidden="true"></div>
         <div className="wrap">
@@ -677,7 +692,7 @@ export default function Home() {
               <div className="reach-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
               </div>
-              <img className="reach-photo" src="/img/reach-consultation.jpg" alt="Book a consultation with Ferguson Law" />
+              <img className="reach-photo" src="/img/reach-consultation.jpg" alt="Book a consultation with Ferguson Law" loading="lazy" />
               <h4>Book a consultation</h4>
               <p>{CONSULT_DURATION_MIN} minutes with our attorney – real answers for your specific situation.</p>
               <p style={{fontSize:"0.78rem",color:"var(--muted)",marginTop:"0.3rem"}}>In-person meetings by appointment only.</p>
@@ -690,7 +705,7 @@ export default function Home() {
               <div className="reach-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
               </div>
-              <img className="reach-photo" src="/img/reach-chat.jpg" alt="Chat live with us" />
+              <img className="reach-photo" src="/img/reach-chat.jpg" alt="Chat live with us" loading="lazy" />
               <h4>Chat live</h4>
               <p>Talk to our AI assistant right now – available 24/7, answers questions about any matter.</p>
               <span className="btn btn-gold reach-btn">Start a chat</span>
@@ -700,7 +715,7 @@ export default function Home() {
               <div className="reach-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.35 2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6.13 6.13l.96-.96a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
               </div>
-              <img className="reach-photo" src="/img/reach-whatsapp.jpg" alt="WhatsApp Ferguson Law" />
+              <img className="reach-photo" src="/img/reach-whatsapp.jpg" alt="WhatsApp Ferguson Law" loading="lazy" />
               <h4>WhatsApp</h4>
               <p>Send us a message directly – we respond personally during business hours.</p>
               <span className="btn btn-wa reach-btn">
@@ -713,7 +728,7 @@ export default function Home() {
               <div className="reach-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>
               </div>
-              <img className="reach-photo" src="/img/reach-email.jpg" alt="Email Ferguson Law" />
+              <img className="reach-photo" src="/img/reach-email.jpg" alt="Email Ferguson Law" loading="lazy" />
               <h4>Email us</h4>
               <p>Send a detailed message and we&apos;ll get back to you – ideal for complex matters and document sharing.</p>
               <span className="btn btn-light reach-btn">{SITE.email}</span>
