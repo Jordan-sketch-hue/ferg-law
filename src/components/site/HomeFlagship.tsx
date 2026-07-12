@@ -84,9 +84,10 @@ export default function HomeFlagship({
         <div className="home-grid">
           <div className="home-photo reveal">
             <img
-              src="/img/home-keys.png"
+              src="/img/home-keys.jpg"
               data-edit-img="images.homePhoto"
               alt="A Jamaican family receiving the keys to their new home"
+              loading="lazy"
             />
             <div className="cap">
               <span className="k">The outcome we deliver</span>
