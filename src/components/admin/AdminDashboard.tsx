@@ -1577,68 +1577,119 @@ function AvailabilityTab({ availability, onSave, token }: {
 
 function BlockedDatesPanel({ token }: { token: string }) {
   const supabase = createClient();
-  const [blocked, setBlocked] = useState<{ id: string; blocked_date: string; reason: string | null }[]>([]);
-  const [newDate, setNewDate] = useState("");
-  const [newReason, setNewReason] = useState("");
-  const [adding, setAdding] = useState(false);
+  const [blocked, setBlocked] = useState<{ id: string; starts_at: string }[]>([]);
+  const [pickedDate, setPickedDate] = useState("");
+  const [daySlots, setDaySlots] = useState<string[]>([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    const { data } = await supabase.rpc("fl_admin_list_blocked_dates", { p_token: token });
+  const blockedSet = new Set(blocked.map(b => new Date(b.starts_at).toISOString()));
+
+  const loadBlocked = useCallback(async () => {
+    const { data } = await supabase.rpc("fl_admin_list_blocked_slots", { p_token: token });
     setBlocked((data as typeof blocked) ?? []);
   }, [token]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { void loadBlocked(); }, [loadBlocked]);
 
-  async function addBlock() {
-    if (!newDate) return;
-    setAdding(true); setErr(null);
-    const { error } = await supabase.rpc("fl_admin_block_date", { p_token: token, p_date: newDate, p_reason: newReason || null });
-    if (error) setErr(error.message);
-    else { setNewDate(""); setNewReason(""); void load(); }
-    setAdding(false);
+  useEffect(() => {
+    if (!pickedDate) { setDaySlots([]); return; }
+    setLoadingSlots(true);
+    fetch(`/api/booking/slots?service=general&days=60`)
+      .then(r => r.json())
+      .then((res: { days?: { date: string; slots: { iso: string }[] }[] }) => {
+        const day = (res.days ?? []).find(d => d.date === pickedDate);
+        setDaySlots(day ? day.slots.map(s => s.iso) : []);
+      })
+      .catch(() => setDaySlots([]))
+      .finally(() => setLoadingSlots(false));
+  }, [pickedDate]);
+
+  async function toggleSlot(iso: string) {
+    const existing = blocked.find(b => new Date(b.starts_at).toISOString() === new Date(iso).toISOString());
+    setSaving(true); setErr(null);
+    if (existing) {
+      await supabase.rpc("fl_admin_unblock_slot", { p_token: token, p_id: existing.id });
+    } else {
+      const { error } = await supabase.rpc("fl_admin_block_slot", { p_token: token, p_starts_at: iso });
+      if (error) { setErr(error.message); setSaving(false); return; }
+    }
+    await loadBlocked();
+    setSaving(false);
   }
 
-  async function removeBlock(id: string) {
-    await supabase.rpc("fl_admin_unblock_date", { p_token: token, p_id: id });
-    void load();
+  async function unblock(id: string) {
+    await supabase.rpc("fl_admin_unblock_slot", { p_token: token, p_id: id });
+    void loadBlocked();
   }
+
+  const fmtTime = (iso: string) =>
+    new Date(iso).toLocaleTimeString("en-JM", { hour: "2-digit", minute: "2-digit", timeZone: "America/Jamaica" });
+
+  const fmtFull = (iso: string) =>
+    new Date(iso).toLocaleString("en-JM", { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "America/Jamaica" });
 
   return (
-    <div style={{ padding: "24px 20px 8px" }}>
-      <div style={{ fontWeight: 700, fontSize: ".9rem", color: GREEN, marginBottom: 14 }}>Block Unavailable Dates</div>
-      <p style={{ color: MUTED, fontSize: ".82rem", marginBottom: 14 }}>
-        Dates added here will show all slots as unavailable in the booking calendar.
+    <div style={{ padding: "28px 20px 8px", borderTop: `1px solid ${"#e7e1d6"}`, marginTop: 8 }}>
+      <div style={{ fontWeight: 700, fontSize: ".9rem", color: GREEN, marginBottom: 6 }}>Block Unavailable Slots</div>
+      <p style={{ color: MUTED, fontSize: ".82rem", marginBottom: 16 }}>
+        Pick a date, then tap individual time slots to block or unblock them. Blocked slots appear as unavailable to clients.
       </p>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
-        <input type="date" value={newDate} onChange={e => setNewDate(e.target.value)}
-          style={{ ...S.fieldInput, width: 160 }} />
-        <input type="text" value={newReason} onChange={e => setNewReason(e.target.value)}
-          placeholder="Reason (optional)" style={{ ...S.fieldInput, flex: 1, minWidth: 160 }} />
-        <button onClick={() => void addBlock()} disabled={!newDate || adding}
-          style={{ ...S.waBtn, ...((!newDate || adding) ? S.btnOff : {}) }}>
-          {adding ? "Adding…" : "Block date"}
-        </button>
+
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18 }}>
+        <input type="date" value={pickedDate}
+          min={new Date().toISOString().slice(0, 10)}
+          onChange={e => setPickedDate(e.target.value)}
+          style={{ ...S.fieldInput, width: 170 }} />
+        {loadingSlots && <span style={{ color: MUTED, fontSize: ".82rem" }}>Loading slots…</span>}
       </div>
+
+      {pickedDate && !loadingSlots && (
+        <div style={{ marginBottom: 22 }}>
+          {daySlots.length === 0
+            ? <p style={{ color: MUTED, fontSize: ".82rem" }}>No scheduled slots on this day.</p>
+            : <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {daySlots.map(iso => {
+                  const isBlocked = blockedSet.has(new Date(iso).toISOString());
+                  return (
+                    <button key={iso} onClick={() => void toggleSlot(iso)} disabled={saving}
+                      style={{
+                        padding: "6px 14px", borderRadius: 999, fontSize: ".8rem", fontWeight: 600,
+                        cursor: saving ? "not-allowed" : "pointer",
+                        border: `1.5px solid ${isBlocked ? "#c0392b" : "#e7e1d6"}`,
+                        background: isBlocked ? "#fbeaea" : "#f8f6f1",
+                        color: isBlocked ? "#a23b3b" : "#3a3a3a",
+                        textDecoration: isBlocked ? "line-through" : "none",
+                      }}>
+                      {fmtTime(iso)}{isBlocked ? " ✕" : ""}
+                    </button>
+                  );
+                })}
+              </div>
+          }
+        </div>
+      )}
+
       {err && <p style={{ color: "#a23b3b", fontSize: ".82rem", marginBottom: 10 }}>{err}</p>}
+
+      <div style={{ fontWeight: 600, fontSize: ".82rem", color: MUTED, marginBottom: 10 }}>
+        Blocked slots ({blocked.length})
+      </div>
       {blocked.length === 0
-        ? <p style={{ color: MUTED, fontSize: ".82rem" }}>No dates blocked.</p>
-        : <div style={S.tableWrap}>
-            <table style={S.table}>
-              <thead><tr><Th>Date</Th><Th>Reason</Th><Th>​</Th></tr></thead>
-              <tbody>
-                {blocked.map(b => (
-                  <tr key={b.id} style={S.tr}>
-                    <Td><span style={S.strong}>{b.blocked_date}</span></Td>
-                    <Td>{b.reason ?? <span style={{ color: MUTED }}>—</span>}</Td>
-                    <Td>
-                      <button onClick={() => void removeBlock(b.id)}
-                        style={{ background: "none", border: "none", cursor: "pointer", color: "#a23b3b", fontWeight: 700, fontSize: 16 }}>×</button>
-                    </Td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        ? <p style={{ color: MUTED, fontSize: ".82rem" }}>None blocked.</p>
+        : <div style={{ display: "flex", flexWrap: "wrap", gap: 8, paddingBottom: 16 }}>
+            {blocked.map(b => (
+              <div key={b.id} style={{
+                display: "flex", alignItems: "center", gap: 6,
+                padding: "5px 10px 5px 14px", borderRadius: 999,
+                background: "#fbeaea", border: "1.5px solid #eecaca", fontSize: ".8rem", color: "#7a2020"
+              }}>
+                <span>{fmtFull(b.starts_at)}</span>
+                <button onClick={() => void unblock(b.id)}
+                  style={{ background: "none", border: "none", cursor: "pointer", color: "#a23b3b", fontWeight: 700, fontSize: 15, lineHeight: 1, padding: 0 }}>×</button>
+              </div>
+            ))}
           </div>
       }
     </div>

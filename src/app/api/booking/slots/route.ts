@@ -31,12 +31,12 @@ export async function GET(req: NextRequest) {
   const allSlots = generateSlots(service, now, days, []);
 
   // Look up taken times + admin-blocked dates. Best-effort on both.
-  const [taken, blockedDates] = await Promise.all([
+  const [taken, blockedSlots] = await Promise.all([
     fetchTakenSlots(allSlots),
-    fetchBlockedDates(now, days),
+    fetchBlockedSlots(allSlots),
   ]);
 
-  const grouped = groupByDay(allSlots, taken, blockedDates);
+  const grouped = groupByDay(allSlots, taken, blockedSlots);
 
   return Response.json(
     { tz: TZ, service, days: grouped },
@@ -73,23 +73,24 @@ async function fetchTakenSlots(allSlots: string[]): Promise<Set<number>> {
   return set;
 }
 
-async function fetchBlockedDates(now: Date, days: number): Promise<Set<string>> {
-  const set = new Set<string>();
+async function fetchBlockedSlots(allSlots: string[]): Promise<Set<number>> {
+  const set = new Set<number>();
+  if (allSlots.length === 0) return set;
   try {
     const supabase = createAdminClient();
-    const from = now.toISOString().slice(0, 10);
-    const to = new Date(now.getTime() + days * 86400000).toISOString().slice(0, 10);
+    const from = allSlots[0];
+    const to = new Date(new Date(allSlots[allSlots.length - 1]).getTime() + 1000).toISOString();
     const { data } = await supabase
-      .from("fl_blocked_dates")
-      .select("blocked_date")
-      .gte("blocked_date", from)
-      .lte("blocked_date", to);
-    for (const r of (data ?? []) as { blocked_date: string }[]) set.add(r.blocked_date);
+      .from("fl_blocked_slots")
+      .select("starts_at")
+      .gte("starts_at", from)
+      .lte("starts_at", to);
+    for (const r of (data ?? []) as { starts_at: string }[]) set.add(new Date(r.starts_at).getTime());
   } catch { /* swallow */ }
   return set;
 }
 
-function groupByDay(allSlots: string[], taken: Set<number>, blockedDates: Set<string>): Day[] {
+function groupByDay(allSlots: string[], taken: Set<number>, blocked: Set<number>): Day[] {
   const map = new Map<string, Day>();
   for (const iso of allSlots) {
     const key = dayKey(iso);
@@ -98,11 +99,11 @@ function groupByDay(allSlots: string[], taken: Set<number>, blockedDates: Set<st
       day = { date: key, label: dateChipLabel(iso), slots: [] };
       map.set(key, day);
     }
-    const dateBlocked = blockedDates.has(key);
+    const ms = new Date(iso).getTime();
     day.slots.push({
       iso,
       label: slotTimeLabel(iso),
-      available: !taken.has(new Date(iso).getTime()) && !dateBlocked,
+      available: !taken.has(ms) && !blocked.has(ms),
     });
   }
   return [...map.values()];
