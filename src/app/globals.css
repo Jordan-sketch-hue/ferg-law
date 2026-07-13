@@ -55,7 +55,10 @@
   .btn-gold:hover{transform:translateY(-2px);box-shadow:0 14px 30px -14px rgba(168,133,62,.7)}
   .btn-ghost{background:transparent;color:var(--ink);border-color:var(--line)}
   .btn-ghost:hover{border-color:var(--ink);transform:translateY(-2px)}
-  .btn svg{width:16px;height:16px}
+  .btn svg{width:16px;height:16px;display:block;flex-shrink:0;vertical-align:middle}
+  .btn-wa{display:inline-flex;align-items:center;justify-content:center;gap:9px}
+  .drawer-cta .btn-wa{display:flex;align-items:center;justify-content:center;gap:10px;width:100%}
+  .drawer-cta .btn-wa svg{width:18px;height:18px;flex-shrink:0;display:block}
 
   /* NAV */
   header.nav{
@@ -329,8 +332,8 @@
   .costs-cta-label{font-family:var(--serif);font-size:1.22rem;color:var(--paper-2);font-weight:600;margin-bottom:6px}
   .costs-cta-sub{font-size:.86rem;color:rgba(246,242,234,.6);line-height:1.55;max-width:44ch}
   .costs-cta-actions{display:flex;gap:14px;flex-shrink:0;flex-wrap:wrap}
-  .btn-ghost-light{background:transparent;color:var(--paper-2);border:1px solid rgba(246,242,234,.25);border-radius:999px;display:inline-flex;align-items:center;gap:9px;font-family:var(--sans);font-weight:600;font-size:.95rem;padding:14px 24px;cursor:pointer;transition:border-color .25s,transform .25s}
-  .btn-ghost-light:hover{border-color:rgba(246,242,234,.55);transform:translateY(-2px)}
+  .btn-ghost-light{background:transparent;color:#fff;border:1px solid rgba(246,242,234,.65);border-radius:999px;display:inline-flex;align-items:center;gap:9px;font-family:var(--sans);font-weight:600;font-size:.95rem;padding:14px 24px;cursor:pointer;transition:border-color .25s,transform .25s}
+  .btn-ghost-light:hover{border-color:rgba(246,242,234,.9);transform:translateY(-2px)}
 
   /* SECTION HEADERS */
   .sec-head{max-width:680px;margin-bottom:48px}
@@ -697,19 +700,20 @@
   .steps .st.active::after{transform:scaleX(.5)}
   .mh-label{font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-top:14px}
 
-  .modal-body{padding:26px;max-height:60vh;overflow-y:auto}
+  .modal-body{padding:26px;max-height:60vh;overflow-y:auto;overflow-x:hidden}
   .mstep{display:none;animation:fade .4s ease}
   .mstep.active{display:block}
   .mstep h3{font-size:1.4rem;margin-bottom:6px}
   .mstep .sub{font-size:.88rem;color:var(--muted);margin-bottom:20px}
 
-  .svc-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
-  .svc-opt{display:flex;gap:12px;align-items:flex-start;text-align:left;background:var(--white);border:1.5px solid var(--line-soft);border-radius:14px;padding:15px;cursor:pointer;transition:border-color .2s,transform .2s,box-shadow .2s;font-family:inherit}
+  .svc-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:11px}
+  .svc-opt{display:flex;gap:12px;align-items:flex-start;text-align:left;background:var(--white);border:1.5px solid var(--line-soft);border-radius:14px;padding:15px;cursor:pointer;transition:border-color .2s,transform .2s,box-shadow .2s;font-family:inherit;min-width:0;box-sizing:border-box}
   .svc-opt:hover{transform:translateY(-2px);box-shadow:var(--shadow-sm)}
   .svc-opt.sel{border-color:var(--gold);background:var(--paper-2)}
   .svc-opt .so-ic{flex-shrink:0;line-height:0;color:var(--gold-deep);margin-top:1px}
   .svc-opt .so-ic svg{width:22px;height:22px;display:block}
-  .svc-opt .so-t{font-size:.92rem;font-weight:600;color:var(--ink)}
+  .svc-opt .so-txt{min-width:0;flex:1}
+  .svc-opt .so-t{font-size:.92rem;font-weight:600;color:var(--ink);word-break:break-word}
   .svc-opt .so-s{font-size:.72rem;color:var(--muted)}
   .helper-link{display:inline-flex;align-items:center;gap:6px;margin-top:18px;font-size:.85rem;font-weight:600;color:var(--gold-deep);cursor:pointer;background:none;border:none;font-family:inherit}
   .helper-link:hover{text-decoration:underline}
@@ -857,6 +861,10 @@
     .drawer-cta .btn{padding:12px 18px}
     /* nav height */
     .nav-inner{height:64px}
+    /* booking modal: 2-col service grid is too tight on narrow phones */
+    .modal{border-radius:16px}
+    .modal-body{padding:20px}
+    .svc-grid{grid-template-columns:1fr}
   }
 
   /* ===== REAL BRAND LOGO ===== */
@@ -1080,7 +1088,7 @@
 .reach-card p{ font-size:.97rem; line-height:1.6; color:rgba(246,242,234,.78); margin:0; flex:1; }
 .reach-reason{ font-size:.78rem; letter-spacing:.08em; text-transform:uppercase;
   color:rgba(200,166,92,.7); font-weight:600; }
-.reach-btn{ margin-top:.3rem; justify-content:center; }
+.reach-btn{ margin-top:.3rem; display:flex; align-items:center; justify-content:center; width:100%; }
 
 /* ── Directory header dark ──────────────────────────────────────────────── */
 .dir-header-dark{ background:#111 !important; }
@@ -1091,3 +1099,7 @@
 
 /* ── Guides separator ───────────────────────────────────────────────────── */
 .g-sep{ margin-top:2.8rem; padding-top:2rem; border-top:2px solid var(--gold); }
+
+
+/* Hide editable images until ContentApply reveals them — prevents stale-image flash */
+[data-edit-img]{opacity:0;transition:opacity .25s ease}

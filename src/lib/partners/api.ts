@@ -33,7 +33,7 @@ function friendly(msg: string): string {
   if (m.includes("invalid login")) return "Email or password is incorrect.";
   if (m.includes("weak password")) return "Password must be at least 6 characters.";
   if (m.includes("unauthorized")) return "Your session expired — please log in again.";
-  if (m.includes("bad kind")) return "Please choose real estate agent, loan officer, valuator or land surveyor.";
+  if (m.includes("bad kind")) return "Please choose real estate agent, banker, valuator or land surveyor.";
   return msg || "Something went wrong. Please try again.";
 }
 

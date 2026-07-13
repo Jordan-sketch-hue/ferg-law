@@ -56,14 +56,20 @@ export function BookButton({
   className,
   children,
   type = "button",
+  onClick,
 }: {
   className?: string;
   children: ReactNode;
   type?: "button" | "submit";
+  onClick?: () => void;
 }) {
   const { openBooking } = useBooking();
   return (
-    <button type={type} className={className} onClick={openBooking}>
+    <button
+      type={type}
+      className={className}
+      onClick={() => { onClick?.(); openBooking(); }}
+    >
       {children}
     </button>
   );

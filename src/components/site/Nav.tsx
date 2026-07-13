@@ -121,7 +121,24 @@ export default function Nav() {
       />
       <nav className={`nav-drawer${menuOpen ? " open" : ""}`}>
         {NAV_LINKS.map((l) => (
-          <a key={l.href} href={l.href} onClick={closeMenu}>{l.label}</a>
+          <a
+            key={l.href}
+            href={l.href}
+            onClick={(e) => {
+              if (l.href.includes("#")) {
+                e.preventDefault();
+                setMenuOpen(false);
+                const id = l.href.split("#")[1];
+                setTimeout(() => {
+                  document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+                }, 320);
+              } else {
+                closeMenu();
+              }
+            }}
+          >
+            {l.label}
+          </a>
         ))}
         {HOME_LINKS.map((l) => (
           <a
@@ -136,13 +153,19 @@ export default function Nav() {
           </a>
         ))}
         <div className="drawer-cta">
-          <a className="btn btn-wa" href={waLink()} target="_blank" rel="noopener">
-            <svg viewBox="0 0 24 24" fill="currentColor" style={{width:18,height:18}}>
+          <a
+            className="btn btn-wa"
+            href={waLink()}
+            target="_blank"
+            rel="noopener"
+            onClick={closeMenu}
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 2a10 10 0 0 0-8.6 15l-1.3 4.8 4.9-1.3A10 10 0 1 0 12 2Zm0 18a8 8 0 0 1-4.1-1.1l-.3-.2-2.9.8.8-2.8-.2-.3A8 8 0 1 1 12 20Zm4.4-6c-.2-.1-1.4-.7-1.6-.8s-.4-.1-.5.1-.6.8-.8 1-.3.2-.5.1a6.5 6.5 0 0 1-3.2-2.8c-.2-.4.2-.4.6-1.2.1-.1 0-.3 0-.4l-.7-1.7c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3A2.8 2.8 0 0 0 6.7 9c0 1.7 1.2 3.3 1.4 3.5s2.4 3.6 5.7 5c2 .9 2.8.9 3.8.8.6-.1 1.9-.8 2.1-1.5s.3-1.4.2-1.5-.3-.2-.5-.3Z" />
             </svg>
             WhatsApp
           </a>
-          <BookButton className="btn btn-gold">
+          <BookButton className="btn btn-gold" onClick={closeMenu}>
             Book a consultation
           </BookButton>
         </div>

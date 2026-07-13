@@ -159,6 +159,10 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${fraunces.variable} ${inter.variable}`}>
+      <head>
+        <link rel="preload" as="image" href="/img/hero-banner.jpg" fetchPriority="high" />
+        <link rel="manifest" href="/manifest.json" />
+      </head>
       <body>
         {children}
         <ChatWidget />

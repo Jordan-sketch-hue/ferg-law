@@ -9,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/admin", "/agent", "/pay", "/reset", "/options", "/directory/dashboard"],
       },
     ],
-    sitemap: "https://ferguson-law.vercel.app/sitemap.xml",
+    sitemap: "https://fergusonlawja.com/sitemap.xml",
   };
 }

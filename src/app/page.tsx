@@ -27,6 +27,8 @@ export default function Home() {
           src="/img/hero-banner.jpg"
           data-edit-img="images.heroBg"
           alt="A joyful Jamaican family moving into their new home"
+          fetchPriority="high"
+          loading="eager"
         />
         <div className="hero-scrim" aria-hidden="true"></div>
         <div className="hero-full-inner reveal in">
@@ -76,7 +78,7 @@ export default function Home() {
               />
             </div>
             <div>
-              <span className="stars">–––––</span>{" "}
+              <span className="stars">★★★★★</span>{" "}
               <b>Trusted</b>{" "}by Jamaican families &amp; the diaspora
             </div>
           </div>
@@ -140,114 +142,47 @@ export default function Home() {
             </div>
           </div>
           <div className="serv-grid">
+            {/* 1 — Real Estate */}
             <div className="serv reveal">
-              <img
-                className="serv-media"
-                src="/img/re-consult.png"
-                data-edit-img="images.serviceImg1"
-                alt="A couple outside their new Kingston property"
-                loading="lazy"
-              />
-              <div className="num" data-edit="services.items.1.num">
-                01
-              </div>
-              <h3 data-edit="services.items.1.title">
-                Real Estate &amp; Conveyancing
-              </h3>
-              <p data-edit="services.items.1.body">
-                Sales, purchases, titles and transfers – plus the H.O.M.E.™
-                home-ownership pathway for first-time and diaspora buyers.
-              </p>
+              <img className="serv-media" src="/img/re-consult.jpg" data-edit-img="images.serviceImg1" alt="A couple outside their new Kingston property" loading="lazy" />
+              <div className="num">01</div>
+              <h3 data-edit="services.items.1.title">Real Estate &amp; Conveyancing</h3>
+              <p data-edit="services.items.1.body">Sales, purchases, titles and transfers – plus the H.O.M.E.™ home-ownership pathway for first-time and diaspora buyers.</p>
             </div>
+            {/* 2 — Divorce */}
             <div className="serv reveal">
-              <img
-                className="serv-media"
-                src="/img/owen-corporate-2026.jpg"
-                alt="Owen K. Ferguson in a modern corporate office"
-                loading="lazy"
-              />
-              <div className="num" data-edit="services.items.0.num">
-                02
-              </div>
-              <h3 data-edit="services.items.0.title">
-                Corporate &amp; Commercial
-              </h3>
-              <p data-edit="services.items.0.body">
-                Company formation, contracts, compliance and advisory for
-                businesses at home and abroad.
-              </p>
+              <img className="serv-media" src="/img/divorce.png" data-edit-img="images.serviceImg3" alt="A couple navigating separation" loading="lazy" />
+              <div className="num">02</div>
+              <h3 data-edit="services.items.3.title">Divorce &amp; Matrimonial</h3>
+              <p data-edit="services.items.3.body">Separation, custody, maintenance and settlements handled with discretion and care.</p>
             </div>
+            {/* 3 — Family & Estate */}
             <div className="serv reveal">
-              <img
-                className="serv-media"
-                src="/img/family-estate.png"
-                data-edit-img="images.serviceImg2"
-                alt="A family meeting their attorney about wills and estate planning"
-                loading="lazy"
-              />
-              <div className="num" data-edit="services.items.2.num">
-                03
-              </div>
+              <img className="serv-media" src="/img/family-estate.jpg" data-edit-img="images.serviceImg2" alt="A family meeting their attorney about wills and estate planning" loading="lazy" />
+              <div className="num">03</div>
               <h3 data-edit="services.items.2.title">Family &amp; Estate</h3>
-              <p data-edit="services.items.2.body">
-                Wills, probate, estate planning and family matters handled with
-                discretion and care.
-              </p>
+              <p data-edit="services.items.2.body">Wills, probate, estate planning and family matters handled with discretion and care.</p>
             </div>
+            {/* 4 — Sports Law */}
             <div className="serv reveal">
-              <img
-                className="serv-media"
-                src="/img/divorce.png"
-                data-edit-img="images.serviceImg3"
-                alt="A couple navigating separation"
-                loading="lazy"
-              />
-              <div className="num" data-edit="services.items.3.num">
-                04
-              </div>
-              <h3 data-edit="services.items.3.title">
-                Divorce &amp; Matrimonial
-              </h3>
-              <p data-edit="services.items.3.body">
-                Separation, custody, maintenance and settlements handled with
-                discretion and care.
-              </p>
-            </div>
-            <div className="serv reveal">
-              <img
-                className="serv-media"
-                src="/img/serv-5.jpg"
-                data-edit-img="images.serviceImg4"
-                alt="Intellectual property protection"
-                loading="lazy"
-              />
-              <div className="num" data-edit="services.items.4.num">
-                05
-              </div>
-              <h3 data-edit="services.items.4.title">
-                Intellectual Property
-              </h3>
-              <p data-edit="services.items.4.body">
-                Trademarks, copyright and IP protection for creators, brands and
-                businesses.
-              </p>
-            </div>
-            <div className="serv reveal">
-              <img
-                className="serv-media"
-                src="/img/p-track.jpg"
-                data-edit-img="images.serviceImg5"
-                alt="Sports law – contracts and representation for athletes"
-                loading="lazy"
-              />
-              <div className="num" data-edit="services.items.5.num">
-                06
-              </div>
+              <img className="serv-media" src="/img/p-track.jpg" data-edit-img="images.serviceImg5" alt="Sports law – contracts and representation for athletes" loading="lazy" />
+              <div className="num">04</div>
               <h3 data-edit="services.items.5.title">Sports Law</h3>
-              <p data-edit="services.items.5.body">
-                Contracts, image rights and representation for athletes, clubs and
-                sporting bodies.
-              </p>
+              <p data-edit="services.items.5.body">Contracts, image rights and representation for athletes, clubs and sporting bodies.</p>
+            </div>
+            {/* 5 — Intellectual Property */}
+            <div className="serv reveal">
+              <img className="serv-media" src="/img/serv-5.jpg" data-edit-img="images.serviceImg4" alt="Intellectual property protection" loading="lazy" />
+              <div className="num">05</div>
+              <h3 data-edit="services.items.4.title">Intellectual Property</h3>
+              <p data-edit="services.items.4.body">Trademarks, copyright and IP protection for creators, brands and businesses.</p>
+            </div>
+            {/* 6 — Corporate & Commercial */}
+            <div className="serv reveal">
+              <img className="serv-media" src="/img/owen-corporate-2026.jpg" alt="Owen K. Ferguson in a modern corporate office" loading="lazy" />
+              <div className="num">06</div>
+              <h3 data-edit="services.items.0.title">Corporate &amp; Commercial</h3>
+              <p data-edit="services.items.0.body">Company formation, contracts, compliance and advisory for businesses at home and abroad.</p>
             </div>
           </div>
         </div>
@@ -279,24 +214,24 @@ export default function Home() {
               A lawyer who understands the <em>money</em>, too.
             </h2>
             <p className="lead" data-edit="about.lead">
-              Ferguson Law is built on a rare combination – deep legal expertise
-              paired with two decades in banking and finance. The firm&apos;s
-              founder, <strong>Owen K. Ferguson, JP</strong>, has practised as an
-              Attorney-at-Law for over 10 years, on top of 20+ years in
-              Jamaica&apos;s banking and financial services sector.
+              <strong>Owen K. Ferguson, JP</strong> founded the firm on a single
+              principle: legal counsel should be honest, practical, and financially
+              grounded. He has served Jamaica&apos;s banking and financial sector
+              for more than 20 years, and has practised as an Attorney-at-Law for
+              over 10.
             </p>
             <p className="about-p" data-edit="about.body2">
-              A 2013 graduate of the Norman Manley Law School with post-graduate
-              studies in law and business administration from the University of
-              London, Owen pairs both disciplines to make complex transactions
-              genuinely clear – for first-time buyers, businesses, investors and
-              overseas Jamaicans alike.
+              A 2013 graduate of the Norman Manley Law School, Owen holds
+              post-graduate qualifications in law and business administration from
+              the University of London. That combination lets him guide first-time
+              buyers, businesses, investors, and the Jamaican diaspora through
+              complex property transactions without the usual legal fog.
             </p>
             <ul className="creds">
               <li>Attorney-at-Law · 10+ years</li>
               <li>20+ years banking &amp; finance</li>
               <li>Norman Manley Law School, 2013</li>
-              <li>Post-graduate law &amp; business – University of London</li>
+              <li>Post-graduate law &amp; business, University of London</li>
               <li>Jamaican Bar Association</li>
               <li>International Bar Association</li>
               <li>Justice of the Peace</li>
@@ -444,97 +379,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ===================================================================== */}
-      {/* REAL ESTATE & H.O.M.E. – grouped together, after the firm's services  */}
-      {/* ===================================================================== */}
-
-      {/* HUMAN MOMENT (full-bleed) – opens the real-estate story */}
-      <section className="human-band">
-        <img
-          className="bg"
-          src="/img/couple-kingston-wide.jpg"
-          data-edit-img="images.humanBandBg"
-          alt="A Jamaican couple outside their new Kingston property"
-        />
-        <div className="scrim"></div>
-        <div className="wrap">
-          <span className="eyebrow reveal in" data-edit="human.eyebrow">
-            Real estate &amp; conveyancing
-          </span>
-          <h2 className="reveal in">
-            Behind every title is a <em>family</em> putting down roots.
-          </h2>
-          <p className="reveal in" data-edit="human.body">
-            Ferguson Law exists for that moment – the keys, the new address, the
-            relief of knowing it was done right. We handle the law so the day
-            feels like a celebration, not a worry.
-          </p>
-        </div>
-      </section>
-
-      {/* JOURNEY GALLERY (human interaction) */}
-      <section className="section">
-        <div className="wrap">
-          <div className="sec-head reveal">
-            <span className="eyebrow">We make it easy</span>
-            <h2>The right people, <em>in your corner.</em></h2>
-            <p className="lead">
-              From your first question to keys in hand – the H.O.M.E.™ network puts a trusted professional at every stage of your journey.
-            </p>
-          </div>
-          <div className="gallery-grid">
-            <div className="gphoto reveal">
-              <img
-                src="/img/owen-portrait-vertical.jpg"
-                data-edit-img="images.gallery2"
-                alt="Attorney-at-Law – Ferguson Law"
-              />
-              <div className="cap">
-                <span className="k">Your attorney</span>
-                <h4>Ferguson Law</h4>
-              </div>
-            </div>
-            <div className="gphoto reveal">
-              <img
-                src="/img/couple-kingston-portrait.jpg"
-                data-edit-img="images.gallery1"
-                alt="Real estate agent showing a property"
-              />
-              <div className="cap">
-                <span className="k">Real estate agent</span>
-                <h4>Find the right property</h4>
-              </div>
-            </div>
-            <a className="gphoto reveal" href="https://homeready-jamaica-redesign.vercel.app/mortgage-calculator" target="_blank" rel="noopener" style={{textDecoration:"none",color:"inherit"}}>
-              <img
-                src="/img/finance-consult.jpg"
-                data-edit-img="images.gallery3"
-                alt="Banker or loan officer – mortgage approval"
-              />
-              <div className="cap">
-                <span className="k">Banker · Loan officer</span>
-                <h4>Secure the financing</h4>
-              </div>
-            </a>
-            <div className="gphoto reveal">
-              <img
-                src="/img/home-welcome-porch.png"
-                data-edit-img="images.gallery4"
-                alt="Surveyor and valuator on site"
-              />
-              <div className="cap">
-                <span className="k">Surveyor · Valuator</span>
-                <h4>Know what you&apos;re buying</h4>
-              </div>
-            </div>
-          </div>
-          <div className="gallery-dir-cta reveal">
-            <a className="btn btn-gold" href="/directory">
-              Find a trusted professional <ArrowIcon />
-            </a>
-          </div>
-        </div>
-      </section>
 
       {/* H.O.M.E. FLAGSHIP */}
       <HomeFlagship />
@@ -563,7 +407,7 @@ export default function Home() {
           </div>
           <div className="test-grid">
             <div className="tcard reveal">
-              <div className="stars">–––––</div>
+              <div className="stars">★★★★★</div>
               <p className="q" data-edit="stories.items.0.quote">
                 I&apos;m in Toronto and thought buying back home would be a
                 nightmare. Ferguson Law handled everything – I signed online and
@@ -586,7 +430,7 @@ export default function Home() {
               </div>
             </div>
             <div className="tcard reveal">
-              <div className="stars">–––––</div>
+              <div className="stars">★★★★★</div>
               <p className="q" data-edit="stories.items.1.quote">
                 The readiness score told me the truth – I wasn&apos;t ready yet.
                 Six months later I was. No other lawyer ever made it that clear or
@@ -609,7 +453,7 @@ export default function Home() {
               </div>
             </div>
             <div className="tcard reveal">
-              <div className="stars">–––––</div>
+              <div className="stars">★★★★★</div>
               <p className="q" data-edit="stories.items.2.quote">
                 They understood the money <em>and</em> the law. Closing costs,
                 NHT, the contract – explained like a friend would, not a textbook.

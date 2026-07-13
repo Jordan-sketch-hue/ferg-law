@@ -25,6 +25,11 @@ const CREAM = "#F6F2EA";
 const INK = "#24211b";
 const MUTED = "#69736d";
 
+// HomeReady Supabase (read + approve professionals from the H.O.M.E. platform)
+const HR_URL = "https://ibtadbwtrxglujkzqofs.supabase.co";
+const HR_KEY = "sb_publishable_jD87Xp8vpaFIZjo3Ez_DlA_BlTgBRSi";
+const HR_BASE = "https://home.fergusonlawja.com";
+
 // ---------------------------------------------------------------------------
 // Row shapes
 // ---------------------------------------------------------------------------
@@ -137,6 +142,18 @@ interface Matter {
   meta: Record<string, unknown>;
 }
 
+interface Milestone {
+  id: string;
+  matter_id: string;
+  title: string;
+  description: string | null;
+  status: "pending" | "in_progress" | "completed";
+  due_date: string | null;
+  completed_at: string | null;
+  notify_client: boolean;
+  created_at: string;
+}
+
 interface Availability {
   id: string;
   day_of_week: number;
@@ -146,7 +163,56 @@ interface Availability {
   active: boolean;
 }
 
-type Tab = "leads" | "bookings" | "clients" | "matters" | "calendar" | "chats" | "invites" | "directory" | "availability";
+interface HomePro {
+  user_id: string;
+  created_at: string;
+  business_name: string | null;
+  profession: string;
+  phone: string | null;
+  parishes: string[] | null;
+  license_number: string | null;
+  verified: boolean;
+  headline: string | null;
+}
+
+interface HomeProperty {
+  id: string;
+  created_at: string;
+  title: string;
+  parish: string;
+  price_jmd: number;
+  realtor_id: string;
+  status: string;
+}
+
+type Tab = "overview" | "leads" | "bookings" | "clients" | "matters" | "cms" | "calendar" | "chats" | "invites" | "directory" | "availability" | "home_pros" | "home_listings" | "email" | "inquiries" | "referrals";
+
+interface InboundEmail {
+  id: string;
+  created_at: string;
+  from_email: string;
+  from_name: string | null;
+  to_email: string | null;
+  subject: string | null;
+  body_text: string | null;
+  body_html: string | null;
+  reply_to: string | null;
+  thread_id: string | null;
+  read: boolean;
+  replied: boolean;
+}
+
+interface HomeInquiry {
+  id: string;
+  created_at: string;
+  property_id: string | null;
+  property_title: string | null;
+  from_name: string | null;
+  from_email: string | null;
+  from_phone: string | null;
+  message: string | null;
+  status: string;
+}
 
 const LEAD_STATUSES: LeadStatus[] = ["new", "contacted", "closed"];
 const APPT_STATUSES: ApptStatus[] = ["pending", "confirmed", "cancelled", "completed"];
@@ -187,7 +253,7 @@ export default function AdminDashboard() {
   const [accountEmail, setAccountEmail] = useState<string | null>(null);
   const [showAccount, setShowAccount] = useState(false);
 
-  const [tab, setTab] = useState<Tab>("leads");
+  const [tab, setTab] = useState<Tab>("overview");
   const [leads, setLeads] = useState<Lead[]>([]);
   const [appts, setAppts] = useState<Appointment[]>([]);
   const [convos, setConvos] = useState<Conversation[]>([]);
@@ -196,6 +262,11 @@ export default function AdminDashboard() {
   const [clients, setClients] = useState<Client[]>([]);
   const [matters, setMatters] = useState<Matter[]>([]);
   const [availability, setAvailability] = useState<Availability[]>([]);
+  const [homePros, setHomePros] = useState<HomePro[]>([]);
+  const [homeListings, setHomeListings] = useState<HomeProperty[]>([]);
+  const [homeLoading, setHomeLoading] = useState(false);
+  const [emails, setEmails] = useState<InboundEmail[]>([]);
+  const [inquiries, setInquiries] = useState<HomeInquiry[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -270,6 +341,10 @@ export default function AdminDashboard() {
         supabase.rpc("fl_admin_matters", { p_token: tok }),
         supabase.rpc("fl_admin_get_availability", { p_token: tok }),
       ]);
+    const [emailsRes, inquiriesRes] = await Promise.all([
+      supabase.rpc("fl_admin_emails", { p_token: tok }),
+      supabase.rpc("fl_admin_home_inquiries", { p_token: tok }),
+    ]);
     const firstError = leadsRes.error || apptsRes.error || convosRes.error ||
       invitesRes.error || listingsRes.error || null;
     return {
@@ -282,6 +357,8 @@ export default function AdminDashboard() {
       clients: (clientsRes.data as Client[] | null) ?? [],
       matters: (mattersRes.data as Matter[] | null) ?? [],
       availability: (availRes.data as Availability[] | null) ?? [],
+      emails: (emailsRes.data as InboundEmail[] | null) ?? [],
+      inquiries: (inquiriesRes.data as HomeInquiry[] | null) ?? [],
     };
   }, []);
 
@@ -293,6 +370,7 @@ export default function AdminDashboard() {
       setLeads(res.leads); setAppts(res.appts); setConvos(res.convos);
       setInvites(res.invites); setListings(res.listings);
       setClients(res.clients); setMatters(res.matters); setAvailability(res.availability);
+      setEmails(res.emails); setInquiries(res.inquiries);
     }
     setLoading(false);
   }, [token, fetchAll]);
@@ -307,6 +385,7 @@ export default function AdminDashboard() {
         setLeads(res.leads); setAppts(res.appts); setConvos(res.convos);
         setInvites(res.invites); setListings(res.listings);
         setClients(res.clients); setMatters(res.matters); setAvailability(res.availability);
+        setEmails(res.emails); setInquiries(res.inquiries);
       }
     })();
     return () => { cancelled = true; };
@@ -393,17 +472,64 @@ export default function AdminDashboard() {
     return null;
   }, [token]);
 
+  // H.O.M.E. data — fetched directly from the homeready Supabase project
+  useEffect(() => {
+    if (!token) return;
+    let cancelled = false;
+    void (async () => {
+      setHomeLoading(true);
+      try {
+        const hdrs = { "apikey": HR_KEY, "Authorization": `Bearer ${HR_KEY}` };
+        const [prosRes, propsRes] = await Promise.all([
+          fetch(`${HR_URL}/rest/v1/home_professional_profiles?verified=eq.false&order=created_at.desc`, { headers: hdrs }),
+          fetch(`${HR_URL}/rest/v1/home_properties?status=eq.active&order=created_at.desc`, { headers: hdrs }),
+        ]);
+        const [pros, props] = await Promise.all([prosRes.json(), propsRes.json()]);
+        if (!cancelled) {
+          setHomePros(Array.isArray(pros) ? (pros as HomePro[]) : []);
+          setHomeListings(Array.isArray(props) ? (props as HomeProperty[]) : []);
+        }
+      } catch { /* ignore */ }
+      if (!cancelled) setHomeLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [token]);
+
+  const approveHomePro = useCallback(async (userId: string) => {
+    setHomePros((prev) => prev.filter((p) => p.user_id !== userId));
+    await fetch(`${HR_URL}/rest/v1/home_professional_profiles?user_id=eq.${userId}`, {
+      method: "PATCH",
+      headers: {
+        "apikey": HR_KEY,
+        "Authorization": `Bearer ${HR_KEY}`,
+        "Content-Type": "application/json",
+        "Prefer": "return=minimal",
+      },
+      body: JSON.stringify({ verified: true }),
+    });
+  }, []);
+
   const signOut = useCallback(() => {
     try { localStorage.removeItem(TOKEN_KEY); } catch { /* ignore */ }
     setToken(null); setLeads([]); setAppts([]); setConvos([]);
     setInvites([]); setListings([]); setClients([]); setMatters([]); setAvailability([]);
+    setHomePros([]); setHomeListings([]); setEmails([]); setInquiries([]);
   }, []);
+
+  // Role — Jordan sees everything; Owen gets a simplified label on his greeting
+  const isJordan = accountEmail === "jordanrmorris01@icloud.com";
 
   // Stats
   const newLeads = leads.filter((l) => (l.status ?? "new") === "new").length;
   const pendingBookings = appts.filter((a) => a.status === "pending").length;
   const openChats = convos.filter((c) => c.status === "waiting_agent" || c.status === "agent").length;
   const pendingListings = listings.filter((l) => (l.status ?? "pending") === "pending").length;
+
+  // Follow-up queue — leads not contacted in 48h
+  const staleLeads = leads.filter((l) => {
+    if ((l.status ?? "new") !== "new") return false;
+    return Date.now() - new Date(l.created_at).getTime() > 48 * 60 * 60 * 1000;
+  });
 
   if (checking) {
     return (
@@ -490,39 +616,75 @@ export default function AdminDashboard() {
 
       <div style={S.body}>
         <div style={S.statStrip}>
-          <Stat label="New leads" value={newLeads} />
-          <Stat label="Pending bookings" value={pendingBookings} />
-          <Stat label="Open chats" value={openChats} />
+          <Stat label="New leads" value={newLeads} urgent />
+          <Stat label="Pending bookings" value={pendingBookings} urgent />
+          <Stat label="Open chats" value={openChats} urgent />
           <Stat label="Clients" value={clients.length} />
           <Stat label="Matters" value={matters.length} />
           <Stat label="Pending partners" value={pendingListings} />
+          <Stat label="H.O.M.E. pending" value={homePros.length} urgent />
         </div>
 
         {loadError && <div style={S.errorBar}>{loadError}</div>}
 
-        <div style={{ ...S.tabs, flexWrap: "wrap" }}>
-          {(["leads","bookings","clients","matters","calendar","chats","invites","directory","availability"] as Tab[]).map((t) => (
+        <div style={{ ...S.tabs, background: "#fff", border: "1px solid rgba(18,16,12,.07)", borderRadius: "12px 12px 0 0" }}>
+          {(["overview","leads","bookings","clients","matters","cms","calendar","chats","email","invites","directory","availability","home_pros","home_listings","inquiries","referrals"] as Tab[]).map((t) => (
             <TabBtn key={t} active={tab === t} onClick={() => setTab(t)}
-              label={t.charAt(0).toUpperCase() + t.slice(1)}
-              count={t === "leads" ? leads.length : t === "bookings" ? appts.length :
-                t === "clients" ? clients.length : t === "matters" ? matters.length :
-                t === "chats" ? convos.length : t === "invites" ? invites.length :
-                t === "directory" ? listings.length : t === "availability" ? availability.length :
-                appts.length /* calendar shows appt count */}
+              label={
+                t === "overview" ? "Overview" :
+                t === "cms" ? "CMS" :
+                t === "home_pros" ? "H.O.M.E. Pros" :
+                t === "home_listings" ? "H.O.M.E. Listings" :
+                t === "email" ? "Email" :
+                t === "inquiries" ? "H.O.M.E. Inquiries" :
+                t === "referrals" ? "Referrals" :
+                t.charAt(0).toUpperCase() + t.slice(1)
+              }
+              count={
+                t === "overview" ? 0 :
+                t === "leads" ? leads.length :
+                t === "bookings" ? appts.length :
+                t === "clients" ? clients.length :
+                t === "matters" ? matters.length :
+                t === "chats" ? convos.length :
+                t === "email" ? emails.filter(e => !e.read).length :
+                t === "invites" ? invites.length :
+                t === "directory" ? listings.length :
+                t === "availability" ? availability.length :
+                t === "home_pros" ? homePros.length :
+                t === "home_listings" ? homeListings.length :
+                t === "inquiries" ? inquiries.filter(i => i.status === "new").length :
+                t === "referrals" ? 0 :
+                0
+              }
             />
           ))}
         </div>
 
         <div style={S.panel}>
-          {tab === "leads" && <LeadsTable leads={leads} loading={loading} onStatus={setLeadStatus} />}
-          {tab === "bookings" && <BookingsTable appts={appts} loading={loading} onStatus={setApptStatus} />}
+          {tab === "overview" && (
+            <OverviewPanel
+              leads={leads} appts={appts} convos={convos} matters={matters}
+              homePros={homePros} emails={emails} inquiries={inquiries}
+              staleLeads={staleLeads} isJordan={isJordan}
+              onTab={setTab}
+            />
+          )}
+          {tab === "leads" && <LeadsTable leads={leads} loading={loading} token={token} onStatus={setLeadStatus} />}
+          {tab === "bookings" && <BookingsTable appts={appts} loading={loading} token={token ?? ""} onStatus={setApptStatus} />}
           {tab === "clients" && <ClientsTab clients={clients} matters={matters} loading={loading} onUpsert={upsertClient} />}
-          {tab === "matters" && <MattersTab matters={matters} loading={loading} onStage={setMatterStage} onPayment={setMatterPayment} />}
+          {tab === "matters" && <MattersTab matters={matters} loading={loading} token={token ?? ""} onStage={setMatterStage} onPayment={setMatterPayment} />}
+          {tab === "cms" && token && <CmsTab token={token} />}
           {tab === "calendar" && <CalendarTab appts={appts} />}
           {tab === "chats" && <ChatsTable convos={convos} loading={loading} />}
+          {tab === "email" && token && <EmailTab emails={emails} token={token} onMarkRead={(id) => setEmails(prev => prev.map(e => e.id === id ? { ...e, read: true } : e))} />}
           {tab === "invites" && <InvitesPanel invites={invites} loading={loading} onCreate={createInvite} />}
           {tab === "directory" && <ListingsPanel listings={listings} loading={loading} onStatus={setListingStatus} />}
-          {tab === "availability" && <AvailabilityTab availability={availability} onSave={saveAvailability} />}
+          {tab === "availability" && <AvailabilityTab availability={availability} onSave={saveAvailability} token={token ?? ""} />}
+          {tab === "home_pros" && <HomeProsPanel pros={homePros} loading={homeLoading} onApprove={approveHomePro} />}
+          {tab === "home_listings" && <HomeListingsPanel listings={homeListings} loading={homeLoading} />}
+          {tab === "inquiries" && token && <InquiriesTab inquiries={inquiries} token={token} onStatus={(id, status) => setInquiries(prev => prev.map(i => i.id === id ? { ...i, status } : i))} />}
+          {tab === "referrals" && <ReferralsTab leads={leads} appts={appts} />}
         </div>
       </div>
     </div>
@@ -533,10 +695,10 @@ export default function AdminDashboard() {
 // Sub-components
 // ===========================================================================
 
-function Stat({ label, value }: { label: string; value: number }) {
+function Stat({ label, value, urgent }: { label: string; value: number; urgent?: boolean }) {
   return (
-    <div style={S.statCard}>
-      <div style={S.statValue}>{value}</div>
+    <div style={{ ...S.statCard, ...(urgent && value > 0 ? { background: "rgba(200,166,92,.12)" } : null) }}>
+      <div style={{ ...S.statValue, ...(urgent && value > 0 ? { color: GOLD } : null) }}>{value}</div>
       <div style={S.statLabel}>{label}</div>
     </div>
   );
@@ -578,65 +740,228 @@ function StatusSelect({ value, options, onChange }: { value: string | null; opti
 }
 
 function Th({ children }: { children: React.ReactNode }) { return <th style={S.th}>{children}</th>; }
-function Td({ children }: { children: React.ReactNode }) { return <td style={S.td}>{children}</td>; }
+function Td({ children, onClick }: { children: React.ReactNode; onClick?: React.MouseEventHandler<HTMLTableCellElement> }) { return <td style={S.td} onClick={onClick}>{children}</td>; }
 function Empty({ children }: { children: React.ReactNode }) { return <div style={S.emptyState}>{children}</div>; }
+
+// ---------------------------------------------------------------------------
+// Email compose modal
+// ---------------------------------------------------------------------------
+const TEMPLATES: Record<string, (name: string, service?: string) => string> = {
+  acknowledge: (name) =>
+    `Dear ${name.split(" ")[0]},\n\nThank you for reaching out to Ferguson Law. We have received your enquiry and a member of our team will be in touch shortly.\n\nShould you have any immediate questions, please feel free to reply to this email or reach us via WhatsApp at +1 876 840 5862.\n\nWarm regards,\nFerguson Law`,
+  followup: (name, service) =>
+    `Dear ${name.split(" ")[0]},\n\nI hope this message finds you well. I wanted to follow up on your recent enquiry${service ? ` regarding ${service}` : ""} and ensure that we have addressed all of your questions.\n\nPlease do not hesitate to reach out if you need any further assistance. We look forward to working with you.\n\nWarm regards,\nFerguson Law`,
+  booking: (name) =>
+    `Dear ${name.split(" ")[0]},\n\nThank you for booking a consultation with Ferguson Law. Your appointment has been confirmed and you will receive a calendar invitation shortly.\n\nPlease note that your J$8,000 consultation fee will be credited toward your legal fees upon retaining our services.\n\nIf you have any questions before your appointment, please do not hesitate to contact us.\n\nWarm regards,\nFerguson Law`,
+};
+
+function EmailComposeModal({ to, toName, defaultSubject, context, service, token, onClose }: {
+  to: string; toName: string; defaultSubject: string; context?: string; service?: string; token: string; onClose: () => void;
+}) {
+  const [subject, setSubject] = useState(defaultSubject);
+  const [body, setBody] = useState("");
+  const [sending, setSending] = useState(false);
+  const [result, setResult] = useState<{ ok: boolean; msg: string } | null>(null);
+
+  function applyTemplate(key: string) {
+    setBody(TEMPLATES[key]?.(toName, service) ?? "");
+  }
+
+  async function send() {
+    if (!body.trim() || sending) return;
+    setSending(true);
+    try {
+      const res = await fetch("/api/admin/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, to, subject, body: body.trim(), replyTo: "contact@fergusonlawja.com" }),
+      });
+      const json = (await res.json()) as { ok?: boolean; error?: string };
+      if (json.ok) {
+        setResult({ ok: true, msg: `Sent to ${to}` });
+        setTimeout(onClose, 1600);
+      } else {
+        setResult({ ok: false, msg: json.error ?? "Send failed." });
+      }
+    } catch (e) {
+      setResult({ ok: false, msg: e instanceof Error ? e.message : "Send failed." });
+    }
+    setSending(false);
+  }
+
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(16,33,28,.5)", display: "grid", placeItems: "center", padding: 16, zIndex: 60 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: "#fff", borderRadius: 18, padding: 28, width: "100%", maxWidth: 540, maxHeight: "92vh", overflowY: "auto" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <span style={{ fontFamily: "var(--serif, Georgia, serif)", fontWeight: 700, fontSize: "1.1rem", color: GREEN }}>Reply to {toName}</span>
+          <button type="button" onClick={onClose} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "#888" }}>×</button>
+        </div>
+        <div style={{ fontSize: ".78rem", color: MUTED, marginBottom: 14 }}>
+          To: <strong style={{ color: INK }}>{toName}</strong> &lt;{to}&gt;&nbsp;&nbsp;·&nbsp;&nbsp;From: contact@fergusonlawja.com
+        </div>
+
+        {/* Templates */}
+        <div style={{ display: "flex", gap: 6, marginBottom: 14, flexWrap: "wrap" }}>
+          <span style={{ fontSize: ".72rem", fontWeight: 700, color: MUTED, alignSelf: "center", textTransform: "uppercase", letterSpacing: ".05em" }}>Template:</span>
+          {[["acknowledge", "Acknowledgement"], ["followup", "Follow-up"], ["booking", "Booking confirm"]].map(([k, lbl]) => (
+            <button key={k} type="button" onClick={() => applyTemplate(k)}
+              style={{ fontSize: ".75rem", padding: "4px 12px", borderRadius: 999, border: `1px solid ${GOLD}`, background: "#fff", color: "#8a6a22", cursor: "pointer", fontWeight: 600 }}>
+              {lbl}
+            </button>
+          ))}
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div style={S.field}>
+            <label style={S.fieldLabel}>Subject</label>
+            <input style={S.fieldInput} value={subject} onChange={(e) => setSubject(e.target.value)} />
+          </div>
+          <div style={S.field}>
+            <label style={S.fieldLabel}>Message</label>
+            <textarea
+              style={{ ...S.fieldInput, resize: "vertical", minHeight: 180, fontFamily: "inherit" }}
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              placeholder={`Dear ${toName.split(" ")[0]},\n\nThank you for reaching out to Ferguson Law…`}
+              autoFocus
+            />
+          </div>
+        </div>
+
+        {/* Original message context */}
+        {context && (
+          <div style={{ marginTop: 12, padding: "10px 14px", background: "#f8f6f1", borderRadius: 10, borderLeft: `3px solid ${GOLD}` }}>
+            <div style={{ fontSize: ".7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em", color: MUTED, marginBottom: 4 }}>Original message</div>
+            <div style={{ fontSize: ".82rem", color: INK, whiteSpace: "pre-wrap", lineClamp: 4, overflow: "hidden", maxHeight: 80 }}>{context}</div>
+          </div>
+        )}
+
+        {result && (
+          <p style={{ fontSize: ".82rem", margin: "12px 0 0", color: result.ok ? "#2e7d4f" : "#a23b3b" }}>{result.msg}</p>
+        )}
+        <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
+          <button type="button" onClick={() => void send()} disabled={sending || !body.trim()}
+            style={{ ...S.authBtn, width: "auto", padding: "11px 26px", ...(sending || !body.trim() ? S.btnOff : null) }}>
+            {sending ? "Sending…" : "Send email"}
+          </button>
+          <button type="button" onClick={onClose}
+            style={{ padding: "11px 18px", border: "1px solid rgba(18,16,12,.2)", borderRadius: 999, background: "#fff", fontSize: ".88rem", cursor: "pointer" }}>
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Leads
 // ---------------------------------------------------------------------------
-function LeadsTable({ leads, loading, onStatus }: { leads: Lead[]; loading: boolean; onStatus: (id: string, s: string) => void }) {
+function LeadsTable({ leads, loading, token, onStatus }: { leads: Lead[]; loading: boolean; token: string; onStatus: (id: string, s: string) => void }) {
+  const [composing, setComposing] = useState<Lead | null>(null);
   if (loading && leads.length === 0) return <Empty>Loading leads…</Empty>;
   if (leads.length === 0) return <Empty>No leads yet.</Empty>;
   return (
-    <div style={S.tableWrap}>
-      <table style={S.table}>
-        <thead><tr><Th>Date</Th><Th>Name</Th><Th>Contact</Th><Th>Service</Th><Th>Source</Th><Th>Message</Th><Th>Status</Th><Th>Action</Th></tr></thead>
-        <tbody>
-          {leads.map((l) => {
-            const wa = l.phone ? waLink(`Hello ${l.name ?? ""}, this is Ferguson Law following up on your enquiry.`) : null;
-            return (
-              <tr key={l.id} style={S.tr}>
-                <Td>{fmtDate(l.created_at)}</Td>
-                <Td><span style={S.strong}>{l.name || "—"}</span></Td>
-                <Td><div style={S.contactCol}>{l.email && <span>{l.email}</span>}{l.phone && <span style={S.muted}>{l.phone}</span>}{!l.email && !l.phone && <span style={S.muted}>—</span>}</div></Td>
-                <Td>{l.service || "—"}</Td>
-                <Td><SourceBadge source={l.source} /></Td>
-                <Td><div style={S.msgCell} title={l.message ?? ""}>{l.message || "—"}</div></Td>
-                <Td><StatusSelect value={l.status} options={LEAD_STATUSES} onChange={(v) => onStatus(l.id, v)} /></Td>
-                <Td>{wa ? <a href={wa} target="_blank" rel="noopener noreferrer" style={S.waBtn}>WhatsApp</a> : <span style={S.muted}>—</span>}</Td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
+    <>
+      <div style={S.tableWrap}>
+        <table style={S.table}>
+          <thead><tr><Th>Date</Th><Th>Name</Th><Th>Contact</Th><Th>Service</Th><Th>Source</Th><Th>Message</Th><Th>Status</Th><Th>Actions</Th></tr></thead>
+          <tbody>
+            {leads.map((l) => {
+              const wa = l.phone ? waLink(`Hello ${l.name ?? ""}, this is Ferguson Law following up on your enquiry.`) : null;
+              return (
+                <tr key={l.id} style={S.tr}>
+                  <Td>{fmtDate(l.created_at)}</Td>
+                  <Td><span style={S.strong}>{l.name || "—"}</span></Td>
+                  <Td><div style={S.contactCol}>{l.email && <span>{l.email}</span>}{l.phone && <span style={S.muted}>{l.phone}</span>}{!l.email && !l.phone && <span style={S.muted}>—</span>}</div></Td>
+                  <Td>{l.service || "—"}</Td>
+                  <Td><SourceBadge source={l.source} /></Td>
+                  <Td><div style={S.msgCell} title={l.message ?? ""}>{l.message || "—"}</div></Td>
+                  <Td><StatusSelect value={l.status} options={LEAD_STATUSES} onChange={(v) => onStatus(l.id, v)} /></Td>
+                  <Td>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                      {l.email && (
+                        <button type="button" onClick={() => setComposing(l)}
+                          style={{ ...S.waBtn, background: "#c9a86a", color: "#10211c" }}>
+                          Email
+                        </button>
+                      )}
+                      {wa && <a href={wa} target="_blank" rel="noopener noreferrer" style={S.waBtn}>WhatsApp</a>}
+                      {l.status === "new" && (
+                        <button type="button" onClick={() => onStatus(l.id, "contacted")}
+                          style={{ ...S.waBtn, background: "rgba(47,122,82,.12)", color: "#2f7a52", border: "1px solid rgba(47,122,82,.25)" }}>
+                          ✓ Contacted
+                        </button>
+                      )}
+                      {!l.email && !wa && l.status !== "new" && <span style={S.muted}>—</span>}
+                    </div>
+                  </Td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      {composing && composing.email && (
+        <EmailComposeModal
+          to={composing.email}
+          toName={composing.name ?? "Client"}
+          defaultSubject={composing.service ? `Re: Your ${composing.service} enquiry — Ferguson Law` : `Re: Your enquiry — Ferguson Law`}
+          context={composing.message ?? undefined}
+          service={composing.service ?? undefined}
+          token={token}
+          onClose={() => setComposing(null)}
+        />
+      )}
+    </>
   );
 }
 
 // ---------------------------------------------------------------------------
 // Bookings
 // ---------------------------------------------------------------------------
-function BookingsTable({ appts, loading, onStatus }: { appts: Appointment[]; loading: boolean; onStatus: (id: string, s: string) => void }) {
+function BookingsTable({ appts, loading, token, onStatus }: { appts: Appointment[]; loading: boolean; token: string; onStatus: (id: string, s: string) => void }) {
+  const [composing, setComposing] = useState<Appointment | null>(null);
   if (loading && appts.length === 0) return <Empty>Loading bookings…</Empty>;
   if (appts.length === 0) return <Empty>No bookings yet.</Empty>;
   return (
-    <div style={S.tableWrap}>
-      <table style={S.table}>
-        <thead><tr><Th>When (Jamaica)</Th><Th>Service</Th><Th>Client</Th><Th>Contact</Th><Th>Ref</Th><Th>Status</Th></tr></thead>
-        <tbody>
-          {appts.map((a) => (
-            <tr key={a.id} style={S.tr}>
-              <Td><span style={S.strong}>{fmtWhen(a.starts_at)}</span></Td>
-              <Td>{a.service || "—"}</Td>
-              <Td>{a.name || "—"}</Td>
-              <Td><div style={S.contactCol}>{a.email && <span>{a.email}</span>}{a.phone && <span style={S.muted}>{a.phone}</span>}{!a.email && !a.phone && <span style={S.muted}>—</span>}</div></Td>
-              <Td><span style={S.mono}>{a.ref || "—"}</span></Td>
-              <Td><StatusSelect value={a.status} options={APPT_STATUSES} onChange={(v) => onStatus(a.id, v)} /></Td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <>
+      <div style={S.tableWrap}>
+        <table style={S.table}>
+          <thead><tr><Th>When (Jamaica)</Th><Th>Service</Th><Th>Client</Th><Th>Contact</Th><Th>Ref</Th><Th>Status</Th><Th>Actions</Th></tr></thead>
+          <tbody>
+            {appts.map((a) => (
+              <tr key={a.id} style={S.tr}>
+                <Td><span style={S.strong}>{fmtWhen(a.starts_at)}</span></Td>
+                <Td>{a.service || "—"}</Td>
+                <Td>{a.name || "—"}</Td>
+                <Td><div style={S.contactCol}>{a.email && <span>{a.email}</span>}{a.phone && <span style={S.muted}>{a.phone}</span>}{!a.email && !a.phone && <span style={S.muted}>—</span>}</div></Td>
+                <Td><span style={S.mono}>{a.ref || "—"}</span></Td>
+                <Td><StatusSelect value={a.status} options={APPT_STATUSES} onChange={(v) => onStatus(a.id, v)} /></Td>
+                <Td>
+                  {a.email ? (
+                    <button type="button" onClick={() => setComposing(a)}
+                      style={{ ...S.waBtn, background: "#c9a86a", color: "#10211c" }}>
+                      Email
+                    </button>
+                  ) : <span style={S.muted}>—</span>}
+                </Td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {composing && composing.email && (
+        <EmailComposeModal
+          to={composing.email}
+          toName={composing.name ?? "Client"}
+          defaultSubject={`Your ${composing.service ?? "consultation"} booking — Ferguson Law`}
+          service={composing.service ?? undefined}
+          token={token}
+          onClose={() => setComposing(null)}
+        />
+      )}
+    </>
   );
 }
 
@@ -771,31 +1096,274 @@ const PRIORITY_COLORS: Record<string, React.CSSProperties> = {
   urgent: { background: "rgba(190,60,60,.14)", color: "#a23b3b" },
 };
 
-function MattersTab({ matters, loading, onStage, onPayment }: {
-  matters: Matter[]; loading: boolean;
+function MattersTab({ matters, loading, token, onStage, onPayment }: {
+  matters: Matter[]; loading: boolean; token: string;
   onStage: (id: string, s: string) => void; onPayment: (id: string, s: string) => void;
 }) {
+  const [view, setView] = useState<"table" | "kanban">("kanban");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
   if (loading && matters.length === 0) return <Empty>Loading matters…</Empty>;
   if (matters.length === 0) return <Empty>No matters yet. They are created automatically when consultations are booked via the chatbot.</Empty>;
+
+  function toggleExpand(id: string) {
+    setExpandedId(prev => prev === id ? null : id);
+  }
+
   return (
-    <div style={S.tableWrap}>
-      <table style={S.table}>
-        <thead><tr><Th>Ref</Th><Th>Client</Th><Th>Type</Th><Th>Stage</Th><Th>Priority</Th><Th>Payment</Th><Th>Description</Th><Th>Date</Th></tr></thead>
-        <tbody>
-          {matters.map((m) => (
-            <tr key={m.id} style={S.tr}>
-              <Td><span style={S.mono}>{m.ref}</span></Td>
-              <Td><span style={S.strong}>{m.client_name || "—"}</span></Td>
-              <Td><TypeBadge type={m.matter_type} colors={MATTER_TYPE_COLORS} /></Td>
-              <Td><StatusSelect value={m.stage} options={MATTER_STAGES} onChange={(v) => onStage(m.id, v)} /></Td>
-              <Td><TypeBadge type={m.priority} colors={PRIORITY_COLORS} /></Td>
-              <Td><StatusSelect value={m.payment_status} options={PAYMENT_STATUSES} onChange={(v) => onPayment(m.id, v)} /></Td>
-              <Td><div style={S.msgCell} title={m.description ?? ""}>{m.description || "—"}</div></Td>
-              <Td>{fmtDate(m.created_at)}</Td>
-            </tr>
+    <>
+      <div style={{ display: "flex", gap: 8, padding: "14px 20px 0", borderBottom: "1px solid rgba(18,16,12,.07)" }}>
+        {(["kanban","table"] as const).map(v => (
+          <button key={v} type="button" onClick={() => setView(v)}
+            style={{ padding: "6px 14px", borderRadius: 6, border: "1px solid rgba(18,16,12,.15)", background: view === v ? GREEN : "transparent", color: view === v ? CREAM : MUTED, fontSize: ".75rem", fontWeight: 600, cursor: "pointer", textTransform: "capitalize" }}>
+            {v === "kanban" ? "⬛ Kanban" : "≡ Table"}
+          </button>
+        ))}
+      </div>
+      {view === "kanban" ? (
+        <div>
+          <KanbanView matters={matters} onStage={onStage} onExpand={toggleExpand} />
+          {expandedId && (
+            <MilestonePanel key={expandedId} matterId={expandedId} token={token} onClose={() => setExpandedId(null)}
+              matter={matters.find(m => m.id === expandedId) ?? null} />
+          )}
+        </div>
+      ) : (
+        <div style={S.tableWrap}>
+          <table style={S.table}>
+            <thead><tr><Th>​</Th><Th>Ref</Th><Th>Client</Th><Th>Type</Th><Th>Stage</Th><Th>Priority</Th><Th>Payment</Th><Th>Description</Th><Th>Date</Th></tr></thead>
+            <tbody>
+              {matters.map((m) => (
+                <>
+                  <tr key={m.id} style={{ ...S.tr, cursor: "pointer" }} onClick={() => toggleExpand(m.id)}>
+                    <Td><span style={{ color: GOLD, fontWeight: 700, fontSize: ".8rem" }}>{expandedId === m.id ? "▼" : "▶"}</span></Td>
+                    <Td><span style={S.mono}>{m.ref}</span></Td>
+                    <Td><span style={S.strong}>{m.client_name || "—"}</span></Td>
+                    <Td><TypeBadge type={m.matter_type} colors={MATTER_TYPE_COLORS} /></Td>
+                    <Td onClick={e => e.stopPropagation()}><StatusSelect value={m.stage} options={MATTER_STAGES} onChange={(v) => onStage(m.id, v)} /></Td>
+                    <Td><TypeBadge type={m.priority} colors={PRIORITY_COLORS} /></Td>
+                    <Td onClick={e => e.stopPropagation()}><StatusSelect value={m.payment_status} options={PAYMENT_STATUSES} onChange={(v) => onPayment(m.id, v)} /></Td>
+                    <Td><div style={S.msgCell} title={m.description ?? ""}>{m.description || "—"}</div></Td>
+                    <Td>{fmtDate(m.created_at)}</Td>
+                  </tr>
+                  {expandedId === m.id && (
+                    <tr key={`${m.id}-milestones`}>
+                      <td colSpan={9} style={{ padding: 0, background: "rgba(16,42,30,.03)" }}>
+                        <MilestonePanel matterId={m.id} token={token} matter={m} onClose={() => setExpandedId(null)} inline />
+                      </td>
+                    </tr>
+                  )}
+                </>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Milestone panel — shown inline (table) or as modal overlay (kanban)
+// ---------------------------------------------------------------------------
+const MILESTONE_STATUSES = ["pending", "in_progress", "completed"] as const;
+const MILESTONE_STATUS_LABELS: Record<string, string> = {
+  pending: "⬜ Pending", in_progress: "🔵 In Progress", completed: "✅ Done",
+};
+const MILESTONE_STATUS_COLORS: Record<string, React.CSSProperties> = {
+  pending: { background: "rgba(18,16,12,.08)", color: MUTED },
+  in_progress: { background: "rgba(47,122,82,.14)", color: GREEN },
+  completed: { background: "rgba(200,166,92,.18)", color: "#8a6a22" },
+};
+
+function MilestonePanel({ matterId, token, matter, onClose, inline }: {
+  matterId: string; token: string; matter: Matter | null;
+  onClose: () => void; inline?: boolean;
+}) {
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState({ title: "", description: "", due_date: "", notify_client: false });
+  const [saving, setSaving] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<Partial<Milestone>>({});
+
+  const supabase = createClient();
+
+  async function load() {
+    setLoading(true);
+    const { data } = await supabase.rpc("fl_admin_matter_milestones", { p_token: token, p_matter_id: matterId });
+    setMilestones((data as Milestone[]) ?? []);
+    setLoading(false);
+  }
+
+  useEffect(() => { void load(); }, [matterId]);
+
+  async function addMilestone() {
+    if (!form.title.trim()) return;
+    setSaving(true);
+    await supabase.rpc("fl_admin_upsert_milestone", {
+      p_token: token,
+      p_matter_id: matterId,
+      p_title: form.title.trim(),
+      p_description: form.description || null,
+      p_status: "pending",
+      p_due_date: form.due_date || null,
+      p_notify_client: form.notify_client,
+    });
+    setForm({ title: "", description: "", due_date: "", notify_client: false });
+    await load();
+    setSaving(false);
+  }
+
+  async function updateMilestone(id: string, patch: Partial<Milestone>) {
+    const existing = milestones.find(m => m.id === id);
+    if (!existing) return;
+    const merged = { ...existing, ...patch };
+    await supabase.rpc("fl_admin_upsert_milestone", {
+      p_token: token,
+      p_id: id,
+      p_matter_id: matterId,
+      p_title: merged.title,
+      p_description: merged.description ?? null,
+      p_status: merged.status,
+      p_due_date: merged.due_date ?? null,
+      p_notify_client: merged.notify_client,
+    });
+    await load();
+  }
+
+  async function deleteMilestone(id: string) {
+    if (!confirm("Delete this milestone?")) return;
+    await supabase.rpc("fl_admin_delete_milestone", { p_token: token, p_id: id });
+    await load();
+  }
+
+  const content = (
+    <div style={{ padding: inline ? "16px 20px" : "24px" }}>
+      {!inline && (
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <div>
+            <div style={{ fontFamily: "var(--serif, Georgia, serif)", fontWeight: 700, color: GREEN, fontSize: "1.1rem" }}>
+              Milestones — {matter?.ref}
+            </div>
+            {matter?.client_name && <div style={{ color: MUTED, fontSize: ".82rem", marginTop: 2 }}>{matter.client_name}</div>}
+          </div>
+          <button type="button" onClick={onClose} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "#888" }}>×</button>
+        </div>
+      )}
+
+      {inline && (
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <span style={{ fontSize: ".78rem", fontWeight: 700, color: GREEN, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+            Milestones
+          </span>
+          <button type="button" onClick={onClose} style={{ background: "none", border: "none", fontSize: 16, cursor: "pointer", color: MUTED }}>✕ Close</button>
+        </div>
+      )}
+
+      {loading ? (
+        <div style={{ color: MUTED, fontSize: ".85rem", padding: "8px 0" }}>Loading…</div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
+          {milestones.length === 0 && (
+            <div style={{ color: MUTED, fontSize: ".82rem" }}>No milestones yet.</div>
+          )}
+          {milestones.map(ms => (
+            <div key={ms.id} style={{ border: "1px solid rgba(18,16,12,.1)", borderRadius: 8, padding: "10px 12px", background: "#fff" }}>
+              {editingId === ms.id ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <input value={editForm.title ?? ""} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))}
+                    style={{ ...S.input, fontWeight: 600 }} placeholder="Title" />
+                  <textarea value={editForm.description ?? ""} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
+                    style={{ ...S.input, resize: "vertical", minHeight: 48 }} placeholder="Description (optional)" rows={2} />
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                    <select value={editForm.status ?? "pending"} onChange={e => setEditForm(f => ({ ...f, status: e.target.value as Milestone["status"] }))}
+                      style={S.select}>
+                      {MILESTONE_STATUSES.map(s => <option key={s} value={s}>{MILESTONE_STATUS_LABELS[s]}</option>)}
+                    </select>
+                    <input type="date" value={editForm.due_date ?? ""} onChange={e => setEditForm(f => ({ ...f, due_date: e.target.value }))}
+                      style={S.input} />
+                    <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: ".78rem", color: MUTED, cursor: "pointer" }}>
+                      <input type="checkbox" checked={editForm.notify_client ?? false} onChange={e => setEditForm(f => ({ ...f, notify_client: e.target.checked }))} />
+                      Notify client on complete
+                    </label>
+                  </div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button type="button" onClick={async () => { await updateMilestone(ms.id, editForm); setEditingId(null); }}
+                      style={{ ...S.btn, background: GREEN, color: CREAM, fontSize: ".78rem" }}>Save</button>
+                    <button type="button" onClick={() => setEditingId(null)}
+                      style={{ ...S.ghostBtn, fontSize: ".78rem" }}>Cancel</button>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                      <span style={{ fontWeight: 600, fontSize: ".88rem", color: INK }}>{ms.title}</span>
+                      <span style={{ ...MILESTONE_STATUS_COLORS[ms.status], padding: "1px 8px", borderRadius: 20, fontSize: ".72rem", fontWeight: 600 }}>
+                        {MILESTONE_STATUS_LABELS[ms.status]}
+                      </span>
+                      {ms.due_date && (
+                        <span style={{ fontSize: ".72rem", color: MUTED }}>Due {ms.due_date}</span>
+                      )}
+                      {ms.notify_client && (
+                        <span style={{ fontSize: ".7rem", color: GOLD, fontWeight: 600 }}>📧 Notifies client</span>
+                      )}
+                    </div>
+                    {ms.description && <div style={{ fontSize: ".8rem", color: MUTED, marginTop: 3 }}>{ms.description}</div>}
+                    {ms.completed_at && <div style={{ fontSize: ".72rem", color: MUTED, marginTop: 2 }}>Completed {fmtDate(ms.completed_at)}</div>}
+                  </div>
+                  <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                    {ms.status !== "completed" && (
+                      <button type="button" onClick={() => updateMilestone(ms.id, { status: "completed" })}
+                        style={{ ...S.ghostBtn, fontSize: ".72rem", color: GREEN, border: `1px solid rgba(16,42,30,.25)` }} title="Mark done">✓</button>
+                    )}
+                    <button type="button" onClick={() => { setEditingId(ms.id); setEditForm({ ...ms }); }}
+                      style={{ ...S.ghostBtn, fontSize: ".72rem" }} title="Edit">✎</button>
+                    <button type="button" onClick={() => deleteMilestone(ms.id)}
+                      style={{ ...S.ghostBtn, fontSize: ".72rem", color: "#a23b3b" }} title="Delete">✕</button>
+                  </div>
+                </div>
+              )}
+            </div>
           ))}
-        </tbody>
-      </table>
+        </div>
+      )}
+
+      {/* Add milestone form */}
+      <div style={{ borderTop: "1px solid rgba(18,16,12,.08)", paddingTop: 14 }}>
+        <div style={{ fontSize: ".76rem", fontWeight: 700, color: MUTED, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Add milestone</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+            placeholder="Milestone title" style={S.input}
+            onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void addMilestone(); } }}
+          />
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+            <input type="date" value={form.due_date} onChange={e => setForm(f => ({ ...f, due_date: e.target.value }))}
+              style={{ ...S.input, width: "auto" }} />
+            <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: ".78rem", color: MUTED, cursor: "pointer" }}>
+              <input type="checkbox" checked={form.notify_client} onChange={e => setForm(f => ({ ...f, notify_client: e.target.checked }))} />
+              Notify client on complete
+            </label>
+            <button type="button" onClick={() => void addMilestone()} disabled={saving || !form.title.trim()}
+              style={{ ...S.btn, background: GREEN, color: CREAM, fontSize: ".78rem", marginLeft: "auto", opacity: saving || !form.title.trim() ? 0.5 : 1 }}>
+              {saving ? "Adding…" : "+ Add"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (inline) return content;
+
+  return (
+    <div onClick={onClose}
+      style={{ position: "fixed", inset: 0, background: "rgba(16,33,28,.45)", display: "grid", placeItems: "center", padding: 16, zIndex: 50 }}>
+      <div onClick={e => e.stopPropagation()}
+        style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 540, maxHeight: "80vh", overflowY: "auto" }}>
+        {content}
+      </div>
     </div>
   );
 }
@@ -912,9 +1480,10 @@ function CalendarTab({ appts }: { appts: Appointment[] }) {
 // ---------------------------------------------------------------------------
 // Availability
 // ---------------------------------------------------------------------------
-function AvailabilityTab({ availability, onSave }: {
+function AvailabilityTab({ availability, onSave, token }: {
   availability: Availability[];
   onSave: (row: Availability) => Promise<string | null>;
+  token: string;
 }) {
   // Local editable state per row
   const [rows, setRows] = useState<Availability[]>([]);
@@ -1001,6 +1570,77 @@ function AvailabilityTab({ availability, onSave }: {
           </tbody>
         </table>
       </div>
+      <BlockedDatesPanel token={token} />
+    </div>
+  );
+}
+
+function BlockedDatesPanel({ token }: { token: string }) {
+  const supabase = createClient();
+  const [blocked, setBlocked] = useState<{ id: string; blocked_date: string; reason: string | null }[]>([]);
+  const [newDate, setNewDate] = useState("");
+  const [newReason, setNewReason] = useState("");
+  const [adding, setAdding] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    const { data } = await supabase.rpc("fl_admin_list_blocked_dates", { p_token: token });
+    setBlocked((data as typeof blocked) ?? []);
+  }, [token]);
+
+  useEffect(() => { void load(); }, [load]);
+
+  async function addBlock() {
+    if (!newDate) return;
+    setAdding(true); setErr(null);
+    const { error } = await supabase.rpc("fl_admin_block_date", { p_token: token, p_date: newDate, p_reason: newReason || null });
+    if (error) setErr(error.message);
+    else { setNewDate(""); setNewReason(""); void load(); }
+    setAdding(false);
+  }
+
+  async function removeBlock(id: string) {
+    await supabase.rpc("fl_admin_unblock_date", { p_token: token, p_id: id });
+    void load();
+  }
+
+  return (
+    <div style={{ padding: "24px 20px 8px" }}>
+      <div style={{ fontWeight: 700, fontSize: ".9rem", color: GREEN, marginBottom: 14 }}>Block Unavailable Dates</div>
+      <p style={{ color: MUTED, fontSize: ".82rem", marginBottom: 14 }}>
+        Dates added here will show all slots as unavailable in the booking calendar.
+      </p>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
+        <input type="date" value={newDate} onChange={e => setNewDate(e.target.value)}
+          style={{ ...S.fieldInput, width: 160 }} />
+        <input type="text" value={newReason} onChange={e => setNewReason(e.target.value)}
+          placeholder="Reason (optional)" style={{ ...S.fieldInput, flex: 1, minWidth: 160 }} />
+        <button onClick={() => void addBlock()} disabled={!newDate || adding}
+          style={{ ...S.waBtn, ...((!newDate || adding) ? S.btnOff : {}) }}>
+          {adding ? "Adding…" : "Block date"}
+        </button>
+      </div>
+      {err && <p style={{ color: "#a23b3b", fontSize: ".82rem", marginBottom: 10 }}>{err}</p>}
+      {blocked.length === 0
+        ? <p style={{ color: MUTED, fontSize: ".82rem" }}>No dates blocked.</p>
+        : <div style={S.tableWrap}>
+            <table style={S.table}>
+              <thead><tr><Th>Date</Th><Th>Reason</Th><Th>​</Th></tr></thead>
+              <tbody>
+                {blocked.map(b => (
+                  <tr key={b.id} style={S.tr}>
+                    <Td><span style={S.strong}>{b.blocked_date}</span></Td>
+                    <Td>{b.reason ?? <span style={{ color: MUTED }}>—</span>}</Td>
+                    <Td>
+                      <button onClick={() => void removeBlock(b.id)}
+                        style={{ background: "none", border: "none", cursor: "pointer", color: "#a23b3b", fontWeight: 700, fontSize: 16 }}>×</button>
+                    </Td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+      }
     </div>
   );
 }
@@ -1008,26 +1648,513 @@ function AvailabilityTab({ availability, onSave }: {
 // ---------------------------------------------------------------------------
 // Chats
 // ---------------------------------------------------------------------------
+const WA_BOT_URL = "https://whatsapp-jarvis-bot-production.up.railway.app/send";
+
 function ChatsTable({ convos, loading }: { convos: Conversation[]; loading: boolean }) {
+  const [selected, setSelected] = useState<Conversation | null>(null);
+  const [waText, setWaText] = useState("");
+  const [waSending, setWaSending] = useState(false);
+  const [waResult, setWaResult] = useState<{ ok: boolean; msg: string } | null>(null);
+
+  async function sendWhatsApp() {
+    if (!selected?.visitor_phone || !waText.trim() || waSending) return;
+    setWaSending(true); setWaResult(null);
+    try {
+      const phone = selected.visitor_phone.replace(/\D/g, "");
+      const jid = phone.includes("@") ? phone : `${phone}@s.whatsapp.net`;
+      const secret = process.env.NEXT_PUBLIC_WHATSAPP_BOT_SECRET ?? "";
+      const res = await fetch(WA_BOT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-send-secret": secret },
+        body: JSON.stringify({ jid, text: waText.trim() }),
+      });
+      if (res.ok) { setWaResult({ ok: true, msg: "Sent via WhatsApp" }); setWaText(""); }
+      else { setWaResult({ ok: false, msg: `Failed (${res.status})` }); }
+    } catch (e) {
+      setWaResult({ ok: false, msg: e instanceof Error ? e.message : "Send failed" });
+    }
+    setWaSending(false);
+  }
+
   if (loading && convos.length === 0) return <Empty>Loading chats…</Empty>;
   if (convos.length === 0) return <Empty>No conversations yet.</Empty>;
   return (
+    <div style={{ display: "flex", height: "calc(100vh - 300px)", minHeight: 400, overflow: "hidden" }}>
+      {/* List */}
+      <div style={{ width: 300, flexShrink: 0, borderRight: "1px solid rgba(18,16,12,.1)", overflowY: "auto" }}>
+        {convos.map((c) => (
+          <button key={c.id} type="button" onClick={() => { setSelected(c); setWaResult(null); setWaText(""); }}
+            style={{ display: "block", width: "100%", textAlign: "left", border: "none", cursor: "pointer",
+              padding: "12px 14px", background: selected?.id === c.id ? "rgba(16,42,30,.06)" : "#fff",
+              borderBottom: "1px solid rgba(18,16,12,.07)",
+              borderLeft: selected?.id === c.id ? `3px solid ${GOLD}` : "3px solid transparent" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontWeight: 600, fontSize: ".85rem", color: GREEN }}>{c.visitor_name || "Website visitor"}</span>
+              <StatusBadge status={c.status} />
+            </div>
+            <div style={{ fontSize: ".78rem", color: MUTED, marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.last_message || "No messages"}</div>
+            <div style={{ fontSize: ".72rem", color: MUTED, marginTop: 2 }}>{fmtDate(c.last_message_at)}</div>
+          </button>
+        ))}
+      </div>
+      {/* Detail */}
+      <div style={{ flex: 1, overflowY: "auto", padding: 20 }}>
+        {!selected ? (
+          <div style={{ color: MUTED, textAlign: "center", paddingTop: 60 }}>Select a conversation</div>
+        ) : (
+          <>
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontFamily: "var(--serif, Georgia, serif)", fontWeight: 700, fontSize: "1.1rem", color: GREEN }}>{selected.visitor_name || "Website visitor"}</div>
+              <div style={{ display: "flex", gap: 12, marginTop: 4, flexWrap: "wrap" }}>
+                {selected.visitor_email && <span style={{ fontSize: ".82rem", color: MUTED }}>{selected.visitor_email}</span>}
+                {selected.visitor_phone && <span style={{ fontSize: ".82rem", color: MUTED }}>{selected.visitor_phone}</span>}
+              </div>
+              <div style={{ marginTop: 8 }}><StatusBadge status={selected.status} /></div>
+            </div>
+            <div style={{ padding: "14px 16px", background: "#faf8f2", borderRadius: 10, marginBottom: 16, borderLeft: `3px solid ${GOLD}` }}>
+              <div style={{ fontSize: ".72rem", fontWeight: 700, textTransform: "uppercase", color: MUTED, marginBottom: 4 }}>Last message</div>
+              <div style={{ fontSize: ".9rem", color: INK }}>{selected.last_message || "—"}</div>
+              <div style={{ fontSize: ".74rem", color: MUTED, marginTop: 4 }}>{fmtDate(selected.last_message_at)}</div>
+            </div>
+            <a href="/agent" style={{ ...S.waBtn, display: "inline-block", marginBottom: 20 }}>Open in Agent Console</a>
+            {selected.visitor_phone && (
+              <div style={{ borderTop: "1px solid rgba(18,16,12,.1)", paddingTop: 16 }}>
+                <div style={{ fontSize: ".78rem", fontWeight: 700, textTransform: "uppercase", color: MUTED, marginBottom: 8 }}>Reply via WhatsApp</div>
+                <textarea value={waText} onChange={(e) => setWaText(e.target.value)} rows={3}
+                  placeholder="Type a WhatsApp message…"
+                  style={{ width: "100%", resize: "vertical", borderRadius: 10, border: "1px solid rgba(18,16,12,.2)", padding: "10px 12px", fontSize: ".9rem", fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 8 }}>
+                  <button type="button" onClick={() => void sendWhatsApp()} disabled={waSending || !waText.trim()}
+                    style={{ ...S.authBtn, width: "auto", padding: "10px 20px", ...(waSending || !waText.trim() ? S.btnOff : null) }}>
+                    {waSending ? "Sending…" : "Send via WhatsApp"}
+                  </button>
+                  {waResult && <span style={{ fontSize: ".82rem", color: waResult.ok ? "#2e7d4f" : "#a23b3b" }}>{waResult.msg}</span>}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Overview
+// ---------------------------------------------------------------------------
+function OverviewPanel({ leads, appts, convos, matters, homePros, emails, inquiries, staleLeads, isJordan, onTab }: {
+  leads: Lead[]; appts: Appointment[]; convos: Conversation[]; matters: Matter[];
+  homePros: HomePro[]; emails: InboundEmail[]; inquiries: HomeInquiry[];
+  staleLeads: Lead[]; isJordan: boolean;
+  onTab: (t: Tab) => void;
+}) {
+  const now = Date.now();
+  const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
+  const sevenDaysAhead = now + 7 * 24 * 60 * 60 * 1000;
+
+  const newLeads7d = leads.filter((l) => new Date(l.created_at).getTime() > sevenDaysAgo).length;
+  const upcomingBookings = appts.filter((a) => {
+    const t = new Date(a.starts_at).getTime();
+    return t >= now && t <= sevenDaysAhead && a.status !== "cancelled";
+  }).length;
+  const activeMatters = matters.filter((m) => !["closed"].includes(m.stage)).length;
+  const openChats = convos.filter((c) => c.status === "waiting_agent" || c.status === "agent").length;
+  const pendingProApprovals = homePros.length;
+  const unreadEmails = emails.filter((e) => !e.read).length;
+
+  const cards: { label: string; value: number; urgent?: boolean; tab?: Tab; note?: string }[] = [
+    { label: "New leads (7d)", value: newLeads7d, urgent: newLeads7d > 0, tab: "leads" },
+    { label: "Upcoming bookings (7d)", value: upcomingBookings, tab: "bookings" },
+    { label: "Active matters", value: activeMatters, tab: "matters" },
+    { label: "Open chats", value: openChats, urgent: openChats > 0, tab: "chats" },
+    { label: "H.O.M.E. pro approvals", value: pendingProApprovals, urgent: pendingProApprovals > 0, tab: "home_pros" },
+    { label: "Unread emails", value: unreadEmails, urgent: unreadEmails > 0, tab: "email" },
+  ];
+
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ fontFamily: "var(--serif, Georgia, serif)", fontSize: "1.15rem", fontWeight: 600, color: GREEN, marginBottom: 20, letterSpacing: "-.01em" }}>
+        {new Date().getHours() < 12 ? "Good morning" : new Date().getHours() < 17 ? "Good afternoon" : "Good evening"}.
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 12, marginBottom: 32 }}>
+        {cards.map((c) => (
+          <button key={c.label} type="button" onClick={() => c.tab && onTab(c.tab)}
+            style={{ textAlign: "left", background: "#fff", border: "1px solid rgba(18,16,12,.07)", borderLeft: `3px solid ${c.urgent && c.value > 0 ? GOLD : "rgba(18,16,12,.1)"}`, borderRadius: 10, padding: "16px 18px", cursor: c.tab ? "pointer" : "default" }}>
+            <div style={{ fontFamily: "var(--serif, Georgia, serif)", fontSize: "2rem", fontWeight: 700, color: c.urgent && c.value > 0 ? GREEN : MUTED, lineHeight: 1 }}>{c.value}</div>
+            <div style={{ fontSize: ".72rem", color: MUTED, marginTop: 5, textTransform: "uppercase", letterSpacing: ".06em" }}>{c.label}</div>
+          </button>
+        ))}
+      </div>
+
+      {/* Follow-up queue */}
+      {staleLeads.length > 0 && (
+        <div style={{ background: "rgba(200,166,92,.1)", border: "1px solid rgba(200,166,92,.35)", borderRadius: 10, padding: "14px 18px", marginBottom: 24 }}>
+          <div style={{ fontWeight: 700, fontSize: ".72rem", textTransform: "uppercase", letterSpacing: ".07em", color: "#8a6a22", marginBottom: 10 }}>
+            ⚠ Follow-up needed — {staleLeads.length} lead{staleLeads.length > 1 ? "s" : ""} not contacted in 48h
+          </div>
+          {staleLeads.slice(0, 4).map((l) => (
+            <div key={l.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderTop: "1px solid rgba(200,166,92,.2)" }}>
+              <div>
+                <span style={{ fontWeight: 600, fontSize: ".88rem", color: GREEN }}>{l.name || "—"}</span>
+                <span style={{ color: MUTED, fontSize: ".78rem" }}> · {l.service || "—"}</span>
+              </div>
+              <span style={{ fontSize: ".72rem", color: "#8a6a22" }}>
+                {Math.floor((Date.now() - new Date(l.created_at).getTime()) / (3600 * 1000))}h ago
+              </span>
+            </div>
+          ))}
+          <button type="button" onClick={() => onTab("leads")}
+            style={{ marginTop: 10, fontSize: ".78rem", fontWeight: 600, color: "#8a6a22", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+            View all leads →
+          </button>
+        </div>
+      )}
+
+      {/* Conversion funnel */}
+      <div style={{ marginBottom: 28 }}>
+        <div style={{ fontWeight: 700, fontSize: ".72rem", textTransform: "uppercase", letterSpacing: ".07em", color: MUTED, marginBottom: 12 }}>Conversion funnel</div>
+        <FunnelChart leads={leads} appts={appts} matters={matters} />
+      </div>
+
+      <div style={{ fontWeight: 700, fontSize: ".78rem", textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 12 }}>Recent leads</div>
+      <div style={{ background: "#fff", border: "1px solid rgba(18,16,12,.08)", borderRadius: 12, overflow: "hidden", marginBottom: 24 }}>
+        {leads.slice(0, 5).map((l, i) => (
+          <div key={l.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderTop: i > 0 ? "1px solid rgba(18,16,12,.06)" : "none" }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 600, fontSize: ".88rem", color: GREEN }}>{l.name || "—"}</div>
+              <div style={{ fontSize: ".78rem", color: MUTED }}>{l.service || "—"} · {fmtDate(l.created_at)}</div>
+            </div>
+            <StatusBadge status={l.status} />
+          </div>
+        ))}
+        {leads.length === 0 && <div style={{ padding: "18px 16px", color: MUTED, fontSize: ".88rem" }}>No leads yet.</div>}
+      </div>
+
+      <div style={{ fontWeight: 700, fontSize: ".78rem", textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 12 }}>Upcoming appointments</div>
+      <div style={{ background: "#fff", border: "1px solid rgba(18,16,12,.08)", borderRadius: 12, overflow: "hidden" }}>
+        {appts.filter(a => new Date(a.starts_at).getTime() >= now && a.status !== "cancelled").slice(0, 5).map((a, i) => (
+          <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderTop: i > 0 ? "1px solid rgba(18,16,12,.06)" : "none" }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 600, fontSize: ".88rem", color: GREEN }}>{a.name || "—"}</div>
+              <div style={{ fontSize: ".78rem", color: MUTED }}>{a.service || "—"} · {fmtWhen(a.starts_at)}</div>
+            </div>
+            <StatusBadge status={a.status} />
+          </div>
+        ))}
+        {appts.filter(a => new Date(a.starts_at).getTime() >= now && a.status !== "cancelled").length === 0 && (
+          <div style={{ padding: "18px 16px", color: MUTED, fontSize: ".88rem" }}>No upcoming appointments.</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Email inbox
+// ---------------------------------------------------------------------------
+function EmailTab({ emails, token, onMarkRead }: {
+  emails: InboundEmail[]; token: string; onMarkRead: (id: string) => void;
+}) {
+  const [selected, setSelected] = useState<InboundEmail | null>(null);
+  const [composing, setComposing] = useState(false);
+  const [replyOpen, setReplyOpen] = useState(false);
+  const [replyBody, setReplyBody] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sendResult, setSendResult] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [newTo, setNewTo] = useState("");
+  const [newSubject, setNewSubject] = useState("");
+  const [newBody, setNewBody] = useState("");
+  const [suggesting, setSuggesting] = useState(false);
+
+  async function suggestReply() {
+    if (!selected || suggesting) return;
+    setSuggesting(true);
+    const res = await fetch("/api/admin/suggest-reply", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, subject: selected.subject, body: selected.body_text }),
+    });
+    const json = (await res.json().catch(() => ({}))) as { ok?: boolean; suggestion?: string };
+    if (json.ok && json.suggestion) { setReplyBody(json.suggestion); setReplyOpen(true); }
+    setSuggesting(false);
+  }
+
+  function selectEmail(e: InboundEmail) {
+    setSelected(e);
+    setReplyOpen(false);
+    setReplyBody("");
+    setSendResult(null);
+    if (!e.read) {
+      void fetch("/api/admin/email-read", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, id: e.id }),
+      });
+      onMarkRead(e.id);
+    }
+  }
+
+  async function sendReply() {
+    if (!selected || !replyBody.trim() || sending) return;
+    setSending(true); setSendResult(null);
+    const to = selected.reply_to || selected.from_email;
+    const subject = selected.subject ? (selected.subject.startsWith("Re:") ? selected.subject : `Re: ${selected.subject}`) : "Re: (no subject)";
+    const res = await fetch("/api/email/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, to, subject, body: replyBody.trim(), replyToId: selected.id }),
+    });
+    const json = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
+    if (json.ok) { setSendResult({ ok: true, msg: `Sent to ${to}` }); setReplyBody(""); setReplyOpen(false); }
+    else { setSendResult({ ok: false, msg: json.error ?? "Send failed" }); }
+    setSending(false);
+  }
+
+  async function sendCompose() {
+    if (!newTo.trim() || !newSubject.trim() || !newBody.trim() || sending) return;
+    setSending(true); setSendResult(null);
+    const res = await fetch("/api/email/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, to: newTo.trim(), subject: newSubject.trim(), body: newBody.trim() }),
+    });
+    const json = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
+    if (json.ok) { setSendResult({ ok: true, msg: `Sent to ${newTo}` }); setComposing(false); setNewTo(""); setNewSubject(""); setNewBody(""); }
+    else { setSendResult({ ok: false, msg: json.error ?? "Send failed" }); }
+    setSending(false);
+  }
+
+  return (
+    <div style={{ display: "flex", height: "calc(100vh - 300px)", minHeight: 400, overflow: "hidden" }}>
+      {/* Inbox list */}
+      <div style={{ width: 300, flexShrink: 0, borderRight: "1px solid rgba(18,16,12,.1)", overflowY: "auto" }}>
+        <div style={{ padding: "12px 14px", borderBottom: "1px solid rgba(18,16,12,.08)" }}>
+          <button type="button" onClick={() => { setComposing(true); setSelected(null); }}
+            style={{ ...S.authBtn, width: "100%", padding: "9px 16px", fontSize: ".82rem" }}>
+            + Compose
+          </button>
+        </div>
+        {emails.length === 0 ? (
+          <div style={{ padding: "32px 16px", textAlign: "center", color: MUTED, fontSize: ".86rem" }}>No inbound emails yet.</div>
+        ) : emails.map((e) => (
+          <button key={e.id} type="button" onClick={() => selectEmail(e)}
+            style={{ display: "block", width: "100%", textAlign: "left", border: "none", cursor: "pointer",
+              padding: "12px 14px", background: selected?.id === e.id ? "rgba(16,42,30,.06)" : "#fff",
+              borderBottom: "1px solid rgba(18,16,12,.07)",
+              borderLeft: selected?.id === e.id ? `3px solid ${GOLD}` : "3px solid transparent" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              {!e.read && <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#c0392b", flexShrink: 0, display: "inline-block" }} />}
+              <span style={{ fontWeight: e.read ? 400 : 700, fontSize: ".85rem", color: GREEN, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
+                {e.from_name || e.from_email}
+              </span>
+            </div>
+            <div style={{ fontSize: ".78rem", color: MUTED, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.subject || "(no subject)"}</div>
+            <div style={{ fontSize: ".72rem", color: MUTED, marginTop: 2 }}>{fmtDate(e.created_at)}</div>
+          </button>
+        ))}
+      </div>
+
+      {/* Right pane */}
+      <div style={{ flex: 1, overflowY: "auto", padding: 24 }}>
+        {composing ? (
+          <div>
+            <div style={{ fontFamily: "var(--serif, Georgia, serif)", fontWeight: 700, fontSize: "1.1rem", color: GREEN, marginBottom: 16 }}>New Email</div>
+            {[["To", newTo, setNewTo, "email"], ["Subject", newSubject, setNewSubject, "text"]].map(([lbl, val, setter, t]) => (
+              <div key={lbl as string} style={{ ...S.field, marginBottom: 12 }}>
+                <label style={S.fieldLabel}>{lbl as string}</label>
+                <input style={S.fieldInput} type={t as string} value={val as string} onChange={(e) => (setter as (v: string) => void)(e.target.value)} />
+              </div>
+            ))}
+            <div style={{ ...S.field, marginBottom: 16 }}>
+              <label style={S.fieldLabel}>Message</label>
+              <textarea style={{ ...S.fieldInput, resize: "vertical", minHeight: 160, fontFamily: "inherit" }}
+                value={newBody} onChange={(e) => setNewBody(e.target.value)} placeholder="Your message…" />
+            </div>
+            {sendResult && <p style={{ fontSize: ".82rem", color: sendResult.ok ? "#2e7d4f" : "#a23b3b", marginBottom: 10 }}>{sendResult.msg}</p>}
+            <div style={{ display: "flex", gap: 10 }}>
+              <button type="button" onClick={() => void sendCompose()} disabled={sending || !newTo.trim() || !newBody.trim()}
+                style={{ ...S.authBtn, width: "auto", padding: "10px 22px", ...(sending || !newTo.trim() || !newBody.trim() ? S.btnOff : null) }}>
+                {sending ? "Sending…" : "Send"}
+              </button>
+              <button type="button" onClick={() => { setComposing(false); setSendResult(null); }}
+                style={{ padding: "10px 18px", border: "1px solid rgba(18,16,12,.2)", borderRadius: 999, background: "#fff", fontSize: ".88rem", cursor: "pointer" }}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : !selected ? (
+          <div style={{ color: MUTED, textAlign: "center", paddingTop: 60 }}>Select an email to read</div>
+        ) : (
+          <div>
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontFamily: "var(--serif, Georgia, serif)", fontWeight: 700, fontSize: "1.15rem", color: GREEN }}>{selected.subject || "(no subject)"}</div>
+              <div style={{ fontSize: ".8rem", color: MUTED, marginTop: 4 }}>
+                From: <strong style={{ color: INK }}>{selected.from_name ? `${selected.from_name} <${selected.from_email}>` : selected.from_email}</strong>
+                &nbsp;·&nbsp;{fmtDate(selected.created_at)}
+              </div>
+              {selected.to_email && <div style={{ fontSize: ".8rem", color: MUTED }}>To: {selected.to_email}</div>}
+            </div>
+            <div style={{ background: "#faf8f2", borderRadius: 10, padding: 20, marginBottom: 20, fontSize: ".9rem", lineHeight: 1.7, color: INK, whiteSpace: "pre-wrap", minHeight: 100 }}>
+              {selected.body_text || selected.body_html?.replace(/<[^>]+>/g, "") || "(empty)"}
+            </div>
+            {!replyOpen ? (
+              <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                <button type="button" onClick={() => setReplyOpen(true)}
+                  style={{ ...S.authBtn, width: "auto", padding: "9px 22px" }}>
+                  Reply
+                </button>
+                <button type="button" onClick={() => void suggestReply()} disabled={suggesting}
+                  style={{ padding: "9px 18px", borderRadius: 999, border: `1px solid ${GOLD}`, background: "rgba(200,166,92,.08)", color: "#8a6a22", fontWeight: 600, fontSize: ".82rem", cursor: "pointer", ...(suggesting ? S.btnOff : null) }}>
+                  {suggesting ? "Thinking…" : "✦ AI draft"}
+                </button>
+              </div>
+            ) : (
+              <div style={{ borderTop: "1px solid rgba(18,16,12,.1)", paddingTop: 16 }}>
+                <div style={{ fontSize: ".78rem", fontWeight: 700, textTransform: "uppercase", color: MUTED, marginBottom: 8 }}>
+                  Reply to {selected.reply_to || selected.from_email}
+                </div>
+                <textarea value={replyBody} onChange={(e) => setReplyBody(e.target.value)} rows={5}
+                  placeholder="Your reply…"
+                  style={{ width: "100%", resize: "vertical", borderRadius: 10, border: "1px solid rgba(18,16,12,.2)", padding: "10px 12px", fontSize: ".9rem", fontFamily: "inherit", outline: "none", boxSizing: "border-box", marginBottom: 10 }} />
+                {sendResult && <p style={{ fontSize: ".82rem", color: sendResult.ok ? "#2e7d4f" : "#a23b3b", marginBottom: 8 }}>{sendResult.msg}</p>}
+                <div style={{ display: "flex", gap: 10 }}>
+                  <button type="button" onClick={() => void sendReply()} disabled={sending || !replyBody.trim()}
+                    style={{ ...S.authBtn, width: "auto", padding: "10px 20px", ...(sending || !replyBody.trim() ? S.btnOff : null) }}>
+                    {sending ? "Sending…" : "Send reply"}
+                  </button>
+                  <button type="button" onClick={() => setReplyOpen(false)}
+                    style={{ padding: "10px 18px", border: "1px solid rgba(18,16,12,.2)", borderRadius: 999, background: "#fff", fontSize: ".88rem", cursor: "pointer" }}>
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// H.O.M.E. Inquiries
+// ---------------------------------------------------------------------------
+function InquiriesTab({ inquiries, token, onStatus }: {
+  inquiries: HomeInquiry[]; token: string; onStatus: (id: string, status: string) => void;
+}) {
+  const [busy, setBusy] = useState<string | null>(null);
+
+  async function setStatus(id: string, status: string) {
+    setBusy(id);
+    onStatus(id, status);
+    const supabase = createClient();
+    await supabase.rpc("fl_admin_home_inquiry_status", { p_token: token, p_id: id, p_status: status });
+    setBusy(null);
+  }
+
+  if (inquiries.length === 0) return <Empty>No H.O.M.E. property inquiries yet.</Empty>;
+  return (
     <div style={S.tableWrap}>
       <table style={S.table}>
-        <thead><tr><Th>Status</Th><Th>Visitor</Th><Th>Contact</Th><Th>Last message</Th><Th>Last activity</Th><Th>Reply</Th></tr></thead>
+        <thead>
+          <tr><Th>Date</Th><Th>Property</Th><Th>From</Th><Th>Contact</Th><Th>Message</Th><Th>Status</Th><Th>Actions</Th></tr>
+        </thead>
         <tbody>
-          {convos.map((c) => (
-            <tr key={c.id} style={S.tr}>
-              <Td><StatusBadge status={c.status} /></Td>
-              <Td><span style={S.strong}>{c.visitor_name || "Website visitor"}</span></Td>
-              <Td><div style={S.contactCol}>{c.visitor_email && <span>{c.visitor_email}</span>}{c.visitor_phone && <span style={S.muted}>{c.visitor_phone}</span>}{!c.visitor_email && !c.visitor_phone && <span style={S.muted}>—</span>}</div></Td>
-              <Td><div style={S.msgCell} title={c.last_message ?? ""}>{c.last_message || "—"}</div></Td>
-              <Td>{fmtDate(c.last_message_at)}</Td>
-              <Td><a href="/agent" style={S.waBtn}>Open</a></Td>
+          {inquiries.map((q) => (
+            <tr key={q.id} style={S.tr}>
+              <Td>{fmtDate(q.created_at)}</Td>
+              <Td><span style={S.strong}>{q.property_title || "—"}</span></Td>
+              <Td>{q.from_name || "—"}</Td>
+              <Td>
+                <div style={S.contactCol}>
+                  {q.from_email && <span>{q.from_email}</span>}
+                  {q.from_phone && <span style={S.muted}>{q.from_phone}</span>}
+                  {!q.from_email && !q.from_phone && <span style={S.muted}>—</span>}
+                </div>
+              </Td>
+              <Td><div style={S.msgCell} title={q.message ?? ""}>{q.message || "—"}</div></Td>
+              <Td><StatusBadge status={q.status} /></Td>
+              <Td>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {q.status !== "contacted" && (
+                    <button type="button" onClick={() => void setStatus(q.id, "contacted")} disabled={busy === q.id}
+                      style={{ ...S.waBtn, background: "rgba(47,122,82,.14)", color: "#2f7a52", border: "1px solid rgba(47,122,82,.3)" }}>
+                      Contacted
+                    </button>
+                  )}
+                  {q.status !== "closed" && (
+                    <button type="button" onClick={() => void setStatus(q.id, "closed")} disabled={busy === q.id}
+                      style={{ ...S.waBtn, background: "rgba(18,16,12,.08)", color: MUTED, border: "1px solid rgba(18,16,12,.15)" }}>
+                      Close
+                    </button>
+                  )}
+                </div>
+              </Td>
             </tr>
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Referrals
+// ---------------------------------------------------------------------------
+function ReferralsTab({ leads, appts }: { leads: Lead[]; appts: Appointment[] }) {
+  // Group leads by ref source
+  const refMap: Record<string, { count: number; booked: number }> = {};
+  for (const l of leads) {
+    const src = l.ref || l.source || "direct";
+    if (!refMap[src]) refMap[src] = { count: 0, booked: 0 };
+    refMap[src].count++;
+  }
+  // Cross-reference with appointments by ref field
+  for (const a of appts) {
+    const src = a.ref || "direct";
+    // Find matching leads by ref
+    const matching = leads.filter((l) => l.ref === src || ((!l.ref) && src === "direct"));
+    if (matching.length > 0) {
+      const key = src;
+      if (refMap[key]) refMap[key].booked++;
+    }
+  }
+
+  const rows = Object.entries(refMap)
+    .map(([src, d]) => ({ src, ...d, pct: d.count > 0 ? Math.round((d.booked / d.count) * 100) : 0 }))
+    .sort((a, b) => b.count - a.count);
+
+  if (rows.length === 0) return <Empty>No lead data yet.</Empty>;
+
+  return (
+    <div style={{ padding: 20 }}>
+      <p style={{ color: MUTED, fontSize: ".84rem", marginBottom: 18 }}>
+        Source attribution based on the <code>ref</code> field on leads and bookings.
+      </p>
+      <div style={S.tableWrap}>
+        <table style={S.table}>
+          <thead>
+            <tr><Th>Source / Referral</Th><Th>Leads</Th><Th>Booked</Th><Th>Conversion</Th></tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.src} style={S.tr}>
+                <Td><span style={S.strong}>{r.src}</span></Td>
+                <Td>{r.count}</Td>
+                <Td>{r.booked}</Td>
+                <Td>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ width: 80, height: 6, background: "rgba(18,16,12,.1)", borderRadius: 4, overflow: "hidden" }}>
+                      <div style={{ width: `${r.pct}%`, height: "100%", background: r.pct >= 50 ? "#2f7a52" : GOLD, borderRadius: 4 }} />
+                    </div>
+                    <span style={{ fontSize: ".82rem", color: r.pct >= 50 ? "#2f7a52" : r.pct > 0 ? "#8a6a22" : MUTED }}>{r.pct}%</span>
+                  </div>
+                </Td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
@@ -1250,6 +2377,89 @@ const STATUS_TONE: Record<string, React.CSSProperties> = {
   closed_chat: { background: "rgba(18,16,12,.1)", color: MUTED },
 };
 
+// ---------------------------------------------------------------------------
+// Funnel Chart
+// ---------------------------------------------------------------------------
+function FunnelChart({ leads, appts, matters }: { leads: Lead[]; appts: Appointment[]; matters: Matter[] }) {
+  const total = leads.length || 1;
+  const booked = appts.filter(a => a.status !== "cancelled").length;
+  const retained = matters.filter(m => ["retainer","active","closed"].includes(m.stage)).length;
+  const stages = [
+    { label: "Leads", value: leads.length, pct: 100 },
+    { label: "Booked", value: booked, pct: Math.round((booked / total) * 100) },
+    { label: "Retained", value: retained, pct: Math.round((retained / total) * 100) },
+  ];
+  return (
+    <div style={{ display: "flex", gap: 6, alignItems: "flex-end", height: 72 }}>
+      {stages.map((s, i) => (
+        <div key={s.label} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+          <div style={{ fontSize: ".7rem", fontWeight: 700, color: GREEN }}>{s.value}</div>
+          <div style={{ width: "100%", height: `${Math.max(s.pct * 0.56, 8)}px`, background: i === 0 ? GREEN : i === 1 ? GOLD : "rgba(16,42,30,.35)", borderRadius: 4, transition: "height .4s" }} />
+          <div style={{ fontSize: ".65rem", color: MUTED, textTransform: "uppercase", letterSpacing: ".06em" }}>{s.label}</div>
+        </div>
+      ))}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+        <div style={{ fontSize: ".7rem", fontWeight: 700, color: GOLD }}>{leads.length > 0 ? Math.round((retained / leads.length) * 100) : 0}%</div>
+        <div style={{ width: "100%", height: "8px", background: "rgba(200,166,92,.18)", borderRadius: 4 }} />
+        <div style={{ fontSize: ".65rem", color: MUTED, textTransform: "uppercase", letterSpacing: ".06em" }}>Close rate</div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Kanban View for Matters
+// ---------------------------------------------------------------------------
+const KANBAN_COLS = [
+  { key: "enquiry",              label: "Enquiry" },
+  { key: "consultation_booked", label: "Booked" },
+  { key: "consultation_done",   label: "Consulted" },
+  { key: "retainer",            label: "Retainer" },
+  { key: "active",              label: "Active" },
+  { key: "closed",              label: "Closed" },
+];
+
+function KanbanView({ matters, onStage, onExpand }: {
+  matters: Matter[];
+  onStage: (id: string, s: string) => void;
+  onExpand?: (id: string) => void;
+}) {
+  if (matters.length === 0) return <Empty>No matters yet.</Empty>;
+  return (
+    <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "20px", alignItems: "flex-start" }}>
+      {KANBAN_COLS.map(col => {
+        const cards = matters.filter(m => m.stage === col.key);
+        return (
+          <div key={col.key} style={{ minWidth: 180, flex: "0 0 180px" }}>
+            <div style={{ fontSize: ".68rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".08em", color: MUTED, marginBottom: 10, padding: "0 2px" }}>
+              {col.label} <span style={{ color: GOLD }}>·{cards.length}</span>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {cards.map(m => (
+                <div key={m.id} style={{ background: "#fff", border: "1px solid rgba(18,16,12,.09)", borderRadius: 8, padding: "12px 14px", boxShadow: "0 2px 8px -4px rgba(0,0,0,.15)" }}>
+                  <div style={{ fontWeight: 600, fontSize: ".82rem", color: GREEN, marginBottom: 3 }}>{m.client_name || "—"}</div>
+                  <div style={{ fontSize: ".7rem", color: MUTED, marginBottom: 8 }}>{m.matter_type || "—"} · {m.ref}</div>
+                  <select value={m.stage} onChange={e => onStage(m.id, e.target.value)}
+                    style={{ width: "100%", fontSize: ".7rem", padding: "4px 6px", borderRadius: 6, border: "1px solid rgba(18,16,12,.15)", background: "#faf8f2", color: INK, cursor: "pointer" }}>
+                    {MATTER_STAGES.map(s => <option key={s} value={s}>{s.replace(/_/g," ")}</option>)}
+                  </select>
+                  {onExpand && (
+                    <button type="button" onClick={() => onExpand(m.id)}
+                      style={{ marginTop: 8, width: "100%", fontSize: ".68rem", fontWeight: 600, color: GOLD, background: "rgba(200,166,92,.1)", border: "1px solid rgba(200,166,92,.3)", borderRadius: 6, padding: "4px 0", cursor: "pointer" }}>
+                      ≡ Milestones
+                    </button>
+                  )}
+                </div>
+              ))}
+              {cards.length === 0 && <div style={{ padding: "14px 10px", fontSize: ".75rem", color: "rgba(18,16,12,.25)", textAlign: "center", border: "1px dashed rgba(18,16,12,.1)", borderRadius: 8 }}>—</div>}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 const S: Record<string, React.CSSProperties> = {
   authWrap: { minHeight: "100dvh", display: "grid", placeItems: "center", alignContent: "center", background: GREEN, fontFamily: "var(--sans, system-ui, sans-serif)", padding: 20 },
   authCard: { background: "#fbf8f1", borderRadius: 18, padding: "34px 30px", width: "100%", maxWidth: 380, textAlign: "center", boxShadow: "0 30px 70px -24px rgba(0,0,0,.55)" },
@@ -1263,24 +2473,24 @@ const S: Record<string, React.CSSProperties> = {
   authLinks: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginTop: 14, flexWrap: "wrap" },
   authLink: { color: MUTED, fontSize: ".8rem", textDecoration: "none" },
   authLinkBtn: { background: "none", border: "none", color: MUTED, fontSize: ".8rem", cursor: "pointer", padding: 0, textDecoration: "underline" },
-  shell: { minHeight: "100dvh", background: CREAM, fontFamily: "var(--sans, system-ui, sans-serif)", color: INK },
-  topbar: { background: GREEN, color: CREAM, padding: "16px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 },
-  brandMarkSm: { fontFamily: "var(--serif, Georgia, serif)", fontWeight: 600, fontSize: "1.25rem", color: CREAM },
-  topSub: { fontSize: ".76rem", color: GOLD, letterSpacing: ".06em", textTransform: "uppercase", marginTop: 2 },
-  topActions: { display: "flex", gap: 10 },
-  ghostBtn: { padding: "9px 18px", borderRadius: 999, border: "1px solid rgba(246,242,234,.3)", background: "transparent", color: CREAM, fontWeight: 600, fontSize: ".82rem", cursor: "pointer" },
-  body: { maxWidth: 1280, margin: "0 auto", padding: "24px 20px 60px" },
-  statStrip: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 14, marginBottom: 22 },
-  statCard: { background: "#fff", border: "1px solid rgba(18,16,12,.08)", borderRadius: 14, padding: "18px 20px", boxShadow: "0 12px 30px -22px rgba(0,0,0,.4)" },
-  statValue: { fontFamily: "var(--serif, Georgia, serif)", fontSize: "2rem", fontWeight: 700, color: GREEN, lineHeight: 1 },
-  statLabel: { fontSize: ".78rem", color: MUTED, marginTop: 6, textTransform: "uppercase", letterSpacing: ".05em" },
-  errorBar: { background: "rgba(190,60,60,.1)", border: "1px solid rgba(190,60,60,.3)", color: "#a23b3b", borderRadius: 10, padding: "10px 14px", fontSize: ".85rem", marginBottom: 16 },
-  tabs: { display: "flex", gap: 4, borderBottom: "1px solid rgba(18,16,12,.12)", marginBottom: 18 },
-  tab: { display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 14px", border: "none", borderBottom: "2px solid transparent", background: "transparent", color: MUTED, fontWeight: 600, fontSize: ".86rem", cursor: "pointer", marginBottom: -1 },
-  tabActive: { color: GREEN, borderBottomColor: GOLD },
-  tabCount: { fontSize: ".7rem", fontWeight: 700, padding: "1px 8px", borderRadius: 999, background: "rgba(18,16,12,.08)", color: MUTED },
-  tabCountActive: { background: GREEN, color: CREAM },
-  panel: { background: "#fff", border: "1px solid rgba(18,16,12,.08)", borderRadius: 14, overflow: "hidden", boxShadow: "0 14px 36px -26px rgba(0,0,0,.4)" },
+  shell: { minHeight: "100dvh", background: "#f4f1ea", fontFamily: "var(--sans, system-ui, sans-serif)", color: INK },
+  topbar: { background: GREEN, color: CREAM, padding: "14px 28px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, borderBottom: `1px solid rgba(200,166,92,.18)` },
+  brandMarkSm: { fontFamily: "var(--serif, Georgia, serif)", fontWeight: 600, fontSize: "1.1rem", color: CREAM, letterSpacing: ".01em" },
+  topSub: { fontSize: ".7rem", color: "rgba(200,166,92,.7)", letterSpacing: ".08em", textTransform: "uppercase", marginTop: 3 },
+  topActions: { display: "flex", gap: 8 },
+  ghostBtn: { padding: "7px 16px", borderRadius: 6, border: "1px solid rgba(246,242,234,.18)", background: "transparent", color: "rgba(246,242,234,.75)", fontWeight: 500, fontSize: ".78rem", cursor: "pointer", letterSpacing: ".01em" },
+  body: { maxWidth: 1320, margin: "0 auto", padding: "28px 24px 72px" },
+  statStrip: { display: "flex", gap: 0, background: GREEN, borderRadius: 10, overflow: "hidden", marginBottom: 28, boxShadow: "0 4px 24px -12px rgba(16,42,30,.35)" },
+  statCard: { flex: 1, padding: "18px 22px", borderRight: "1px solid rgba(255,255,255,.07)", cursor: "pointer" },
+  statValue: { fontFamily: "var(--serif, Georgia, serif)", fontSize: "1.75rem", fontWeight: 700, color: CREAM, lineHeight: 1 },
+  statLabel: { fontSize: ".68rem", color: "rgba(200,166,92,.8)", marginTop: 5, textTransform: "uppercase", letterSpacing: ".07em" },
+  errorBar: { background: "rgba(190,60,60,.07)", border: "1px solid rgba(190,60,60,.2)", color: "#a23b3b", borderRadius: 8, padding: "10px 14px", fontSize: ".84rem", marginBottom: 16 },
+  tabs: { display: "flex", gap: 0, borderBottom: "1px solid rgba(18,16,12,.1)", marginBottom: 0, overflowX: "auto" },
+  tab: { display: "inline-flex", alignItems: "center", gap: 7, padding: "11px 16px", border: "none", borderBottom: "2px solid transparent", background: "transparent", color: MUTED, fontWeight: 500, fontSize: ".8rem", cursor: "pointer", marginBottom: -1, whiteSpace: "nowrap", letterSpacing: ".01em" },
+  tabActive: { color: GREEN, borderBottomColor: GOLD, fontWeight: 600 },
+  tabCount: { fontSize: ".65rem", fontWeight: 700, padding: "1px 7px", borderRadius: 999, background: "rgba(18,16,12,.07)", color: MUTED },
+  tabCountActive: { background: GOLD, color: GREEN },
+  panel: { background: "#fff", border: "1px solid rgba(18,16,12,.07)", borderRadius: "0 0 12px 12px", overflow: "hidden" },
   tableWrap: { overflowX: "auto" },
   table: { width: "100%", borderCollapse: "collapse", fontSize: ".86rem", minWidth: 760 },
   th: { textAlign: "left", padding: "12px 16px", background: GREEN, color: CREAM, fontWeight: 600, fontSize: ".74rem", textTransform: "uppercase", letterSpacing: ".05em", whiteSpace: "nowrap" },
@@ -1309,4 +2519,899 @@ const S: Record<string, React.CSSProperties> = {
   listThumb: { width: 60, height: 60, objectFit: "cover", borderRadius: 8, border: "1px solid rgba(18,16,12,.1)" },
   approveBtn: { border: "none", borderRadius: 8, padding: "7px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer", background: GREEN, color: CREAM },
   rejectBtn: { border: "1px solid rgba(190,60,60,.4)", borderRadius: 8, padding: "7px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer", background: "#fff", color: "#a23b3b" },
+  input: { padding: "8px 10px", borderRadius: 8, border: "1px solid rgba(18,16,12,.2)", background: "#faf8f2", fontSize: ".84rem", color: INK, outline: "none", width: "100%", boxSizing: "border-box" } as React.CSSProperties,
+  btn: { padding: "7px 16px", borderRadius: 999, border: "none", fontWeight: 600, cursor: "pointer", fontSize: ".84rem" } as React.CSSProperties,
 };
+
+// ---------------------------------------------------------------------------
+// H.O.M.E. — Professional Approvals
+// ---------------------------------------------------------------------------
+function HomeProsPanel({ pros, loading, onApprove }: {
+  pros: HomePro[]; loading: boolean; onApprove: (userId: string) => void;
+}) {
+  const rejectPro = useCallback(async (userId: string) => {
+    await fetch(`${HR_URL}/rest/v1/home_professional_profiles?user_id=eq.${userId}`, {
+      method: "PATCH",
+      headers: {
+        "apikey": HR_KEY, "Authorization": `Bearer ${HR_KEY}`,
+        "Content-Type": "application/json", "Prefer": "return=minimal",
+      },
+      body: JSON.stringify({ verified: false }),
+    });
+  }, []);
+
+  if (loading && pros.length === 0) return <Empty>Loading H.O.M.E. professionals…</Empty>;
+  if (pros.length === 0) return <Empty>No professionals awaiting verification.</Empty>;
+  return (
+    <div style={{ display: "grid", gap: 14, padding: 20 }}>
+      {pros.map((p) => (
+        <div key={p.user_id} style={S.listCard}>
+          <div style={S.listTop}>
+            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+              <span style={S.listType}>{p.profession}</span>
+              <span style={{ ...S.statusBadge, background: "rgba(200,166,92,.22)", color: "#8a6a22" }}>pending</span>
+              <span style={S.muted}>{fmtDate(p.created_at)}</span>
+            </div>
+            <div style={{ display: "flex", gap: 7 }}>
+              <button type="button" onClick={() => onApprove(p.user_id)} style={S.approveBtn}>Approve</button>
+              <button type="button" onClick={() => void rejectPro(p.user_id)} style={S.rejectBtn}>Reject</button>
+            </div>
+          </div>
+          <div style={S.listTitle}>{p.business_name || "—"}</div>
+          {p.headline && <div style={{ fontSize: 13, color: INK, marginTop: 2 }}>{p.headline}</div>}
+          <div style={{ ...S.muted, marginTop: 4 }}>
+            {p.license_number ? `Licence: ${p.license_number}` : "No licence number"}
+            {p.parishes?.length ? ` · ${p.parishes.join(", ")}` : ""}
+            {p.phone ? ` · ${p.phone}` : ""}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// H.O.M.E. — Property Listings (CRUD)
+// ---------------------------------------------------------------------------
+const HR_PARISHES = ["Kingston","St. Andrew","St. Catherine","St. Thomas","Portland","St. Mary","St. Ann","Trelawny","St. James","Hanover","Westmoreland","St. Elizabeth","Manchester","Clarendon"];
+
+function HomeListingsPanel({ listings, loading }: { listings: HomeProperty[]; loading: boolean }) {
+  const [rows, setRows] = useState<HomeProperty[]>(listings);
+  const [editing, setEditing] = useState<HomeProperty | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [editForm, setEditForm] = useState<Partial<HomeProperty>>({});
+
+  useEffect(() => { setRows(listings); }, [listings]);
+
+  function openEdit(l: HomeProperty) { setEditing(l); setEditForm({ title: l.title, parish: l.parish, price_jmd: l.price_jmd, status: l.status }); }
+
+  async function saveEdit() {
+    if (!editing) return;
+    setBusy(true);
+    const res = await fetch(`${HR_URL}/rest/v1/home_properties?id=eq.${editing.id}`, {
+      method: "PATCH",
+      headers: { "apikey": HR_KEY, "Authorization": `Bearer ${HR_KEY}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
+      body: JSON.stringify(editForm),
+    });
+    if (res.ok) {
+      setRows((prev) => prev.map((r) => r.id === editing.id ? { ...r, ...editForm } as HomeProperty : r));
+      setEditing(null);
+    }
+    setBusy(false);
+  }
+
+  async function confirmDelete() {
+    if (!deleteId) return;
+    setBusy(true);
+    await fetch(`${HR_URL}/rest/v1/home_properties?id=eq.${deleteId}`, {
+      method: "DELETE",
+      headers: { "apikey": HR_KEY, "Authorization": `Bearer ${HR_KEY}`, "Prefer": "return=minimal" },
+    });
+    setRows((prev) => prev.filter((r) => r.id !== deleteId));
+    setDeleteId(null);
+    setBusy(false);
+  }
+
+  const fld: React.CSSProperties = { ...S.fieldInput, width: "100%", marginBottom: 10, boxSizing: "border-box" };
+
+  if (loading && rows.length === 0) return <Empty>Loading H.O.M.E. listings…</Empty>;
+  if (rows.length === 0) return <Empty>No active property listings found.</Empty>;
+
+  return (
+    <div>
+      <div style={S.tableWrap}>
+        <table style={S.table}>
+          <thead>
+            <tr><Th>Title</Th><Th>Parish</Th><Th>Price (JMD)</Th><Th>Status</Th><Th>Date listed</Th><Th>Actions</Th></tr>
+          </thead>
+          <tbody>
+            {rows.map((l) => (
+              <tr key={l.id} style={S.tr}>
+                <Td><span style={S.strong}>{l.title}</span></Td>
+                <Td>{l.parish}</Td>
+                <Td>J${l.price_jmd.toLocaleString()}</Td>
+                <Td><StatusBadge status={l.status} /></Td>
+                <Td>{fmtDate(l.created_at)}</Td>
+                <Td>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button type="button" onClick={() => openEdit(l)} style={{ ...S.waBtn, background: GOLD, color: "#10211c" }}>Edit</button>
+                    <button type="button" onClick={() => setDeleteId(l.id)} style={S.rejectBtn}>Delete</button>
+                    <a href={`${HR_BASE}/properties/${l.id}`} target="_blank" rel="noopener noreferrer" style={S.waBtn}>View →</a>
+                  </div>
+                </Td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Edit modal */}
+      {editing && (
+        <div onClick={() => setEditing(null)} style={{ position: "fixed", inset: 0, background: "rgba(16,33,28,.5)", display: "grid", placeItems: "center", padding: 16, zIndex: 60 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: "#fff", borderRadius: 18, padding: 28, width: "100%", maxWidth: 480, maxHeight: "90vh", overflowY: "auto" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <span style={{ fontFamily: "var(--serif,Georgia,serif)", fontWeight: 700, fontSize: "1.1rem", color: GREEN }}>Edit listing</span>
+              <button type="button" onClick={() => setEditing(null)} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "#888" }}>×</button>
+            </div>
+            <label style={S.fieldLabel}>Title</label>
+            <input style={fld} value={editForm.title ?? ""} onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))} />
+            <label style={S.fieldLabel}>Parish</label>
+            <select style={fld} value={editForm.parish ?? ""} onChange={(e) => setEditForm((f) => ({ ...f, parish: e.target.value }))}>
+              {HR_PARISHES.map((p) => <option key={p} value={p}>{p}</option>)}
+            </select>
+            <label style={S.fieldLabel}>Price (JMD)</label>
+            <input style={fld} type="number" min={0} value={editForm.price_jmd ?? 0} onChange={(e) => setEditForm((f) => ({ ...f, price_jmd: Number(e.target.value) }))} />
+            <label style={S.fieldLabel}>Status</label>
+            <select style={fld} value={editForm.status ?? "active"} onChange={(e) => setEditForm((f) => ({ ...f, status: e.target.value as HomeProperty["status"] }))}>
+              {["active","sold","draft"].map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+            <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
+              <button type="button" onClick={() => void saveEdit()} disabled={busy}
+                style={{ ...S.authBtn, width: "auto", padding: "10px 22px", ...(busy ? S.btnOff : null) }}>
+                {busy ? "Saving…" : "Save changes"}
+              </button>
+              <button type="button" onClick={() => setEditing(null)}
+                style={{ padding: "10px 18px", border: "1px solid rgba(18,16,12,.2)", borderRadius: 999, background: "#fff", fontSize: ".88rem", cursor: "pointer" }}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete confirmation modal */}
+      {deleteId && (
+        <div onClick={() => setDeleteId(null)} style={{ position: "fixed", inset: 0, background: "rgba(16,33,28,.5)", display: "grid", placeItems: "center", padding: 16, zIndex: 60 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: "#fff", borderRadius: 18, padding: 28, width: "100%", maxWidth: 380 }}>
+            <div style={{ fontFamily: "var(--serif,Georgia,serif)", fontWeight: 700, fontSize: "1.1rem", color: GREEN, marginBottom: 10 }}>Delete listing?</div>
+            <p style={{ fontSize: ".9rem", color: INK, marginBottom: 18 }}>
+              "{rows.find((r) => r.id === deleteId)?.title}" will be permanently deleted from the H.O.M.E. platform.
+            </p>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button type="button" onClick={() => void confirmDelete()} disabled={busy}
+                style={{ ...S.rejectBtn, padding: "10px 20px", borderRadius: 999, ...(busy ? S.btnOff : null) }}>
+                {busy ? "Deleting…" : "Delete"}
+              </button>
+              <button type="button" onClick={() => setDeleteId(null)}
+                style={{ padding: "10px 18px", border: "1px solid rgba(18,16,12,.2)", borderRadius: 999, background: "#fff", fontSize: ".88rem", cursor: "pointer" }}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CMS Tab — workflow-based case management
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface CmsMatter {
+  id: string;
+  client_id: string;
+  client_email: string;
+  client_name: string;
+  matter_type: string;
+  workflow_type: string | null;
+  current_phase: number;
+  status: string;
+  kyc_status: string;
+  title: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
+interface CmsMilestone {
+  id: string;
+  matter_id: string;
+  phase_order: number;
+  phase_name: string;
+  name: string;
+  status: string;
+  due_at: string | null;
+  completed_at: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
+interface CmsMessage {
+  id: string;
+  matter_id: string;
+  sender_id: string | null;
+  sender_type: string;
+  sender_label: string | null;
+  body: string;
+  read_at: string | null;
+  created_at: string;
+}
+
+interface CmsFile {
+  id: string;
+  matter_id: string;
+  uploader_type: string;
+  file_name: string;
+  file_url: string;
+  file_size: number | null;
+  mime_type: string | null;
+  created_at: string;
+}
+
+interface CmsKyc {
+  id: string;
+  client_id: string;
+  full_legal_name: string | null;
+  date_of_birth: string | null;
+  nationality: string | null;
+  address: string | null;
+  id_type: string | null;
+  id_number: string | null;
+  id_doc_url: string | null;
+  source_of_funds: string | null;
+  is_pep: boolean;
+  pep_details: string | null;
+  submitted_at: string | null;
+  reviewed_at: string | null;
+  reviewer_notes: string | null;
+  status: string;
+}
+
+interface CmsPayment {
+  id: string;
+  matter_id: string;
+  kind: string;
+  amount_jmd: number;
+  method: string | null;
+  reference: string | null;
+  status: string;
+  confirmed_at: string | null;
+  receipt_issued: boolean;
+  receipt_number: string | null;
+  created_at: string;
+}
+
+interface CmsClientHit {
+  id: string;
+  email: string;
+  full_name: string;
+}
+
+const MS_COLORS: Record<string, { bg: string; color: string; border: string }> = {
+  pending:     { bg: "#f5f5f5", color: "#888",    border: "#ddd" },
+  in_progress: { bg: "#fdf3d9", color: "#8a6a22", border: "#e8d090" },
+  done:        { bg: "#dff0df", color: "#1a4d28", border: "#a5d4a5" },
+  blocked:     { bg: "#fbeaea", color: "#7a2020", border: "#eecaca" },
+};
+
+const MATTER_STATUS_OPTS = ["intake","in_progress","awaiting_client","awaiting_third_party","completed","on_hold"];
+const MILESTONE_STATUS_OPTS = ["pending","in_progress","done","blocked"];
+
+function CmsTab({ token }: { token: string }) {
+  const supabase = createClient();
+  const [matters, setMatters] = useState<CmsMatter[]>([]);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [milestones, setMilestones] = useState<CmsMilestone[]>([]);
+  const [messages, setMessages] = useState<CmsMessage[]>([]);
+  const [files, setFiles] = useState<CmsFile[]>([]);
+  const [kyc, setKyc] = useState<CmsKyc | null>(null);
+  const [payments, setPayments] = useState<CmsPayment[]>([]);
+  const [tab, setTab] = useState<"timeline"|"messages"|"files"|"kyc"|"payments">("timeline");
+  const [loading, setLoading] = useState(true);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [msgText, setMsgText] = useState("");
+  const [sending, setSending] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [openMatter, setOpenMatter] = useState(false);
+  const [clientQuery, setClientQuery] = useState("");
+  const [clientHits, setClientHits] = useState<CmsClientHit[]>([]);
+  const [newClientId, setNewClientId] = useState("");
+  const [newClientLabel, setNewClientLabel] = useState("");
+  const [newWorkflow, setNewWorkflow] = useState("property_purchase");
+  const [newTitle, setNewTitle] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [kycNotes, setKycNotes] = useState("");
+  const [addingPayment, setAddingPayment] = useState(false);
+  const [payKind, setPayKind] = useState("deposit");
+  const [payAmount, setPayAmount] = useState("");
+  const [payMethod, setPayMethod] = useState("wipay");
+  const [payRef, setPayRef] = useState("");
+  const msgEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const q = clientQuery.trim();
+    if (q.length < 2) { setClientHits([]); return; }
+    const t = setTimeout(async () => {
+      const { data } = await supabase.rpc("fl_admin_cms_client_search", { p_token: token, p_query: q });
+      setClientHits((data as CmsClientHit[]) ?? []);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [clientQuery]);
+
+  useEffect(() => {
+    void (async () => {
+      const { data } = await supabase.rpc("fl_admin_cms_matters", { p_token: token });
+      setMatters((data as CmsMatter[]) ?? []);
+      setLoading(false);
+    })();
+  }, []);
+
+  async function loadDetail(id: string) {
+    setSelected(id); setDetailLoading(true); setTab("timeline");
+    const matter = matters.find(m => m.id === id);
+    const [mRes, msgRes, fRes, kRes, pRes] = await Promise.all([
+      supabase.rpc("fl_admin_cms_milestones", { p_token: token, p_matter_id: id }),
+      supabase.rpc("fl_admin_cms_messages", { p_token: token, p_matter_id: id }),
+      supabase.rpc("fl_admin_cms_files", { p_token: token, p_matter_id: id }),
+      matter ? supabase.rpc("fl_admin_cms_kyc_get", { p_token: token, p_client_id: matter.client_id }) : Promise.resolve({ data: null }),
+      supabase.rpc("fl_admin_cms_payments", { p_token: token, p_matter_id: id }),
+    ]);
+    setMilestones((mRes.data as CmsMilestone[]) ?? []);
+    setMessages((msgRes.data as CmsMessage[]) ?? []);
+    setFiles((fRes.data as CmsFile[]) ?? []);
+    const kycRows = kRes.data as CmsKyc[] | null;
+    setKyc(kycRows?.[0] ?? null);
+    setKycNotes(kycRows?.[0]?.reviewer_notes ?? "");
+    setPayments((pRes.data as CmsPayment[]) ?? []);
+    setDetailLoading(false);
+  }
+
+  async function notifyClient(matterId: string, kind: "milestone" | "message", milestoneName?: string) {
+    try {
+      await fetch("/api/admin/cms/notify", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, matterId, kind, milestoneName }),
+      });
+    } catch { /* best-effort — notification failure never blocks the action */ }
+  }
+
+  async function updateMilestone(id: string, status: string) {
+    const m = milestones.find(x => x.id === id);
+    await supabase.rpc("fl_admin_cms_update_milestone", { p_token: token, p_id: id, p_status: status });
+    setMilestones(prev => prev.map(x => x.id === id
+      ? { ...x, status, completed_at: status === "done" ? new Date().toISOString() : x.completed_at }
+      : x
+    ));
+    if (status === "done" && m && selected) void notifyClient(selected, "milestone", m.name);
+  }
+
+  async function updateMatterStatus(id: string, status: string) {
+    await supabase.rpc("fl_admin_cms_update_matter_status", { p_token: token, p_matter_id: id, p_status: status });
+    setMatters(prev => prev.map(m => m.id === id ? { ...m, status } : m));
+  }
+
+  async function reviewKyc(status: "approved" | "flagged") {
+    if (!kyc) return;
+    await supabase.rpc("fl_admin_cms_kyc_review", { p_token: token, p_kyc_id: kyc.id, p_status: status, p_notes: kycNotes || null });
+    setKyc(prev => prev ? { ...prev, status, reviewer_notes: kycNotes || null, reviewed_at: new Date().toISOString() } : prev);
+    if (selected) setMatters(prev => prev.map(m => m.id === selected ? { ...m, kyc_status: status } : m));
+  }
+
+  async function addPayment() {
+    if (!selected || !payAmount.trim() || addingPayment) return;
+    setAddingPayment(true);
+    const { data } = await supabase.rpc("fl_admin_cms_add_payment", {
+      p_token: token, p_matter_id: selected, p_kind: payKind,
+      p_amount_jmd: Number(payAmount), p_method: payMethod || null, p_reference: payRef.trim() || null,
+    });
+    if (data) {
+      setPayments(prev => [{
+        id: data as string, matter_id: selected, kind: payKind, amount_jmd: Number(payAmount),
+        method: payMethod, reference: payRef.trim() || null, status: "pending", confirmed_at: null,
+        receipt_issued: false, receipt_number: null, created_at: new Date().toISOString(),
+      }, ...prev]);
+      setPayAmount(""); setPayRef("");
+    }
+    setAddingPayment(false);
+  }
+
+  async function confirmPayment(id: string) {
+    const res = await fetch("/api/admin/cms/payment", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, action: "confirm", paymentId: id }),
+    });
+    if (res.ok) {
+      setPayments(prev => prev.map(p => p.id === id ? { ...p, status: "confirmed", confirmed_at: new Date().toISOString() } : p));
+    }
+  }
+
+  async function issueReceipt(id: string) {
+    const res = await fetch("/api/admin/cms/payment", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, action: "issue-receipt", paymentId: id }),
+    });
+    const json = (await res.json().catch(() => ({}))) as { receiptNumber?: string; error?: string };
+    if (res.ok && json.receiptNumber) {
+      setPayments(prev => prev.map(p => p.id === id ? { ...p, receipt_issued: true, receipt_number: json.receiptNumber! } : p));
+    } else if (json.error) {
+      alert(json.error);
+    }
+  }
+
+  async function uploadStaffFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !selected || uploading) return;
+    setUploading(true);
+    const form = new FormData();
+    form.append("token", token); form.append("matterId", selected); form.append("file", file);
+    const res = await fetch("/api/admin/cms/upload", { method: "POST", body: form });
+    const json = (await res.json().catch(() => ({}))) as { ok?: boolean; id?: string; url?: string; name?: string; size?: number; mimeType?: string; error?: string };
+    if (res.ok && json.ok) {
+      setFiles(prev => [{
+        id: json.id!, matter_id: selected, uploader_type: "staff",
+        file_name: json.name!, file_url: json.url!, file_size: json.size ?? null,
+        mime_type: json.mimeType ?? null, created_at: new Date().toISOString(),
+      }, ...prev]);
+    } else if (json.error) {
+      alert(json.error);
+    }
+    setUploading(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  async function sendMessage() {
+    if (!msgText.trim() || !selected) return;
+    setSending(true);
+    const { data } = await supabase.rpc("fl_admin_cms_send_message", {
+      p_token: token, p_matter_id: selected, p_body: msgText.trim(), p_label: "Ferguson Law",
+    });
+    if (data) {
+      setMessages(prev => [...prev, {
+        id: data as string, matter_id: selected, sender_id: null,
+        sender_type: "staff", sender_label: "Ferguson Law",
+        body: msgText.trim(), read_at: null, created_at: new Date().toISOString(),
+      }]);
+      setMsgText("");
+      void notifyClient(selected, "message");
+      setTimeout(() => msgEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+    }
+    setSending(false);
+  }
+
+  async function createMatter() {
+    if (!newClientId.trim()) return;
+    setCreating(true);
+    const { data } = await supabase.rpc("fl_admin_cms_open_matter", {
+      p_token: token, p_client_id: newClientId, p_workflow_type: newWorkflow,
+      p_title: newTitle || null,
+    });
+    if (data) {
+      const { data: refreshed } = await supabase.rpc("fl_admin_cms_matters", { p_token: token });
+      setMatters((refreshed as CmsMatter[]) ?? []);
+      setOpenMatter(false);
+      setNewClientId(""); setNewClientLabel(""); setClientQuery(""); setClientHits([]); setNewTitle("");
+      void loadDetail(data as string);
+    }
+    setCreating(false);
+  }
+
+  const activeMatter = matters.find(m => m.id === selected);
+
+  const phases = milestones.reduce<Record<number, { name: string; items: CmsMilestone[] }>>((acc, m) => {
+    if (!acc[m.phase_order]) acc[m.phase_order] = { name: m.phase_name, items: [] };
+    acc[m.phase_order].items.push(m);
+    return acc;
+  }, {});
+  const phaseList = Object.entries(phases).sort(([a], [b]) => Number(a) - Number(b));
+
+  if (loading) return <div style={{ padding: 20, color: MUTED }}>Loading CMS matters…</div>;
+
+  return (
+    <div style={{ display: "flex", height: "calc(100vh - 260px)", minHeight: 500, overflow: "hidden" }}>
+      {/* Left sidebar */}
+      <div style={{ width: 280, flexShrink: 0, borderRight: `1px solid rgba(18,16,12,.1)`, overflowY: "auto", padding: "16px 12px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <span style={{ fontWeight: 700, fontSize: 13, color: GREEN }}>CMS Matters</span>
+          <button onClick={() => setOpenMatter(true)} style={{
+            background: GREEN, color: CREAM, border: "none", borderRadius: 8,
+            padding: "5px 12px", fontSize: 12, fontWeight: 700, cursor: "pointer",
+          }}>+ New</button>
+        </div>
+        {matters.length === 0 && (
+          <p style={{ fontSize: 13, color: MUTED }}>No workflow matters yet. Click + New to open one.</p>
+        )}
+        {matters.map(m => (
+          <button key={m.id} onClick={() => loadDetail(m.id)} style={{
+            display: "block", width: "100%", textAlign: "left", border: "none", cursor: "pointer",
+            padding: "10px 12px", borderRadius: 10, marginBottom: 6,
+            background: selected === m.id ? `rgba(16,42,30,.08)` : "transparent",
+            borderLeft: selected === m.id ? `3px solid ${GOLD}` : "3px solid transparent",
+          }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#8a6a22", textTransform: "uppercase", letterSpacing: ".1em", marginBottom: 2 }}>
+              {m.workflow_type?.replace("_", " ") || m.matter_type}
+            </div>
+            <div style={{ fontSize: 13.5, fontWeight: 600, color: INK }}>{m.title || m.client_name}</div>
+            <div style={{ fontSize: 12, color: MUTED, marginTop: 2 }}>{m.client_email}</div>
+            <div style={{ marginTop: 4, display: "flex", gap: 6 }}>
+              <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, background: "rgba(18,16,12,.07)", borderRadius: 999, padding: "2px 7px" }}>{m.status}</span>
+              {m.kyc_status !== "approved" && (
+                <span style={{ fontSize: 11, fontWeight: 600, color: "#8a6a22", background: "rgba(200,166,92,.2)", borderRadius: 999, padding: "2px 7px" }}>KYC {m.kyc_status}</span>
+              )}
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {/* Right pane */}
+      <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column" }}>
+        {!selected ? (
+          <div style={{ padding: 40, textAlign: "center", color: MUTED, fontSize: 14 }}>
+            Select a matter to view details
+          </div>
+        ) : detailLoading ? (
+          <div style={{ padding: 40, color: MUTED }}>Loading…</div>
+        ) : activeMatter ? (
+          <>
+            {/* Matter header */}
+            <div style={{ padding: "16px 20px", borderBottom: `1px solid rgba(18,16,12,.1)`, background: "#faf8f2" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#8a6a22", letterSpacing: ".12em", textTransform: "uppercase", marginBottom: 3 }}>
+                    {activeMatter.workflow_type?.replace("_", " ") || activeMatter.matter_type}
+                  </div>
+                  <div style={{ fontFamily: "var(--serif, Georgia, serif)", fontSize: 18, fontWeight: 700, color: GREEN }}>
+                    {activeMatter.title || activeMatter.client_name}
+                  </div>
+                  <div style={{ fontSize: 12.5, color: MUTED, marginTop: 2 }}>
+                    {activeMatter.client_name} · {activeMatter.client_email}
+                  </div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  <select
+                    value={activeMatter.status}
+                    onChange={e => updateMatterStatus(activeMatter.id, e.target.value)}
+                    style={{ fontSize: 12, padding: "5px 8px", borderRadius: 8, border: "1px solid rgba(18,16,12,.2)", background: "#fff" }}
+                  >
+                    {MATTER_STATUS_OPTS.map(o => <option key={o} value={o}>{o.replace(/_/g, " ")}</option>)}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Tabs */}
+            <div style={{ display: "flex", borderBottom: `1px solid rgba(18,16,12,.1)`, background: "#fafaf8" }}>
+              {(["timeline","messages","files","kyc","payments"] as const).map(t => (
+                <button key={t} onClick={() => setTab(t)} style={{
+                  padding: "10px 18px", fontSize: 13, fontWeight: 600, border: "none",
+                  background: "none", cursor: "pointer", color: tab === t ? INK : MUTED,
+                  borderBottom: tab === t ? `2px solid ${GOLD}` : "2px solid transparent",
+                }}>
+                  {t === "messages" ? `Messages (${messages.length})`
+                    : t === "files" ? `Files (${files.length})`
+                    : t === "kyc" ? `KYC/AML${kyc && kyc.status !== "approved" ? " •" : ""}`
+                    : t === "payments" ? `Payments (${payments.length})`
+                    : "Timeline"}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ flex: 1, overflowY: "auto", padding: "20px" }}>
+              {/* TIMELINE */}
+              {tab === "timeline" && (
+                <div>
+                  {phaseList.length === 0 ? (
+                    <p style={{ color: MUTED, fontSize: 14 }}>No milestones. This matter may not have a workflow template.</p>
+                  ) : phaseList.map(([orderStr, phase]) => {
+                    const done = phase.items.filter(i => i.status === "done").length;
+                    const pct = Math.round((done / phase.items.length) * 100);
+                    return (
+                      <div key={orderStr} style={{ marginBottom: 26 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                          <span style={{ fontWeight: 700, fontSize: 14, color: GREEN }}>{phase.name}</span>
+                          <span style={{ fontSize: 12, color: MUTED }}>{done}/{phase.items.length}</span>
+                        </div>
+                        <div style={{ height: 4, background: "#eee", borderRadius: 4, marginBottom: 10, overflow: "hidden" }}>
+                          <div style={{ width: `${pct}%`, height: "100%", background: pct === 100 ? "#1a4d28" : GOLD, borderRadius: 4, transition: "width .3s" }} />
+                        </div>
+                        {phase.items.map(m => {
+                          const mc = MS_COLORS[m.status] ?? MS_COLORS.pending;
+                          return (
+                            <div key={m.id} style={{
+                              display: "flex", alignItems: "center", gap: 10,
+                              padding: "8px 10px", borderRadius: 8, marginBottom: 4,
+                              background: m.status === "in_progress" ? "#fffbf0" : "#fff",
+                              border: `1px solid ${m.status === "in_progress" ? "#f0e4b0" : "rgba(18,16,12,.08)"}`,
+                            }}>
+                              <span style={{ fontSize: 13, flex: 1, color: m.status === "done" ? MUTED : INK,
+                                textDecoration: m.status === "done" ? "line-through" : "none" }}>
+                                {m.name}
+                              </span>
+                              <select
+                                value={m.status}
+                                onChange={e => updateMilestone(m.id, e.target.value)}
+                                style={{
+                                  fontSize: 11.5, padding: "3px 7px", borderRadius: 7, fontWeight: 700,
+                                  border: `1px solid ${mc.border}`, background: mc.bg, color: mc.color, cursor: "pointer",
+                                }}
+                              >
+                                {MILESTONE_STATUS_OPTS.map(o => <option key={o} value={o}>{o.replace("_", " ")}</option>)}
+                              </select>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* MESSAGES */}
+              {tab === "messages" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 14 }}>
+                    {messages.length === 0 ? (
+                      <p style={{ color: MUTED, fontSize: 13 }}>No messages yet.</p>
+                    ) : messages.map(msg => (
+                      <div key={msg.id} style={{ display: "flex", justifyContent: msg.sender_type === "staff" ? "flex-end" : "flex-start" }}>
+                        <div style={{
+                          maxWidth: "76%", padding: "9px 13px", borderRadius: 11,
+                          background: msg.sender_type === "staff" ? GREEN : "#f3f2ee",
+                          color: msg.sender_type === "staff" ? CREAM : INK,
+                          fontSize: 13.5,
+                        }}>
+                          {msg.sender_type === "client" && (
+                            <div style={{ fontSize: 11, fontWeight: 700, marginBottom: 3, opacity: .65 }}>
+                              {activeMatter.client_name}
+                            </div>
+                          )}
+                          <div>{msg.body}</div>
+                          <div style={{ fontSize: 10.5, marginTop: 4, opacity: .55, textAlign: "right" }}>
+                            {fmtDate(msg.created_at)}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    <div ref={msgEndRef} />
+                  </div>
+                  <div style={{ display: "flex", gap: 8, alignItems: "flex-end", position: "sticky", bottom: 0, background: "#fff", paddingTop: 8 }}>
+                    <textarea
+                      value={msgText}
+                      onChange={e => setMsgText(e.target.value)}
+                      onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void sendMessage(); } }}
+                      rows={2}
+                      placeholder="Reply to client… (Enter to send)"
+                      style={{ flex: 1, resize: "none", borderRadius: 10, border: "1px solid rgba(18,16,12,.2)", padding: "9px 12px", fontSize: 13.5, fontFamily: "inherit", outline: "none" }}
+                    />
+                    <button onClick={() => void sendMessage()} disabled={sending || !msgText.trim()}
+                      style={{ background: GREEN, color: CREAM, border: "none", borderRadius: 10, padding: "10px 18px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+                      {sending ? "…" : "Send"}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* FILES */}
+              {tab === "files" && (
+                <div>
+                  <div style={{ marginBottom: 14 }}>
+                    <input ref={fileInputRef} type="file" onChange={e => void uploadStaffFile(e)} disabled={uploading}
+                      style={{ display: "none" }} id="cms-staff-file" />
+                    <label htmlFor="cms-staff-file" style={{
+                      display: "inline-flex", alignItems: "center", gap: 6, cursor: uploading ? "default" : "pointer",
+                      background: uploading ? "#eee" : GREEN, color: uploading ? MUTED : CREAM,
+                      borderRadius: 999, padding: "8px 16px", fontSize: 12.5, fontWeight: 700,
+                    }}>
+                      {uploading ? "Uploading…" : "↑ Upload file to client"}
+                    </label>
+                  </div>
+                  {files.length === 0 ? (
+                    <p style={{ color: MUTED, fontSize: 13 }}>No files uploaded yet.</p>
+                  ) : files.map(f => (
+                    <a key={f.id} href={f.file_url} target="_blank" rel="noopener"
+                      style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 10, border: "1px solid rgba(18,16,12,.1)", background: "#fafaf8", textDecoration: "none", marginBottom: 6 }}>
+                      <span style={{ fontSize: 20 }}>{f.mime_type?.includes("pdf") ? "📄" : f.mime_type?.includes("image") ? "🖼️" : "📎"}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13.5, fontWeight: 600, color: INK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.file_name}</div>
+                        <div style={{ fontSize: 11.5, color: MUTED }}>
+                          {f.uploader_type === "client" ? activeMatter.client_name : "Ferguson Law"} · {fmtDate(f.created_at)}
+                          {f.file_size ? ` · ${(f.file_size / 1024).toFixed(1)} KB` : ""}
+                        </div>
+                      </div>
+                      <span style={{ fontSize: 12, color: "#8a6a22", fontWeight: 600 }}>↓</span>
+                    </a>
+                  ))}
+                </div>
+              )}
+
+              {/* KYC / AML */}
+              {tab === "kyc" && (
+                <div style={{ maxWidth: 560 }}>
+                  {!kyc ? (
+                    <p style={{ color: MUTED, fontSize: 13.5 }}>No KYC/AML submission on file yet for this client.</p>
+                  ) : (
+                    <>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                        <span style={{
+                          fontSize: 12, fontWeight: 700, padding: "4px 12px", borderRadius: 999,
+                          background: kyc.status === "approved" ? "rgba(47,122,82,.16)" : kyc.status === "flagged" ? "rgba(122,32,32,.12)" : "rgba(200,166,92,.2)",
+                          color: kyc.status === "approved" ? "#2f7a52" : kyc.status === "flagged" ? "#7a2020" : "#8a6a22",
+                        }}>{kyc.status}</span>
+                        {kyc.submitted_at && <span style={{ fontSize: 12, color: MUTED }}>Submitted {fmtDate(kyc.submitted_at)}</span>}
+                      </div>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
+                        {[["Full legal name", kyc.full_legal_name], ["Date of birth", kyc.date_of_birth], ["Nationality", kyc.nationality],
+                          ["ID type", kyc.id_type], ["ID number", kyc.id_number], ["Address", kyc.address],
+                          ["Source of funds", kyc.source_of_funds], ["Politically exposed?", kyc.is_pep ? "Yes" : "No"]].map(([label, val]) => (
+                          <div key={label as string}>
+                            <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 2 }}>{label}</div>
+                            <div style={{ fontSize: 13.5, color: INK }}>{val || "—"}</div>
+                          </div>
+                        ))}
+                      </div>
+                      {kyc.is_pep && kyc.pep_details && (
+                        <div style={{ marginBottom: 16, padding: "10px 14px", background: "#fbeaea", borderRadius: 10, fontSize: 13 }}>
+                          <strong>PEP details:</strong> {kyc.pep_details}
+                        </div>
+                      )}
+                      {kyc.id_doc_url && (
+                        <a href={kyc.id_doc_url} target="_blank" rel="noopener" style={{ display: "inline-block", marginBottom: 18, fontSize: 13, color: "#8a6a22", fontWeight: 600 }}>
+                          📄 View identity document
+                        </a>
+                      )}
+                      <div style={S.field}>
+                        <label style={S.fieldLabel}>Reviewer notes</label>
+                        <textarea value={kycNotes} onChange={e => setKycNotes(e.target.value)} rows={3}
+                          style={{ ...S.fieldInput, resize: "vertical", fontFamily: "inherit" }} placeholder="Notes for the compliance file…" />
+                      </div>
+                      <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
+                        <button onClick={() => void reviewKyc("approved")}
+                          style={{ background: "#2f7a52", color: "#fff", border: "none", borderRadius: 10, padding: "10px 20px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+                          Approve
+                        </button>
+                        <button onClick={() => void reviewKyc("flagged")}
+                          style={{ background: "#fff", color: "#7a2020", border: "1px solid #eecaca", borderRadius: 10, padding: "10px 20px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+                          Flag for review
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* PAYMENTS */}
+              {tab === "payments" && (
+                <div style={{ maxWidth: 620 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 18, padding: 14, background: "#faf8f2", borderRadius: 12 }}>
+                    <select value={payKind} onChange={e => setPayKind(e.target.value)} style={{ fontSize: 12.5, padding: "8px 10px", borderRadius: 8, border: "1px solid rgba(18,16,12,.2)" }}>
+                      {["deposit","balance","fee","disbursement","other"].map(k => <option key={k} value={k}>{k}</option>)}
+                    </select>
+                    <input value={payAmount} onChange={e => setPayAmount(e.target.value)} placeholder="Amount (JMD)" type="number"
+                      style={{ fontSize: 12.5, padding: "8px 10px", borderRadius: 8, border: "1px solid rgba(18,16,12,.2)" }} />
+                    <select value={payMethod} onChange={e => setPayMethod(e.target.value)} style={{ fontSize: 12.5, padding: "8px 10px", borderRadius: 8, border: "1px solid rgba(18,16,12,.2)" }}>
+                      {["wipay","bank_transfer","cash","cheque","other"].map(k => <option key={k} value={k}>{k.replace("_"," ")}</option>)}
+                    </select>
+                    <input value={payRef} onChange={e => setPayRef(e.target.value)} placeholder="Reference (optional)"
+                      style={{ fontSize: 12.5, padding: "8px 10px", borderRadius: 8, border: "1px solid rgba(18,16,12,.2)" }} />
+                    <button onClick={() => void addPayment()} disabled={addingPayment || !payAmount.trim()}
+                      style={{ gridColumn: "1/-1", background: GREEN, color: CREAM, border: "none", borderRadius: 8, padding: "9px", fontSize: 12.5, fontWeight: 700, cursor: "pointer" }}>
+                      {addingPayment ? "Recording…" : "Record payment"}
+                    </button>
+                  </div>
+                  {payments.length === 0 ? (
+                    <p style={{ color: MUTED, fontSize: 13 }}>No payments recorded yet.</p>
+                  ) : payments.map(p => (
+                    <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 10, border: "1px solid rgba(18,16,12,.1)", background: "#fff", marginBottom: 8 }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 13.5, fontWeight: 700, color: INK, textTransform: "capitalize" }}>
+                          {p.kind} · JMD {p.amount_jmd.toLocaleString()}
+                        </div>
+                        <div style={{ fontSize: 11.5, color: MUTED }}>
+                          {p.method?.replace("_"," ") || "—"}{p.reference ? ` · ${p.reference}` : ""} · {fmtDate(p.created_at)}
+                        </div>
+                        {p.receipt_number && <div style={{ fontSize: 11.5, color: "#2f7a52", fontWeight: 600, marginTop: 2 }}>Receipt {p.receipt_number}</div>}
+                      </div>
+                      <span style={{
+                        fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 999,
+                        background: p.status === "confirmed" ? "rgba(47,122,82,.16)" : "rgba(200,166,92,.2)",
+                        color: p.status === "confirmed" ? "#2f7a52" : "#8a6a22",
+                      }}>{p.status}</span>
+                      {p.status === "pending" && (
+                        <button onClick={() => void confirmPayment(p.id)}
+                          style={{ background: "#2f7a52", color: "#fff", border: "none", borderRadius: 8, padding: "7px 14px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+                          Confirm
+                        </button>
+                      )}
+                      {p.status === "confirmed" && !p.receipt_issued && (
+                        <button onClick={() => void issueReceipt(p.id)}
+                          style={{ background: GOLD, color: GREEN, border: "none", borderRadius: 8, padding: "7px 14px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+                          Issue receipt
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        ) : null}
+      </div>
+
+      {/* New matter modal */}
+      {openMatter && (
+        <div onClick={() => setOpenMatter(false)}
+          style={{ position: "fixed", inset: 0, background: "rgba(16,33,28,.5)", display: "grid", placeItems: "center", padding: 16, zIndex: 60 }}>
+          <div onClick={e => e.stopPropagation()}
+            style={{ background: "#fff", borderRadius: 18, padding: 28, width: "100%", maxWidth: 420 }}>
+            <div style={{ fontFamily: "var(--serif, Georgia, serif)", fontWeight: 700, fontSize: 19, color: GREEN, marginBottom: 18 }}>Open New Matter</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <label style={{ display: "flex", flexDirection: "column", gap: 5, position: "relative" }}>
+                <span style={{ fontSize: 11.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".07em", color: MUTED }}>Client</span>
+                {newClientId ? (
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 12px", borderRadius: 10, border: `1px solid ${GOLD}`, background: "#fffbf0" }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: INK }}>{newClientLabel}</span>
+                    <button type="button" onClick={() => { setNewClientId(""); setNewClientLabel(""); setClientQuery(""); }}
+                      style={{ background: "none", border: "none", cursor: "pointer", color: MUTED, fontSize: 16 }}>×</button>
+                  </div>
+                ) : (
+                  <>
+                    <input value={clientQuery} onChange={e => setClientQuery(e.target.value)}
+                      placeholder="Search by client email…"
+                      style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid rgba(18,16,12,.2)", fontSize: 13, outline: "none" }} />
+                    {clientHits.length > 0 && (
+                      <div style={{ position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, background: "#fff", border: "1px solid rgba(18,16,12,.15)", borderRadius: 10, boxShadow: "0 6px 18px rgba(0,0,0,.1)", zIndex: 5, maxHeight: 180, overflowY: "auto" }}>
+                        {clientHits.map(c => (
+                          <button key={c.id} type="button" onClick={() => { setNewClientId(c.id); setNewClientLabel(`${c.full_name} <${c.email}>`); setClientHits([]); }}
+                            style={{ display: "block", width: "100%", textAlign: "left", padding: "9px 12px", border: "none", background: "none", cursor: "pointer", fontSize: 13 }}>
+                            <div style={{ fontWeight: 600, color: INK }}>{c.full_name}</div>
+                            <div style={{ fontSize: 11.5, color: MUTED }}>{c.email}</div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </label>
+              <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                <span style={{ fontSize: 11.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".07em", color: MUTED }}>Workflow</span>
+                <select value={newWorkflow} onChange={e => setNewWorkflow(e.target.value)}
+                  style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid rgba(18,16,12,.2)", fontSize: 13, outline: "none" }}>
+                  <option value="property_purchase">Property Purchase</option>
+                  <option value="property_sale">Property Sale</option>
+                  <option value="general">General</option>
+                </select>
+              </label>
+              <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                <span style={{ fontSize: 11.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".07em", color: MUTED }}>Matter title (optional)</span>
+                <input value={newTitle} onChange={e => setNewTitle(e.target.value)}
+                  placeholder="e.g. 12 Kingsway Ave purchase"
+                  style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid rgba(18,16,12,.2)", fontSize: 13, outline: "none" }} />
+              </label>
+            </div>
+            <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
+              <button onClick={() => void createMatter()} disabled={creating || !newClientId.trim()}
+                style={{ flex: 1, background: GREEN, color: CREAM, border: "none", borderRadius: 10, padding: "12px", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+                {creating ? "Creating…" : "Open Matter"}
+              </button>
+              <button onClick={() => setOpenMatter(false)}
+                style={{ padding: "12px 20px", border: "1px solid rgba(18,16,12,.2)", borderRadius: 10, background: "#fff", fontSize: 13, cursor: "pointer" }}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

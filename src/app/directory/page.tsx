@@ -59,9 +59,9 @@ export default async function DirectoryPage({
     <div className="dir-wrap">
       <section className="dir-hero">
         <div className="eyebrow">H.O.M.E.™ by Ferguson Law · Find a Professional</div>
-        <h1>Trusted real estate agents, surveyors, valuators &amp; loan officers — in one place.</h1>
+        <h1>Trusted real estate agents, surveyors, valuators &amp; bankers — in one place.</h1>
         <p>
-          Browse vetted Jamaican property professionals listed with Ferguson Law. Real estate agents showcase listings; loan officers, valuators and land surveyors publish their services and fees.
+          Browse vetted Jamaican property professionals listed with Ferguson Law. Real estate agents showcase listings; bankers, valuators and land surveyors publish their services and fees.
         </p>
         <div className="cta-row">
           <Link className="btn btn-gold" href="/directory/join">
@@ -88,7 +88,7 @@ export default async function DirectoryPage({
         <div className="dir-empty">
           <h3>No professionals listed yet</h3>
           <p>
-            Be the first — real estate agents, loan officers, valuators and surveyors can{" "}
+            Be the first — real estate agents, bankers, valuators and surveyors can{" "}
             <Link href="/directory/join" style={{ color: "var(--ink)", fontWeight: 600 }}>
               list their business
             </Link>{" "}
@@ -105,7 +105,7 @@ export default async function DirectoryPage({
                 ? `${n} listing${n === 1 ? "" : "s"}`
                 : `${n} service${n === 1 ? "" : "s"}`;
             return (
-              <Link key={p.id} className="pcard" href={`/directory/${p.slug}`}>
+              <Link key={p.id} className="pcard" href={`/directory/${p.slug || p.id}`}>
                 <div
                   className="thumb"
                   style={thumb ? { backgroundImage: `url("${thumb}")` } : undefined}

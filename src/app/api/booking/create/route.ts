@@ -25,6 +25,7 @@ import { serviceDuration, TZ } from "@/lib/booking/availability";
 import { isServiceId, serviceTitle } from "@/lib/booking/services";
 import { fullWhenLabel, dateChipLabel, slotTimeLabel } from "@/lib/booking/format";
 import { sendBookingConfirmation } from "@/lib/email/send";
+import { notifyOwenWA } from "@/lib/wa-notify";
 import { consultFee } from "@/lib/payments/fees";
 import { createPayment } from "@/lib/payments/wipay";
 
@@ -209,6 +210,24 @@ export async function POST(req: NextRequest) {
         /* swallow — booking already saved */
       }
 
+      // Notify Owen (email + WhatsApp)
+      try {
+        const resendKey = process.env.RESEND_API_KEY;
+        if (resendKey) {
+          await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              from: "Ferguson Law <info@fergusonlawja.com>",
+              to: ["owen@fergusonlawja.com"],
+              subject: `New Booking (Free): ${name} — ${title}`,
+              text: `New free booking\n\nRef: ${ref}\nName: ${name}\nEmail: ${email}\nPhone: ${phone}\nService: ${title}\nWhen: ${whenLabel}\nNotes: ${notes || "—"}`,
+            }),
+          });
+        }
+      } catch { /* swallow */ }
+      void notifyOwenWA(`📅 *New booking (free)*\n${name} · ${title}\n${whenLabel}\n${email} · ${phone}\nRef: ${ref}`);
+
       return Response.json({ ok: true, ref, free: true, startsAtLabel: whenLabel });
     }
 
@@ -280,6 +299,24 @@ export async function POST(req: NextRequest) {
     });
 
     // NO confirmation email here — it fires on the return once paid.
+    // Notify Owen of pending booking
+    try {
+      const resendKey = process.env.RESEND_API_KEY;
+      if (resendKey) {
+        await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            from: "Ferguson Law <info@fergusonlawja.com>",
+            to: ["owen@fergusonlawja.com"],
+            subject: `New Booking: ${name} — ${title}`,
+            text: `New booking (payment pending)\n\nRef: ${ref}\nName: ${name}\nEmail: ${email}\nPhone: ${phone}\nService: ${title}\nWhen: ${whenLabel}\nAmount: JMD ${amount.toLocaleString()}\nNotes: ${notes || "—"}`,
+          }),
+        });
+      }
+    } catch { /* swallow */ }
+    void notifyOwenWA(`📅 *New booking (pending payment)*\n${name} · ${title}\n${whenLabel}\nJ$${amount.toLocaleString()} · ${email}\nRef: ${ref}`);
+
     return Response.json({ ok: true, ref, payUrl, amount });
   } catch {
     return Response.json(

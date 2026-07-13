@@ -18,12 +18,12 @@ const EXPLAINERS = [
 const PER_PAGE = 8;
 
 const TAG_COLORS: Record<string, string> = {
-  Buying: "#1e8a4a",
-  Selling: "#c07000",
-  Financing: "#2257b0",
-  Costs: "#7c2aa0",
-  Strategy: "#9a5c10",
-  "Due Diligence": "#5a6e2a",
+  Buying: "#1a3828",
+  Selling: "#a8853e",
+  Financing: "#2d4a38",
+  Costs: "#3d2f1a",
+  Strategy: "#6b4f1c",
+  "Due Diligence": "#243d2e",
 };
 
 export default function GuidesClient() {

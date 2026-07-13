@@ -54,21 +54,21 @@ export interface Service {
 
 export const PARTNER_KINDS: { value: PartnerKind; label: string; blurb: string }[] = [
   { value: "realtor",      label: "Real Estate Agent", blurb: "Post property listings with photos & video." },
-  { value: "loan_officer", label: "Loan Officer",      blurb: "Post your mortgage & loan products and rates." },
+  { value: "loan_officer", label: "Banker", blurb: "Post your mortgage & loan products and rates." },
   { value: "valuator",     label: "Valuator",          blurb: "Post your valuation services and fees." },
   { value: "surveyor",     label: "Land Surveyor",     blurb: "Post your survey services and fees." },
 ];
 
 export const KIND_LABEL: Record<PartnerKind, string> = {
   realtor:      "Real Estate Agent",
-  loan_officer: "Loan Officer",
+  loan_officer: "Banker",
   valuator:     "Valuator",
   surveyor:     "Land Surveyor",
 };
 
 export const KIND_PLURAL: Record<PartnerKind, string> = {
   realtor:      "Real Estate Agents",
-  loan_officer: "Loan Officers",
+  loan_officer: "Bankers",
   valuator:     "Valuators",
   surveyor:     "Land Surveyors",
 };

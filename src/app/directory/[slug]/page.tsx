@@ -5,6 +5,7 @@ import {
   KIND_LABEL, PARTNER_DISCLAIMER,
   type Partner, type Listing, type Service,
 } from "@/lib/partners/constants";
+import ListingCards from "./ListingCards";
 
 export const dynamic = "force-dynamic";
 
@@ -76,26 +77,7 @@ export default async function PartnerProfilePage({
         <section style={{ marginTop: 26 }}>
           <h2 style={{ fontFamily: "var(--serif)", color: "var(--ink)", fontSize: 24, marginBottom: 14 }}>Listings</h2>
           {(listings as Listing[] | null)?.length ? (
-            <div className="listing-grid">
-              {(listings as Listing[]).map((l) => {
-                const cover = (l.media ?? []).find((m) => m.type === "image");
-                return (
-                  <article className="listing-card" key={l.id}>
-                    <div className="lmedia" style={cover ? { backgroundImage: `url("${cover.url}")` } : undefined} />
-                    <div className="lbody">
-                      <h4>{l.title}</h4>
-                      <div style={{ fontSize: 13, color: "var(--muted)" }}>
-                        {l.parish || "—"}
-                        {l.bedrooms ? ` · ${l.bedrooms} bd` : ""}
-                        {l.bathrooms ? ` · ${l.bathrooms} ba` : ""}
-                      </div>
-                      {l.price_jmd ? <div className="price">J${l.price_jmd.toLocaleString()}</div> : null}
-                      {l.description && <p style={{ fontSize: 13.5, color: "var(--text)", marginTop: 6 }}>{l.description}</p>}
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
+            <ListingCards listings={listings as Listing[]} />
           ) : (
             <p style={{ color: "var(--muted)" }}>No listings published yet.</p>
           )}

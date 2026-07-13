@@ -1,13 +1,31 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { registerPartner, PARTNER_KINDS, type PartnerKind } from "@/lib/partners/api";
 
+const VALID_KINDS = PARTNER_KINDS.map((k) => k.value) as PartnerKind[];
+
 export default function JoinPage() {
+  return (
+    <Suspense>
+      <JoinForm />
+    </Suspense>
+  );
+}
+
+function JoinForm() {
   const router = useRouter();
-  const [kind, setKind] = useState<PartnerKind>("realtor");
+  const params = useSearchParams();
+  const kindParam = params.get("kind") as PartnerKind | null;
+  const [kind, setKind] = useState<PartnerKind>(
+    kindParam && VALID_KINDS.includes(kindParam) ? kindParam : "realtor"
+  );
+
+  useEffect(() => {
+    if (kindParam && VALID_KINDS.includes(kindParam)) setKind(kindParam);
+  }, [kindParam]);
   const [business, setBusiness] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

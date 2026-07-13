@@ -21,7 +21,7 @@ export type SendResult =
   | { ok: true; id?: string }
   | { ok: false; error: string };
 
-const FROM = process.env.FERGUSON_FROM_EMAIL || "Ferguson Law <noreply@fergusonlawja.com>";
+const FROM = process.env.FERGUSON_FROM_EMAIL || "Ferguson Law <contact@fergusonlawja.com>";
 
 export async function sendBookingConfirmation(
   args: SendBookingConfirmationArgs,
@@ -41,7 +41,7 @@ export async function sendBookingConfirmation(
     const { data, error } = await resend.emails.send({
       from: FROM,
       to,
-      subject: `Your appointment is confirmed — ${ref}`,
+      subject: `Consultation booked — ${ref}`,
       html: buildHtml({ firstName, service, whenLabel, ref, wa }),
       text: buildText({ firstName, service, whenLabel, ref, wa }),
     });
@@ -173,14 +173,18 @@ function buildHtml(d: {
     d.body ||
     `Thank you for choosing Ferguson Law. Your consultation is reserved. We'll send a secure intake link before we meet.`;
   return `<!doctype html>
-<html>
-  <body style="margin:0;padding:0;background:#f4f1ec;font-family:Georgia,'Times New Roman',serif;color:#1c1c1c;">
+<html lang="en">
+  <head>
+    <meta name="color-scheme" content="light" />
+    <meta name="supported-color-schemes" content="light" />
+  </head>
+  <body style="margin:0;padding:0;background:#f4f1ec !important;font-family:Georgia,'Times New Roman',serif;color:#1c1c1c;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f1ec;padding:40px 16px;">
       <tr>
         <td align="center">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e7e1d6;">
             <tr>
-              <td style="background:#10211c;padding:34px 40px;text-align:left;">
+              <td style="background:#10211c !important;padding:34px 40px;text-align:left;mso-padding-alt:34px 40px;">
                 <div style="font-size:13px;letter-spacing:3px;text-transform:uppercase;color:#c9a86a;">Ferguson Law</div>
                 <div style="font-size:13px;color:#9fb3ab;margin-top:6px;">${SITE.tagline}</div>
               </td>

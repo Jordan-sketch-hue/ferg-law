@@ -30,11 +30,13 @@ export async function GET(req: NextRequest) {
   // All structurally-valid slots for the window, ignoring bookings.
   const allSlots = generateSlots(service, now, days, []);
 
-  // Look up taken times in the same window (PII-free RPC). Best-effort: if it
-  // fails, we still return the open grid rather than blocking the UI.
-  const taken = await fetchTakenSlots(allSlots);
+  // Look up taken times + admin-blocked dates. Best-effort on both.
+  const [taken, blockedDates] = await Promise.all([
+    fetchTakenSlots(allSlots),
+    fetchBlockedDates(now, days),
+  ]);
 
-  const grouped = groupByDay(allSlots, taken);
+  const grouped = groupByDay(allSlots, taken, blockedDates);
 
   return Response.json(
     { tz: TZ, service, days: grouped },
@@ -71,7 +73,23 @@ async function fetchTakenSlots(allSlots: string[]): Promise<Set<number>> {
   return set;
 }
 
-function groupByDay(allSlots: string[], taken: Set<number>): Day[] {
+async function fetchBlockedDates(now: Date, days: number): Promise<Set<string>> {
+  const set = new Set<string>();
+  try {
+    const supabase = createAdminClient();
+    const from = now.toISOString().slice(0, 10);
+    const to = new Date(now.getTime() + days * 86400000).toISOString().slice(0, 10);
+    const { data } = await supabase
+      .from("fl_blocked_dates")
+      .select("blocked_date")
+      .gte("blocked_date", from)
+      .lte("blocked_date", to);
+    for (const r of (data ?? []) as { blocked_date: string }[]) set.add(r.blocked_date);
+  } catch { /* swallow */ }
+  return set;
+}
+
+function groupByDay(allSlots: string[], taken: Set<number>, blockedDates: Set<string>): Day[] {
   const map = new Map<string, Day>();
   for (const iso of allSlots) {
     const key = dayKey(iso);
@@ -80,10 +98,11 @@ function groupByDay(allSlots: string[], taken: Set<number>): Day[] {
       day = { date: key, label: dateChipLabel(iso), slots: [] };
       map.set(key, day);
     }
+    const dateBlocked = blockedDates.has(key);
     day.slots.push({
       iso,
       label: slotTimeLabel(iso),
-      available: !taken.has(new Date(iso).getTime()),
+      available: !taken.has(new Date(iso).getTime()) && !dateBlocked,
     });
   }
   return [...map.values()];

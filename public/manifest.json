@@ -1,0 +1,15 @@
+{
+  "name": "Ferguson Law — Back Office",
+  "short_name": "FL Admin",
+  "description": "Ferguson Law consultation CRM and back office",
+  "start_url": "/admin",
+  "display": "standalone",
+  "background_color": "#102A1E",
+  "theme_color": "#102A1E",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/favicon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "/favicon-32.png",  "sizes": "32x32",  "type": "image/png" },
+    { "src": "/favicon.ico",     "sizes": "any" }
+  ]
+}

@@ -508,7 +508,7 @@ export default function BookingModal({
                     className="so-ic"
                     dangerouslySetInnerHTML={{ __html: svc.ic }}
                   />
-                  <span>
+                  <span className="so-txt">
                     <span className="so-t">{svc.t}</span>
                     <br />
                     <span className="so-s">{svc.s}</span>

@@ -110,6 +110,8 @@ toward your legal fees once you engage Ferguson Law.
 ## General Jamaica home-buying basics (general information only)
 - NHT (National Housing Trust): contributors can access NHT mortgage benefits toward a
   home purchase; eligibility depends on your contribution history.
+  NHT loan limits (subject to eligibility): 1 applicant up to J$5 million; 2 co-applicants
+  up to J$7 million; 3 co-applicants up to J$10.5 million.
 - Down payment: buyers typically put down a down payment (often around 10% of the price) when the
   sale agreement is signed; exact amounts vary by transaction.
 - Conveyancing steps (typical): sale agreement → down payment → searches and due diligence →
@@ -161,8 +163,7 @@ A: I can share general information, but specific legal advice needs an attorney 
    reviewed your matter. I'm happy to book a consultation or connect you with the team.
 
 Q: Can I speak to a real person?
-A: Absolutely — just say the word and I'll bring a member of the team into this chat, or you
-   can reach us on WhatsApp at ${SITE.whatsappDisplay}.
+A: Of course — reach us directly on WhatsApp at ${SITE.whatsappDisplay}, or book a consultation and the firm will call you back.
 
 ## Full FAQ (firm services, fees, and overseas property buyers)
 The following are the firm's published answers. Use them verbatim where possible.

@@ -5,7 +5,7 @@ import "./directory.css";
 export const metadata: Metadata = {
   title: "Find a Professional — H.O.M.E.™ by Ferguson Law",
   description:
-    "Browse vetted Jamaican real estate agents, loan officers, land surveyors and valuators in the H.O.M.E.™ professional directory by Ferguson Law.",
+    "Browse vetted Jamaican real estate agents, bankers, land surveyors and valuators in the H.O.M.E.™ professional directory by Ferguson Law.",
 };
 
 export default function DirectoryLayout({ children }: { children: React.ReactNode }) {
@@ -20,6 +20,9 @@ export default function DirectoryLayout({ children }: { children: React.ReactNod
           <nav className="dir-nav">
             <a href="/">Home</a>
             <a href="/directory">Browse</a>
+            <a className="ghost hide-sm" href="/directory/client-login">
+              Client portal
+            </a>
             <a className="ghost hide-sm" href="/directory/login">
               Partner login
             </a>

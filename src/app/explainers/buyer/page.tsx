@@ -195,6 +195,9 @@ export default function GuidePage() {
           </div>
         </div>
       </article>
+      <p style={{ fontSize: ".75rem", color: "var(--muted)", textAlign: "center", padding: "1rem 1.5rem 0", borderTop: "1px solid var(--line)", marginTop: "2rem" }}>
+        H.O.M.E.™ Buyer&apos;s Guide. Informational only, not legal advice. © Ferguson Law. All rights reserved.
+      </p>
       <Footer />
     </BookingProvider>
   );

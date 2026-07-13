@@ -10,12 +10,12 @@ export const SITE = {
   founderRole: "Founder & Principal Attorney-at-Law",
   // Contact
   whatsappNumber: "18763200235", // wa.me format (no +)
-  whatsappDisplay: "+1 (876) 320-0235",
+  whatsappDisplay: "(876) 320-0235",
   email: "contact@fergusonlawja.com",
   website: "https://fergusonlawja.com",
   // External products
-  homeApp: "https://homeready-jamaica-redesign.vercel.app/",
-  ebookApp: "https://ferguson-home-ebook.vercel.app/",
+  homeApp: "https://home.fergusonlawja.com/",
+  ebookApp: "https://home.fergusonlawja.com/ebook",
 } as const;
 
 /** Consultation fee in whole JMD. */

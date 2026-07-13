@@ -67,5 +67,7 @@ export function applyContent(content: Record<string, unknown>) {
           (el as HTMLVideoElement).load();
         }
       }
+      // Reveal after src is set (prevents stale-image flash)
+      (el as HTMLElement).style.opacity = "1";
     });
 }
