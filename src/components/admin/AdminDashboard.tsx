@@ -10,7 +10,7 @@
  * and pass it as the `p_token` arg on every call.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { formatInTimeZone } from "date-fns-tz";
 import { createClient } from "@/lib/supabase/client";
 import { waLink } from "@/lib/site";
@@ -135,6 +135,19 @@ interface Matter {
   notes: string | null;
   closed_at: string | null;
   meta: Record<string, unknown>;
+}
+
+interface Milestone {
+  id: string;
+  matter_id: string;
+  phase_order: number;
+  phase_name: string;
+  name: string;
+  status: string;
+  due_at: string | null;
+  completed_at: string | null;
+  notes: string | null;
+  created_at: string;
 }
 
 interface Availability {
@@ -517,7 +530,7 @@ export default function AdminDashboard() {
           {tab === "leads" && <LeadsTable leads={leads} loading={loading} onStatus={setLeadStatus} />}
           {tab === "bookings" && <BookingsTable appts={appts} loading={loading} onStatus={setApptStatus} />}
           {tab === "clients" && <ClientsTab clients={clients} matters={matters} loading={loading} onUpsert={upsertClient} />}
-          {tab === "matters" && <MattersTab matters={matters} loading={loading} onStage={setMatterStage} onPayment={setMatterPayment} />}
+          {tab === "matters" && <MattersTab matters={matters} loading={loading} token={token!} onStage={setMatterStage} onPayment={setMatterPayment} />}
           {tab === "calendar" && <CalendarTab appts={appts} />}
           {tab === "chats" && <ChatsTable convos={convos} loading={loading} />}
           {tab === "invites" && <InvitesPanel invites={invites} loading={loading} onCreate={createInvite} />}
@@ -771,28 +784,228 @@ const PRIORITY_COLORS: Record<string, React.CSSProperties> = {
   urgent: { background: "rgba(190,60,60,.14)", color: "#a23b3b" },
 };
 
-function MattersTab({ matters, loading, onStage, onPayment }: {
-  matters: Matter[]; loading: boolean;
+const MILESTONE_STATUSES = ["pending", "in_progress", "done", "blocked", "skipped"];
+const MILESTONE_STATUS_COLOR: Record<string, React.CSSProperties> = {
+  pending:     { background: "rgba(18,16,12,.08)", color: "#555" },
+  in_progress: { background: "rgba(200,166,92,.22)", color: "#7a5c10" },
+  done:        { background: "rgba(16,42,30,.12)", color: GREEN },
+  blocked:     { background: "rgba(190,60,60,.12)", color: "#a23b3b" },
+  skipped:     { background: "rgba(18,16,12,.06)", color: "#999" },
+};
+
+function MilestonePanel({ matterId, token }: { matterId: string; token: string }) {
+  const supabase = createClient();
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
+  const [form, setForm] = useState({ title: "", description: "", status: "pending", due_date: "" });
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editStatus, setEditStatus] = useState("");
+
+  const load = useCallback(async () => {
+    const { data } = await supabase.rpc("fl_admin_matter_milestones", { p_token: token, p_matter_id: matterId });
+    if (data) setMilestones(data as Milestone[]);
+  }, [matterId, token]);
+
+  useEffect(() => { load(); }, [load]);
+
+  async function addMilestone() {
+    if (!form.title.trim()) return;
+    setBusy(true);
+    await supabase.rpc("fl_admin_upsert_milestone", {
+      p_token: token,
+      p_id: null,
+      p_matter_id: matterId,
+      p_title: form.title.trim(),
+      p_description: form.description.trim() || null,
+      p_status: form.status,
+      p_due_date: form.due_date || null,
+      p_notify_client: false,
+    });
+    setForm({ title: "", description: "", status: "pending", due_date: "" });
+    setAddOpen(false);
+    await load();
+    setBusy(false);
+  }
+
+  async function updateStatus(id: string, status: string) {
+    await supabase.rpc("fl_admin_upsert_milestone", {
+      p_token: token,
+      p_id: id,
+      p_matter_id: matterId,
+      p_title: milestones.find(m => m.id === id)?.name ?? "",
+      p_description: milestones.find(m => m.id === id)?.notes ?? null,
+      p_status: status,
+      p_due_date: milestones.find(m => m.id === id)?.due_at?.slice(0, 10) ?? null,
+      p_notify_client: false,
+    });
+    setMilestones(prev => prev.map(m => m.id === id ? { ...m, status } : m));
+    setEditId(null);
+  }
+
+  async function deleteMilestone(id: string) {
+    await supabase.rpc("fl_admin_delete_milestone", { p_token: token, p_id: id });
+    setMilestones(prev => prev.filter(m => m.id !== id));
+  }
+
+  // Group by phase
+  const phases = Array.from(new Set(milestones.map(m => m.phase_name)))
+    .sort((a, b) => {
+      const ao = milestones.find(m => m.phase_name === a)?.phase_order ?? 0;
+      const bo = milestones.find(m => m.phase_name === b)?.phase_order ?? 0;
+      return ao - bo;
+    });
+
+  const pct = milestones.length ? Math.round(milestones.filter(m => m.status === "done").length / milestones.length * 100) : 0;
+
+  return (
+    <div style={{ padding: "16px 20px 20px", background: "#f7f4ed", borderTop: "1px solid rgba(18,16,12,.09)" }}>
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, gap: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <span style={{ fontWeight: 700, fontSize: ".84rem", color: GREEN, textTransform: "uppercase", letterSpacing: ".06em" }}>Milestones</span>
+          {milestones.length > 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <div style={{ width: 100, height: 6, borderRadius: 99, background: "rgba(18,16,12,.12)", overflow: "hidden" }}>
+                <div style={{ width: `${pct}%`, height: "100%", background: GREEN, borderRadius: 99, transition: "width .3s" }} />
+              </div>
+              <span style={{ fontSize: ".74rem", color: MUTED }}>{pct}%</span>
+            </div>
+          )}
+        </div>
+        <button type="button" onClick={() => setAddOpen(o => !o)}
+          style={{ padding: "5px 14px", borderRadius: 999, border: "none", background: GREEN, color: CREAM, fontSize: ".78rem", fontWeight: 600, cursor: "pointer" }}>
+          {addOpen ? "Cancel" : "+ Add"}
+        </button>
+      </div>
+
+      {/* Add form */}
+      {addOpen && (
+        <div style={{ background: "#fff", border: "1px solid rgba(18,16,12,.12)", borderRadius: 10, padding: 14, marginBottom: 14, display: "grid", gap: 10 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div>
+              <div style={S.fieldLabel}>Title *</div>
+              <input style={{ ...S.fieldInput, width: "100%", boxSizing: "border-box" as const }} value={form.title}
+                onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="e.g. Title search" />
+            </div>
+            <div>
+              <div style={S.fieldLabel}>Due date</div>
+              <input type="date" style={{ ...S.fieldInput, width: "100%", boxSizing: "border-box" as const }} value={form.due_date}
+                onChange={e => setForm(f => ({ ...f, due_date: e.target.value }))} />
+            </div>
+          </div>
+          <div>
+            <div style={S.fieldLabel}>Notes</div>
+            <input style={{ ...S.fieldInput, width: "100%", boxSizing: "border-box" as const }} value={form.description}
+              onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Optional note" />
+          </div>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <select style={S.select} value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value }))}>
+              {MILESTONE_STATUSES.map(s => <option key={s} value={s}>{s.replace("_", " ")}</option>)}
+            </select>
+            <button type="button" onClick={addMilestone} disabled={busy || !form.title.trim()}
+              style={{ padding: "7px 18px", borderRadius: 999, border: "none", background: GOLD, color: GREEN, fontWeight: 700, fontSize: ".82rem", cursor: "pointer", opacity: busy || !form.title.trim() ? 0.5 : 1 }}>
+              Save
+            </button>
+          </div>
+        </div>
+      )}
+
+      {milestones.length === 0 && !addOpen && (
+        <p style={{ color: MUTED, fontSize: ".82rem", margin: 0 }}>No milestones yet. Add one above to start tracking progress.</p>
+      )}
+
+      {/* Grouped milestone list */}
+      {phases.length > 0 && phases.map(phase => (
+        <div key={phase} style={{ marginBottom: 12 }}>
+          {phases.length > 1 && (
+            <div style={{ fontSize: ".7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".07em", color: MUTED, marginBottom: 6 }}>{phase}</div>
+          )}
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {milestones.filter(m => m.phase_name === phase).map(m => (
+              <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 10, background: "#fff", border: "1px solid rgba(18,16,12,.09)", borderRadius: 8, padding: "8px 12px" }}>
+                {/* Status dot / checkbox */}
+                <button type="button"
+                  onClick={() => updateStatus(m.id, m.status === "done" ? "pending" : "done")}
+                  style={{ width: 18, height: 18, borderRadius: "50%", border: `2px solid ${m.status === "done" ? GREEN : "rgba(18,16,12,.25)"}`, background: m.status === "done" ? GREEN : "transparent", cursor: "pointer", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
+                  {m.status === "done" && <span style={{ color: "#fff", fontSize: 10, fontWeight: 900 }}>✓</span>}
+                </button>
+
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 600, fontSize: ".84rem", color: m.status === "done" ? MUTED : INK, textDecoration: m.status === "done" ? "line-through" : "none" }}>{m.name}</div>
+                  {m.notes && <div style={{ fontSize: ".75rem", color: MUTED, marginTop: 1 }}>{m.notes}</div>}
+                </div>
+
+                {m.due_at && (
+                  <span style={{ fontSize: ".72rem", color: MUTED, whiteSpace: "nowrap" }}>
+                    due {new Date(m.due_at).toLocaleDateString("en-JM", { day: "numeric", month: "short" })}
+                  </span>
+                )}
+
+                {editId === m.id ? (
+                  <select style={{ ...S.select, fontSize: ".74rem" }} value={editStatus}
+                    onChange={e => setEditStatus(e.target.value)}
+                    onBlur={() => { if (editStatus !== m.status) updateStatus(m.id, editStatus); else setEditId(null); }}>
+                    {MILESTONE_STATUSES.map(s => <option key={s} value={s}>{s.replace("_", " ")}</option>)}
+                  </select>
+                ) : (
+                  <button type="button"
+                    onClick={() => { setEditId(m.id); setEditStatus(m.status); }}
+                    style={{ ...MILESTONE_STATUS_COLOR[m.status] ?? MILESTONE_STATUS_COLOR.pending, fontSize: ".7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".04em", padding: "3px 9px", borderRadius: 999, border: "none", cursor: "pointer", whiteSpace: "nowrap" }}>
+                    {m.status.replace("_", " ")}
+                  </button>
+                )}
+
+                <button type="button" onClick={() => deleteMilestone(m.id)}
+                  style={{ background: "none", border: "none", color: MUTED, cursor: "pointer", fontSize: ".8rem", padding: "0 2px", lineHeight: 1 }} title="Delete">×</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function MattersTab({ matters, loading, token, onStage, onPayment }: {
+  matters: Matter[]; loading: boolean; token: string;
   onStage: (id: string, s: string) => void; onPayment: (id: string, s: string) => void;
 }) {
+  const [expanded, setExpanded] = useState<string | null>(null);
+
   if (loading && matters.length === 0) return <Empty>Loading matters…</Empty>;
   if (matters.length === 0) return <Empty>No matters yet. They are created automatically when consultations are booked via the chatbot.</Empty>;
   return (
     <div style={S.tableWrap}>
       <table style={S.table}>
-        <thead><tr><Th>Ref</Th><Th>Client</Th><Th>Type</Th><Th>Stage</Th><Th>Priority</Th><Th>Payment</Th><Th>Description</Th><Th>Date</Th></tr></thead>
+        <thead><tr><Th>Ref</Th><Th>Client</Th><Th>Type</Th><Th>Stage</Th><Th>Priority</Th><Th>Payment</Th><Th>Description</Th><Th>Date</Th><Th> </Th></tr></thead>
         <tbody>
           {matters.map((m) => (
-            <tr key={m.id} style={S.tr}>
-              <Td><span style={S.mono}>{m.ref}</span></Td>
-              <Td><span style={S.strong}>{m.client_name || "—"}</span></Td>
-              <Td><TypeBadge type={m.matter_type} colors={MATTER_TYPE_COLORS} /></Td>
-              <Td><StatusSelect value={m.stage} options={MATTER_STAGES} onChange={(v) => onStage(m.id, v)} /></Td>
-              <Td><TypeBadge type={m.priority} colors={PRIORITY_COLORS} /></Td>
-              <Td><StatusSelect value={m.payment_status} options={PAYMENT_STATUSES} onChange={(v) => onPayment(m.id, v)} /></Td>
-              <Td><div style={S.msgCell} title={m.description ?? ""}>{m.description || "—"}</div></Td>
-              <Td>{fmtDate(m.created_at)}</Td>
-            </tr>
+            <React.Fragment key={m.id}>
+              <tr style={S.tr}>
+                <Td><span style={S.mono}>{m.ref}</span></Td>
+                <Td><span style={S.strong}>{m.client_name || "—"}</span></Td>
+                <Td><TypeBadge type={m.matter_type} colors={MATTER_TYPE_COLORS} /></Td>
+                <Td><StatusSelect value={m.stage} options={MATTER_STAGES} onChange={(v) => onStage(m.id, v)} /></Td>
+                <Td><TypeBadge type={m.priority} colors={PRIORITY_COLORS} /></Td>
+                <Td><StatusSelect value={m.payment_status} options={PAYMENT_STATUSES} onChange={(v) => onPayment(m.id, v)} /></Td>
+                <Td><div style={S.msgCell} title={m.description ?? ""}>{m.description || "—"}</div></Td>
+                <Td>{fmtDate(m.created_at)}</Td>
+                <Td>
+                  <button type="button" onClick={() => setExpanded(e => e === m.id ? null : m.id)}
+                    style={{ background: "none", border: "none", cursor: "pointer", color: GREEN, fontWeight: 700, fontSize: ".8rem", padding: "2px 6px" }}>
+                    {expanded === m.id ? "▲ milestones" : "▼ milestones"}
+                  </button>
+                </Td>
+              </tr>
+              {expanded === m.id && (
+                <tr style={{ background: "#f7f4ed" }}>
+                  <td colSpan={9} style={{ padding: 0 }}>
+                    <MilestonePanel matterId={m.id} token={token} />
+                  </td>
+                </tr>
+              )}
+            </React.Fragment>
           ))}
         </tbody>
       </table>
