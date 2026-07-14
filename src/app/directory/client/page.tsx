@@ -109,7 +109,7 @@ function groupMilestones(milestones: Milestone[]) {
 
 export default function ClientDashboardPage() {
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = typeof window !== "undefined" ? createClient() : null as any;
 
   const [matters, setMatters] = useState<Matter[]>([]);
   const [selected, setSelected] = useState<string | null>(null);

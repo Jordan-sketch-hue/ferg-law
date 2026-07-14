@@ -16,12 +16,11 @@ export default function ClientLoginPage() {
   const [err, setErr] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
 
-  const supabase = createClient();
-
   async function onLogin(e: React.FormEvent) {
     e.preventDefault();
     setErr(null);
     setBusy(true);
+    const supabase = createClient();
     const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     if (error) { setErr(error.message); setBusy(false); return; }
     router.push("/directory/client");
@@ -33,6 +32,7 @@ export default function ClientLoginPage() {
     if (!name.trim()) return setErr("Please enter your name.");
     if (password.length < 6) return setErr("Password must be at least 6 characters.");
     setBusy(true);
+    const supabase = createClient();
     const { data, error } = await supabase.auth.signUp({
       email: email.trim(),
       password,
