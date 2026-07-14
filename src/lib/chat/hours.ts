@@ -12,7 +12,9 @@ export function isAfterHours(): boolean {
   }).formatToParts(now);
 
   const weekday = parts.find((p) => p.type === "weekday")?.value ?? "";
-  const hour = parseInt(parts.find((p) => p.type === "hour")?.value ?? "0", 10);
+  // hour12: false can return "24" for midnight in some runtimes — normalise it
+  const raw = parts.find((p) => p.type === "hour")?.value ?? "0";
+  const hour = parseInt(raw, 10) % 24;
 
   const isWeekend = weekday === "Sat" || weekday === "Sun";
   const outsideHours = hour < 9 || hour >= 17;
@@ -20,14 +22,34 @@ export function isAfterHours(): boolean {
   return isWeekend || outsideHours;
 }
 
-export function afterHoursReply(whatsappDisplay: string): string {
-  return `Thank you for reaching out to Ferguson Law!
+function jamaicaTimeLabel(): string {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Jamaica",
+    weekday: "long",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(new Date());
+}
 
-Our office hours are **Monday – Friday, 9:00 AM – 5:00 PM** (Jamaica time). Your message has been received and we'll get back to you first thing during business hours.
+/**
+ * channel: "whatsapp" | "web" | string
+ * If the client is already on WhatsApp we don't tell them to WhatsApp us.
+ */
+export function afterHoursReply(whatsappDisplay: string, channel = "web"): string {
+  const time = jamaicaTimeLabel();
+  const onWhatsApp = channel === "whatsapp";
 
-In the meantime you can:
-• **Book a consultation** — choose a time that works for you using the button above
-• **WhatsApp us** at ${whatsappDisplay} for anything urgent
+  const lines = [
+    `Thanks for your message! You reached us at **${time}** (Jamaica time) — outside our office hours.`,
+    ``,
+    `We've received your message and will follow up **Monday – Friday between 9:00 AM and 5:00 PM**. We'll get back to you then.`,
+  ];
 
-We look forward to speaking with you soon!`;
+  if (!onWhatsApp) {
+    lines.push(``);
+    lines.push(`For anything urgent in the meantime, WhatsApp us at ${whatsappDisplay}.`);
+  }
+
+  return lines.join("\n");
 }

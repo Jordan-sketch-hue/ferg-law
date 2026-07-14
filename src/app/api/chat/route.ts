@@ -48,14 +48,16 @@ export async function POST(req: Request) {
 
     // --- Load or create the conversation -----------------------------------
     let status: string = "bot";
+    let channel: string = "web";
     if (conversationId) {
       const { data } = await supabase
         .from("chat_conversations")
-        .select("id, status")
+        .select("id, status, channel")
         .eq("id", conversationId)
         .maybeSingle();
       if (data) {
         status = data.status as string;
+        channel = (data.channel as string) ?? "web";
       } else {
         conversationId = undefined; // stale id — start fresh
       }
@@ -73,7 +75,7 @@ export async function POST(req: Request) {
           visitor_phone:
             typeof visitor.phone === "string" ? visitor.phone : null,
         })
-        .select("id, status")
+        .select("id, status, channel")
         .single();
       if (error || !data) {
         return Response.json(
@@ -88,6 +90,7 @@ export async function POST(req: Request) {
       }
       conversationId = data.id;
       status = data.status;
+      channel = (data.channel as string) ?? "web";
     }
 
     if (!conversationId) {
@@ -134,7 +137,7 @@ export async function POST(req: Request) {
 
     // --- After-hours auto-reply (Mon–Fri 9am–5pm Jamaica time) -------------
     if (incoming && isAfterHours()) {
-      const reply = afterHoursReply(SITE.whatsappDisplay);
+      const reply = afterHoursReply(SITE.whatsappDisplay, channel);
       await supabase.from("chat_messages").insert({
         conversation_id: cid,
         role: "bot",
