@@ -49,8 +49,8 @@ export async function POST(req: NextRequest) {
   <hr style="border:none;border-top:1px solid #ece6da;margin:0 0 18px;"/>
   <p style="font-size:13px;color:#9a9a9a;margin:0;">
     Ferguson Law · Jamaica<br/>
-    <a href="tel:+18768405862" style="color:#9a8f7a;">+1 876 840 5862</a> ·
-    <a href="mailto:owen@fergusonlawja.com" style="color:#9a8f7a;">owen@fergusonlawja.com</a>
+    <a href="tel:+18763200235" style="color:#9a8f7a;">(876) 320-0235</a> ·
+    <a href="mailto:contact@fergusonlawja.com" style="color:#9a8f7a;">contact@fergusonlawja.com</a>
   </p>
 </td></tr>
 </table></td></tr></table>

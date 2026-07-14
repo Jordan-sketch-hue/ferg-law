@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     template: "%s | Ferguson Law Jamaica",
   },
   description:
-    "Ferguson Law — Jamaica's trusted property law firm. Conveyancing, title transfers, real estate transactions and legal guidance for buyers, sellers and the diaspora. Based in Kingston.",
+    "Ferguson Law — your trusted legal partner. Conveyancing, title transfers, real estate transactions and legal guidance for buyers, sellers and the diaspora. Based in Kingston.",
   keywords: [
     "Jamaica property lawyer",
     "conveyancing Jamaica",
@@ -62,7 +62,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Ferguson Law | Jamaica Property Lawyer & Conveyancing",
     description:
-      "Jamaica's trusted conveyancing firm — guiding buyers, sellers and the diaspora from first question to registered title. Based in Kingston.",
+      "Your trusted legal partner — guiding buyers, sellers and the diaspora from first question to registered title. Based in Kingston.",
     type: "website",
     url: "https://fergusonlawja.com",
     siteName: "Ferguson Law",
@@ -72,7 +72,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Ferguson Law | Jamaica Property Lawyer & Conveyancing",
     description:
-      "Jamaica's trusted conveyancing firm — guiding buyers, sellers and the diaspora from first question to registered title.",
+      "Your trusted legal partner — guiding buyers, sellers and the diaspora from first question to registered title.",
   },
   alternates: {
     canonical: "https://fergusonlawja.com",

@@ -748,7 +748,7 @@ function Empty({ children }: { children: React.ReactNode }) { return <div style=
 // ---------------------------------------------------------------------------
 const TEMPLATES: Record<string, (name: string, service?: string) => string> = {
   acknowledge: (name) =>
-    `Dear ${name.split(" ")[0]},\n\nThank you for reaching out to Ferguson Law. We have received your enquiry and a member of our team will be in touch shortly.\n\nShould you have any immediate questions, please feel free to reply to this email or reach us via WhatsApp at +1 876 840 5862.\n\nWarm regards,\nFerguson Law`,
+    `Dear ${name.split(" ")[0]},\n\nThank you for reaching out to Ferguson Law. We have received your enquiry and a member of our team will be in touch shortly.\n\nShould you have any immediate questions, please feel free to reply to this email or reach us via WhatsApp at (876) 320-0235.\n\nWarm regards,\nFerguson Law`,
   followup: (name, service) =>
     `Dear ${name.split(" ")[0]},\n\nI hope this message finds you well. I wanted to follow up on your recent enquiry${service ? ` regarding ${service}` : ""} and ensure that we have addressed all of your questions.\n\nPlease do not hesitate to reach out if you need any further assistance. We look forward to working with you.\n\nWarm regards,\nFerguson Law`,
   booking: (name) =>
