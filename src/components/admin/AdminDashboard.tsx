@@ -616,13 +616,13 @@ export default function AdminDashboard() {
 
       <div style={S.body}>
         <div style={S.statStrip}>
-          <Stat label="New leads" value={newLeads} urgent />
-          <Stat label="Pending bookings" value={pendingBookings} urgent />
-          <Stat label="Open chats" value={openChats} urgent />
-          <Stat label="Clients" value={clients.length} />
-          <Stat label="Matters" value={matters.length} />
-          <Stat label="Pending partners" value={pendingListings} />
-          <Stat label="H.O.M.E. pending" value={homePros.length} urgent />
+          <Stat label="New leads" value={newLeads} urgent onClick={() => setTab("leads")} />
+          <Stat label="Pending bookings" value={pendingBookings} urgent onClick={() => setTab("bookings")} />
+          <Stat label="Open chats" value={openChats} urgent onClick={() => setTab("chats")} />
+          <Stat label="Clients" value={clients.length} onClick={() => setTab("clients")} />
+          <Stat label="Matters" value={matters.length} onClick={() => setTab("matters")} />
+          <Stat label="Pending partners" value={pendingListings} onClick={() => setTab("directory")} />
+          <Stat label="H.O.M.E. pending" value={homePros.length} urgent onClick={() => setTab("home_pros")} />
         </div>
 
         {loadError && <div style={S.errorBar}>{loadError}</div>}
@@ -670,8 +670,8 @@ export default function AdminDashboard() {
               onTab={setTab}
             />
           )}
-          {tab === "leads" && <LeadsTable leads={leads} loading={loading} token={token} onStatus={setLeadStatus} />}
-          {tab === "bookings" && <BookingsTable appts={appts} loading={loading} token={token ?? ""} onStatus={setApptStatus} />}
+          {tab === "leads" && <LeadsTable leads={leads} loading={loading} token={token} onStatus={setLeadStatus} onDelete={(id) => setLeads((prev) => prev.filter((l) => l.id !== id))} />}
+          {tab === "bookings" && <BookingsTable appts={appts} loading={loading} token={token ?? ""} onStatus={setApptStatus} onDelete={(id) => setAppts((prev) => prev.filter((a) => a.id !== id))} />}
           {tab === "clients" && <ClientsTab clients={clients} matters={matters} loading={loading} onUpsert={upsertClient} />}
           {tab === "matters" && <MattersTab matters={matters} loading={loading} token={token ?? ""} onStage={setMatterStage} onPayment={setMatterPayment} />}
           {tab === "cms" && token && <CmsTab token={token} />}
@@ -695,11 +695,15 @@ export default function AdminDashboard() {
 // Sub-components
 // ===========================================================================
 
-function Stat({ label, value, urgent }: { label: string; value: number; urgent?: boolean }) {
+function Stat({ label, value, urgent, onClick }: { label: string; value: number; urgent?: boolean; onClick?: () => void }) {
   return (
-    <div style={{ ...S.statCard, ...(urgent && value > 0 ? { background: "rgba(200,166,92,.12)" } : null) }}>
+    <div
+      style={{ ...S.statCard, ...(urgent && value > 0 ? { background: "rgba(200,166,92,.12)" } : null), ...(onClick ? { cursor: "pointer" } : null) }}
+      onClick={onClick}
+      role={onClick ? "button" : undefined}
+    >
       <div style={{ ...S.statValue, ...(urgent && value > 0 ? { color: GOLD } : null) }}>{value}</div>
-      <div style={S.statLabel}>{label}</div>
+      <div style={{ ...S.statLabel, ...(onClick ? { textDecoration: "underline dotted", textUnderlineOffset: 3 } : null) }}>{label}</div>
     </div>
   );
 }
@@ -857,8 +861,13 @@ function EmailComposeModal({ to, toName, defaultSubject, context, service, token
 // ---------------------------------------------------------------------------
 // Leads
 // ---------------------------------------------------------------------------
-function LeadsTable({ leads, loading, token, onStatus }: { leads: Lead[]; loading: boolean; token: string; onStatus: (id: string, s: string) => void }) {
+function LeadsTable({ leads, loading, token, onStatus, onDelete }: { leads: Lead[]; loading: boolean; token: string; onStatus: (id: string, s: string) => void; onDelete: (id: string) => void }) {
   const [composing, setComposing] = useState<Lead | null>(null);
+  async function deleteLead(id: string, name: string | null) {
+    if (!confirm(`Delete lead "${name || "this lead"}"? This cannot be undone.`)) return;
+    await supabase.rpc("fl_admin_delete_lead", { p_token: token, p_id: id });
+    onDelete(id);
+  }
   if (loading && leads.length === 0) return <Empty>Loading leads…</Empty>;
   if (leads.length === 0) return <Empty>No leads yet.</Empty>;
   return (
@@ -893,7 +902,10 @@ function LeadsTable({ leads, loading, token, onStatus }: { leads: Lead[]; loadin
                           ✓ Contacted
                         </button>
                       )}
-                      {!l.email && !wa && l.status !== "new" && <span style={S.muted}>—</span>}
+                      <button type="button" onClick={() => void deleteLead(l.id, l.name ?? null)}
+                        style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.25)" }}>
+                        Delete
+                      </button>
                     </div>
                   </Td>
                 </tr>
@@ -920,8 +932,13 @@ function LeadsTable({ leads, loading, token, onStatus }: { leads: Lead[]; loadin
 // ---------------------------------------------------------------------------
 // Bookings
 // ---------------------------------------------------------------------------
-function BookingsTable({ appts, loading, token, onStatus }: { appts: Appointment[]; loading: boolean; token: string; onStatus: (id: string, s: string) => void }) {
+function BookingsTable({ appts, loading, token, onStatus, onDelete }: { appts: Appointment[]; loading: boolean; token: string; onStatus: (id: string, s: string) => void; onDelete: (id: string) => void }) {
   const [composing, setComposing] = useState<Appointment | null>(null);
+  async function deleteAppt(id: string, name: string | null) {
+    if (!confirm(`Delete booking for "${name || "this client"}"? This cannot be undone.`)) return;
+    await supabase.rpc("fl_admin_delete_appointment", { p_token: token, p_id: id });
+    onDelete(id);
+  }
   if (loading && appts.length === 0) return <Empty>Loading bookings…</Empty>;
   if (appts.length === 0) return <Empty>No bookings yet.</Empty>;
   return (
@@ -939,12 +956,18 @@ function BookingsTable({ appts, loading, token, onStatus }: { appts: Appointment
                 <Td><span style={S.mono}>{a.ref || "—"}</span></Td>
                 <Td><StatusSelect value={a.status} options={APPT_STATUSES} onChange={(v) => onStatus(a.id, v)} /></Td>
                 <Td>
-                  {a.email ? (
-                    <button type="button" onClick={() => setComposing(a)}
-                      style={{ ...S.waBtn, background: "#c9a86a", color: "#10211c" }}>
-                      Email
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    {a.email && (
+                      <button type="button" onClick={() => setComposing(a)}
+                        style={{ ...S.waBtn, background: "#c9a86a", color: "#10211c" }}>
+                        Email
+                      </button>
+                    )}
+                    <button type="button" onClick={() => void deleteAppt(a.id, a.name ?? null)}
+                      style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.25)" }}>
+                      Delete
                     </button>
-                  ) : <span style={S.muted}>—</span>}
+                  </div>
                 </Td>
               </tr>
             ))}
