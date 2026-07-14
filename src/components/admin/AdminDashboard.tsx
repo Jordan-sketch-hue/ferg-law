@@ -439,7 +439,7 @@ export default function AdminDashboard() {
     });
     if (error) return error.message || "Could not save client.";
     const list = await supabase.rpc("fl_admin_clients", { p_token: token });
-    setClients((list.data as Client[] | null) ?? []);
+    if (list.data) setClients(list.data as Client[]);
     return null;
   }, [token]);
 
