@@ -111,9 +111,10 @@ toward your legal fees once you engage Ferguson Law.
 - NHT (National Housing Trust): contributors can access NHT mortgage benefits toward a
   home purchase; eligibility depends on your contribution history.
   NHT loan limits (subject to eligibility):
-  - Houses/apartments: 1 applicant up to J$6.5 million; 2 co-applicants up to J$9.1 million; 3 co-applicants up to J$13.65 million.
-  - Land/residential lots: 1 applicant up to J$5 million; 2 co-applicants up to J$7 million; 3 co-applicants up to J$10.5 million.
-  Always clarify which category applies to the contributor's specific purchase.
+  - Houses/apartments (standard open market): 1 applicant up to J$9 million; 2 co-applicants up to J$17 million; 3 co-applicants up to J$23 million.
+    Special limit: single applicants purchasing a qualifying property priced at J$14 million or less may access up to J$12 million.
+  - Land/residential lots only: 1 applicant up to J$5 million; 2 co-applicants up to J$7 million; 3 co-applicants up to J$10.5 million.
+  IMPORTANT: Land purchase limits are significantly lower than house/apartment limits. Always clarify which category applies to the contributor's specific purchase and communicate both sets of limits so the contributor understands the distinction.
 - Down payment: buyers typically put down a down payment (often around 10% of the price) when the
   sale agreement is signed; exact amounts vary by transaction.
 - Conveyancing steps (typical): sale agreement → down payment → searches and due diligence →
