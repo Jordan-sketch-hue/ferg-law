@@ -472,6 +472,42 @@ export default function AdminDashboard() {
     return null;
   }, [token]);
 
+  const deleteClient = useCallback(async (id: string) => {
+    if (!token || !confirm("Delete this client and all their matters? This cannot be undone.")) return;
+    const supabase = createClient();
+    await supabase.rpc("fl_admin_delete_client", { p_token: token, p_id: id });
+    setClients((prev) => prev.filter((c) => c.id !== id));
+    setMatters((prev) => prev.filter((m) => m.client_id !== id));
+  }, [token]);
+
+  const deleteLead = useCallback(async (id: string) => {
+    if (!token || !confirm("Delete this lead? This cannot be undone.")) return;
+    const supabase = createClient();
+    await supabase.rpc("fl_admin_delete_lead", { p_token: token, p_id: id });
+    setLeads((prev) => prev.filter((l) => l.id !== id));
+  }, [token]);
+
+  const cancelBooking = useCallback(async (id: string) => {
+    if (!token || !confirm("Cancel this booking?")) return;
+    const supabase = createClient();
+    await supabase.rpc("fl_admin_cancel_booking", { p_token: token, p_id: id });
+    setAppts((prev) => prev.map((a) => a.id === id ? { ...a, status: "cancelled" } : a));
+  }, [token]);
+
+  const deactivateInvite = useCallback(async (code: string) => {
+    if (!token) return;
+    const supabase = createClient();
+    await supabase.rpc("fl_admin_deactivate_invite", { p_token: token, p_code: code });
+    setInvites((prev) => prev.map((iv) => iv.code === code ? { ...iv, active: false } : iv));
+  }, [token]);
+
+  const deleteInvite = useCallback(async (code: string) => {
+    if (!token || !confirm("Delete this invite link?")) return;
+    const supabase = createClient();
+    await supabase.rpc("fl_admin_delete_invite", { p_token: token, p_code: code });
+    setInvites((prev) => prev.filter((iv) => iv.code !== code));
+  }, [token]);
+
   // H.O.M.E. data — fetched directly from the homeready Supabase project
   useEffect(() => {
     if (!token) return;
@@ -670,15 +706,15 @@ export default function AdminDashboard() {
               onTab={setTab}
             />
           )}
-          {tab === "leads" && <LeadsTable leads={leads} loading={loading} token={token} onStatus={setLeadStatus} onDelete={(id) => setLeads((prev) => prev.filter((l) => l.id !== id))} />}
-          {tab === "bookings" && <BookingsTable appts={appts} loading={loading} token={token ?? ""} onStatus={setApptStatus} onDelete={(id) => setAppts((prev) => prev.filter((a) => a.id !== id))} />}
-          {tab === "clients" && <ClientsTab clients={clients} matters={matters} loading={loading} onUpsert={upsertClient} />}
+          {tab === "leads" && <LeadsTable leads={leads} loading={loading} token={token} onStatus={setLeadStatus} onDelete={deleteLead} />}
+          {tab === "bookings" && <BookingsTable appts={appts} loading={loading} token={token ?? ""} onStatus={setApptStatus} onCancel={cancelBooking} />}
+          {tab === "clients" && <ClientsTab clients={clients} matters={matters} loading={loading} onUpsert={upsertClient} onDelete={deleteClient} />}
           {tab === "matters" && <MattersTab matters={matters} loading={loading} token={token ?? ""} onStage={setMatterStage} onPayment={setMatterPayment} />}
           {tab === "cms" && token && <CmsTab token={token} />}
           {tab === "calendar" && <CalendarTab appts={appts} />}
           {tab === "chats" && <ChatsTable convos={convos} loading={loading} />}
           {tab === "email" && token && <EmailTab emails={emails} token={token} onMarkRead={(id) => setEmails(prev => prev.map(e => e.id === id ? { ...e, read: true } : e))} />}
-          {tab === "invites" && <InvitesPanel invites={invites} loading={loading} onCreate={createInvite} />}
+          {tab === "invites" && <InvitesPanel invites={invites} loading={loading} onCreate={createInvite} onDeactivate={deactivateInvite} onDelete={deleteInvite} />}
           {tab === "directory" && <ListingsPanel listings={listings} loading={loading} onStatus={setListingStatus} />}
           {tab === "availability" && <AvailabilityTab availability={availability} onSave={saveAvailability} token={token ?? ""} />}
           {tab === "home_pros" && <HomeProsPanel pros={homePros} loading={homeLoading} onApprove={approveHomePro} />}
@@ -902,8 +938,9 @@ function LeadsTable({ leads, loading, token, onStatus, onDelete }: { leads: Lead
                           ✓ Contacted
                         </button>
                       )}
-                      <button type="button" onClick={() => void deleteLead(l.id, l.name ?? null)}
-                        style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.25)" }}>
+                      {!l.email && !wa && l.status !== "new" && <span style={S.muted}>—</span>}
+                      <button type="button" onClick={() => onDelete(l.id)}
+                        style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)" }}>
                         Delete
                       </button>
                     </div>
@@ -932,13 +969,8 @@ function LeadsTable({ leads, loading, token, onStatus, onDelete }: { leads: Lead
 // ---------------------------------------------------------------------------
 // Bookings
 // ---------------------------------------------------------------------------
-function BookingsTable({ appts, loading, token, onStatus, onDelete }: { appts: Appointment[]; loading: boolean; token: string; onStatus: (id: string, s: string) => void; onDelete: (id: string) => void }) {
+function BookingsTable({ appts, loading, token, onStatus, onCancel }: { appts: Appointment[]; loading: boolean; token: string; onStatus: (id: string, s: string) => void; onCancel: (id: string) => void }) {
   const [composing, setComposing] = useState<Appointment | null>(null);
-  async function deleteAppt(id: string, name: string | null) {
-    if (!confirm(`Delete booking for "${name || "this client"}"? This cannot be undone.`)) return;
-    await createClient().rpc("fl_admin_delete_appointment", { p_token: token, p_id: id });
-    onDelete(id);
-  }
   if (loading && appts.length === 0) return <Empty>Loading bookings…</Empty>;
   if (appts.length === 0) return <Empty>No bookings yet.</Empty>;
   return (
@@ -963,10 +995,13 @@ function BookingsTable({ appts, loading, token, onStatus, onDelete }: { appts: A
                         Email
                       </button>
                     )}
-                    <button type="button" onClick={() => void deleteAppt(a.id, a.name ?? null)}
-                      style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.25)" }}>
-                      Delete
-                    </button>
+                    {a.status !== "cancelled" && (
+                      <button type="button" onClick={() => onCancel(a.id)}
+                        style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)" }}>
+                        Cancel
+                      </button>
+                    )}
+                    {!a.email && a.status === "cancelled" && <span style={S.muted}>—</span>}
                   </div>
                 </Td>
               </tr>
@@ -1002,9 +1037,10 @@ const CLIENT_STATUS_COLORS: Record<string, React.CSSProperties> = {
   prospect: { background: "rgba(200,166,92,.22)", color: "#8a6a22" },
 };
 
-function ClientsTab({ clients, matters, loading, onUpsert }: {
+function ClientsTab({ clients, matters, loading, onUpsert, onDelete }: {
   clients: Client[]; matters: Matter[]; loading: boolean;
   onUpsert: (f: { name: string; email: string; phone: string; type: string; country: string; notes: string }) => Promise<string | null>;
+  onDelete: (id: string) => void;
 }) {
   const [name, setName] = useState(""); const [email, setEmail] = useState("");
   const [phone, setPhone] = useState(""); const [type, setType] = useState("individual");
@@ -1058,7 +1094,7 @@ function ClientsTab({ clients, matters, loading, onUpsert }: {
         clients.length === 0 ? <Empty>No clients yet. Add one above.</Empty> : (
           <div style={S.tableWrap}>
             <table style={S.table}>
-              <thead><tr><Th>Name</Th><Th>Contact</Th><Th>Type</Th><Th>Country</Th><Th>Status</Th><Th>Source</Th><Th>Date</Th><Th>Matters</Th></tr></thead>
+              <thead><tr><Th>Name</Th><Th>Contact</Th><Th>Type</Th><Th>Country</Th><Th>Status</Th><Th>Source</Th><Th>Date</Th><Th>Matters</Th><Th>Actions</Th></tr></thead>
               <tbody>
                 {clients.map((c) => {
                   const cms = clientMatters(c.id);
@@ -1080,10 +1116,16 @@ function ClientsTab({ clients, matters, loading, onUpsert }: {
                             </button>
                           ) : <span style={S.muted}>—</span>}
                         </Td>
+                        <Td>
+                          <button type="button" onClick={() => onDelete(c.id)}
+                            style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)" }}>
+                            Delete
+                          </button>
+                        </Td>
                       </tr>
                       {expanded === c.id && cms.map((m) => (
                         <tr key={m.id} style={{ ...S.tr, background: "#faf8f2" }}>
-                          <td colSpan={8} style={{ ...S.td, paddingLeft: 32 }}>
+                          <td colSpan={9} style={{ ...S.td, paddingLeft: 32 }}>
                             <span style={S.mono}>{m.ref}</span>
                             {" · "}<strong>{m.matter_type || "matter"}</strong>
                             {" · stage: "}{m.stage}
@@ -2247,9 +2289,11 @@ function inviteLink(code: string): string {
   return `${origin}/?invite=${encodeURIComponent(code)}`;
 }
 
-function InvitesPanel({ invites, loading, onCreate }: {
+function InvitesPanel({ invites, loading, onCreate, onDeactivate, onDelete }: {
   invites: Invite[]; loading: boolean;
   onCreate: (args: { code: string; label: string; maxUses: number; expires: string | null }) => Promise<string | null>;
+  onDeactivate: (code: string) => void;
+  onDelete: (code: string) => void;
 }) {
   const [label, setLabel] = useState(""); const [code, setCode] = useState("");
   const [maxUses, setMaxUses] = useState("1"); const [expires, setExpires] = useState("");
@@ -2302,7 +2346,7 @@ function InvitesPanel({ invites, loading, onCreate }: {
         invites.length === 0 ? <Empty>No invites yet. Create one above to share a free-booking link.</Empty> : (
           <div style={S.tableWrap}>
             <table style={S.table}>
-              <thead><tr><Th>Code</Th><Th>Label</Th><Th>Uses</Th><Th>Expires</Th><Th>Active</Th><Th>Share link</Th></tr></thead>
+              <thead><tr><Th>Code</Th><Th>Label</Th><Th>Uses</Th><Th>Expires</Th><Th>Active</Th><Th>Share link</Th><Th>Actions</Th></tr></thead>
               <tbody>
                 {invites.map((iv) => {
                   const spent = iv.used_count >= iv.max_uses;
@@ -2316,6 +2360,20 @@ function InvitesPanel({ invites, loading, onCreate }: {
                       <Td>{iv.expires_at ? fmtDate(iv.expires_at) : "Never"}</Td>
                       <Td><span style={{ ...S.statusBadge, ...(live ? { background: "rgba(47,122,82,.16)", color: "#2f7a52" } : { background: "rgba(18,16,12,.1)", color: MUTED }) }}>{live ? "live" : expired ? "expired" : spent ? "spent" : "off"}</span></Td>
                       <Td><button type="button" onClick={() => copy(iv.code)} style={S.waBtn}>{copied === iv.code ? "Copied ✓" : "Copy link"}</button></Td>
+                      <Td>
+                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                          {iv.active && (
+                            <button type="button" onClick={() => onDeactivate(iv.code)}
+                              style={{ ...S.waBtn, background: "rgba(200,166,92,.15)", color: "#8a6a22", border: "1px solid rgba(200,166,92,.3)" }}>
+                              Deactivate
+                            </button>
+                          )}
+                          <button type="button" onClick={() => onDelete(iv.code)}
+                            style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)" }}>
+                            Delete
+                          </button>
+                        </div>
+                      </Td>
                     </tr>
                   );
                 })}
