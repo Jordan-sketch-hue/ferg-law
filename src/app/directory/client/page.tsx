@@ -134,7 +134,7 @@ export default function ClientDashboardPage() {
       setClientName(user.user_metadata?.full_name || user.email?.split("@")[0] || "");
       setClientId(user.id);
 
-      const { data: mattersRaw } = await supabase
+      const { data: mattersRaw } = await supabase()
         .from("fl_client_matters")
         .select(`
           id, matter_type, workflow_type, current_phase, status, kyc_status, title, notes, created_at,
