@@ -79,6 +79,20 @@ export default function Nav() {
 
           <div className="nav-cta">
             <a
+              href="/directory/client-login"
+              className="btn btn-ghost nav-portal"
+              style={{ fontSize: ".78rem", fontWeight: 600 }}
+            >
+              Client portal
+            </a>
+            <a
+              href="/directory/login"
+              className="btn btn-ghost nav-portal"
+              style={{ fontSize: ".78rem", fontWeight: 600 }}
+            >
+              Partner login
+            </a>
+            <a
               className="btn btn-wa nav-wa"
               href={waLink()}
               target="_blank"
@@ -152,6 +166,14 @@ export default function Nav() {
             {l.label}
           </a>
         ))}
+        <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+          <a href="/directory/client-login" className="btn btn-ghost" style={{ flex: 1, textAlign: "center", fontSize: ".85rem" }} onClick={closeMenu}>
+            Client portal
+          </a>
+          <a href="/directory/login" className="btn btn-ghost" style={{ flex: 1, textAlign: "center", fontSize: ".85rem" }} onClick={closeMenu}>
+            Partner login
+          </a>
+        </div>
         <div className="drawer-cta">
           <a
             className="btn btn-wa"
