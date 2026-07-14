@@ -137,7 +137,7 @@ export async function POST(req: Request) {
 
     // --- After-hours auto-reply (Mon–Fri 9am–5pm Jamaica time) -------------
     if (incoming && isAfterHours()) {
-      const reply = afterHoursReply(SITE.whatsappDisplay, channel);
+      const reply = afterHoursReply();
       await supabase.from("chat_messages").insert({
         conversation_id: cid,
         role: "bot",

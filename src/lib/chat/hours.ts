@@ -36,20 +36,12 @@ function jamaicaTimeLabel(): string {
  * channel: "whatsapp" | "web" | string
  * If the client is already on WhatsApp we don't tell them to WhatsApp us.
  */
-export function afterHoursReply(whatsappDisplay: string, channel = "web"): string {
+export function afterHoursReply(): string {
   const time = jamaicaTimeLabel();
-  const onWhatsApp = channel === "whatsapp";
 
-  const lines = [
+  return [
     `Thanks for your message! You reached us at **${time}** (Jamaica time) — outside our office hours.`,
     ``,
     `We've received your message and will follow up **Monday – Friday between 9:00 AM and 5:00 PM**. We'll get back to you then.`,
-  ];
-
-  if (!onWhatsApp) {
-    lines.push(``);
-    lines.push(`For anything urgent in the meantime, WhatsApp us at ${whatsappDisplay}.`);
-  }
-
-  return lines.join("\n");
+  ].join("\n");
 }
