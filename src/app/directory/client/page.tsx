@@ -111,7 +111,8 @@ function groupMilestones(milestones: Milestone[]) {
 
 export default function ClientDashboardPage() {
   const router = useRouter();
-  const supabase = createClient();
+  const _sbRef = useRef<ReturnType<typeof createClient> | null>(null);
+  const supabase = () => { if (!_sbRef.current) _sbRef.current = createClient(); return _sbRef.current; };
 
   const [matters, setMatters] = useState<Matter[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
@@ -128,7 +129,7 @@ export default function ClientDashboardPage() {
 
   useEffect(() => {
     (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase().auth.getUser();
       if (!user) { router.push("/directory/client-login"); return; }
       setClientName(user.user_metadata?.full_name || user.email?.split("@")[0] || "");
       setClientId(user.id);
@@ -145,9 +146,9 @@ export default function ClientDashboardPage() {
       const matterIds = (mattersRaw ?? []).map((m: Record<string, unknown>) => m.id as string);
 
       const [{ data: milestonesRaw }, { data: messagesRaw }, { data: filesRaw }] = await Promise.all([
-        matterIds.length ? supabase.from("fl_matter_milestones").select("*").in("matter_id", matterIds).order("phase_order").order("created_at") : { data: [] },
-        matterIds.length ? supabase.from("fl_matter_messages").select("*").in("matter_id", matterIds).order("created_at") : { data: [] },
-        matterIds.length ? supabase.from("fl_matter_files").select("*").in("matter_id", matterIds).order("created_at", { ascending: false }) : { data: [] },
+        matterIds.length ? supabase().from("fl_matter_milestones").select("*").in("matter_id", matterIds).order("phase_order").order("created_at") : { data: [] },
+        matterIds.length ? supabase().from("fl_matter_messages").select("*").in("matter_id", matterIds).order("created_at") : { data: [] },
+        matterIds.length ? supabase().from("fl_matter_files").select("*").in("matter_id", matterIds).order("created_at", { ascending: false }) : { data: [] },
       ]);
 
       const built = (mattersRaw ?? []).map((m: Record<string, unknown>) => {
@@ -187,7 +188,7 @@ export default function ClientDashboardPage() {
   async function sendMessage() {
     if (!msgText.trim() || !activeMatter) return;
     setSending(true);
-    const { data } = await supabase.from("fl_matter_messages").insert({
+    const { data } = await supabase().from("fl_matter_messages").insert({
       matter_id: activeMatter.id,
       sender_id: clientId,
       sender_type: "client",
@@ -215,12 +216,12 @@ export default function ClientDashboardPage() {
 
     const ext = file.name.split(".").pop();
     const path = `matters/${activeMatter.id}/${Date.now()}.${ext}`;
-    const { error: upErr } = await supabase.storage.from("fl-matter-files").upload(path, file);
+    const { error: upErr } = await supabase().storage.from("fl-matter-files").upload(path, file);
     if (upErr) { alert("Upload failed: " + upErr.message); setUploading(false); return; }
 
-    const { data: { publicUrl } } = supabase.storage.from("fl-matter-files").getPublicUrl(path);
+    const { data: { publicUrl } } = supabase().storage.from("fl-matter-files").getPublicUrl(path);
 
-    const { data } = await supabase.from("fl_matter_files").insert({
+    const { data } = await supabase().from("fl_matter_files").insert({
       matter_id: activeMatter.id,
       uploader_id: clientId,
       uploader_type: "client",
@@ -245,7 +246,7 @@ export default function ClientDashboardPage() {
   }
 
   async function onSignOut() {
-    await supabase.auth.signOut();
+    await supabase().auth.signOut();
     router.push("/directory/client-login");
   }
 
