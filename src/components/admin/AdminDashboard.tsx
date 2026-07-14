@@ -865,7 +865,7 @@ function LeadsTable({ leads, loading, token, onStatus, onDelete }: { leads: Lead
   const [composing, setComposing] = useState<Lead | null>(null);
   async function deleteLead(id: string, name: string | null) {
     if (!confirm(`Delete lead "${name || "this lead"}"? This cannot be undone.`)) return;
-    await supabase.rpc("fl_admin_delete_lead", { p_token: token, p_id: id });
+    await createClient().rpc("fl_admin_delete_lead", { p_token: token, p_id: id });
     onDelete(id);
   }
   if (loading && leads.length === 0) return <Empty>Loading leads…</Empty>;
@@ -936,7 +936,7 @@ function BookingsTable({ appts, loading, token, onStatus, onDelete }: { appts: A
   const [composing, setComposing] = useState<Appointment | null>(null);
   async function deleteAppt(id: string, name: string | null) {
     if (!confirm(`Delete booking for "${name || "this client"}"? This cannot be undone.`)) return;
-    await supabase.rpc("fl_admin_delete_appointment", { p_token: token, p_id: id });
+    await createClient().rpc("fl_admin_delete_appointment", { p_token: token, p_id: id });
     onDelete(id);
   }
   if (loading && appts.length === 0) return <Empty>Loading bookings…</Empty>;
