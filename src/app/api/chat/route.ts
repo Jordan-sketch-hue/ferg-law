@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { systemPrompt } from "@/lib/chat/prompt";
 import { CHAT_TOOLS, executeTool } from "@/lib/chat/tools";
 import { generateReply, hasAnyLLMKey, type ChatMsg } from "@/lib/chat/llm";
+import { isAfterHours, afterHoursReply } from "@/lib/chat/hours";
 import { SITE } from "@/lib/site";
 
 export const runtime = "nodejs";
@@ -129,6 +130,18 @@ export async function POST(req: Request) {
     // --- A human is handling this thread — do NOT call the model -----------
     if (status === "agent" || status === "waiting_agent") {
       return Response.json({ conversationId: cid, status, handledByHuman: true });
+    }
+
+    // --- After-hours auto-reply (Mon–Fri 9am–5pm Jamaica time) -------------
+    if (incoming && isAfterHours()) {
+      const reply = afterHoursReply(SITE.whatsappDisplay);
+      await supabase.from("chat_messages").insert({
+        conversation_id: cid,
+        role: "bot",
+        body: reply,
+        meta: { info: [{ afterHours: true }] },
+      });
+      return Response.json({ conversationId: cid, reply, status: "bot" });
     }
 
     // --- Build message history (shared by both model paths) ----------------
