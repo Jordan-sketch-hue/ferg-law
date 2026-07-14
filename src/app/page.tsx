@@ -22,14 +22,18 @@ export default function Home() {
 
       {/* HERO – full-bleed editorial */}
       <section className="hero-full">
-        <img
-          className="hero-bg"
-          src="/img/hero-banner.jpg"
-          data-edit-img="images.heroBg"
-          alt="A joyful Jamaican family moving into their new home"
-          fetchPriority="high"
-          loading="eager"
-        />
+        <picture>
+          <source srcSet="/img/hero-banner.webp" type="image/webp" />
+          <img
+            className="hero-bg"
+            src="/img/hero-banner.jpg"
+            data-edit-img="images.heroBg"
+            alt="A joyful Jamaican family moving into their new home"
+            fetchPriority="high"
+            loading="eager"
+            decoding="async"
+          />
+        </picture>
         <div className="hero-scrim" aria-hidden="true"></div>
         <div className="hero-full-inner reveal in">
           <p className="hero-firm" data-edit="hero.firm">Ferguson Law</p>
