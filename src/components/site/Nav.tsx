@@ -14,6 +14,11 @@ const NAV_LINKS = [
   { href: "/#contact", label: "Contact" },
 ] as const;
 
+const LOGIN_LINKS = [
+  { href: "/directory/client-login", label: "Client Portal" },
+  { href: "/directory/login", label: "Partner Login" },
+] as const;
+
 const HOME_LINKS = [
   { href: SITE.homeApp, label: "H.O.M.E.™ by Ferguson Law", external: true },
   { href: "/buyers-guide", label: "Buyer's Guide", external: false },
@@ -72,6 +77,12 @@ export default function Nav() {
                 className="nav-home-inline"
                 onClick={(e) => handleNavClick(e, l.href)}
               >
+                {l.label}
+              </a>
+            ))}
+            <span className="nav-divider" aria-hidden="true" />
+            {LOGIN_LINKS.map((l) => (
+              <a key={l.href} href={l.href} className="nav-login-inline">
                 {l.label}
               </a>
             ))}
@@ -152,6 +163,16 @@ export default function Nav() {
             {l.label}
           </a>
         ))}
+        {LOGIN_LINKS.map((l) => (
+          <a
+            key={l.href}
+            href={l.href}
+            onClick={closeMenu}
+            className="drawer-login-link"
+          >
+            {l.label}
+          </a>
+        ))}
         <div className="drawer-cta">
           <a
             className="btn btn-wa"
@@ -187,6 +208,19 @@ export default function Nav() {
 
         /* Mobile drawer H.O.M.E. links */
         .drawer-home-link{ display:block; padding:.45rem 0; font-size:1rem; color:var(--gold-deep); text-decoration:none; font-weight:600; border-bottom:1px solid var(--line); }
+
+        /* Desktop portal login links */
+        a.nav-login-inline{
+          font-size:.78rem; font-weight:600;
+          color:var(--fg) !important;
+          text-decoration:none;
+          opacity:.75;
+          transition:opacity .15s;
+        }
+        a.nav-login-inline:hover{ opacity:1; }
+
+        /* Mobile drawer portal login links */
+        .drawer-login-link{ display:block; padding:.45rem 0; font-size:1rem; color:var(--fg); text-decoration:none; font-weight:500; border-bottom:1px solid var(--line); opacity:.8; }
 
         .nav-links{ gap:1.4rem; }
         @media(max-width:1200px){
