@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 const TOC = [
   { id: "role", label: "NHT's role in homeownership" },
   { id: "open-market", label: "Open Market Loans" },
-  { id: "limits", label: "Current loan limits" },
+  { id: "limits", label: "Current loan limits (houses vs land)" },
   { id: "efmp", label: "The EFMP explained" },
   { id: "who", label: "Who applies through EFMP?" },
   { id: "rates", label: "Does your interest rate change?" },
@@ -114,8 +114,11 @@ export default function NhtExplainerPage() {
                 Current Open Market Loan Limits
               </h2>
               <div style={{ color: "#48524d", lineHeight: 1.8, fontSize: "1rem" }}>
-                <p>The NHT has substantially increased its loan limits to better reflect rising property values. Currently, eligible contributors may access:</p>
-                <div style={{ margin: "1.2rem 0", display: "flex", flexDirection: "column", gap: ".7rem" }}>
+                <p>The NHT sets different loan limits depending on the type of property being purchased. It is important to confirm which category applies to your transaction.</p>
+
+                <h3 style={{ fontFamily: "var(--serif)", fontSize: "1.1rem", color: "#102a1e", margin: "1.4rem 0 .6rem" }}>Houses &amp; Apartments</h3>
+                <p style={{ marginBottom: ".8rem" }}>For the purchase of a house, apartment or townhouse, eligible contributors may access:</p>
+                <div style={{ margin: "0 0 1rem", display: "flex", flexDirection: "column", gap: ".7rem" }}>
                   {[
                     { label: "Single applicant", amount: "Up to J$9 million" },
                     { label: "Two contributors (joint)", amount: "Up to J$17 million" },
@@ -127,7 +130,25 @@ export default function NhtExplainerPage() {
                     </div>
                   ))}
                 </div>
-                <p>In addition, single applicants purchasing qualifying properties priced at <strong>J$14 million or less</strong> may access a special loan limit of up to <strong>J$12 million</strong>, subject to the applicable conditions and affordability assessment.</p>
+                <p>Single applicants purchasing qualifying properties priced at <strong>J$14 million or less</strong> may access a special loan limit of up to <strong>J$12 million</strong>, subject to the applicable conditions and affordability assessment.</p>
+
+                <h3 style={{ fontFamily: "var(--serif)", fontSize: "1.1rem", color: "#102a1e", margin: "1.6rem 0 .6rem" }}>Land / Residential Lots</h3>
+                <p style={{ marginBottom: ".8rem" }}>For the purchase of land or a residential lot only (without a house), the NHT applies lower limits:</p>
+                <div style={{ margin: "0 0 1rem", display: "flex", flexDirection: "column", gap: ".7rem" }}>
+                  {[
+                    { label: "Single applicant", amount: "Up to J$5 million" },
+                    { label: "Two contributors (joint)", amount: "Up to J$7 million" },
+                    { label: "Three contributors (joint)", amount: "Up to J$10.5 million" },
+                  ].map(r => (
+                    <div key={r.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: ".9rem 1.2rem", background: "#fff", border: "1px solid var(--line)", borderRadius: 12 }}>
+                      <span style={{ fontWeight: 600, color: "#102a1e" }}>{r.label}</span>
+                      <span style={{ color: "var(--gold)", fontWeight: 700 }}>{r.amount}</span>
+                    </div>
+                  ))}
+                </div>
+                <p style={{ background: "rgba(200,166,92,.12)", border: "1px solid rgba(200,166,92,.3)", borderRadius: 10, padding: ".9rem 1.1rem", fontSize: ".95rem" }}>
+                  <strong>Note:</strong> Land purchase limits are significantly lower than house/apartment limits. Always confirm with your attorney or the NHT which category applies to your specific purchase before making financial plans.
+                </p>
               </div>
             </section>
 

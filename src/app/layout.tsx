@@ -160,6 +160,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${fraunces.variable} ${inter.variable}`}>
       <head>
+        <link rel="preload" as="image" href="/img/hero-banner.webp" type="image/webp" fetchPriority="high" />
         <link rel="preload" as="image" href="/img/hero-banner.jpg" fetchPriority="high" />
         <link rel="manifest" href="/manifest.json" />
       </head>

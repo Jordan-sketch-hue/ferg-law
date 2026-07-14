@@ -22,14 +22,18 @@ export default function Home() {
 
       {/* HERO – full-bleed editorial */}
       <section className="hero-full">
-        <img
-          className="hero-bg"
-          src="/img/hero-banner.jpg"
-          data-edit-img="images.heroBg"
-          alt="A joyful Jamaican family moving into their new home"
-          fetchPriority="high"
-          loading="eager"
-        />
+        <picture>
+          <source srcSet="/img/hero-banner.webp" type="image/webp" />
+          <img
+            className="hero-bg"
+            src="/img/hero-banner.jpg"
+            data-edit-img="images.heroBg"
+            alt="A joyful Jamaican family moving into their new home"
+            fetchPriority="high"
+            loading="eager"
+            decoding="async"
+          />
+        </picture>
         <div className="hero-scrim" aria-hidden="true"></div>
         <div className="hero-full-inner reveal in">
           <p className="hero-firm" data-edit="hero.firm">Ferguson Law</p>
@@ -151,7 +155,7 @@ export default function Home() {
             </div>
             {/* 2 — Divorce */}
             <div className="serv reveal">
-              <img className="serv-media" src="/img/divorce.png" data-edit-img="images.serviceImg3" alt="A couple navigating separation" loading="lazy" />
+              <img className="serv-media" src="/img/couple-signing.jpg" data-edit-img="images.serviceImg3" alt="A couple navigating separation" loading="lazy" />
               <div className="num">02</div>
               <h3 data-edit="services.items.3.title">Divorce &amp; Matrimonial</h3>
               <p data-edit="services.items.3.body">Separation, custody, maintenance and settlements handled with discretion and care.</p>
