@@ -3,6 +3,7 @@ import Link from "next/link";
 import EbookPaymentGate from "@/components/site/EbookPaymentGate";
 import Nav from "@/components/site/Nav";
 import Footer from "@/components/site/Footer";
+import { BookingProvider } from "@/components/site/BookingProvider";
 
 export const metadata: Metadata = {
   title: "Buy the H.O.M.E.™ Buyers Guide — Ferguson Law",
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function BuyersGuidePaymentPage() {
   return (
-    <>
+    <BookingProvider>
       <Nav />
       <main style={{ background: "#0e2518", color: "#f6f2ea", display: "grid", placeItems: "center", padding: 24, minHeight: "calc(100dvh - 120px)" }}>
         <div style={{ width: "100%", maxWidth: 560, background: "#fbf8f1", color: "#102a1e", borderRadius: 24, padding: 32, boxShadow: "0 32px 80px rgba(0,0,0,.24)" }}>
@@ -31,6 +32,6 @@ export default function BuyersGuidePaymentPage() {
         </div>
       </main>
       <Footer />
-    </>
+    </BookingProvider>
   );
 }

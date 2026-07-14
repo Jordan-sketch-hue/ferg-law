@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Footer from "@/components/site/Footer";
 import Nav from "@/components/site/Nav";
+import { BookingProvider } from "@/components/site/BookingProvider";
 
 export const metadata: Metadata = {
   title: "H.O.M.E.™ Buyers Guide preview — Ferguson Law",
@@ -10,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function BuyersGuidePreviewPage() {
   return (
-    <>
+    <BookingProvider>
       <Nav />
       <main style={{ background: "#f6f2ea", color: "#102a1e", padding: 24 }}>
         <div style={{ maxWidth: 900, margin: "0 auto", background: "#fff", borderRadius: 24, padding: 32, boxShadow: "0 24px 70px rgba(0,0,0,.08)" }}>
@@ -42,6 +43,6 @@ export default function BuyersGuidePreviewPage() {
         </div>
       </main>
       <Footer />
-    </>
+    </BookingProvider>
   );
 }
