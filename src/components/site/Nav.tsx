@@ -186,7 +186,7 @@ export default function Nav() {
         /* Mobile drawer portal login links */
         .drawer-login-link{ display:block; padding:.45rem 0; font-size:1rem; color:var(--fg); text-decoration:none; font-weight:500; border-bottom:1px solid var(--line); opacity:.8; }
 
-        .nav-links{ gap:1.4rem; }
+        .nav-links{ gap:1.4rem; flex:1; justify-content:center; }
         @media(max-width:1200px){
           .nav-links a, .nav-links .nav-home-inline{ font-size:.78rem; }
           .nav-links{ gap:1rem; }
