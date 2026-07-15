@@ -645,7 +645,7 @@ function MatterPane({
         )}
 
         {/* IDENTITY / KYC */}
-        {tab === "identity" && <KycTab clientId={clientId} />}
+        {tab === "kyc" && <KycTab clientId={clientId} />}
 
         {/* FILES */}
         {tab === "files" && (
