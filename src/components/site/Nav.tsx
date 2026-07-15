@@ -3,8 +3,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { SITE, waLink } from "@/lib/site";
-import { BookButton } from "@/components/site/BookingProvider";
+import { SITE } from "@/lib/site";
 
 const NAV_LINKS = [
   { href: "/#about", label: "About" },
@@ -89,26 +88,9 @@ export default function Nav() {
           </nav>
 
           <div className="nav-cta">
-            <a
-              className="btn btn-wa nav-wa"
-              href={waLink()}
-              target="_blank"
-              rel="noopener"
-              aria-label="Chat on WhatsApp"
-            >
-              <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2a10 10 0 0 0-8.6 15l-1.3 4.8 4.9-1.3A10 10 0 1 0 12 2Zm0 18a8 8 0 0 1-4.1-1.1l-.3-.2-2.9.8.8-2.8-.2-.3A8 8 0 1 1 12 20Zm4.4-6c-.2-.1-1.4-.7-1.6-.8s-.4-.1-.5.1-.6.8-.8 1-.3.2-.5.1a6.5 6.5 0 0 1-3.2-2.8c-.2-.4.2-.4.6-1.2.1-.1 0-.3 0-.4l-.7-1.7c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3A2.8 2.8 0 0 0 6.7 9c0 1.7 1.2 3.3 1.4 3.5s2.4 3.6 5.7 5c2 .9 2.8.9 3.8.8.6-.1 1.9-.8 2.1-1.5s.3-1.4.2-1.5-.3-.2-.5-.3Z" />
-              </svg>
-              WhatsApp
+            <a className="btn btn-gold nav-get-started" href="/directory/client-login">
+              Get started
             </a>
-            <BookButton className="btn btn-gold nav-book">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="3" y="4" width="18" height="18" rx="2" />
-                <path d="M16 2v4M8 2v4M3 10h18" />
-              </svg>
-              <span className="nav-book-full">Book a consultation</span>
-              <span className="nav-book-short">Book</span>
-            </BookButton>
           </div>
 
           <button
@@ -174,21 +156,9 @@ export default function Nav() {
           </a>
         ))}
         <div className="drawer-cta">
-          <a
-            className="btn btn-wa"
-            href={waLink()}
-            target="_blank"
-            rel="noopener"
-            onClick={closeMenu}
-          >
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2a10 10 0 0 0-8.6 15l-1.3 4.8 4.9-1.3A10 10 0 1 0 12 2Zm0 18a8 8 0 0 1-4.1-1.1l-.3-.2-2.9.8.8-2.8-.2-.3A8 8 0 1 1 12 20Zm4.4-6c-.2-.1-1.4-.7-1.6-.8s-.4-.1-.5.1-.6.8-.8 1-.3.2-.5.1a6.5 6.5 0 0 1-3.2-2.8c-.2-.4.2-.4.6-1.2.1-.1 0-.3 0-.4l-.7-1.7c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3A2.8 2.8 0 0 0 6.7 9c0 1.7 1.2 3.3 1.4 3.5s2.4 3.6 5.7 5c2 .9 2.8.9 3.8.8.6-.1 1.9-.8 2.1-1.5s.3-1.4.2-1.5-.3-.2-.5-.3Z" />
-            </svg>
-            WhatsApp
+          <a className="btn btn-gold" href="/directory/client-login" onClick={closeMenu}>
+            Get started
           </a>
-          <BookButton className="btn btn-gold" onClick={closeMenu}>
-            Book a consultation
-          </BookButton>
         </div>
       </nav>
 
