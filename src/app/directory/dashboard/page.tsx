@@ -152,11 +152,11 @@ function ProfileCard({ me, onSaved }: { me: Partner; onSaved: (p: Partner) => vo
       </div>
       <div className="dform-field">
         <label>Phone</label>
-        <input value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} placeholder="+1 876 …" />
+        <input value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} placeholder="+1 800 000 0000" />
       </div>
       <div className="dform-field">
         <label>WhatsApp</label>
-        <input value={f.whatsapp} onChange={(e) => setF({ ...f, whatsapp: e.target.value })} placeholder="+1 876 …" />
+        <input value={f.whatsapp} onChange={(e) => setF({ ...f, whatsapp: e.target.value })} placeholder="+1 800 000 0000" />
       </div>
       <div className="dform-field">
         <label>Website / social</label>

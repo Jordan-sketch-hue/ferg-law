@@ -104,7 +104,7 @@ export default function LeadForm() {
                   name="phone"
                   type="tel"
                   autoComplete="tel"
-                  placeholder="+1 876 000 0000"
+                  placeholder="+1 800 000 0000"
                   required
                   className={errPhone ? "err" : undefined}
                   value={phone}

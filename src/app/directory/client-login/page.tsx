@@ -91,7 +91,7 @@ export default function ClientLoginPage() {
               </div>
               <div className="dform-field">
                 <label htmlFor="ph">Cell number</label>
-                <input id="ph" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 876 XXX XXXX" />
+                <input id="ph" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 800 000 0000" />
               </div>
               <div className="dform-field">
                 <label htmlFor="intent">What can we help you with?</label>

@@ -672,7 +672,7 @@ export default function BookingModal({
               <input
                 id="phone"
                 type="tel"
-                placeholder="+1 876 000 0000"
+                placeholder="+1 800 000 0000"
                 className={
                   marked && phone.replace(/\D/g, "").length < 7 ? "err" : undefined
                 }
