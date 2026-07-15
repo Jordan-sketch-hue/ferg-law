@@ -36,8 +36,8 @@ export default function Home() {
             />
           </picture>
           <picture className="hero-bg-slide">
-            <source srcSet="/img/couple-keys.webp" type="image/webp" />
-            <img src="/img/couple-keys.jpg" alt="A couple receiving the keys to their new home" loading="lazy" fetchPriority="low" />
+            <source srcSet="/img/couple-signing.webp" type="image/webp" />
+            <img src="/img/couple-signing.jpg" alt="A couple signing their property documents" loading="lazy" fetchPriority="low" />
           </picture>
           <picture className="hero-bg-slide">
             <source srcSet="/img/people-new-home.webp" type="image/webp" />
