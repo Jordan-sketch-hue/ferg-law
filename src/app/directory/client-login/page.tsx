@@ -14,6 +14,7 @@ export default function ClientLoginPage() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
@@ -32,6 +33,7 @@ export default function ClientLoginPage() {
     setErr(null);
     if (!name.trim()) return setErr("Please enter your name.");
     if (password.length < 6) return setErr("Password must be at least 6 characters.");
+    if (!agreedToTerms) return setErr("Please agree to the Terms of Service and Privacy Policy to continue.");
     setBusy(true);
     const res = await fetch("/api/auth/client-signup", {
       method: "POST",
@@ -124,6 +126,24 @@ export default function ClientLoginPage() {
               </button>
             </div>
           </div>
+
+          {tab === "signup" && (
+            <label style={{ display: "flex", alignItems: "flex-start", gap: 10, marginTop: 14, cursor: "pointer" }}>
+              <input
+                type="checkbox"
+                checked={agreedToTerms}
+                onChange={e => setAgreedToTerms(e.target.checked)}
+                style={{ marginTop: 3, flexShrink: 0, accentColor: "var(--gold)", width: 16, height: 16 }}
+              />
+              <span style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.5 }}>
+                I agree to Ferguson Law&apos;s{" "}
+                <a href="/terms" target="_blank" style={{ color: "var(--ink)", fontWeight: 600 }}>Terms of Service</a>{" "}
+                and{" "}
+                <a href="/privacy" target="_blank" style={{ color: "var(--ink)", fontWeight: 600 }}>Privacy Policy</a>,
+                and consent to Ferguson Law collecting and processing my personal information for the purpose of delivering legal services.
+              </span>
+            </label>
+          )}
 
           <button className="btn btn-gold" type="submit" disabled={busy} style={{ width: "100%", marginTop: 4 }}>
             {busy ? (tab === "login" ? "Signing in…" : "Creating account…") : (tab === "login" ? "Sign in" : "Create account")}

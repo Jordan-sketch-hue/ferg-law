@@ -5,6 +5,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
+import { sendWelcomeToClient } from "@/lib/email/cms";
 
 export async function POST(req: NextRequest) {
   try {
@@ -38,6 +39,9 @@ export async function POST(req: NextRequest) {
       }
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
+
+    // Fire welcome email (best-effort)
+    void sendWelcomeToClient(email.trim().toLowerCase(), name.trim()).catch(() => null);
 
     return NextResponse.json({ ok: true, userId: data.user?.id });
   } catch (e) {
