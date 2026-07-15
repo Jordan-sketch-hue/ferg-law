@@ -1181,7 +1181,7 @@ function MattersTab({ matters, loading, token, onStage, onPayment }: {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   if (loading && matters.length === 0) return <Empty>Loading matters…</Empty>;
-  if (matters.length === 0) return <Empty>No matters yet. They are created automatically when consultations are booked via the chatbot.</Empty>;
+  if (matters.length === 0) return <Empty>No matters yet. Use the CMS tab to open a new matter for any client.</Empty>;
 
   function toggleExpand(id: string) {
     setExpandedId(prev => prev === id ? null : id);
