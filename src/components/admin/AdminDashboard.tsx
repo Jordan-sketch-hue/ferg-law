@@ -2236,10 +2236,12 @@ function ReferralsTab({ leads, appts }: { leads: Lead[]; appts: Appointment[] })
     if (!refMap[src]) refMap[src] = { count: 0, booked: 0 };
     refMap[src].count++;
   }
-  // Count booked per lead (not per appointment) to avoid inflating conversions
-  const bookedLeadIds = new Set(appts.map(a => a.lead_id).filter(Boolean));
+  // Count booked per lead (match by email to avoid inflating conversions when one lead books multiple times)
+  const bookedEmails = new Set(appts.map(a => a.email).filter(Boolean) as string[]);
+  const counted = new Set<string>();
   for (const l of leads) {
-    if (bookedLeadIds.has(l.id)) {
+    if (l.email && bookedEmails.has(l.email) && !counted.has(l.email)) {
+      counted.add(l.email);
       const src = l.ref || l.source || "direct";
       if (refMap[src]) refMap[src].booked++;
     }
