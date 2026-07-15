@@ -71,25 +71,6 @@ export default function ClientLoginPage() {
   return (
     <div className="dir-wrap">
       <div className="dir-form">
-        <div style={{ display: "flex", gap: 0, marginBottom: 22, borderBottom: "1px solid var(--line)" }}>
-          {(["login", "signup"] as const).map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => { setTab(t); setErr(null); setOk(null); }}
-              style={{
-                flex: 1, background: "none", border: "none", cursor: "pointer",
-                padding: "10px 0", fontFamily: "var(--serif)", fontSize: 17,
-                fontWeight: 600, color: tab === t ? "var(--ink)" : "var(--muted)",
-                borderBottom: tab === t ? "2px solid var(--ink)" : "2px solid transparent",
-                marginBottom: -1,
-              }}
-            >
-              {t === "login" ? "Sign in" : "Create account"}
-            </button>
-          ))}
-        </div>
-
         <h1 style={{ marginBottom: 4 }}>{tab === "login" ? "Client portal" : "Create your account"}</h1>
         <p className="lede">
           {tab === "login"
@@ -162,6 +143,23 @@ export default function ClientLoginPage() {
         </form>
 
         <div className="dform-alt" style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--line)" }}>
+          {tab === "login" ? (
+            <>Don&apos;t have an account?{" "}
+              <button type="button" onClick={() => { setTab("signup"); setErr(null); setOk(null); }}
+                style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ink)", fontWeight: 600, padding: 0, fontSize: "inherit" }}>
+                Create one →
+              </button>
+            </>
+          ) : (
+            <>Already have an account?{" "}
+              <button type="button" onClick={() => { setTab("login"); setErr(null); setOk(null); }}
+                style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ink)", fontWeight: 600, padding: 0, fontSize: "inherit" }}>
+                Sign in →
+              </button>
+            </>
+          )}
+        </div>
+        <div className="dform-alt" style={{ paddingTop: 8 }}>
           Are you a professional?{" "}
           <Link href="/directory/login">Partner login →</Link>
         </div>

@@ -2986,6 +2986,7 @@ function CmsTab({ token }: { token: string }) {
   const [clientHits, setClientHits] = useState<CmsClientHit[]>([]);
   const [newClientId, setNewClientId] = useState("");
   const [newClientLabel, setNewClientLabel] = useState("");
+  const [newClientName, setNewClientName] = useState("");
   const [newWorkflow, setNewWorkflow] = useState("property_purchase");
   const [newTitle, setNewTitle] = useState("");
   const [creating, setCreating] = useState(false);
@@ -3162,15 +3163,18 @@ function CmsTab({ token }: { token: string }) {
     setCreateError(null);
     try {
       const { data, error } = await supabase.rpc("fl_admin_cms_open_matter", {
-        p_token: token, p_client_id: newClientId, p_workflow_type: newWorkflow,
+        p_token: token,
+        p_client_id: newClientId || null,
+        p_workflow_type: newWorkflow,
         p_title: newTitle || null,
+        p_client_name: newClientId ? null : (newClientName.trim() || null),
       });
       if (error) throw error;
       if (!data) throw new Error("No matter ID returned — check the RPC returned a value.");
       const { data: refreshed } = await supabase.rpc("fl_admin_cms_matters", { p_token: token });
       setMatters((refreshed as CmsMatter[]) ?? []);
       setOpenMatter(false);
-      setNewClientId(""); setNewClientLabel(""); setClientQuery(""); setClientHits([]); setNewTitle("");
+      setNewClientId(""); setNewClientLabel(""); setClientQuery(""); setClientHits([]); setNewTitle(""); setNewClientName("");
       void loadDetail(data as string);
     } catch (err) {
       setCreateError(err instanceof Error ? err.message : String(err));
@@ -3533,18 +3537,18 @@ function CmsTab({ token }: { token: string }) {
                 {newClientId ? (
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 12px", borderRadius: 10, border: `1px solid ${GOLD}`, background: "#fffbf0" }}>
                     <span style={{ fontSize: 13, fontWeight: 600, color: INK }}>{newClientLabel}</span>
-                    <button type="button" onClick={() => { setNewClientId(""); setNewClientLabel(""); setClientQuery(""); }}
+                    <button type="button" onClick={() => { setNewClientId(""); setNewClientLabel(""); setClientQuery(""); setNewClientName(""); }}
                       style={{ background: "none", border: "none", cursor: "pointer", color: MUTED, fontSize: 16 }}>×</button>
                   </div>
                 ) : (
                   <>
                     <input value={clientQuery} onChange={e => setClientQuery(e.target.value)}
-                      placeholder="Search by client email…"
+                      placeholder="Search by email (or enter name below)…"
                       style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid rgba(18,16,12,.2)", fontSize: 13, outline: "none" }} />
                     {clientHits.length > 0 && (
                       <div style={{ position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, background: "#fff", border: "1px solid rgba(18,16,12,.15)", borderRadius: 10, boxShadow: "0 6px 18px rgba(0,0,0,.1)", zIndex: 5, maxHeight: 180, overflowY: "auto" }}>
                         {clientHits.map(c => (
-                          <button key={c.id} type="button" onClick={() => { setNewClientId(c.id); setNewClientLabel(`${c.full_name} <${c.email}>`); setClientHits([]); }}
+                          <button key={c.id} type="button" onClick={() => { setNewClientId(c.id); setNewClientLabel(`${c.full_name} <${c.email}>`); setClientHits([]); setNewClientName(""); }}
                             style={{ display: "block", width: "100%", textAlign: "left", padding: "9px 12px", border: "none", background: "none", cursor: "pointer", fontSize: 13 }}>
                             <div style={{ fontWeight: 600, color: INK }}>{c.full_name}</div>
                             <div style={{ fontSize: 11.5, color: MUTED }}>{c.email}</div>
@@ -3552,6 +3556,10 @@ function CmsTab({ token }: { token: string }) {
                         ))}
                       </div>
                     )}
+                    <div style={{ fontSize: 11, color: MUTED, textAlign: "center", margin: "4px 0" }}>— or —</div>
+                    <input value={newClientName} onChange={e => setNewClientName(e.target.value)}
+                      placeholder="Enter client name manually"
+                      style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid rgba(18,16,12,.2)", fontSize: 13, outline: "none" }} />
                   </>
                 )}
               </label>
@@ -3577,8 +3585,8 @@ function CmsTab({ token }: { token: string }) {
               </div>
             )}
             <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
-              <button onClick={() => void createMatter()} disabled={creating || !newClientId.trim()}
-                style={{ flex: 1, background: GREEN, color: CREAM, border: "none", borderRadius: 10, padding: "12px", fontSize: 14, fontWeight: 700, cursor: "pointer", opacity: creating || !newClientId.trim() ? 0.6 : 1 }}>
+              <button onClick={() => void createMatter()} disabled={creating || (!newClientId.trim() && !newClientName.trim())}
+                style={{ flex: 1, background: GREEN, color: CREAM, border: "none", borderRadius: 10, padding: "12px", fontSize: 14, fontWeight: 700, cursor: "pointer", opacity: creating || (!newClientId.trim() && !newClientName.trim()) ? 0.6 : 1 }}>
                 {creating ? "Creating…" : "Open Matter"}
               </button>
               <button onClick={() => { setOpenMatter(false); setCreateError(null); }}
