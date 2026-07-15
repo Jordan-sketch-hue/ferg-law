@@ -3158,7 +3158,7 @@ function CmsTab({ token }: { token: string }) {
   }
 
   async function createMatter() {
-    if (!newClientId.trim()) return;
+    if (!newClientId.trim() && !newClientName.trim()) return;
     setCreating(true);
     setCreateError(null);
     try {
