@@ -13,6 +13,35 @@ import { waLink } from "@/lib/site";
 type MatterStatus = "intake" | "in_progress" | "awaiting_client" | "awaiting_third_party" | "completed" | "on_hold";
 type MilestoneStatus = "pending" | "in_progress" | "done" | "blocked";
 
+interface KycRecord {
+  id: string;
+  full_legal_name: string | null;
+  date_of_birth: string | null;
+  nationality: string | null;
+  address: string | null;
+  id_type: string | null;
+  id_number: string | null;
+  id_doc_url: string | null;
+  source_of_funds: string | null;
+  is_pep: boolean;
+  submitted_at: string | null;
+  status: string;
+  reviewer_notes: string | null;
+}
+
+interface Payment {
+  id: string;
+  kind: string;
+  amount_jmd: number;
+  method: string | null;
+  reference: string | null;
+  status: string;
+  confirmed_at: string | null;
+  receipt_issued: boolean;
+  receipt_number: string | null;
+  created_at: string;
+}
+
 interface Milestone {
   id: string;
   phase_order: number;
@@ -119,10 +148,19 @@ export default function ClientDashboardPage() {
   const [clientName, setClientName] = useState("");
   const [clientId, setClientId] = useState("");
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<"timeline" | "messages" | "files">("timeline");
+  const [tab, setTab] = useState<"timeline" | "messages" | "files" | "kyc" | "payments">("timeline");
+
+  const [kyc, setKyc] = useState<KycRecord | null>(null);
+  const [kycLoading, setKycLoading] = useState(false);
+  const [kycSubmitting, setKycSubmitting] = useState(false);
+  const [kycError, setKycError] = useState<string | null>(null);
+  const [kycOk, setKycOk] = useState(false);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [paymentsLoading, setPaymentsLoading] = useState(false);
 
   const [msgText, setMsgText] = useState("");
   const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -181,32 +219,57 @@ export default function ClientDashboardPage() {
 
   useEffect(() => {
     if (tab === "messages") messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (tab === "kyc" && kyc === null && !kycLoading) {
+      setKycLoading(true);
+      fetch("/api/client/kyc")
+        .then(r => r.json())
+        .then((j: { kyc: KycRecord | null }) => { setKyc(j.kyc); setKycLoading(false); })
+        .catch(() => setKycLoading(false));
+    }
+    if (tab === "payments" && payments.length === 0 && !paymentsLoading && selected) {
+      setPaymentsLoading(true);
+      void (async () => {
+        try {
+          const { data } = await supabase().from("fl_matter_payments").select("*").eq("matter_id", selected).order("created_at", { ascending: false });
+          setPayments((data ?? []) as Payment[]);
+        } catch { /* ignore */ }
+        finally { setPaymentsLoading(false); }
+      })();
+    }
   }, [tab, selected]);
 
   const activeMatter = matters.find(m => m.id === selected);
 
   async function sendMessage() {
-    if (!msgText.trim() || !activeMatter) return;
+    const clean = msgText.replace(/[﻿​‌‍⁠]/g, "").trim();
+    if (!clean || !activeMatter) return;
     setSending(true);
-    const { data } = await supabase().from("fl_matter_messages").insert({
-      matter_id: activeMatter.id,
-      sender_id: clientId,
-      sender_type: "client",
-      sender_label: clientName || "Client",
-      body: msgText.trim(),
-    }).select().single();
-    if (data) {
-      setMatters(prev => prev.map(m => m.id === activeMatter.id
-        ? { ...m, messages: [...m.messages, data as Message] }
-        : m
-      ));
-      setMsgText("");
-      void fetch("/api/cms/notify", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ matterId: activeMatter.id, kind: "message" }),
-      }).catch(() => null);
+    setSendError(null);
+    try {
+      const { data, error } = await supabase().from("fl_matter_messages").insert({
+        matter_id: activeMatter.id,
+        sender_id: clientId,
+        sender_type: "client",
+        sender_label: (clientName || "Client").replace(/[﻿]/g, ""),
+        body: clean,
+      }).select().single();
+      if (error) throw error;
+      if (data) {
+        setMatters(prev => prev.map(m => m.id === activeMatter.id
+          ? { ...m, messages: [...m.messages, data as Message] }
+          : m
+        ));
+        setMsgText("");
+        void fetch("/api/cms/notify", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ matterId: activeMatter.id, kind: "message" }),
+        }).catch(() => null);
+      }
+    } catch (err) {
+      setSendError(err instanceof Error ? err.message : "Failed to send. Please try again.");
+    } finally {
+      setSending(false);
     }
-    setSending(false);
   }
 
   async function uploadFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -320,6 +383,25 @@ export default function ClientDashboardPage() {
                 onUpload={uploadFile}
                 fileRef={fileRef}
                 messagesEndRef={messagesEndRef}
+                sendError={sendError}
+                kyc={kyc}
+                kycLoading={kycLoading}
+                kycSubmitting={kycSubmitting}
+                kycError={kycError}
+                kycOk={kycOk}
+                onKycSubmit={async (fields) => {
+                  setKycSubmitting(true); setKycError(null); setKycOk(false);
+                  try {
+                    const r = await fetch("/api/client/kyc", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(fields) });
+                    const j = await r.json() as { ok?: boolean; error?: string };
+                    if (!r.ok || j.error) throw new Error(j.error ?? "Submission failed.");
+                    setKycOk(true);
+                    setKyc(prev => prev ? { ...prev, status: "submitted", submitted_at: new Date().toISOString(), ...fields } : null);
+                  } catch (e) { setKycError(e instanceof Error ? e.message : "Submission failed."); }
+                  finally { setKycSubmitting(false); }
+                }}
+                payments={payments}
+                paymentsLoading={paymentsLoading}
               />
             </div>
           ) : (
@@ -342,11 +424,13 @@ export default function ClientDashboardPage() {
 
 function MatterPane({
   matter, tab, setTab, msgText, setMsgText, sending, uploading,
-  onSendMessage, onUpload, fileRef, messagesEndRef,
+  onSendMessage, onUpload, fileRef, messagesEndRef, sendError,
+  kyc, kycLoading, kycSubmitting, kycError, kycOk, onKycSubmit,
+  payments, paymentsLoading,
 }: {
   matter: Matter;
-  tab: "timeline" | "messages" | "files";
-  setTab: (t: "timeline" | "messages" | "files") => void;
+  tab: "timeline" | "messages" | "files" | "kyc" | "payments";
+  setTab: (t: "timeline" | "messages" | "files" | "kyc" | "payments") => void;
   msgText: string;
   setMsgText: (v: string) => void;
   sending: boolean;
@@ -355,6 +439,15 @@ function MatterPane({
   onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   fileRef: React.RefObject<HTMLInputElement | null>;
   messagesEndRef: React.RefObject<HTMLDivElement | null>;
+  sendError: string | null;
+  kyc: KycRecord | null;
+  kycLoading: boolean;
+  kycSubmitting: boolean;
+  kycError: string | null;
+  kycOk: boolean;
+  onKycSubmit: (fields: Record<string, unknown>) => Promise<void>;
+  payments: Payment[];
+  paymentsLoading: boolean;
 }) {
   const s = STATUS_CONFIG[matter.status] ?? STATUS_CONFIG.intake;
   const phases = groupMilestones(matter.milestones);
@@ -407,17 +500,17 @@ function MatterPane({
       </div>
 
       {/* Tabs */}
-      <div style={{ display: "flex", borderBottom: "1px solid var(--line)", background: "#fafaf8" }}>
-        {(["timeline", "messages", "files"] as const).map(t => (
+      <div style={{ display: "flex", borderBottom: "1px solid var(--line)", background: "#fafaf8", overflowX: "auto" }}>
+        {(["timeline", "messages", "files", "kyc", "payments"] as const).map(t => (
           <button key={t} onClick={() => setTab(t)} style={{
-            padding: "11px 18px", fontSize: 13, fontWeight: 600, border: "none", background: "none",
-            cursor: "pointer", position: "relative",
+            padding: "11px 16px", fontSize: 13, fontWeight: 600, border: "none", background: "none",
+            cursor: "pointer", whiteSpace: "nowrap",
             color: tab === t ? "var(--ink)" : "var(--muted)",
             borderBottom: tab === t ? "2px solid var(--gold)" : "2px solid transparent",
           }}>
             {t === "timeline" ? "Progress" : t === "messages" ? (
               <>Messages{unread > 0 && <span style={{ marginLeft: 6, background: "#C8A65C", color: "#fff", borderRadius: 999, fontSize: 11, padding: "1px 6px" }}>{unread}</span>}</>
-            ) : "Files"}
+            ) : t === "files" ? "Files" : t === "kyc" ? "Identity (KYC)" : "Payments"}
           </button>
         ))}
       </div>
@@ -525,6 +618,11 @@ function MatterPane({
               )}
               <div ref={messagesEndRef} />
             </div>
+            {sendError && (
+              <div style={{ marginBottom: 8, padding: "8px 12px", borderRadius: 8, background: "#fbeaea", border: "1px solid #eecaca", fontSize: 13, color: "#7a2020" }}>
+                {sendError}
+              </div>
+            )}
             <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
               <textarea
                 value={msgText}
@@ -579,7 +677,199 @@ function MatterPane({
             )}
           </div>
         )}
+
+        {/* KYC */}
+        {tab === "kyc" && (
+          <KycTab
+            kyc={kyc}
+            loading={kycLoading}
+            submitting={kycSubmitting}
+            error={kycError}
+            submitted={kycOk}
+            onSubmit={onKycSubmit}
+          />
+        )}
+
+        {/* PAYMENTS */}
+        {tab === "payments" && (
+          <div>
+            <p style={{ fontSize: 13.5, color: "var(--muted)", marginBottom: 16, lineHeight: 1.55 }}>
+              Payments confirmed by Ferguson Law appear here. Contact us on WhatsApp with any payment queries.
+            </p>
+            {paymentsLoading ? (
+              <p style={{ color: "var(--muted)", fontSize: 14 }}>Loading…</p>
+            ) : payments.length === 0 ? (
+              <p style={{ color: "var(--muted)", fontSize: 14 }}>No payments recorded yet.</p>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {payments.map(p => {
+                  const confirmed = p.status === "confirmed";
+                  return (
+                    <div key={p.id} style={{ padding: "14px 16px", borderRadius: 12, border: "1px solid var(--line)", background: "#fafaf8" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, flexWrap: "wrap" }}>
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: 15, color: "var(--ink)" }}>
+                            JMD {p.amount_jmd.toLocaleString()}
+                          </div>
+                          <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 2 }}>
+                            {p.kind}{p.method ? ` · ${p.method}` : ""}{p.reference ? ` · Ref: ${p.reference}` : ""}
+                          </div>
+                        </div>
+                        <span style={{
+                          padding: "4px 10px", borderRadius: 999, fontSize: 12, fontWeight: 600,
+                          background: confirmed ? "#dff0df" : "#f0f0f0",
+                          color: confirmed ? "#1a4d28" : "#5a5a5a",
+                          border: confirmed ? "1px solid #a5d4a5" : "1px solid #d0d0d0",
+                        }}>
+                          {confirmed ? "Confirmed" : "Pending"}
+                        </span>
+                      </div>
+                      {confirmed && p.confirmed_at && (
+                        <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>
+                          Confirmed {fmt(p.confirmed_at)}
+                          {p.receipt_issued && p.receipt_number && ` · Receipt #${p.receipt_number}`}
+                        </div>
+                      )}
+                      {p.receipt_issued && (
+                        <div style={{ marginTop: 8, fontSize: 12.5, color: "#1a4d28", fontWeight: 600 }}>
+                          Receipt issued — contact us if you need a PDF copy
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </div>
+    </div>
+  );
+}
+
+// ── KycTab ──────────────────────────────────────────────────────────────────
+
+function KycTab({ kyc, loading, submitting, error, submitted, onSubmit }: {
+  kyc: KycRecord | null;
+  loading: boolean;
+  submitting: boolean;
+  error: string | null;
+  submitted: boolean;
+  onSubmit: (fields: Record<string, unknown>) => Promise<void>;
+}) {
+  const [form, setForm] = useState({
+    full_legal_name: kyc?.full_legal_name ?? "",
+    date_of_birth: kyc?.date_of_birth ?? "",
+    nationality: kyc?.nationality ?? "",
+    address: kyc?.address ?? "",
+    id_type: kyc?.id_type ?? "national_id",
+    id_number: kyc?.id_number ?? "",
+    source_of_funds: kyc?.source_of_funds ?? "",
+    is_pep: kyc?.is_pep ?? false,
+  });
+
+  useEffect(() => {
+    if (kyc) setForm({
+      full_legal_name: kyc.full_legal_name ?? "",
+      date_of_birth: kyc.date_of_birth ?? "",
+      nationality: kyc.nationality ?? "",
+      address: kyc.address ?? "",
+      id_type: kyc.id_type ?? "national_id",
+      id_number: kyc.id_number ?? "",
+      source_of_funds: kyc.source_of_funds ?? "",
+      is_pep: kyc.is_pep ?? false,
+    });
+  }, [kyc]);
+
+  const set = (k: string, v: string | boolean) => setForm(f => ({ ...f, [k]: v }));
+
+  if (loading) return <p style={{ color: "var(--muted)", fontSize: 14 }}>Loading…</p>;
+
+  const isApproved = kyc?.status === "approved";
+  const isSubmitted = kyc?.status === "submitted";
+
+  const statusBanner = isApproved ? (
+    <div style={{ marginBottom: 18, padding: "10px 14px", borderRadius: 10, background: "#dff0df", border: "1px solid #a5d4a5", fontSize: 13.5, color: "#1a4d28", fontWeight: 600 }}>
+      Your identity has been verified. No further action needed.
+    </div>
+  ) : isSubmitted ? (
+    <div style={{ marginBottom: 18, padding: "10px 14px", borderRadius: 10, background: "#fdf3d9", border: "1px solid #f0e4b0", fontSize: 13.5, color: "#5a5200" }}>
+      Your KYC information has been submitted and is under review. We will notify you of the outcome.
+    </div>
+  ) : kyc?.status === "flagged" ? (
+    <div style={{ marginBottom: 18, padding: "10px 14px", borderRadius: 10, background: "#fbeaea", border: "1px solid #eecaca", fontSize: 13.5, color: "#7a2020" }}>
+      Your submission was flagged for review.{kyc.reviewer_notes ? ` Note from Ferguson Law: ${kyc.reviewer_notes}` : " Please update and resubmit below."}
+    </div>
+  ) : null;
+
+  return (
+    <div>
+      <p style={{ fontSize: 13.5, color: "var(--muted)", marginBottom: 16, lineHeight: 1.6 }}>
+        Ferguson Law is required by law to verify the identity of all clients (Know Your Customer / KYC). Please fill in your details accurately.
+      </p>
+      {statusBanner}
+      {submitted && (
+        <div style={{ marginBottom: 16, padding: "10px 14px", borderRadius: 10, background: "#dff0df", border: "1px solid #a5d4a5", fontSize: 13.5, color: "#1a4d28", fontWeight: 600 }}>
+          KYC submitted successfully. Ferguson Law will review your information shortly.
+        </div>
+      )}
+      {error && (
+        <div style={{ marginBottom: 14, padding: "8px 12px", borderRadius: 8, background: "#fbeaea", border: "1px solid #eecaca", fontSize: 13, color: "#7a2020" }}>
+          {error}
+        </div>
+      )}
+      {!isApproved && (
+        <form onSubmit={async e => { e.preventDefault(); await onSubmit(form); }} noValidate>
+          <div style={{ display: "grid", gap: 14 }}>
+            <KycField label="Full legal name (as on ID)">
+              <input value={form.full_legal_name} onChange={e => set("full_legal_name", e.target.value)} required placeholder="e.g. Jane Mary Smith" />
+            </KycField>
+            <KycField label="Date of birth">
+              <input type="date" value={form.date_of_birth} onChange={e => set("date_of_birth", e.target.value)} required />
+            </KycField>
+            <KycField label="Nationality">
+              <input value={form.nationality} onChange={e => set("nationality", e.target.value)} placeholder="e.g. Jamaican" />
+            </KycField>
+            <KycField label="Residential address">
+              <textarea rows={2} value={form.address} onChange={e => set("address", e.target.value)}
+                placeholder="Full street address" style={{ resize: "vertical", fontFamily: "inherit", fontSize: 14, padding: "8px 10px", borderRadius: 8, border: "1px solid var(--line)", width: "100%", boxSizing: "border-box" }} />
+            </KycField>
+            <KycField label="ID type">
+              <select value={form.id_type} onChange={e => set("id_type", e.target.value)}
+                style={{ width: "100%", padding: "9px 10px", borderRadius: 8, border: "1px solid var(--line)", fontSize: 14, background: "#fff" }}>
+                <option value="national_id">National ID</option>
+                <option value="passport">Passport</option>
+                <option value="drivers_licence">Driver&apos;s Licence</option>
+              </select>
+            </KycField>
+            <KycField label="ID number">
+              <input value={form.id_number} onChange={e => set("id_number", e.target.value)} required placeholder="As printed on your ID" />
+            </KycField>
+            <KycField label="Source of funds">
+              <input value={form.source_of_funds} onChange={e => set("source_of_funds", e.target.value)} placeholder="e.g. Employment, savings, sale of property" />
+            </KycField>
+            <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer" }}>
+              <input type="checkbox" checked={form.is_pep} onChange={e => set("is_pep", e.target.checked)}
+                style={{ marginTop: 3, flexShrink: 0, accentColor: "var(--gold)", width: 16, height: 16 }} />
+              <span style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.5 }}>
+                I am or have been a Politically Exposed Person (PEP) — a senior government official, politician, judge, or close associate of one.
+              </span>
+            </label>
+          </div>
+          <button type="submit" disabled={submitting} className="btn btn-gold" style={{ marginTop: 20, width: "100%" }}>
+            {submitting ? "Submitting…" : isSubmitted ? "Re-submit KYC" : "Submit KYC"}
+          </button>
+        </form>
+      )}
+    </div>
+  );
+}
+
+function KycField({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="dform-field" style={{ margin: 0 }}>
+      <label style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ink)", display: "block", marginBottom: 5 }}>{label}</label>
+      {children}
     </div>
   );
 }

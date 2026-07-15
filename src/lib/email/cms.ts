@@ -53,6 +53,32 @@ async function send(to: string, subject: string, html: string): Promise<SendResu
 
 const PORTAL_URL = "https://fergusonlawja.com/directory/client";
 
+export function sendWelcomeToClient(to: string, clientName: string) {
+  return send(
+    to,
+    "Welcome to Ferguson Law — your client portal is ready",
+    shell(
+      `Welcome, ${escapeHtml(clientName.split(" ")[0])}.`,
+      `Your Ferguson Law client account is set up and ready. Once we open your matter you'll be able to track every step, send messages and upload documents — all from your secure portal. We'll be in touch shortly.`,
+      "Go to my portal",
+      PORTAL_URL,
+    ),
+  );
+}
+
+export function sendKycSubmittedToStaff(clientName: string, clientEmail: string) {
+  return send(
+    process.env.FERGUSON_STAFF_EMAIL || "contact@fergusonlawja.com",
+    `KYC submitted — ${clientName}`,
+    shell(
+      "A client just submitted their KYC.",
+      `${escapeHtml(clientName)} (${escapeHtml(clientEmail)}) has submitted their identity documents and KYC information. Review it in the admin CMS.`,
+      "Review KYC",
+      "https://fergusonlawja.com/admin",
+    ),
+  );
+}
+
 export function sendMilestoneUpdate(to: string, matterTitle: string, milestoneName: string) {
   return send(
     to,

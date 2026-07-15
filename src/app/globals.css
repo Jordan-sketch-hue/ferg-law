@@ -248,6 +248,7 @@
     .hero-full .hero-cta{flex-direction:column;gap:8px;margin:14px 0 0}
     .hero-full .hero-cta .btn{width:100%;text-align:center;justify-content:center;padding-top:13px;padding-bottom:13px}
     .hero-full .hero-cta .btn-light{display:none}
+    .hero-cta-book{display:none}
   }
 
   /* H.O.M.E. editorial photo */

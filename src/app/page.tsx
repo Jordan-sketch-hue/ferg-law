@@ -50,7 +50,10 @@ export default function Home() {
             sale, and transfer.
           </p>
           <div className="hero-cta">
-            <BookButton className="btn btn-gold">
+            <a className="btn btn-gold hero-cta-primary" href="/directory/client-login">
+              Get started <ArrowIcon />
+            </a>
+            <BookButton className="btn btn-gold hero-cta-book">
               <span data-edit="hero.ctaPrimary">Book a consultation</span>{" "}
               <ArrowIcon />
             </BookButton>
