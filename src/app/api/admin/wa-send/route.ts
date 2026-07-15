@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 const WA_BOT_URL = process.env.WHATSAPP_BOT_URL ?? process.env.NEXT_PUBLIC_WHATSAPP_BOT_URL ?? "";
-const WA_SECRET = process.env.WHATSAPP_BOT_SECRET ?? process.env.NEXT_PUBLIC_WHATSAPP_BOT_SECRET ?? "";
+const WA_SECRET = process.env.WHATSAPP_BOT_SECRET ?? "";
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();

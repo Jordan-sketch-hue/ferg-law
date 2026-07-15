@@ -3241,7 +3241,7 @@ function CmsTab({ token }: { token: string }) {
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 700, color: "#8a6a22", letterSpacing: ".12em", textTransform: "uppercase", marginBottom: 3 }}>
-                    {activeMatter.workflow_type?.replace("_", " ") || activeMatter.matter_type}
+                    {activeMatter.workflow_type?.replace(/_/g, " ") || activeMatter.matter_type}
                   </div>
                   <div style={{ fontFamily: "var(--serif, Georgia, serif)", fontSize: 18, fontWeight: 700, color: GREEN }}>
                     {activeMatter.title || activeMatter.client_name}
