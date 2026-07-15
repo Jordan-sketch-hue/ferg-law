@@ -79,12 +79,6 @@ export default function Nav() {
                 {l.label}
               </a>
             ))}
-            <span className="nav-divider" aria-hidden="true" />
-            {LOGIN_LINKS.map((l) => (
-              <a key={l.href} href={l.href} className="nav-login-inline">
-                {l.label}
-              </a>
-            ))}
           </nav>
 
           <div className="nav-cta">
