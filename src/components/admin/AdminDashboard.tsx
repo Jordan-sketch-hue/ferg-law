@@ -250,6 +250,7 @@ export default function AdminDashboard() {
   const [loginMode, setLoginMode] = useState<"account" | "code">("account");
   const [emailInput, setEmailInput] = useState("");
   const [pwInput, setPwInput] = useState("");
+  const [showPw, setShowPw] = useState(false);
   const [accountEmail, setAccountEmail] = useState<string | null>(null);
   const [showAccount, setShowAccount] = useState(false);
 
@@ -588,9 +589,20 @@ export default function AdminDashboard() {
               <input type="email" value={emailInput} onChange={(e) => setEmailInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && void submitLogin()} placeholder="Email"
                 style={S.authInput} aria-label="Email" autoComplete="username" autoFocus />
-              <input type="password" value={pwInput} onChange={(e) => setPwInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && void submitLogin()} placeholder="Password"
-                style={{ ...S.authInput, marginTop: 10 }} aria-label="Password" autoComplete="current-password" />
+              <div style={{ position: "relative", marginTop: 10 }}>
+                <input type={showPw ? "text" : "password"} value={pwInput} onChange={(e) => setPwInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && void submitLogin()} placeholder="Password"
+                  style={{ ...S.authInput, marginTop: 0, width: "100%", boxSizing: "border-box", paddingRight: 40 }} aria-label="Password" autoComplete="current-password" />
+                <button type="button" onClick={() => setShowPw(v => !v)}
+                  style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", padding: 4, color: "#b9b099", display: "flex", alignItems: "center" }}
+                  aria-label={showPw ? "Hide password" : "Show password"}>
+                  {showPw ? (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                  ) : (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  )}
+                </button>
+              </div>
               {authError && <p style={S.authErr}>{authError}</p>}
               <button type="button" onClick={() => void submitLogin()}
                 disabled={verifying || !emailInput.trim() || !pwInput}
@@ -2963,6 +2975,7 @@ function CmsTab({ token }: { token: string }) {
   const [newWorkflow, setNewWorkflow] = useState("property_purchase");
   const [newTitle, setNewTitle] = useState("");
   const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
   const [kycNotes, setKycNotes] = useState("");
   const [addingPayment, setAddingPayment] = useState(false);
   const [payKind, setPayKind] = useState("deposit");
@@ -3104,39 +3117,52 @@ function CmsTab({ token }: { token: string }) {
   }
 
   async function sendMessage() {
-    if (!msgText.trim() || !selected) return;
+    const clean = msgText.replace(/[﻿​‌‍⁠]/g, "").trim();
+    if (!clean || !selected) return;
     setSending(true);
-    const { data } = await supabase.rpc("fl_admin_cms_send_message", {
-      p_token: token, p_matter_id: selected, p_body: msgText.trim(), p_label: "Ferguson Law",
-    });
-    if (data) {
-      setMessages(prev => [...prev, {
-        id: data as string, matter_id: selected, sender_id: null,
-        sender_type: "staff", sender_label: "Ferguson Law",
-        body: msgText.trim(), read_at: null, created_at: new Date().toISOString(),
-      }]);
-      setMsgText("");
-      void notifyClient(selected, "message");
-      setTimeout(() => msgEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+    try {
+      const { data, error } = await supabase.rpc("fl_admin_cms_send_message", {
+        p_token: token, p_matter_id: selected, p_body: clean, p_label: "Ferguson Law",
+      });
+      if (error) throw error;
+      if (data) {
+        setMessages(prev => [...prev, {
+          id: data as string, matter_id: selected, sender_id: null,
+          sender_type: "staff", sender_label: "Ferguson Law",
+          body: clean, read_at: null, created_at: new Date().toISOString(),
+        }]);
+        setMsgText("");
+        void notifyClient(selected, "message");
+        setTimeout(() => msgEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+      }
+    } catch (err) {
+      alert("Failed to send message: " + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setSending(false);
     }
-    setSending(false);
   }
 
   async function createMatter() {
     if (!newClientId.trim()) return;
     setCreating(true);
-    const { data } = await supabase.rpc("fl_admin_cms_open_matter", {
-      p_token: token, p_client_id: newClientId, p_workflow_type: newWorkflow,
-      p_title: newTitle || null,
-    });
-    if (data) {
+    setCreateError(null);
+    try {
+      const { data, error } = await supabase.rpc("fl_admin_cms_open_matter", {
+        p_token: token, p_client_id: newClientId, p_workflow_type: newWorkflow,
+        p_title: newTitle || null,
+      });
+      if (error) throw error;
+      if (!data) throw new Error("No matter ID returned — check the RPC returned a value.");
       const { data: refreshed } = await supabase.rpc("fl_admin_cms_matters", { p_token: token });
       setMatters((refreshed as CmsMatter[]) ?? []);
       setOpenMatter(false);
       setNewClientId(""); setNewClientLabel(""); setClientQuery(""); setClientHits([]); setNewTitle("");
       void loadDetail(data as string);
+    } catch (err) {
+      setCreateError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setCreating(false);
     }
-    setCreating(false);
   }
 
   const activeMatter = matters.find(m => m.id === selected);
@@ -3531,12 +3557,17 @@ function CmsTab({ token }: { token: string }) {
                   style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid rgba(18,16,12,.2)", fontSize: 13, outline: "none" }} />
               </label>
             </div>
+            {createError && (
+              <div style={{ marginTop: 12, padding: "10px 12px", borderRadius: 8, background: "#fbeaea", border: "1px solid #eecaca", fontSize: 13, color: "#7a2020" }}>
+                {createError}
+              </div>
+            )}
             <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
               <button onClick={() => void createMatter()} disabled={creating || !newClientId.trim()}
-                style={{ flex: 1, background: GREEN, color: CREAM, border: "none", borderRadius: 10, padding: "12px", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+                style={{ flex: 1, background: GREEN, color: CREAM, border: "none", borderRadius: 10, padding: "12px", fontSize: 14, fontWeight: 700, cursor: "pointer", opacity: creating || !newClientId.trim() ? 0.6 : 1 }}>
                 {creating ? "Creating…" : "Open Matter"}
               </button>
-              <button onClick={() => setOpenMatter(false)}
+              <button onClick={() => { setOpenMatter(false); setCreateError(null); }}
                 style={{ padding: "12px 20px", border: "1px solid rgba(18,16,12,.2)", borderRadius: 10, background: "#fff", fontSize: 13, cursor: "pointer" }}>
                 Cancel
               </button>

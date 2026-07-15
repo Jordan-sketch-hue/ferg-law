@@ -123,6 +123,7 @@ export default function ClientDashboardPage() {
 
   const [msgText, setMsgText] = useState("");
   const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -186,27 +187,35 @@ export default function ClientDashboardPage() {
   const activeMatter = matters.find(m => m.id === selected);
 
   async function sendMessage() {
-    if (!msgText.trim() || !activeMatter) return;
+    const clean = msgText.replace(/[﻿​‌‍⁠]/g, "").trim();
+    if (!clean || !activeMatter) return;
     setSending(true);
-    const { data } = await supabase().from("fl_matter_messages").insert({
-      matter_id: activeMatter.id,
-      sender_id: clientId,
-      sender_type: "client",
-      sender_label: clientName || "Client",
-      body: msgText.trim(),
-    }).select().single();
-    if (data) {
-      setMatters(prev => prev.map(m => m.id === activeMatter.id
-        ? { ...m, messages: [...m.messages, data as Message] }
-        : m
-      ));
-      setMsgText("");
-      void fetch("/api/cms/notify", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ matterId: activeMatter.id, kind: "message" }),
-      }).catch(() => null);
+    setSendError(null);
+    try {
+      const { data, error } = await supabase().from("fl_matter_messages").insert({
+        matter_id: activeMatter.id,
+        sender_id: clientId,
+        sender_type: "client",
+        sender_label: (clientName || "Client").replace(/[﻿]/g, ""),
+        body: clean,
+      }).select().single();
+      if (error) throw error;
+      if (data) {
+        setMatters(prev => prev.map(m => m.id === activeMatter.id
+          ? { ...m, messages: [...m.messages, data as Message] }
+          : m
+        ));
+        setMsgText("");
+        void fetch("/api/cms/notify", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ matterId: activeMatter.id, kind: "message" }),
+        }).catch(() => null);
+      }
+    } catch (err) {
+      setSendError(err instanceof Error ? err.message : "Failed to send. Please try again.");
+    } finally {
+      setSending(false);
     }
-    setSending(false);
   }
 
   async function uploadFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -320,6 +329,7 @@ export default function ClientDashboardPage() {
                 onUpload={uploadFile}
                 fileRef={fileRef}
                 messagesEndRef={messagesEndRef}
+                sendError={sendError}
               />
             </div>
           ) : (
@@ -342,7 +352,7 @@ export default function ClientDashboardPage() {
 
 function MatterPane({
   matter, tab, setTab, msgText, setMsgText, sending, uploading,
-  onSendMessage, onUpload, fileRef, messagesEndRef,
+  onSendMessage, onUpload, fileRef, messagesEndRef, sendError,
 }: {
   matter: Matter;
   tab: "timeline" | "messages" | "files";
@@ -355,6 +365,7 @@ function MatterPane({
   onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   fileRef: React.RefObject<HTMLInputElement | null>;
   messagesEndRef: React.RefObject<HTMLDivElement | null>;
+  sendError: string | null;
 }) {
   const s = STATUS_CONFIG[matter.status] ?? STATUS_CONFIG.intake;
   const phases = groupMilestones(matter.milestones);
@@ -525,6 +536,11 @@ function MatterPane({
               )}
               <div ref={messagesEndRef} />
             </div>
+            {sendError && (
+              <div style={{ marginBottom: 8, padding: "8px 12px", borderRadius: 8, background: "#fbeaea", border: "1px solid #eecaca", fontSize: 13, color: "#7a2020" }}>
+                {sendError}
+              </div>
+            )}
             <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
               <textarea
                 value={msgText}

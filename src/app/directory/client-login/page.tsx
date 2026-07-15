@@ -33,19 +33,25 @@ export default function ClientLoginPage() {
     if (!name.trim()) return setErr("Please enter your name.");
     if (password.length < 6) return setErr("Password must be at least 6 characters.");
     setBusy(true);
-    const { data, error } = await createClient().auth.signUp({
-      email: email.trim(),
-      password,
-      options: { data: { full_name: name.trim(), role: "client" } },
+    const res = await fetch("/api/auth/client-signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email.trim(), password, name: name.trim() }),
     });
-    if (error) { setErr(error.message); setBusy(false); return; }
-    if (data.session) {
-      router.push("/directory/client");
-    } else {
-      setOk("Check your email to confirm your account, then sign in.");
+    const json = await res.json() as { ok?: boolean; error?: string };
+    if (!res.ok || json.error) {
+      setErr(json.error ?? "Sign up failed. Please try again.");
       setBusy(false);
-      setTab("login");
+      return;
     }
+    // Account created — sign in immediately, no confirmation email
+    const { error: signInErr } = await createClient().auth.signInWithPassword({ email: email.trim(), password });
+    if (signInErr) {
+      setErr(signInErr.message);
+      setBusy(false);
+      return;
+    }
+    router.push("/directory/client");
   }
 
   const EyeIcon = ({ open }: { open: boolean }) => open ? (
