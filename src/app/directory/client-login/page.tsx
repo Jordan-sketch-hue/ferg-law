@@ -13,6 +13,7 @@ export default function ClientLoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -38,7 +39,7 @@ export default function ClientLoginPage() {
     const res = await fetch("/api/auth/client-signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: email.trim(), password, name: name.trim() }),
+      body: JSON.stringify({ email: email.trim(), password, name: name.trim(), phone: phone.trim() }),
     });
     const json = await res.json() as { ok?: boolean; error?: string };
     if (!res.ok || json.error) {
@@ -101,10 +102,16 @@ export default function ClientLoginPage() {
 
         <form onSubmit={tab === "login" ? onLogin : onSignup} noValidate>
           {tab === "signup" && (
-            <div className="dform-field">
-              <label htmlFor="nm">Full name</label>
-              <input id="nm" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your full name" />
-            </div>
+            <>
+              <div className="dform-field">
+                <label htmlFor="nm">Full name</label>
+                <input id="nm" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your full name" />
+              </div>
+              <div className="dform-field">
+                <label htmlFor="ph">Cell number</label>
+                <input id="ph" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 876 XXX XXXX" />
+              </div>
+            </>
           )}
           <div className="dform-field">
             <label htmlFor="em">Email</label>

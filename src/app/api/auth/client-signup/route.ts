@@ -9,10 +9,11 @@ import { sendWelcomeToClient } from "@/lib/email/cms";
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, password, name } = (await req.json()) as {
+    const { email, password, name, phone } = (await req.json()) as {
       email: string;
       password: string;
       name: string;
+      phone?: string;
     };
 
     if (!email?.trim() || !password || !name?.trim()) {
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest) {
       email: email.trim().toLowerCase(),
       password,
       email_confirm: true,
-      user_metadata: { full_name: name.trim(), role: "client" },
+      user_metadata: { full_name: name.trim(), role: "client", phone_number: phone?.trim() || null },
     });
 
     if (error) {

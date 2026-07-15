@@ -14,7 +14,7 @@ export async function GET() {
   const admin = createAdminClient();
   const { data, error } = await admin
     .from("fl_client_kyc")
-    .select("id, full_legal_name, date_of_birth, nationality, address, id_type, id_number, id_doc_url, source_of_funds, is_pep, submitted_at, status, reviewer_notes")
+    .select("id, full_legal_name, date_of_birth, nationality, address, trn, id_type, id_number, id_doc_url, source_of_funds, is_pep, submitted_at, status, reviewer_notes")
     .eq("client_id", user.id)
     .maybeSingle();
 
@@ -32,6 +32,7 @@ export async function POST(req: NextRequest) {
     date_of_birth: string;
     nationality: string;
     address: string;
+    trn?: string;
     id_type: string;
     id_number: string;
     id_doc_url?: string;
@@ -54,6 +55,7 @@ export async function POST(req: NextRequest) {
       date_of_birth: body.date_of_birth,
       nationality: body.nationality?.trim() || null,
       address: body.address?.trim() || null,
+      trn: body.trn?.trim() || null,
       id_type: body.id_type,
       id_number: body.id_number.trim(),
       id_doc_url: body.id_doc_url || null,

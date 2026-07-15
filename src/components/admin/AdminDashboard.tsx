@@ -2913,6 +2913,7 @@ interface CmsKyc {
   id_type: string | null;
   id_number: string | null;
   id_doc_url: string | null;
+  trn: string | null;
   source_of_funds: string | null;
   is_pep: boolean;
   pep_details: string | null;
@@ -3410,7 +3411,7 @@ function CmsTab({ token }: { token: string }) {
                       </div>
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
                         {[["Full legal name", kyc.full_legal_name], ["Date of birth", kyc.date_of_birth], ["Nationality", kyc.nationality],
-                          ["ID type", kyc.id_type], ["ID number", kyc.id_number], ["Address", kyc.address],
+                          ["TRN", kyc.trn], ["ID type", kyc.id_type], ["ID number", kyc.id_number], ["Address", kyc.address],
                           ["Source of funds", kyc.source_of_funds], ["Politically exposed?", kyc.is_pep ? "Yes" : "No"]].map(([label, val]) => (
                           <div key={label as string}>
                             <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 2 }}>{label}</div>

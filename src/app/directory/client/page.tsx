@@ -19,6 +19,7 @@ interface KycRecord {
   date_of_birth: string | null;
   nationality: string | null;
   address: string | null;
+  trn: string | null;
   id_type: string | null;
   id_number: string | null;
   id_doc_url: string | null;
@@ -643,6 +644,9 @@ function MatterPane({
           </div>
         )}
 
+        {/* IDENTITY / KYC */}
+        {tab === "identity" && <KycTab clientId={clientId} />}
+
         {/* FILES */}
         {tab === "files" && (
           <div>
@@ -762,6 +766,7 @@ function KycTab({ kyc, loading, submitting, error, submitted, onSubmit }: {
     date_of_birth: kyc?.date_of_birth ?? "",
     nationality: kyc?.nationality ?? "",
     address: kyc?.address ?? "",
+    trn: kyc?.trn ?? "",
     id_type: kyc?.id_type ?? "national_id",
     id_number: kyc?.id_number ?? "",
     source_of_funds: kyc?.source_of_funds ?? "",
@@ -774,6 +779,7 @@ function KycTab({ kyc, loading, submitting, error, submitted, onSubmit }: {
       date_of_birth: kyc.date_of_birth ?? "",
       nationality: kyc.nationality ?? "",
       address: kyc.address ?? "",
+      trn: kyc.trn ?? "",
       id_type: kyc.id_type ?? "national_id",
       id_number: kyc.id_number ?? "",
       source_of_funds: kyc.source_of_funds ?? "",
@@ -833,6 +839,9 @@ function KycTab({ kyc, loading, submitting, error, submitted, onSubmit }: {
             <KycField label="Residential address">
               <textarea rows={2} value={form.address} onChange={e => set("address", e.target.value)}
                 placeholder="Full street address" style={{ resize: "vertical", fontFamily: "inherit", fontSize: 14, padding: "8px 10px", borderRadius: 8, border: "1px solid var(--line)", width: "100%", boxSizing: "border-box" }} />
+            </KycField>
+            <KycField label="TRN (Tax Registration Number)">
+              <input value={form.trn} onChange={e => set("trn", e.target.value)} placeholder="000-000-000" />
             </KycField>
             <KycField label="ID type">
               <select value={form.id_type} onChange={e => set("id_type", e.target.value)}
