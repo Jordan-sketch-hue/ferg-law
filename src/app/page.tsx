@@ -22,19 +22,31 @@ export default function Home() {
 
       {/* HERO – full-bleed editorial */}
       <section className="hero-full">
-        <picture>
-          <source srcSet="/img/hero-banner.avif" type="image/avif" />
-          <source srcSet="/img/hero-banner.webp" type="image/webp" />
-          <img
-            className="hero-bg"
-            src="/img/hero-banner.jpg"
-            data-edit-img="images.heroBg"
-            alt="A joyful Jamaican family moving into their new home"
-            fetchPriority="high"
-            loading="eager"
-            decoding="sync"
-          />
-        </picture>
+        <div className="hero-carousel">
+          <picture className="hero-bg-slide">
+            <source srcSet="/img/hero-banner.avif" type="image/avif" />
+            <source srcSet="/img/hero-banner.webp" type="image/webp" />
+            <img
+              src="/img/hero-banner.jpg"
+              data-edit-img="images.heroBg"
+              alt="A joyful Jamaican family moving into their new home"
+              fetchPriority="high"
+              loading="eager"
+              decoding="sync"
+            />
+          </picture>
+          <picture className="hero-bg-slide">
+            <source srcSet="/img/couple-keys.webp" type="image/webp" />
+            <img src="/img/couple-keys.jpg" alt="A couple receiving the keys to their new home" loading="lazy" fetchPriority="low" />
+          </picture>
+          <picture className="hero-bg-slide">
+            <source srcSet="/img/people-new-home.webp" type="image/webp" />
+            <img src="/img/people-new-home.jpg" alt="A family settling into their new Jamaican home" loading="lazy" fetchPriority="low" />
+          </picture>
+          <picture className="hero-bg-slide">
+            <img src="/img/family-moving-in.jpg" alt="A family moving into their new property" loading="lazy" fetchPriority="low" />
+          </picture>
+        </div>
         <div className="hero-scrim" aria-hidden="true"></div>
         <div className="hero-full-inner reveal in">
           <p className="hero-firm" data-edit="hero.firm">Ferguson Law</p>
