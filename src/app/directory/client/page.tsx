@@ -644,8 +644,6 @@ function MatterPane({
           </div>
         )}
 
-        {/* IDENTITY / KYC */}
-        {tab === "kyc" && <KycTab clientId={clientId} />}
 
         {/* FILES */}
         {tab === "files" && (
