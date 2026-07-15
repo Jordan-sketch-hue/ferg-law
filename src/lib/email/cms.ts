@@ -23,7 +23,7 @@ function shell(lead: string, body: string, ctaLabel: string, ctaHref: string): s
 </td></tr>
 <tr><td style="padding:40px 40px 8px;">
   <p style="font-size:22px;line-height:1.35;margin:0 0 18px;color:#10211c;">${lead}</p>
-  <p style="font-size:15.5px;line-height:1.75;margin:0 0 26px;color:#3a3a3a;">${body}</p>
+  <div style="font-size:15.5px;line-height:1.75;margin:0 0 26px;color:#3a3a3a;">${body}</div>
 </td></tr>
 <tr><td style="padding:0 40px 8px;" align="center">
   <a href="${ctaHref}" style="display:inline-block;background:#c9a86a;color:#10211c;text-decoration:none;font-size:14px;font-weight:bold;padding:13px 28px;border-radius:9px;">${ctaLabel}</a>
@@ -154,6 +154,64 @@ export function sendReceiptToClient(to: string, matterTitle: string, receiptNumb
       `We've confirmed your payment of <strong>JMD ${amountJmd.toLocaleString()}</strong> on <em>${escapeHtml(matterTitle)}</em>. Receipt number <strong>${escapeHtml(receiptNumber)}</strong> is on file. Reach us on WhatsApp if you'd like a PDF copy sent separately.`,
       "Message us on WhatsApp",
       wa,
+    ),
+  );
+}
+
+export interface DigestStatusChange { milestoneName: string; phaseName: string; newStatus: string; changedAt: string; }
+export interface DigestAlert { milestoneName: string; daysRemaining: number; }
+
+export function sendWeeklyClientDigest(
+  to: string,
+  matterTitle: string,
+  data: {
+    recentChanges: DigestStatusChange[];
+    pending: string[];
+    awaitingClient: string[];
+    nextStep: string | null;
+    alerts: DigestAlert[];
+  },
+) {
+  const statusLabel = (s: string) => s.replace(/_/g, " ");
+
+  const alertsHtml = data.alerts.length ? `
+    <div style="margin:0 0 22px;padding:14px 16px;border-radius:10px;background:#fbeaea;border:1px solid #eecaca;">
+      <div style="font-size:12px;font-weight:bold;letter-spacing:.05em;text-transform:uppercase;color:#7a2020;margin-bottom:8px;">Alerts</div>
+      ${data.alerts.map(a => `<div style="font-size:14px;color:#7a2020;margin-bottom:4px;">⚠ <strong>${escapeHtml(a.milestoneName)}</strong> — ${a.daysRemaining} day${a.daysRemaining === 1 ? "" : "s"} remaining</div>`).join("")}
+    </div>` : "";
+
+  const changesHtml = data.recentChanges.length ? `
+    <div style="margin:0 0 20px;">
+      <div style="font-size:12px;font-weight:bold;letter-spacing:.05em;text-transform:uppercase;color:#9a8f7a;margin-bottom:8px;">Recent progress</div>
+      ${data.recentChanges.map(c => `<div style="font-size:14px;color:#3a3a3a;margin-bottom:5px;">✓ <strong>${escapeHtml(c.milestoneName)}</strong> — ${escapeHtml(statusLabel(c.newStatus))}</div>`).join("")}
+    </div>` : "";
+
+  const awaitingHtml = data.awaitingClient.length ? `
+    <div style="margin:0 0 20px;">
+      <div style="font-size:12px;font-weight:bold;letter-spacing:.05em;text-transform:uppercase;color:#9a8f7a;margin-bottom:8px;">Action needed from you</div>
+      ${data.awaitingClient.map(m => `<div style="font-size:14px;color:#3a3a3a;margin-bottom:5px;">• ${escapeHtml(m)}</div>`).join("")}
+    </div>` : "";
+
+  const pendingHtml = data.pending.length ? `
+    <div style="margin:0 0 20px;">
+      <div style="font-size:12px;font-weight:bold;letter-spacing:.05em;text-transform:uppercase;color:#9a8f7a;margin-bottom:8px;">Pending steps</div>
+      ${data.pending.slice(0, 6).map(m => `<div style="font-size:14px;color:#3a3a3a;margin-bottom:5px;">• ${escapeHtml(m)}</div>`).join("")}
+    </div>` : "";
+
+  const forecastHtml = data.nextStep ? `
+    <div style="margin:0 0 6px;padding:14px 16px;border-radius:10px;background:#f8f6f1;border:1px solid #ece6da;">
+      <div style="font-size:12px;font-weight:bold;letter-spacing:.05em;text-transform:uppercase;color:#9a8f7a;margin-bottom:6px;">Next up</div>
+      <div style="font-size:14px;color:#3a3a3a;">${escapeHtml(data.nextStep)}</div>
+    </div>` : "";
+
+  return send(
+    to,
+    `Your weekly update — ${matterTitle}`,
+    shell(
+      `Here's where things stand on ${escapeHtml(matterTitle)}.`,
+      `${alertsHtml}${changesHtml}${awaitingHtml}${pendingHtml}${forecastHtml}`,
+      "View my matter",
+      PORTAL_URL,
     ),
   );
 }

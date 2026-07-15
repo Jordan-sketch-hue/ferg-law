@@ -3057,6 +3057,11 @@ function CmsTab({ token }: { token: string }) {
     if (status === "done" && m && selected) void notifyClient(selected, "milestone", m.name);
   }
 
+  async function setMilestoneDue(id: string, dueAt: string) {
+    await supabase.rpc("fl_admin_cms_set_milestone_due", { p_token: token, p_id: id, p_due_at: dueAt || null });
+    setMilestones(prev => prev.map(x => x.id === id ? { ...x, due_at: dueAt || null } : x));
+  }
+
   async function updateMatterStatus(id: string, status: string) {
     await supabase.rpc("fl_admin_cms_update_matter_status", { p_token: token, p_matter_id: id, p_status: status });
     setMatters(prev => prev.map(m => m.id === id ? { ...m, status } : m));
@@ -3314,6 +3319,13 @@ function CmsTab({ token }: { token: string }) {
                                 textDecoration: m.status === "done" ? "line-through" : "none" }}>
                                 {m.name}
                               </span>
+                              <input
+                                type="date"
+                                title="Due date (drives weekly digest deadline alerts)"
+                                value={m.due_at ? m.due_at.slice(0, 10) : ""}
+                                onChange={e => setMilestoneDue(m.id, e.target.value ? new Date(e.target.value).toISOString() : "")}
+                                style={{ fontSize: 11.5, padding: "3px 6px", borderRadius: 7, border: "1px solid rgba(18,16,12,.15)", color: MUTED }}
+                              />
                               <select
                                 value={m.status}
                                 onChange={e => updateMilestone(m.id, e.target.value)}
