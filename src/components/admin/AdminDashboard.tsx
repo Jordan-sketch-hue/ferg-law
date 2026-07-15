@@ -185,7 +185,7 @@ interface HomeProperty {
   status: string;
 }
 
-type Tab = "overview" | "leads" | "bookings" | "clients" | "matters" | "cms" | "calendar" | "chats" | "invites" | "directory" | "availability" | "home_pros" | "home_listings" | "email" | "inquiries" | "referrals";
+type Tab = "overview" | "leads" | "bookings" | "clients" | "matters" | "cms" | "calendar" | "chats" | "invites" | "directory" | "availability" | "home_pros" | "home_listings" | "email" | "inquiries" | "referrals" | "zoom";
 
 interface InboundEmail {
   id: string;
@@ -676,7 +676,7 @@ export default function AdminDashboard() {
         {loadError && <div style={S.errorBar}>{loadError}</div>}
 
         <div style={{ ...S.tabs, background: "#fff", border: "1px solid rgba(18,16,12,.07)", borderRadius: "12px 12px 0 0" }}>
-          {(["overview","leads","bookings","clients","matters","cms","calendar","chats","email","invites","directory","availability","home_pros","home_listings","inquiries","referrals"] as Tab[]).map((t) => (
+          {(["overview","leads","bookings","clients","matters","cms","calendar","chats","email","invites","directory","availability","home_pros","home_listings","inquiries","referrals","zoom"] as Tab[]).map((t) => (
             <TabBtn key={t} active={tab === t} onClick={() => setTab(t)}
               label={
                 t === "overview" ? "Overview" :
@@ -686,6 +686,7 @@ export default function AdminDashboard() {
                 t === "email" ? "Email" :
                 t === "inquiries" ? "H.O.M.E. Inquiries" :
                 t === "referrals" ? "Referrals" :
+                t === "zoom" ? "Zoom" :
                 t.charAt(0).toUpperCase() + t.slice(1)
               }
               count={
@@ -703,6 +704,7 @@ export default function AdminDashboard() {
                 t === "home_listings" ? homeListings.length :
                 t === "inquiries" ? inquiries.filter(i => i.status === "new").length :
                 t === "referrals" ? 0 :
+                t === "zoom" ? 0 :
                 0
               }
             />
@@ -733,6 +735,7 @@ export default function AdminDashboard() {
           {tab === "home_listings" && <HomeListingsPanel listings={homeListings} loading={homeLoading} />}
           {tab === "inquiries" && token && <InquiriesTab inquiries={inquiries} token={token} onStatus={(id, status) => setInquiries(prev => prev.map(i => i.id === id ? { ...i, status } : i))} />}
           {tab === "referrals" && <ReferralsTab leads={leads} appts={appts} />}
+          {tab === "zoom" && token && <ZoomSetupTab token={token} />}
         </div>
       </div>
     </div>
@@ -3609,6 +3612,189 @@ function CmsTab({ token }: { token: string }) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Zoom Setup Tab
+// ─────────────────────────────────────────────────────────────────────────────
+function ZoomSetupTab({ token }: { token: string }) {
+  const [testing, setTesting] = useState(false);
+  const [status, setStatus] = useState<null | {
+    ok: boolean; status?: string; email?: string; displayName?: string; missing?: string[]; error?: string;
+  }>(null);
+
+  async function testConnection() {
+    setTesting(true);
+    setStatus(null);
+    try {
+      const r = await fetch("/api/admin/zoom/test", { headers: { "x-admin-token": token } });
+      setStatus(await r.json());
+    } catch {
+      setStatus({ ok: false, error: "Network error — check your connection." });
+    } finally {
+      setTesting(false);
+    }
+  }
+
+  const STEP_NUM: React.CSSProperties = {
+    display: "inline-flex", alignItems: "center", justifyContent: "center",
+    width: 28, height: 28, borderRadius: "50%", background: GOLD, color: CREAM,
+    fontWeight: 800, fontSize: 13, flexShrink: 0, marginTop: 1,
+  };
+  const STEP_ROW: React.CSSProperties = { display: "flex", gap: 14, alignItems: "flex-start", marginBottom: 20 };
+  const STEP_BODY: React.CSSProperties = { fontSize: 14, lineHeight: 1.65, color: INK };
+  const CODE: React.CSSProperties = {
+    display: "inline-block", background: "#f0ece4", borderRadius: 5,
+    padding: "1px 7px", fontFamily: "monospace", fontSize: 13, color: "#4a3f2f",
+  };
+  const SECTION: React.CSSProperties = {
+    background: "#fff", borderRadius: 14, padding: "24px 28px", marginBottom: 18,
+    border: "1px solid rgba(18,16,12,.08)",
+  };
+
+  return (
+    <div style={{ maxWidth: 680, margin: "0 auto", padding: "28px 0" }}>
+
+      <div style={{ marginBottom: 28 }}>
+        <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: 22, fontWeight: 700, margin: 0, color: INK }}>
+          Zoom Integration
+        </h2>
+        <p style={{ marginTop: 6, color: MUTED, fontSize: 14 }}>
+          Connect your Zoom account so you can create and manage consultation meetings directly from this dashboard.
+          Setup takes about 5 minutes and only needs to be done once.
+        </p>
+      </div>
+
+      {status && (
+        <div style={{
+          borderRadius: 10, padding: "14px 18px", marginBottom: 24, fontSize: 14,
+          background: status.ok ? "#edf7ee" : "#fdf0f0",
+          border: `1px solid ${status.ok ? "#b2dfb5" : "#f5c6c6"}`,
+          color: status.ok ? "#1e5c22" : "#7a1515",
+        }}>
+          {status.ok
+            ? `Connected as ${status.displayName ?? status.email ?? "Zoom user"}${status.email ? ` (${status.email})` : ""}`
+            : status.status === "not_configured"
+              ? `Not configured yet. Missing environment variables: ${(status.missing ?? []).join(", ")}`
+              : `Error: ${status.error}`
+          }
+        </div>
+      )}
+
+      <div style={SECTION}>
+        <p style={{ fontWeight: 700, fontSize: 15, marginBottom: 18, color: INK }}>Step 1 — Create a Zoom Server-to-Server OAuth App</p>
+        {[
+          { n: 1, body: <>Go to <a href="https://marketplace.zoom.us" target="_blank" rel="noopener noreferrer" style={{ color: GOLD }}>marketplace.zoom.us</a> and sign in with the Zoom account you host meetings from.</> },
+          { n: 2, body: <>In the top-right menu click <strong>Develop</strong> → <strong>Build App</strong>.</> },
+          { n: 3, body: <>Find the <strong>"Server-to-Server OAuth"</strong> card and click <strong>Create</strong>. <span style={{ color: MUTED, fontSize: 13 }}>(This type runs with your credentials only — clients never need to authorise anything.)</span></> },
+          { n: 4, body: <>Give the app a name, e.g. <em>"Ferguson Law"</em>, then click <strong>Create</strong>.</> },
+        ].map(({ n, body }) => (
+          <div key={n} style={STEP_ROW}>
+            <span style={STEP_NUM}>{n}</span>
+            <div style={STEP_BODY}>{body}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={SECTION}>
+        <p style={{ fontWeight: 700, fontSize: 15, marginBottom: 18, color: INK }}>Step 2 — Copy credentials and add scopes</p>
+        {[
+          {
+            n: 5, body: <>
+              On the <strong>App Credentials</strong> tab copy these three values — you&apos;ll need them in Step 3:
+              <ul style={{ marginTop: 10, paddingLeft: 18, lineHeight: 2 }}>
+                <li><span style={CODE}>Account ID</span></li>
+                <li><span style={CODE}>Client ID</span></li>
+                <li><span style={CODE}>Client Secret</span> <em style={{ color: MUTED, fontSize: 12 }}>(click the eye icon to reveal)</em></li>
+              </ul>
+            </>
+          },
+          {
+            n: 6, body: <>
+              Click the <strong>Scopes</strong> tab → <strong>+ Add Scopes</strong> → search for{" "}
+              <span style={CODE}>meeting:write:admin</span> → tick it and save.{" "}
+              <span style={{ color: MUTED, fontSize: 13 }}>This lets the app create and manage meetings on your behalf.</span>
+            </>
+          },
+          { n: 7, body: <>Click the <strong>Activation</strong> tab → <strong>Activate your app</strong>.</> },
+        ].map(({ n, body }) => (
+          <div key={n} style={STEP_ROW}>
+            <span style={STEP_NUM}>{n}</span>
+            <div style={STEP_BODY}>{body}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={SECTION}>
+        <p style={{ fontWeight: 700, fontSize: 15, marginBottom: 18, color: INK }}>Step 3 — Add credentials to Vercel</p>
+        {[
+          {
+            n: 8, body: <>
+              Go to your <a href="https://vercel.com/dashboard" target="_blank" rel="noopener noreferrer" style={{ color: GOLD }}>Vercel dashboard</a>
+              {" → "}<strong>ferguson-law</strong> → <strong>Settings</strong> → <strong>Environment Variables</strong>.
+            </>
+          },
+          {
+            n: 9, body: <>
+              Add these three variables for <strong>all environments</strong> (Production, Preview, Development):
+              <div style={{ marginTop: 12, display: "grid", rowGap: 8 }}>
+                {([
+                  ["ZOOM_ACCOUNT_ID", "Your Account ID from Step 5"],
+                  ["ZOOM_CLIENT_ID", "Your Client ID from Step 5"],
+                  ["ZOOM_CLIENT_SECRET", "Your Client Secret from Step 5"],
+                ] as [string, string][]).map(([k, desc]) => (
+                  <div key={k} style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                    <span style={CODE}>{k}</span>
+                    <span style={{ color: MUTED, fontSize: 13 }}>{desc}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          },
+          {
+            n: 10, body: <>
+              After saving, go to <strong>Deployments</strong> and click <strong>Redeploy</strong> on the latest build.
+              {" "}<span style={{ color: MUTED, fontSize: 13 }}>Vercel only picks up new env vars when you redeploy.</span>
+            </>
+          },
+        ].map(({ n, body }) => (
+          <div key={n} style={STEP_ROW}>
+            <span style={STEP_NUM}>{n}</span>
+            <div style={STEP_BODY}>{body}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={SECTION}>
+        <p style={{ fontWeight: 700, fontSize: 15, marginBottom: 12, color: INK }}>Step 4 — Verify the connection</p>
+        <p style={{ fontSize: 14, color: MUTED, marginBottom: 20 }}>
+          After redeploying, come back here and click below to confirm everything is working.
+        </p>
+        <button
+          onClick={() => void testConnection()}
+          disabled={testing}
+          style={{
+            background: GOLD, color: CREAM, border: "none", borderRadius: 10,
+            padding: "12px 26px", fontWeight: 700, fontSize: 14, cursor: "pointer",
+            opacity: testing ? 0.7 : 1,
+          }}
+        >
+          {testing ? "Testing…" : "Test Zoom Connection"}
+        </button>
+      </div>
+
+      <div style={{ ...SECTION, background: "#f9f7f3" }}>
+        <p style={{ fontWeight: 700, fontSize: 14, marginBottom: 10, color: INK }}>What you get once connected</p>
+        <ul style={{ fontSize: 13.5, lineHeight: 1.9, color: MUTED, paddingLeft: 18, margin: 0 }}>
+          <li>Create a Zoom meeting link directly from any Booking or Matter in this admin.</li>
+          <li>The meeting link is emailed to the client automatically.</li>
+          <li>Meetings are created in the <strong>America/Jamaica</strong> timezone by default.</li>
+          <li>Waiting room and host video are enabled by default for all meetings.</li>
+        </ul>
+      </div>
+
     </div>
   );
 }
