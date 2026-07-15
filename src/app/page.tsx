@@ -24,20 +24,19 @@ export default function Home() {
       <section className="hero-full">
         <div className="hero-carousel">
           <picture className="hero-bg-slide">
-            <source srcSet="/img/hero-banner.avif" type="image/avif" />
-            <source srcSet="/img/hero-banner.webp" type="image/webp" />
+            <source srcSet="/img/family-moving-in.webp" type="image/webp" />
             <img
-              src="/img/hero-banner.jpg"
-              data-edit-img="images.heroBg"
-              alt="A joyful Jamaican family moving into their new home"
+              src="/img/family-moving-in.jpg"
+              alt="A family moving into their new property"
               fetchPriority="high"
               loading="eager"
               decoding="sync"
             />
           </picture>
           <picture className="hero-bg-slide">
-            <source srcSet="/img/couple-signing.webp" type="image/webp" />
-            <img src="/img/couple-signing.jpg" alt="A couple signing their property documents" loading="eager" fetchPriority="low" decoding="async" />
+            <source srcSet="/img/hero-banner.avif" type="image/avif" />
+            <source srcSet="/img/hero-banner.webp" type="image/webp" />
+            <img src="/img/hero-banner.jpg" alt="A joyful Jamaican family moving into their new home" loading="eager" fetchPriority="low" decoding="async" />
           </picture>
           <picture className="hero-bg-slide">
             <source srcSet="/img/people-new-home.webp" type="image/webp" />
