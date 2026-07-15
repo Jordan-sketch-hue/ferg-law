@@ -14,6 +14,7 @@ export default function ClientLoginPage() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [intent, setIntent] = useState<"property_purchase" | "property_sale" | "general">("property_purchase");
   const [showPassword, setShowPassword] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -39,7 +40,7 @@ export default function ClientLoginPage() {
     const res = await fetch("/api/auth/client-signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: email.trim(), password, name: name.trim(), phone: phone.trim() }),
+      body: JSON.stringify({ email: email.trim(), password, name: name.trim(), phone: phone.trim(), intent }),
     });
     const json = await res.json() as { ok?: boolean; error?: string };
     if (!res.ok || json.error) {
@@ -91,6 +92,15 @@ export default function ClientLoginPage() {
               <div className="dform-field">
                 <label htmlFor="ph">Cell number</label>
                 <input id="ph" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 876 XXX XXXX" />
+              </div>
+              <div className="dform-field">
+                <label htmlFor="intent">What can we help you with?</label>
+                <select id="intent" value={intent} onChange={(e) => setIntent(e.target.value as typeof intent)}
+                  style={{ width: "100%", padding: "9px 10px", borderRadius: 8, border: "1px solid var(--line)", fontSize: 14, background: "#fff" }}>
+                  <option value="property_purchase">Buying a property</option>
+                  <option value="property_sale">Selling a property</option>
+                  <option value="general">Something else</option>
+                </select>
               </div>
             </>
           )}

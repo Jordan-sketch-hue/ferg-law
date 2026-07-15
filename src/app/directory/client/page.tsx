@@ -159,6 +159,10 @@ export default function ClientDashboardPage() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [paymentsLoading, setPaymentsLoading] = useState(false);
 
+  const [startIntent, setStartIntent] = useState<"property_purchase" | "property_sale" | "general">("property_purchase");
+  const [starting, setStarting] = useState(false);
+  const [startError, setStartError] = useState<string | null>(null);
+
   const [msgText, setMsgText] = useState("");
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
@@ -315,6 +319,26 @@ export default function ClientDashboardPage() {
     if (fileRef.current) fileRef.current.value = "";
   }
 
+  async function onStartMatter() {
+    setStarting(true);
+    setStartError(null);
+    try {
+      const r = await fetch("/api/client/start-matter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ intent: startIntent }),
+      });
+      const j = await r.json() as { ok?: boolean; matterId?: string; error?: string };
+      if (!r.ok || j.error) throw new Error(j.error ?? "Couldn't start your matter. Please try again.");
+      router.refresh();
+      window.location.reload();
+    } catch (e) {
+      setStartError(e instanceof Error ? e.message : "Couldn't start your matter. Please try again.");
+    } finally {
+      setStarting(false);
+    }
+  }
+
   async function onSignOut() {
     await supabase().auth.signOut();
     router.push("/directory/client-login");
@@ -339,10 +363,26 @@ export default function ClientDashboardPage() {
         <p style={{ color: "var(--muted)" }}>Loading your matters…</p>
       ) : matters.length === 0 ? (
         <div className="dir-empty">
-          <h3>No active matters yet</h3>
-          <p>Once Ferguson Law opens a matter for you, it will appear here. This page is where you&apos;ll track progress, send messages, upload documents, and view payments.</p>
-          <p style={{ marginTop: 8 }}>Already working with us?{" "}
-            <a href={waLink()} target="_blank" rel="noopener" style={{ color: "var(--ink)", fontWeight: 600 }}>Message us on WhatsApp</a> and we&apos;ll get you set up.
+          <h3>Let&apos;s get your matter moving</h3>
+          <p>Tell us what you need and we&apos;ll open your matter right now — you&apos;ll land straight in your progress tracker, no waiting required.</p>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginTop: 16 }}>
+            <select value={startIntent} onChange={e => setStartIntent(e.target.value as typeof startIntent)}
+              style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid var(--line)", fontSize: 14, background: "#fff" }}>
+              <option value="property_purchase">Buying a property</option>
+              <option value="property_sale">Selling a property</option>
+              <option value="general">Something else</option>
+            </select>
+            <button onClick={onStartMatter} disabled={starting} className="btn btn-gold" style={{ fontSize: 13 }}>
+              {starting ? "Starting…" : "Start now →"}
+            </button>
+          </div>
+          {startError && (
+            <div style={{ marginTop: 10, padding: "8px 12px", borderRadius: 8, background: "#fbeaea", border: "1px solid #eecaca", fontSize: 13, color: "#7a2020" }}>
+              {startError}
+            </div>
+          )}
+          <p style={{ marginTop: 14, fontSize: 13 }}>Prefer to talk first?{" "}
+            <a href={waLink()} target="_blank" rel="noopener" style={{ color: "var(--ink)", fontWeight: 600 }}>Message us on WhatsApp</a>.
           </p>
         </div>
       ) : (

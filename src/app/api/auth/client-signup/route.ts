@@ -9,11 +9,12 @@ import { sendWelcomeToClient } from "@/lib/email/cms";
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, password, name, phone } = (await req.json()) as {
+    const { email, password, name, phone, intent } = (await req.json()) as {
       email: string;
       password: string;
       name: string;
       phone?: string;
+      intent?: "property_purchase" | "property_sale" | "general";
     };
 
     if (!email?.trim() || !password || !name?.trim()) {
@@ -43,6 +44,17 @@ export async function POST(req: NextRequest) {
 
     // Fire welcome email (best-effort)
     void sendWelcomeToClient(email.trim().toLowerCase(), name.trim()).catch(() => null);
+
+    // Open an intake matter immediately so the client lands straight in the
+    // portal's active-matter view instead of an empty "no matters yet" screen.
+    if (data.user?.id) {
+      const { error: matterErr } = await admin.rpc("fl_open_matter", {
+        p_client_id: data.user.id,
+        p_workflow_type: intent ?? "general",
+        p_title: null,
+      });
+      if (matterErr) console.error("fl_open_matter failed on signup:", matterErr.message);
+    }
 
     return NextResponse.json({ ok: true, userId: data.user?.id });
   } catch (e) {
