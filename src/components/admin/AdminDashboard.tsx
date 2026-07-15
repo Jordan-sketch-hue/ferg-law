@@ -509,6 +509,20 @@ export default function AdminDashboard() {
     setInvites((prev) => prev.filter((iv) => iv.code !== code));
   }, [token]);
 
+  const deleteMatter = useCallback(async (id: string) => {
+    if (!token || !confirm("Delete this matter and all its milestones? This cannot be undone.")) return;
+    const supabase = createClient();
+    await supabase.rpc("fl_admin_delete_matter", { p_token: token, p_id: id });
+    setMatters((prev) => prev.filter((m) => m.id !== id));
+  }, [token]);
+
+  const deleteBooking = useCallback(async (id: string) => {
+    if (!token || !confirm("Delete this booking permanently?")) return;
+    const supabase = createClient();
+    await supabase.rpc("fl_admin_delete_booking", { p_token: token, p_id: id });
+    setAppts((prev) => prev.filter((a) => a.id !== id));
+  }, [token]);
+
   // H.O.M.E. data — fetched directly from the homeready Supabase project
   useEffect(() => {
     if (!token) return;
@@ -721,9 +735,9 @@ export default function AdminDashboard() {
             />
           )}
           {tab === "leads" && <LeadsTable leads={leads} loading={loading} token={token} onStatus={setLeadStatus} onDelete={deleteLead} />}
-          {tab === "bookings" && <BookingsTable appts={appts} loading={loading} token={token ?? ""} onStatus={setApptStatus} onCancel={cancelBooking} />}
+          {tab === "bookings" && <BookingsTable appts={appts} loading={loading} token={token ?? ""} onStatus={setApptStatus} onCancel={cancelBooking} onDelete={deleteBooking} />}
           {tab === "clients" && <ClientsTab clients={clients} matters={matters} loading={loading} onUpsert={upsertClient} onDelete={deleteClient} />}
-          {tab === "matters" && <MattersTab matters={matters} loading={loading} token={token ?? ""} onStage={setMatterStage} onPayment={setMatterPayment} />}
+          {tab === "matters" && <MattersTab matters={matters} loading={loading} token={token ?? ""} onStage={setMatterStage} onPayment={setMatterPayment} onDelete={deleteMatter} onAdd={(m) => setMatters(prev => [m, ...prev])} />}
           {tab === "cms" && token && <CmsTab token={token} />}
           {tab === "calendar" && <CalendarTab appts={appts} />}
           {tab === "chats" && <ChatsTable convos={convos} loading={loading} />}
@@ -984,7 +998,7 @@ function LeadsTable({ leads, loading, token, onStatus, onDelete }: { leads: Lead
 // ---------------------------------------------------------------------------
 // Bookings
 // ---------------------------------------------------------------------------
-function BookingsTable({ appts, loading, token, onStatus, onCancel }: { appts: Appointment[]; loading: boolean; token: string; onStatus: (id: string, s: string) => void; onCancel: (id: string) => void }) {
+function BookingsTable({ appts, loading, token, onStatus, onCancel, onDelete }: { appts: Appointment[]; loading: boolean; token: string; onStatus: (id: string, s: string) => void; onCancel: (id: string) => void; onDelete: (id: string) => void }) {
   const [composing, setComposing] = useState<Appointment | null>(null);
   if (loading && appts.length === 0) return <Empty>Loading bookings…</Empty>;
   if (appts.length === 0) return <Empty>No bookings yet.</Empty>;
@@ -1016,7 +1030,10 @@ function BookingsTable({ appts, loading, token, onStatus, onCancel }: { appts: A
                         Cancel
                       </button>
                     )}
-                    {!a.email && a.status === "cancelled" && <span style={S.muted}>—</span>}
+                    <button type="button" onClick={() => onDelete(a.id)}
+                      style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)" }}>
+                      Delete
+                    </button>
                   </div>
                 </Td>
               </tr>
@@ -1176,33 +1193,70 @@ const PRIORITY_COLORS: Record<string, React.CSSProperties> = {
   urgent: { background: "rgba(190,60,60,.14)", color: "#a23b3b" },
 };
 
-function MattersTab({ matters, loading, token, onStage, onPayment }: {
+function MattersTab({ matters, loading, token, onStage, onPayment, onDelete, onAdd }: {
   matters: Matter[]; loading: boolean; token: string;
   onStage: (id: string, s: string) => void; onPayment: (id: string, s: string) => void;
+  onDelete: (id: string) => void; onAdd: (m: Matter) => void;
 }) {
+  const supabase = createClient();
   const [view, setView] = useState<"table" | "kanban">("kanban");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [clientQuery, setClientQuery] = useState("");
+  const [clientHits, setClientHits] = useState<CmsClientHit[]>([]);
+  const [newClientId, setNewClientId] = useState("");
+  const [newClientLabel, setNewClientLabel] = useState("");
+  const [newClientName, setNewClientName] = useState("");
+  const [newWorkflow, setNewWorkflow] = useState("property_purchase");
+  const [newTitle, setNewTitle] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
 
-  if (loading && matters.length === 0) return <Empty>Loading matters…</Empty>;
-  if (matters.length === 0) return <Empty>No matters yet. Use the CMS tab to open a new matter for any client.</Empty>;
+  useEffect(() => {
+    const q = clientQuery.trim();
+    if (q.length < 2) { setClientHits([]); return; }
+    const t = setTimeout(async () => {
+      const { data } = await supabase.rpc("fl_admin_cms_client_search", { p_token: token, p_query: q });
+      setClientHits((data as CmsClientHit[]) ?? []);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [clientQuery]);
 
-  function toggleExpand(id: string) {
-    setExpandedId(prev => prev === id ? null : id);
+  async function createMatter() {
+    setCreating(true); setCreateError(null);
+    const { data, error } = await supabase.rpc("fl_open_matter", {
+      p_client_id: newClientId || null, p_workflow_type: newWorkflow,
+      p_title: newTitle.trim() || null, p_client_name: newClientName.trim() || null,
+    });
+    if (error) { setCreateError(error.message); setCreating(false); return; }
+    if (data) onAdd(data as Matter);
+    setShowModal(false); setNewClientId(""); setNewClientLabel(""); setNewClientName(""); setNewTitle(""); setClientQuery(""); setCreating(false);
   }
+
+  function resetModal() { setShowModal(false); setNewClientId(""); setNewClientLabel(""); setNewClientName(""); setNewTitle(""); setClientQuery(""); setCreateError(null); }
+
+  function toggleExpand(id: string) { setExpandedId(prev => prev === id ? null : id); }
 
   return (
     <>
-      <div style={{ display: "flex", gap: 8, padding: "14px 20px 0", borderBottom: "1px solid rgba(18,16,12,.07)" }}>
+      <div style={{ display: "flex", gap: 8, padding: "14px 20px 0", borderBottom: "1px solid rgba(18,16,12,.07)", alignItems: "center" }}>
         {(["kanban","table"] as const).map(v => (
           <button key={v} type="button" onClick={() => setView(v)}
             style={{ padding: "6px 14px", borderRadius: 6, border: "1px solid rgba(18,16,12,.15)", background: view === v ? GREEN : "transparent", color: view === v ? CREAM : MUTED, fontSize: ".75rem", fontWeight: 600, cursor: "pointer", textTransform: "capitalize" }}>
             {v === "kanban" ? "⬛ Kanban" : "≡ Table"}
           </button>
         ))}
+        <button type="button" onClick={() => setShowModal(true)}
+          style={{ marginLeft: "auto", padding: "6px 16px", borderRadius: 6, border: "none", background: GOLD, color: CREAM, fontSize: ".75rem", fontWeight: 700, cursor: "pointer" }}>
+          + New Matter
+        </button>
       </div>
-      {view === "kanban" ? (
+
+      {loading && matters.length === 0 ? <Empty>Loading matters…</Empty> : matters.length === 0 ? (
+        <Empty>No matters yet. <button type="button" onClick={() => setShowModal(true)} style={{ background: "none", border: "none", color: GOLD, cursor: "pointer", fontWeight: 700, fontSize: "inherit" }}>Open one now →</button></Empty>
+      ) : view === "kanban" ? (
         <div>
-          <KanbanView matters={matters} onStage={onStage} onExpand={toggleExpand} />
+          <KanbanView matters={matters} onStage={onStage} onExpand={toggleExpand} onDelete={onDelete} />
           {expandedId && (
             <MilestonePanel key={expandedId} matterId={expandedId} token={token} onClose={() => setExpandedId(null)}
               matter={matters.find(m => m.id === expandedId) ?? null} />
@@ -1211,7 +1265,7 @@ function MattersTab({ matters, loading, token, onStage, onPayment }: {
       ) : (
         <div style={S.tableWrap}>
           <table style={S.table}>
-            <thead><tr><Th>​</Th><Th>Ref</Th><Th>Client</Th><Th>Type</Th><Th>Stage</Th><Th>Priority</Th><Th>Payment</Th><Th>Description</Th><Th>Date</Th></tr></thead>
+            <thead><tr><Th>​</Th><Th>Ref</Th><Th>Client</Th><Th>Type</Th><Th>Stage</Th><Th>Priority</Th><Th>Payment</Th><Th>Description</Th><Th>Date</Th><Th>​</Th></tr></thead>
             <tbody>
               {matters.map((m) => (
                 <>
@@ -1225,10 +1279,14 @@ function MattersTab({ matters, loading, token, onStage, onPayment }: {
                     <Td onClick={e => e.stopPropagation()}><StatusSelect value={m.payment_status} options={PAYMENT_STATUSES} onChange={(v) => onPayment(m.id, v)} /></Td>
                     <Td><div style={S.msgCell} title={m.description ?? ""}>{m.description || "—"}</div></Td>
                     <Td>{fmtDate(m.created_at)}</Td>
+                    <Td onClick={e => e.stopPropagation()}>
+                      <button type="button" onClick={() => onDelete(m.id)}
+                        title="Delete matter" style={{ background: "none", border: "none", cursor: "pointer", color: "#c0392b", fontSize: 15, padding: "2px 6px" }}>🗑</button>
+                    </Td>
                   </tr>
                   {expandedId === m.id && (
                     <tr key={`${m.id}-milestones`}>
-                      <td colSpan={9} style={{ padding: 0, background: "rgba(16,42,30,.03)" }}>
+                      <td colSpan={10} style={{ padding: 0, background: "rgba(16,42,30,.03)" }}>
                         <MilestonePanel matterId={m.id} token={token} matter={m} onClose={() => setExpandedId(null)} inline />
                       </td>
                     </tr>
@@ -1237,6 +1295,65 @@ function MattersTab({ matters, loading, token, onStage, onPayment }: {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {showModal && (
+        <div onClick={resetModal} style={{ position: "fixed", inset: 0, background: "rgba(16,33,28,.5)", display: "grid", placeItems: "center", padding: 16, zIndex: 60 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 18, padding: 28, width: "100%", maxWidth: 420 }}>
+            <div style={{ fontFamily: "var(--serif, Georgia, serif)", fontWeight: 700, fontSize: 19, color: GREEN, marginBottom: 18 }}>Open New Matter</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <label style={{ display: "flex", flexDirection: "column", gap: 5, position: "relative" }}>
+                <span style={{ fontSize: 11.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".07em", color: MUTED }}>Client</span>
+                {newClientId ? (
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 12px", borderRadius: 10, border: `1px solid ${GOLD}`, background: "#fffbf0" }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: INK }}>{newClientLabel}</span>
+                    <button type="button" onClick={() => { setNewClientId(""); setNewClientLabel(""); setClientQuery(""); setNewClientName(""); }} style={{ background: "none", border: "none", cursor: "pointer", color: MUTED, fontSize: 16 }}>×</button>
+                  </div>
+                ) : (
+                  <>
+                    <input value={clientQuery} onChange={e => setClientQuery(e.target.value)} placeholder="Search by email (or enter name below)…"
+                      style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid rgba(18,16,12,.2)", fontSize: 13, outline: "none" }} />
+                    {clientHits.length > 0 && (
+                      <div style={{ position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, background: "#fff", border: "1px solid rgba(18,16,12,.15)", borderRadius: 10, boxShadow: "0 6px 18px rgba(0,0,0,.1)", zIndex: 5, maxHeight: 180, overflowY: "auto" }}>
+                        {clientHits.map(c => (
+                          <button key={c.id} type="button" onClick={() => { setNewClientId(c.id); setNewClientLabel(`${c.full_name} <${c.email}>`); setClientHits([]); setNewClientName(""); }}
+                            style={{ display: "block", width: "100%", textAlign: "left", padding: "9px 12px", border: "none", background: "none", cursor: "pointer", fontSize: 13 }}>
+                            <div style={{ fontWeight: 600, color: INK }}>{c.full_name}</div>
+                            <div style={{ fontSize: 11.5, color: MUTED }}>{c.email}</div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    <div style={{ fontSize: 11, color: MUTED, textAlign: "center", margin: "4px 0" }}>— or —</div>
+                    <input value={newClientName} onChange={e => setNewClientName(e.target.value)} placeholder="Enter client name manually"
+                      style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid rgba(18,16,12,.2)", fontSize: 13, outline: "none" }} />
+                  </>
+                )}
+              </label>
+              <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                <span style={{ fontSize: 11.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".07em", color: MUTED }}>Workflow</span>
+                <select value={newWorkflow} onChange={e => setNewWorkflow(e.target.value)} style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid rgba(18,16,12,.2)", fontSize: 13, outline: "none" }}>
+                  <option value="property_purchase">Property Purchase</option>
+                  <option value="property_sale">Property Sale</option>
+                  <option value="general">General</option>
+                </select>
+              </label>
+              <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                <span style={{ fontSize: 11.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".07em", color: MUTED }}>Matter title (optional)</span>
+                <input value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder="e.g. 12 Kingsway Ave purchase"
+                  style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid rgba(18,16,12,.2)", fontSize: 13, outline: "none" }} />
+              </label>
+            </div>
+            {createError && <div style={{ marginTop: 12, padding: "10px 12px", borderRadius: 8, background: "#fbeaea", border: "1px solid #eecaca", fontSize: 13, color: "#7a2020" }}>{createError}</div>}
+            <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
+              <button onClick={() => void createMatter()} disabled={creating || (!newClientId.trim() && !newClientName.trim())}
+                style={{ flex: 1, background: GREEN, color: CREAM, border: "none", borderRadius: 10, padding: "12px", fontSize: 14, fontWeight: 700, cursor: "pointer", opacity: creating || (!newClientId.trim() && !newClientName.trim()) ? 0.6 : 1 }}>
+                {creating ? "Creating…" : "Open Matter"}
+              </button>
+              <button onClick={resetModal} style={{ padding: "12px 20px", border: "1px solid rgba(18,16,12,.2)", borderRadius: 10, background: "#fff", fontSize: 13, cursor: "pointer" }}>Cancel</button>
+            </div>
+          </div>
         </div>
       )}
     </>
@@ -2570,10 +2687,11 @@ const KANBAN_COLS = [
   { key: "closed",              label: "Closed" },
 ];
 
-function KanbanView({ matters, onStage, onExpand }: {
+function KanbanView({ matters, onStage, onExpand, onDelete }: {
   matters: Matter[];
   onStage: (id: string, s: string) => void;
   onExpand?: (id: string) => void;
+  onDelete?: (id: string) => void;
 }) {
   if (matters.length === 0) return <Empty>No matters yet.</Empty>;
   return (
@@ -2588,7 +2706,13 @@ function KanbanView({ matters, onStage, onExpand }: {
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {cards.map(m => (
                 <div key={m.id} style={{ background: "#fff", border: "1px solid rgba(18,16,12,.09)", borderRadius: 8, padding: "12px 14px", boxShadow: "0 2px 8px -4px rgba(0,0,0,.15)" }}>
-                  <div style={{ fontWeight: 600, fontSize: ".82rem", color: GREEN, marginBottom: 3 }}>{m.client_name || "—"}</div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 3 }}>
+                    <div style={{ fontWeight: 600, fontSize: ".82rem", color: GREEN }}>{m.client_name || "—"}</div>
+                    {onDelete && (
+                      <button type="button" onClick={() => onDelete(m.id)} title="Delete matter"
+                        style={{ background: "none", border: "none", cursor: "pointer", color: "#c0392b", fontSize: 13, padding: "0 0 0 4px", lineHeight: 1 }}>🗑</button>
+                    )}
+                  </div>
                   <div style={{ fontSize: ".7rem", color: MUTED, marginBottom: 8 }}>{m.matter_type || "—"} · {m.ref}</div>
                   <select value={m.stage} onChange={e => onStage(m.id, e.target.value)}
                     style={{ width: "100%", fontSize: ".7rem", padding: "4px 6px", borderRadius: 6, border: "1px solid rgba(18,16,12,.15)", background: "#faf8f2", color: INK, cursor: "pointer" }}>
