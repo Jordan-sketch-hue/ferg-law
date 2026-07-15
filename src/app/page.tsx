@@ -43,10 +43,6 @@ export default function Home() {
             <source srcSet="/img/people-new-home.webp" type="image/webp" />
             <img src="/img/people-new-home.jpg" alt="A family settling into their new Jamaican home" loading="eager" fetchPriority="low" decoding="async" />
           </picture>
-          <picture className="hero-bg-slide">
-            <source srcSet="/img/family-moving-in.webp" type="image/webp" />
-            <img src="/img/family-moving-in.jpg" alt="A family moving into their new property" loading="eager" fetchPriority="low" decoding="async" />
-          </picture>
         </div>
         <div className="hero-scrim" aria-hidden="true"></div>
         <div className="hero-full-inner reveal in">
