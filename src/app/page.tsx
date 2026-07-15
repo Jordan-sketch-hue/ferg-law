@@ -44,6 +44,7 @@ export default function Home() {
             <img src="/img/people-new-home.jpg" alt="A family settling into their new Jamaican home" loading="lazy" fetchPriority="low" />
           </picture>
           <picture className="hero-bg-slide">
+            <source srcSet="/img/family-moving-in.webp" type="image/webp" />
             <img src="/img/family-moving-in.jpg" alt="A family moving into their new property" loading="lazy" fetchPriority="low" />
           </picture>
         </div>
