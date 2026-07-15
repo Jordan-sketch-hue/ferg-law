@@ -8,8 +8,10 @@ import {
   type KeyboardEvent,
 } from "react";
 import { usePathname } from "next/navigation";
+import { useContext } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { SITE, waLink } from "@/lib/site";
+import { BookingContext } from "@/components/site/BookingProvider";
 import "@/app/chat.css";
 
 type Role = "visitor" | "bot" | "agent" | "system";
@@ -31,9 +33,8 @@ const HIDE_CHAT_PATHS = ["/booking", "/directory/client", "/directory/client-log
 
 export default function ChatWidget() {
   const pathname = usePathname();
+  const bookingCtx = useContext(BookingContext);
   const [open, setOpen] = useState(false);
-
-  if (HIDE_CHAT_PATHS.some((p) => pathname.startsWith(p))) return null;
   const [messages, setMessages] = useState<Msg[]>([GREETING]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -236,6 +237,9 @@ export default function ChatWidget() {
       setSending(false);
     }
   }, [convId, pushMsg, sending]);
+
+  const bookingOpen = bookingCtx?.open ?? false;
+  if (HIDE_CHAT_PATHS.some((p) => pathname.startsWith(p)) || bookingOpen) return null;
 
   if (!open) {
     return (

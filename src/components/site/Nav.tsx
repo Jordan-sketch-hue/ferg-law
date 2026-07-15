@@ -87,6 +87,10 @@ export default function Nav() {
             </a>
           </div>
 
+          <a className="btn btn-gold nav-mobile-cta" href="/directory/client-login">
+            Get started
+          </a>
+
           <button
             className={`menu-btn${menuOpen ? " active" : ""}`}
             id="menuBtn"
@@ -187,6 +191,11 @@ export default function Nav() {
         .drawer-login-link{ display:block; padding:.45rem 0; font-size:1rem; color:var(--fg); text-decoration:none; font-weight:500; border-bottom:1px solid var(--line); opacity:.8; }
 
         .nav-links{ gap:1.4rem; flex:1; justify-content:center; }
+        .nav-mobile-cta{ display:none; font-size:.82rem; padding:.4rem .9rem; }
+        @media(max-width:768px){
+          .nav-mobile-cta{ display:inline-flex; }
+          .nav-cta{ display:none; }
+        }
         @media(max-width:1200px){
           .nav-links a, .nav-links .nav-home-inline{ font-size:.78rem; }
           .nav-links{ gap:1rem; }

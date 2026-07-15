@@ -15,7 +15,7 @@ type BookingContextValue = {
   closeBooking: () => void;
 };
 
-const BookingContext = createContext<BookingContextValue | null>(null);
+export const BookingContext = createContext<BookingContextValue | null>(null);
 
 export function useBooking(): BookingContextValue {
   const ctx = useContext(BookingContext);
