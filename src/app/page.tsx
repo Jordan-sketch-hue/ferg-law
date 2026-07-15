@@ -23,6 +23,7 @@ export default function Home() {
       {/* HERO – full-bleed editorial */}
       <section className="hero-full">
         <picture>
+          <source srcSet="/img/hero-banner.avif" type="image/avif" />
           <source srcSet="/img/hero-banner.webp" type="image/webp" />
           <img
             className="hero-bg"
@@ -31,7 +32,7 @@ export default function Home() {
             alt="A joyful Jamaican family moving into their new home"
             fetchPriority="high"
             loading="eager"
-            decoding="async"
+            decoding="sync"
           />
         </picture>
         <div className="hero-scrim" aria-hidden="true"></div>
@@ -63,21 +64,9 @@ export default function Home() {
           </div>
           <div className="hero-proof">
             <div className="avatars">
-              <img
-                src="/img/couple-keys.jpg"
-                data-edit-img="images.heroAvatar1"
-                alt="Client"
-              />
-              <img
-                src="/img/people-new-home.jpg"
-                data-edit-img="images.heroAvatar2"
-                alt="Client"
-              />
-              <img
-                src="/img/finance-consult.jpg"
-                data-edit-img="images.heroAvatar3"
-                alt="Client"
-              />
+              <img src="/img/couple-keys.webp" data-edit-img="images.heroAvatar1" alt="Client" loading="lazy" />
+              <img src="/img/people-new-home.webp" data-edit-img="images.heroAvatar2" alt="Client" loading="lazy" />
+              <img src="/img/finance-consult.webp" data-edit-img="images.heroAvatar3" alt="Client" loading="lazy" />
               <img
                 src="/img/realtor-banner.jpg"
                 data-edit-img="images.heroAvatar4"
@@ -200,7 +189,7 @@ export default function Home() {
         <div className="wrap about-grid">
           <div className="about-photo reveal">
             <img
-              src="/img/founder.jpg"
+              src="/img/founder.webp"
               data-edit-img="images.founderPhoto"
               alt="Owen K. Ferguson, JP – Founder &amp; Principal Attorney-at-Law"
             />
@@ -445,7 +434,7 @@ export default function Home() {
               </p>
               <div className="tperson">
                 <img
-                  src="/img/step-assess.jpg"
+                  src="/img/step-assess.webp"
                   data-edit-img="images.avatar2"
                   alt="Keisha L."
                 />
@@ -490,7 +479,7 @@ export default function Home() {
       <section className="coast-band">
         <img
           className="bg"
-          src="/img/jamaica-coast.jpg"
+          src="/img/jamaica-coast.webp"
           data-edit-img="images.coastBandBg"
           alt="Jamaica's north coast meeting turquoise water"
         />
@@ -528,7 +517,7 @@ export default function Home() {
               <div className="reach-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
               </div>
-              <img className="reach-photo" src="/img/reach-consultation.jpg" alt="Book a consultation with Ferguson Law" />
+              <img className="reach-photo" src="/img/reach-consultation.webp" alt="Book a consultation with Ferguson Law" />
               <h4>Book a consultation</h4>
               <p>{CONSULT_DURATION_MIN} minutes with our attorney – real answers for your specific situation.</p>
               <p style={{fontSize:"0.78rem",color:"var(--muted)",marginTop:"0.3rem"}}>In-person meetings by appointment only.</p>
@@ -541,7 +530,7 @@ export default function Home() {
               <div className="reach-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
               </div>
-              <img className="reach-photo" src="/img/reach-chat.jpg" alt="Chat live with us" />
+              <img className="reach-photo" src="/img/reach-chat.webp" alt="Chat live with us" />
               <h4>Chat live</h4>
               <p>Talk to our AI assistant right now – available 24/7, answers questions about any matter.</p>
               <span className="btn btn-gold reach-btn">Start a chat</span>
@@ -551,7 +540,7 @@ export default function Home() {
               <div className="reach-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.35 2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6.13 6.13l.96-.96a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
               </div>
-              <img className="reach-photo" src="/img/reach-whatsapp.jpg" alt="WhatsApp Ferguson Law" />
+              <img className="reach-photo" src="/img/reach-whatsapp.webp" alt="WhatsApp Ferguson Law" />
               <h4>WhatsApp</h4>
               <p>Send us a message directly – we respond personally during business hours.</p>
               <span className="btn btn-wa reach-btn">
