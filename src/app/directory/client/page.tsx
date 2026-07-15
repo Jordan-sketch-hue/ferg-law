@@ -227,7 +227,8 @@ export default function ClientDashboardPage() {
         .then((j: { kyc: KycRecord | null }) => { setKyc(j.kyc); setKycLoading(false); })
         .catch(() => setKycLoading(false));
     }
-    if (tab === "payments" && payments.length === 0 && !paymentsLoading && selected) {
+    if (tab === "payments" && !paymentsLoading && selected) {
+      setPayments([]);
       setPaymentsLoading(true);
       void (async () => {
         try {
@@ -283,14 +284,19 @@ export default function ClientDashboardPage() {
     const { error: upErr } = await supabase().storage.from("fl-matter-files").upload(path, file);
     if (upErr) { alert("Upload failed: " + upErr.message); setUploading(false); return; }
 
-    const { data: { publicUrl } } = supabase().storage.from("fl-matter-files").getPublicUrl(path);
+    const urlRes = await fetch("/api/client/file-url", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path }),
+    });
+    const { url: signedUrl } = await urlRes.json() as { url: string };
 
     const { data } = await supabase().from("fl_matter_files").insert({
       matter_id: activeMatter.id,
       uploader_id: clientId,
       uploader_type: "client",
       file_name: file.name,
-      file_url: publicUrl,
+      file_url: signedUrl,
       file_size: file.size,
       mime_type: file.type,
     }).select().single();
@@ -333,9 +339,10 @@ export default function ClientDashboardPage() {
         <p style={{ color: "var(--muted)" }}>Loading your matters…</p>
       ) : matters.length === 0 ? (
         <div className="dir-empty">
-          <h3>No active matters</h3>
-          <p>Your Ferguson Law matters will appear here once set up by the firm.{" "}
-            <a href={waLink()} target="_blank" rel="noopener" style={{ color: "var(--ink)", fontWeight: 600 }}>Message us on WhatsApp</a>.
+          <h3>No active matters yet</h3>
+          <p>Once Ferguson Law opens a matter for you, it will appear here. This page is where you&apos;ll track progress, send messages, upload documents, and view payments.</p>
+          <p style={{ marginTop: 8 }}>Already working with us?{" "}
+            <a href={waLink()} target="_blank" rel="noopener" style={{ color: "var(--ink)", fontWeight: 600 }}>Message us on WhatsApp</a> and we&apos;ll get you set up.
           </p>
         </div>
       ) : (
@@ -393,11 +400,23 @@ export default function ClientDashboardPage() {
                 onKycSubmit={async (fields) => {
                   setKycSubmitting(true); setKycError(null); setKycOk(false);
                   try {
-                    const r = await fetch("/api/client/kyc", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(fields) });
-                    const j = await r.json() as { ok?: boolean; error?: string };
-                    if (!r.ok || j.error) throw new Error(j.error ?? "Submission failed.");
+                    const file = fields.id_doc_file as File | undefined;
+                    const payload = { ...fields };
+                    delete payload.id_doc_file;
+                    if (file instanceof File) {
+                      const fd = new FormData();
+                      fd.append("file", file);
+                      Object.entries(payload).forEach(([k, v]) => fd.append(k, String(v ?? "")));
+                      const r = await fetch("/api/client/kyc", { method: "POST", body: fd });
+                      const j = await r.json() as { ok?: boolean; error?: string };
+                      if (!r.ok || j.error) throw new Error(j.error ?? "Submission failed.");
+                    } else {
+                      const r = await fetch("/api/client/kyc", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+                      const j = await r.json() as { ok?: boolean; error?: string };
+                      if (!r.ok || j.error) throw new Error(j.error ?? "Submission failed.");
+                    }
                     setKycOk(true);
-                    setKyc(prev => prev ? { ...prev, status: "submitted", submitted_at: new Date().toISOString(), ...fields } : null);
+                    setKyc(prev => prev ? { ...prev, status: "submitted", submitted_at: new Date().toISOString(), ...payload } : null);
                   } catch (e) { setKycError(e instanceof Error ? e.message : "Submission failed."); }
                   finally { setKycSubmitting(false); }
                 }}
@@ -809,7 +828,7 @@ function KycTab({ kyc, loading, submitting, error, submitted, onSubmit }: {
   return (
     <div>
       <p style={{ fontSize: 13.5, color: "var(--muted)", marginBottom: 16, lineHeight: 1.6 }}>
-        Ferguson Law is required by law to verify the identity of all clients (Know Your Customer / KYC). Please fill in your details accurately.
+        Ferguson Law is required by law to verify the identity of all clients (Know Your Customer / KYC). Please fill in your details accurately. This information is linked to your account — not to any specific matter — and only needs to be submitted once.
       </p>
       {statusBanner}
       {submitted && (
@@ -851,6 +870,16 @@ function KycTab({ kyc, loading, submitting, error, submitted, onSubmit }: {
             </KycField>
             <KycField label="ID number">
               <input value={form.id_number} onChange={e => set("id_number", e.target.value)} required placeholder="As printed on your ID" />
+            </KycField>
+            <KycField label="Upload a copy of your ID (photo or scan)">
+              <input type="file" accept="image/*,.pdf"
+                onChange={e => set("id_doc_file", e.target.files?.[0] as unknown as string)}
+                style={{ fontSize: 13, padding: "6px 0" }} />
+              {kyc?.id_doc_url && (
+                <a href={kyc.id_doc_url} target="_blank" rel="noopener" style={{ fontSize: 12, color: "var(--gold-deep)" }}>
+                  Previously uploaded document ↗
+                </a>
+              )}
             </KycField>
             <KycField label="Source of funds">
               <input value={form.source_of_funds} onChange={e => set("source_of_funds", e.target.value)} placeholder="e.g. Employment, savings, sale of property" />

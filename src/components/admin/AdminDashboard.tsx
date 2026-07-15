@@ -1470,7 +1470,7 @@ function CalendarTab({ appts }: { appts: Appointment[] }) {
     return d;
   });
 
-  const hours = Array.from({ length: 9 }, (_, i) => i + 9); // 9-17
+  const hours = Array.from({ length: 11 }, (_, i) => i + 8); // 8-18
 
   function apptForSlot(day: Date, hour: number): Appointment | undefined {
     const dayStr = formatInTimeZone(day, TZ, "yyyy-MM-dd");
@@ -1790,10 +1790,9 @@ function ChatsTable({ convos, loading }: { convos: Conversation[]; loading: bool
     try {
       const phone = selected.visitor_phone.replace(/\D/g, "");
       const jid = phone.includes("@") ? phone : `${phone}@s.whatsapp.net`;
-      const secret = process.env.NEXT_PUBLIC_WHATSAPP_BOT_SECRET ?? "";
-      const res = await fetch(WA_BOT_URL, {
+      const res = await fetch("/api/admin/wa-send", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-send-secret": secret },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ jid, text: waText.trim() }),
       });
       if (res.ok) { setWaResult({ ok: true, msg: "Sent via WhatsApp" }); setWaText(""); }
@@ -1844,7 +1843,6 @@ function ChatsTable({ convos, loading }: { convos: Conversation[]; loading: bool
               <div style={{ fontSize: ".9rem", color: INK }}>{selected.last_message || "—"}</div>
               <div style={{ fontSize: ".74rem", color: MUTED, marginTop: 4 }}>{fmtDate(selected.last_message_at)}</div>
             </div>
-            <a href="/agent" style={{ ...S.waBtn, display: "inline-block", marginBottom: 20 }}>Open in Agent Console</a>
             {selected.visitor_phone && (
               <div style={{ borderTop: "1px solid rgba(18,16,12,.1)", paddingTop: 16 }}>
                 <div style={{ fontSize: ".78rem", fontWeight: 700, textTransform: "uppercase", color: MUTED, marginBottom: 8 }}>Reply via WhatsApp</div>
@@ -2075,6 +2073,7 @@ function EmailTab({ emails, token, onMarkRead }: {
               <span style={{ fontWeight: e.read ? 400 : 700, fontSize: ".85rem", color: GREEN, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
                 {e.from_name || e.from_email}
               </span>
+              {e.replied && <span style={{ fontSize: ".66rem", fontWeight: 700, color: "#2f7a52", background: "rgba(47,122,82,.12)", borderRadius: 999, padding: "1px 6px", flexShrink: 0 }}>Replied</span>}
             </div>
             <div style={{ fontSize: ".78rem", color: MUTED, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.subject || "(no subject)"}</div>
             <div style={{ fontSize: ".72rem", color: MUTED, marginTop: 2 }}>{fmtDate(e.created_at)}</div>
@@ -2237,14 +2236,12 @@ function ReferralsTab({ leads, appts }: { leads: Lead[]; appts: Appointment[] })
     if (!refMap[src]) refMap[src] = { count: 0, booked: 0 };
     refMap[src].count++;
   }
-  // Cross-reference with appointments by ref field
-  for (const a of appts) {
-    const src = a.ref || "direct";
-    // Find matching leads by ref
-    const matching = leads.filter((l) => l.ref === src || ((!l.ref) && src === "direct"));
-    if (matching.length > 0) {
-      const key = src;
-      if (refMap[key]) refMap[key].booked++;
+  // Count booked per lead (not per appointment) to avoid inflating conversions
+  const bookedLeadIds = new Set(appts.map(a => a.lead_id).filter(Boolean));
+  for (const l of leads) {
+    if (bookedLeadIds.has(l.id)) {
+      const src = l.ref || l.source || "direct";
+      if (refMap[src]) refMap[src].booked++;
     }
   }
 
@@ -2404,7 +2401,11 @@ function ListingsPanel({ listings, loading, onStatus }: { listings: Listing[]; l
   if (loading && listings.length === 0) return <Empty>Loading partners…</Empty>;
   if (listings.length === 0) return <Empty>No professional sign-ups yet.</Empty>;
   return (
-    <div style={{ display: "grid", gap: 14 }}>
+    <div>
+      <div style={{ margin: "16px 16px 0", padding: "10px 14px", background: "rgba(200,166,92,.1)", borderRadius: 10, border: "1px solid rgba(200,166,92,.3)", fontSize: 13, color: "#6b5210" }}>
+        <strong>Ferguson Law Directory Partners</strong> — professionals who signed up via the /directory partner application form on fergusonlawja.com. These are your own referral network (solicitors, surveyors, realtors, valuers, etc.).
+      </div>
+    <div style={{ display: "grid", gap: 14, marginTop: 14 }}>
       {listings.map((l) => {
         const status = l.status ?? "pending";
         return (
@@ -2434,6 +2435,7 @@ function ListingsPanel({ listings, loading, onStatus }: { listings: Listing[]; l
           </div>
         );
       })}
+    </div>
     </div>
   );
 }
@@ -2673,6 +2675,8 @@ const S: Record<string, React.CSSProperties> = {
 function HomeProsPanel({ pros, loading, onApprove }: {
   pros: HomePro[]; loading: boolean; onApprove: (userId: string) => void;
 }) {
+  const [rejectedIds, setRejectedIds] = useState<Set<string>>(new Set());
+
   const rejectPro = useCallback(async (userId: string) => {
     await fetch(`${HR_URL}/rest/v1/home_professional_profiles?user_id=eq.${userId}`, {
       method: "PATCH",
@@ -2680,15 +2684,21 @@ function HomeProsPanel({ pros, loading, onApprove }: {
         "apikey": HR_KEY, "Authorization": `Bearer ${HR_KEY}`,
         "Content-Type": "application/json", "Prefer": "return=minimal",
       },
-      body: JSON.stringify({ verified: false }),
+      body: JSON.stringify({ rejected: true }),
     });
+    setRejectedIds(prev => new Set(prev).add(userId));
   }, []);
 
+  const visiblePros = pros.filter(p => !rejectedIds.has(p.user_id));
   if (loading && pros.length === 0) return <Empty>Loading H.O.M.E. professionals…</Empty>;
-  if (pros.length === 0) return <Empty>No professionals awaiting verification.</Empty>;
+  if (visiblePros.length === 0) return <Empty>No professionals awaiting verification.</Empty>;
   return (
-    <div style={{ display: "grid", gap: 14, padding: 20 }}>
-      {pros.map((p) => (
+    <div style={{ padding: 20 }}>
+      <div style={{ marginBottom: 16, padding: "10px 14px", background: "rgba(200,166,92,.1)", borderRadius: 10, border: "1px solid rgba(200,166,92,.3)", fontSize: 13, color: "#6b5210" }}>
+        <strong>H.O.M.E. Platform Professionals</strong> — professionals who applied via the H.O.M.E. by Ferguson Law platform (home.fergusonlawja.com). These serve homebuyers on the H.O.M.E. marketplace and are separate from your Directory partners.
+      </div>
+    <div style={{ display: "grid", gap: 14 }}>
+      {visiblePros.map((p) => (
         <div key={p.user_id} style={S.listCard}>
           <div style={S.listTop}>
             <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
@@ -2710,6 +2720,7 @@ function HomeProsPanel({ pros, loading, onApprove }: {
           </div>
         </div>
       ))}
+    </div>
     </div>
   );
 }
@@ -3199,7 +3210,7 @@ function CmsTab({ token }: { token: string }) {
             borderLeft: selected === m.id ? `3px solid ${GOLD}` : "3px solid transparent",
           }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: "#8a6a22", textTransform: "uppercase", letterSpacing: ".1em", marginBottom: 2 }}>
-              {m.workflow_type?.replace("_", " ") || m.matter_type}
+              {m.workflow_type?.replace(/_/g, " ") || m.matter_type}
             </div>
             <div style={{ fontSize: 13.5, fontWeight: 600, color: INK }}>{m.title || m.client_name}</div>
             <div style={{ fontSize: 12, color: MUTED, marginTop: 2 }}>{m.client_email}</div>
