@@ -162,6 +162,9 @@ export default function RootLayout({
       <head>
         <link rel="preload" as="image" href="/img/hero-banner.avif" type="image/avif" fetchPriority="high" />
         <link rel="preload" as="image" href="/img/hero-banner.webp" type="image/webp" fetchPriority="high" />
+        <link rel="preload" as="image" href="/img/couple-signing.webp" type="image/webp" />
+        <link rel="preload" as="image" href="/img/people-new-home.webp" type="image/webp" />
+        <link rel="preload" as="image" href="/img/family-moving-in.webp" type="image/webp" />
         <link rel="manifest" href="/manifest.json" />
       </head>
       <body>
