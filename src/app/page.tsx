@@ -5,6 +5,7 @@ import Nav from "@/components/site/Nav";
 import Reveal from "@/components/site/Reveal";
 import HomeFlagship from "@/components/site/HomeFlagship";
 import Footer from "@/components/site/Footer";
+import HeroCarousel from "@/components/site/HeroCarousel";
 
 const ArrowIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
@@ -21,28 +22,8 @@ export default function Home() {
       <span id="top"></span>
 
       {/* HERO – full-bleed editorial */}
-      <section className="hero-full">
-        <div className="hero-carousel">
-          <picture className="hero-bg-slide">
-            <source srcSet="/img/family-moving-in.webp" type="image/webp" />
-            <img
-              src="/img/family-moving-in.jpg"
-              alt="A family moving into their new property"
-              fetchPriority="high"
-              loading="eager"
-              decoding="sync"
-            />
-          </picture>
-          <picture className="hero-bg-slide">
-            <source srcSet="/img/hero-banner.avif" type="image/avif" />
-            <source srcSet="/img/hero-banner.webp" type="image/webp" />
-            <img src="/img/hero-banner.jpg" alt="A joyful Jamaican family moving into their new home" loading="eager" fetchPriority="low" decoding="async" />
-          </picture>
-          <picture className="hero-bg-slide">
-            <source srcSet="/img/people-new-home.webp" type="image/webp" />
-            <img src="/img/people-new-home.jpg" alt="A family settling into their new Jamaican home" loading="eager" fetchPriority="low" decoding="async" />
-          </picture>
-        </div>
+      <section className="hero-full" style={{ position: "relative" }}>
+        <HeroCarousel />
         <div className="hero-scrim" aria-hidden="true"></div>
         <div className="hero-full-inner reveal in">
           <p className="hero-firm" data-edit="hero.firm">Ferguson Law</p>
@@ -59,11 +40,8 @@ export default function Home() {
             sale, and transfer.
           </p>
           <div className="hero-cta">
-            <a className="btn btn-gold hero-cta-primary" href="/directory/client-login">
-              Get started <ArrowIcon />
-            </a>
-            <BookButton className="btn btn-gold hero-cta-book">
-              <span data-edit="hero.ctaPrimary">Book a consultation</span>{" "}
+            <BookButton className="btn btn-gold hero-cta-primary">
+              <span data-edit="hero.ctaPrimary">Get started</span>{" "}
               <ArrowIcon />
             </BookButton>
             <a className="btn btn-light" href="/buyers-guide">

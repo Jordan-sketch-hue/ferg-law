@@ -185,7 +185,17 @@ interface HomeProperty {
   status: string;
 }
 
-type Tab = "overview" | "leads" | "bookings" | "clients" | "matters" | "cms" | "calendar" | "chats" | "invites" | "directory" | "availability" | "home_pros" | "home_listings" | "email" | "inquiries" | "referrals" | "zoom";
+type Tab = "overview" | "leads" | "bookings" | "clients" | "matters" | "cms" | "calendar" | "chats" | "invites" | "directory" | "availability" | "home_pros" | "home_listings" | "email" | "inquiries" | "referrals" | "recycle_bin" | "workflows" | "zoom";
+
+interface BinItem {
+  id: string;
+  source_table: string;
+  source_id: string;
+  label: string | null;
+  record_data: Record<string, unknown>;
+  deleted_at: string;
+  days_left: number;
+}
 
 interface InboundEmail {
   id: string;
@@ -268,8 +278,10 @@ export default function AdminDashboard() {
   const [homeLoading, setHomeLoading] = useState(false);
   const [emails, setEmails] = useState<InboundEmail[]>([]);
   const [inquiries, setInquiries] = useState<HomeInquiry[]>([]);
+  const [binItems, setBinItems] = useState<BinItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [cmsUnread, setCmsUnread] = useState(0);
 
   // Verify stored token on mount
   useEffect(() => {
@@ -342,9 +354,10 @@ export default function AdminDashboard() {
         supabase.rpc("fl_admin_matters", { p_token: tok }),
         supabase.rpc("fl_admin_get_availability", { p_token: tok }),
       ]);
-    const [emailsRes, inquiriesRes] = await Promise.all([
+    const [emailsRes, inquiriesRes, binRes] = await Promise.all([
       supabase.rpc("fl_admin_emails", { p_token: tok }),
       supabase.rpc("fl_admin_home_inquiries", { p_token: tok }),
+      supabase.rpc("fl_admin_get_recycle_bin", { p_token: tok }),
     ]);
     const firstError = leadsRes.error || apptsRes.error || convosRes.error ||
       invitesRes.error || listingsRes.error || null;
@@ -360,6 +373,7 @@ export default function AdminDashboard() {
       availability: (availRes.data as Availability[] | null) ?? [],
       emails: (emailsRes.data as InboundEmail[] | null) ?? [],
       inquiries: (inquiriesRes.data as HomeInquiry[] | null) ?? [],
+      binItems: (binRes.data as BinItem[] | null) ?? [],
     };
   }, []);
 
@@ -371,7 +385,7 @@ export default function AdminDashboard() {
       setLeads(res.leads); setAppts(res.appts); setConvos(res.convos);
       setInvites(res.invites); setListings(res.listings);
       setClients(res.clients); setMatters(res.matters); setAvailability(res.availability);
-      setEmails(res.emails); setInquiries(res.inquiries);
+      setEmails(res.emails); setInquiries(res.inquiries); setBinItems(res.binItems);
     }
     setLoading(false);
   }, [token, fetchAll]);
@@ -380,14 +394,18 @@ export default function AdminDashboard() {
     if (!token) return;
     let cancelled = false;
     void (async () => {
-      const res = await fetchAll(token);
+      const [res, unreadRes] = await Promise.all([
+        fetchAll(token),
+        fetch(`/api/admin/cms/unread-count?token=${encodeURIComponent(token)}`).then(r => r.json()).catch(() => ({ count: 0 })),
+      ]);
       if (cancelled) return;
       if (res.error) { setLoadError(res.error); } else {
         setLeads(res.leads); setAppts(res.appts); setConvos(res.convos);
         setInvites(res.invites); setListings(res.listings);
         setClients(res.clients); setMatters(res.matters); setAvailability(res.availability);
-        setEmails(res.emails); setInquiries(res.inquiries);
+        setEmails(res.emails); setInquiries(res.inquiries); setBinItems(res.binItems);
       }
+      setCmsUnread((unreadRes as { count?: number }).count ?? 0);
     })();
     return () => { cancelled = true; };
   }, [token, fetchAll]);
@@ -474,7 +492,7 @@ export default function AdminDashboard() {
   }, [token]);
 
   const deleteClient = useCallback(async (id: string) => {
-    if (!token || !confirm("Delete this client and all their matters? This cannot be undone.")) return;
+    if (!token || !confirm("Archive this client? They'll move to the Recycle Bin and be permanently removed after 30 days. You can restore them anytime before then.")) return;
     const supabase = createClient();
     await supabase.rpc("fl_admin_delete_client", { p_token: token, p_id: id });
     setClients((prev) => prev.filter((c) => c.id !== id));
@@ -482,7 +500,7 @@ export default function AdminDashboard() {
   }, [token]);
 
   const deleteLead = useCallback(async (id: string) => {
-    if (!token || !confirm("Delete this lead? This cannot be undone.")) return;
+    if (!token || !confirm("Archive this lead? They'll move to the Recycle Bin and be permanently removed after 30 days. You can restore them anytime before then.")) return;
     const supabase = createClient();
     await supabase.rpc("fl_admin_delete_lead", { p_token: token, p_id: id });
     setLeads((prev) => prev.filter((l) => l.id !== id));
@@ -509,18 +527,20 @@ export default function AdminDashboard() {
     setInvites((prev) => prev.filter((iv) => iv.code !== code));
   }, [token]);
 
-  const deleteMatter = useCallback(async (id: string) => {
-    if (!token || !confirm("Delete this matter and all its milestones? This cannot be undone.")) return;
+  const restoreFromBin = useCallback(async (binId: string) => {
+    if (!token) return;
     const supabase = createClient();
-    await supabase.rpc("fl_admin_delete_matter", { p_token: token, p_id: id });
-    setMatters((prev) => prev.filter((m) => m.id !== id));
-  }, [token]);
+    const { error } = await supabase.rpc("fl_admin_restore_from_bin", { p_token: token, p_bin_id: binId });
+    if (error) { alert("Restore failed: " + error.message); return; }
+    setBinItems((prev) => prev.filter((b) => b.id !== binId));
+    void refresh();
+  }, [token, refresh]);
 
-  const deleteBooking = useCallback(async (id: string) => {
-    if (!token || !confirm("Delete this booking permanently?")) return;
+  const purgeFromBin = useCallback(async (binId: string) => {
+    if (!token || !confirm("Permanently delete this item? It cannot be recovered.")) return;
     const supabase = createClient();
-    await supabase.rpc("fl_admin_delete_booking", { p_token: token, p_id: id });
-    setAppts((prev) => prev.filter((a) => a.id !== id));
+    await supabase.rpc("fl_admin_purge_from_bin", { p_token: token, p_bin_id: binId });
+    setBinItems((prev) => prev.filter((b) => b.id !== binId));
   }, [token]);
 
   // H.O.M.E. data — fetched directly from the homeready Supabase project
@@ -681,6 +701,7 @@ export default function AdminDashboard() {
           <Stat label="New leads" value={newLeads} urgent onClick={() => setTab("leads")} />
           <Stat label="Pending bookings" value={pendingBookings} urgent onClick={() => setTab("bookings")} />
           <Stat label="Open chats" value={openChats} urgent onClick={() => setTab("chats")} />
+          <Stat label="Client messages" value={cmsUnread} urgent onClick={() => setTab("cms")} />
           <Stat label="Clients" value={clients.length} onClick={() => setTab("clients")} />
           <Stat label="Matters" value={matters.length} onClick={() => setTab("matters")} />
           <Stat label="Pending partners" value={pendingListings} onClick={() => setTab("directory")} />
@@ -690,16 +711,18 @@ export default function AdminDashboard() {
         {loadError && <div style={S.errorBar}>{loadError}</div>}
 
         <div style={{ ...S.tabs, background: "#fff", border: "1px solid rgba(18,16,12,.07)", borderRadius: "12px 12px 0 0" }}>
-          {(["overview","leads","bookings","clients","matters","cms","calendar","chats","email","invites","directory","availability","home_pros","home_listings","inquiries","referrals","zoom"] as Tab[]).map((t) => (
+          {(["overview","leads","bookings","clients","matters","cms","calendar","chats","email","invites","directory","availability","home_pros","home_listings","inquiries","referrals","workflows","recycle_bin","zoom"] as Tab[]).map((t) => (
             <TabBtn key={t} active={tab === t} onClick={() => setTab(t)}
               label={
                 t === "overview" ? "Overview" :
-                t === "cms" ? "CMS" :
+                t === "cms" ? `CMS${cmsUnread > 0 ? ` (${cmsUnread})` : ""}` :
                 t === "home_pros" ? "H.O.M.E. Pros" :
                 t === "home_listings" ? "H.O.M.E. Listings" :
                 t === "email" ? "Email" :
                 t === "inquiries" ? "H.O.M.E. Inquiries" :
                 t === "referrals" ? "Referrals" :
+                t === "recycle_bin" ? "🗑 Bin" :
+                t === "workflows" ? "Workflows" :
                 t === "zoom" ? "Zoom" :
                 t.charAt(0).toUpperCase() + t.slice(1)
               }
@@ -718,6 +741,8 @@ export default function AdminDashboard() {
                 t === "home_listings" ? homeListings.length :
                 t === "inquiries" ? inquiries.filter(i => i.status === "new").length :
                 t === "referrals" ? 0 :
+                t === "recycle_bin" ? binItems.length :
+                t === "workflows" ? 0 :
                 t === "zoom" ? 0 :
                 0
               }
@@ -735,10 +760,10 @@ export default function AdminDashboard() {
             />
           )}
           {tab === "leads" && <LeadsTable leads={leads} loading={loading} token={token} onStatus={setLeadStatus} onDelete={deleteLead} />}
-          {tab === "bookings" && <BookingsTable appts={appts} loading={loading} token={token ?? ""} onStatus={setApptStatus} onCancel={cancelBooking} onDelete={deleteBooking} />}
+          {tab === "bookings" && <BookingsTable appts={appts} loading={loading} token={token ?? ""} onStatus={setApptStatus} onCancel={cancelBooking} />}
           {tab === "clients" && <ClientsTab clients={clients} matters={matters} loading={loading} onUpsert={upsertClient} onDelete={deleteClient} />}
-          {tab === "matters" && <MattersTab matters={matters} loading={loading} token={token ?? ""} onStage={setMatterStage} onPayment={setMatterPayment} onDelete={deleteMatter} onAdd={(m) => setMatters(prev => [m, ...prev])} />}
-          {tab === "cms" && token && <CmsTab token={token} />}
+          {tab === "matters" && <MattersTab matters={matters} loading={loading} token={token ?? ""} onStage={setMatterStage} onPayment={setMatterPayment} />}
+          {tab === "cms" && token && <CmsTab token={token} onUnreadChange={setCmsUnread} />}
           {tab === "calendar" && <CalendarTab appts={appts} />}
           {tab === "chats" && <ChatsTable convos={convos} loading={loading} />}
           {tab === "email" && token && <EmailTab emails={emails} token={token} onMarkRead={(id) => setEmails(prev => prev.map(e => e.id === id ? { ...e, read: true } : e))} />}
@@ -749,6 +774,10 @@ export default function AdminDashboard() {
           {tab === "home_listings" && <HomeListingsPanel listings={homeListings} loading={homeLoading} />}
           {tab === "inquiries" && token && <InquiriesTab inquiries={inquiries} token={token} onStatus={(id, status) => setInquiries(prev => prev.map(i => i.id === id ? { ...i, status } : i))} />}
           {tab === "referrals" && <ReferralsTab leads={leads} appts={appts} />}
+          {tab === "recycle_bin" && token && (
+            <RecycleBinTab items={binItems} token={token} onRestore={restoreFromBin} onPurge={purgeFromBin} />
+          )}
+          {tab === "workflows" && token && <WorkflowTemplatesTab token={token} />}
           {tab === "zoom" && token && <ZoomSetupTab token={token} />}
         </div>
       </div>
@@ -970,7 +999,7 @@ function LeadsTable({ leads, loading, token, onStatus, onDelete }: { leads: Lead
                       {!l.email && !wa && l.status !== "new" && <span style={S.muted}>—</span>}
                       <button type="button" onClick={() => onDelete(l.id)}
                         style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)" }}>
-                        Delete
+                        Archive
                       </button>
                     </div>
                   </Td>
@@ -998,7 +1027,7 @@ function LeadsTable({ leads, loading, token, onStatus, onDelete }: { leads: Lead
 // ---------------------------------------------------------------------------
 // Bookings
 // ---------------------------------------------------------------------------
-function BookingsTable({ appts, loading, token, onStatus, onCancel, onDelete }: { appts: Appointment[]; loading: boolean; token: string; onStatus: (id: string, s: string) => void; onCancel: (id: string) => void; onDelete: (id: string) => void }) {
+function BookingsTable({ appts, loading, token, onStatus, onCancel }: { appts: Appointment[]; loading: boolean; token: string; onStatus: (id: string, s: string) => void; onCancel: (id: string) => void }) {
   const [composing, setComposing] = useState<Appointment | null>(null);
   if (loading && appts.length === 0) return <Empty>Loading bookings…</Empty>;
   if (appts.length === 0) return <Empty>No bookings yet.</Empty>;
@@ -1030,10 +1059,7 @@ function BookingsTable({ appts, loading, token, onStatus, onCancel, onDelete }: 
                         Cancel
                       </button>
                     )}
-                    <button type="button" onClick={() => onDelete(a.id)}
-                      style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)" }}>
-                      Delete
-                    </button>
+                    {!a.email && a.status === "cancelled" && <span style={S.muted}>—</span>}
                   </div>
                 </Td>
               </tr>
@@ -1151,7 +1177,7 @@ function ClientsTab({ clients, matters, loading, onUpsert, onDelete }: {
                         <Td>
                           <button type="button" onClick={() => onDelete(c.id)}
                             style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)" }}>
-                            Delete
+                            Archive
                           </button>
                         </Td>
                       </tr>
@@ -1193,70 +1219,33 @@ const PRIORITY_COLORS: Record<string, React.CSSProperties> = {
   urgent: { background: "rgba(190,60,60,.14)", color: "#a23b3b" },
 };
 
-function MattersTab({ matters, loading, token, onStage, onPayment, onDelete, onAdd }: {
+function MattersTab({ matters, loading, token, onStage, onPayment }: {
   matters: Matter[]; loading: boolean; token: string;
   onStage: (id: string, s: string) => void; onPayment: (id: string, s: string) => void;
-  onDelete: (id: string) => void; onAdd: (m: Matter) => void;
 }) {
-  const supabase = createClient();
   const [view, setView] = useState<"table" | "kanban">("kanban");
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [showModal, setShowModal] = useState(false);
-  const [clientQuery, setClientQuery] = useState("");
-  const [clientHits, setClientHits] = useState<CmsClientHit[]>([]);
-  const [newClientId, setNewClientId] = useState("");
-  const [newClientLabel, setNewClientLabel] = useState("");
-  const [newClientName, setNewClientName] = useState("");
-  const [newWorkflow, setNewWorkflow] = useState("property_purchase");
-  const [newTitle, setNewTitle] = useState("");
-  const [creating, setCreating] = useState(false);
-  const [createError, setCreateError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const q = clientQuery.trim();
-    if (q.length < 2) { setClientHits([]); return; }
-    const t = setTimeout(async () => {
-      const { data } = await supabase.rpc("fl_admin_cms_client_search", { p_token: token, p_query: q });
-      setClientHits((data as CmsClientHit[]) ?? []);
-    }, 300);
-    return () => clearTimeout(t);
-  }, [clientQuery]);
+  if (loading && matters.length === 0) return <Empty>Loading matters…</Empty>;
+  if (matters.length === 0) return <Empty>No matters yet. Use the CMS tab to open a new matter for any client.</Empty>;
 
-  async function createMatter() {
-    setCreating(true); setCreateError(null);
-    const { data, error } = await supabase.rpc("fl_open_matter", {
-      p_client_id: newClientId || null, p_workflow_type: newWorkflow,
-      p_title: newTitle.trim() || null, p_client_name: newClientName.trim() || null,
-    });
-    if (error) { setCreateError(error.message); setCreating(false); return; }
-    if (data) onAdd(data as Matter);
-    setShowModal(false); setNewClientId(""); setNewClientLabel(""); setNewClientName(""); setNewTitle(""); setClientQuery(""); setCreating(false);
+  function toggleExpand(id: string) {
+    setExpandedId(prev => prev === id ? null : id);
   }
-
-  function resetModal() { setShowModal(false); setNewClientId(""); setNewClientLabel(""); setNewClientName(""); setNewTitle(""); setClientQuery(""); setCreateError(null); }
-
-  function toggleExpand(id: string) { setExpandedId(prev => prev === id ? null : id); }
 
   return (
     <>
-      <div style={{ display: "flex", gap: 8, padding: "14px 20px 0", borderBottom: "1px solid rgba(18,16,12,.07)", alignItems: "center" }}>
+      <div style={{ display: "flex", gap: 8, padding: "14px 20px 0", borderBottom: "1px solid rgba(18,16,12,.07)" }}>
         {(["kanban","table"] as const).map(v => (
           <button key={v} type="button" onClick={() => setView(v)}
             style={{ padding: "6px 14px", borderRadius: 6, border: "1px solid rgba(18,16,12,.15)", background: view === v ? GREEN : "transparent", color: view === v ? CREAM : MUTED, fontSize: ".75rem", fontWeight: 600, cursor: "pointer", textTransform: "capitalize" }}>
             {v === "kanban" ? "⬛ Kanban" : "≡ Table"}
           </button>
         ))}
-        <button type="button" onClick={() => setShowModal(true)}
-          style={{ marginLeft: "auto", padding: "6px 16px", borderRadius: 6, border: "none", background: GOLD, color: CREAM, fontSize: ".75rem", fontWeight: 700, cursor: "pointer" }}>
-          + New Matter
-        </button>
       </div>
-
-      {loading && matters.length === 0 ? <Empty>Loading matters…</Empty> : matters.length === 0 ? (
-        <Empty>No matters yet. <button type="button" onClick={() => setShowModal(true)} style={{ background: "none", border: "none", color: GOLD, cursor: "pointer", fontWeight: 700, fontSize: "inherit" }}>Open one now →</button></Empty>
-      ) : view === "kanban" ? (
+      {view === "kanban" ? (
         <div>
-          <KanbanView matters={matters} onStage={onStage} onExpand={toggleExpand} onDelete={onDelete} />
+          <KanbanView matters={matters} onStage={onStage} onExpand={toggleExpand} />
           {expandedId && (
             <MilestonePanel key={expandedId} matterId={expandedId} token={token} onClose={() => setExpandedId(null)}
               matter={matters.find(m => m.id === expandedId) ?? null} />
@@ -1265,7 +1254,7 @@ function MattersTab({ matters, loading, token, onStage, onPayment, onDelete, onA
       ) : (
         <div style={S.tableWrap}>
           <table style={S.table}>
-            <thead><tr><Th>​</Th><Th>Ref</Th><Th>Client</Th><Th>Type</Th><Th>Stage</Th><Th>Priority</Th><Th>Payment</Th><Th>Description</Th><Th>Date</Th><Th>​</Th></tr></thead>
+            <thead><tr><Th>​</Th><Th>Ref</Th><Th>Client</Th><Th>Type</Th><Th>Stage</Th><Th>Priority</Th><Th>Payment</Th><Th>Description</Th><Th>Date</Th></tr></thead>
             <tbody>
               {matters.map((m) => (
                 <>
@@ -1279,14 +1268,10 @@ function MattersTab({ matters, loading, token, onStage, onPayment, onDelete, onA
                     <Td onClick={e => e.stopPropagation()}><StatusSelect value={m.payment_status} options={PAYMENT_STATUSES} onChange={(v) => onPayment(m.id, v)} /></Td>
                     <Td><div style={S.msgCell} title={m.description ?? ""}>{m.description || "—"}</div></Td>
                     <Td>{fmtDate(m.created_at)}</Td>
-                    <Td onClick={e => e.stopPropagation()}>
-                      <button type="button" onClick={() => onDelete(m.id)}
-                        title="Delete matter" style={{ background: "none", border: "none", cursor: "pointer", color: "#c0392b", fontSize: 15, padding: "2px 6px" }}>🗑</button>
-                    </Td>
                   </tr>
                   {expandedId === m.id && (
                     <tr key={`${m.id}-milestones`}>
-                      <td colSpan={10} style={{ padding: 0, background: "rgba(16,42,30,.03)" }}>
+                      <td colSpan={9} style={{ padding: 0, background: "rgba(16,42,30,.03)" }}>
                         <MilestonePanel matterId={m.id} token={token} matter={m} onClose={() => setExpandedId(null)} inline />
                       </td>
                     </tr>
@@ -1295,65 +1280,6 @@ function MattersTab({ matters, loading, token, onStage, onPayment, onDelete, onA
               ))}
             </tbody>
           </table>
-        </div>
-      )}
-
-      {showModal && (
-        <div onClick={resetModal} style={{ position: "fixed", inset: 0, background: "rgba(16,33,28,.5)", display: "grid", placeItems: "center", padding: 16, zIndex: 60 }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 18, padding: 28, width: "100%", maxWidth: 420 }}>
-            <div style={{ fontFamily: "var(--serif, Georgia, serif)", fontWeight: 700, fontSize: 19, color: GREEN, marginBottom: 18 }}>Open New Matter</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              <label style={{ display: "flex", flexDirection: "column", gap: 5, position: "relative" }}>
-                <span style={{ fontSize: 11.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".07em", color: MUTED }}>Client</span>
-                {newClientId ? (
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 12px", borderRadius: 10, border: `1px solid ${GOLD}`, background: "#fffbf0" }}>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: INK }}>{newClientLabel}</span>
-                    <button type="button" onClick={() => { setNewClientId(""); setNewClientLabel(""); setClientQuery(""); setNewClientName(""); }} style={{ background: "none", border: "none", cursor: "pointer", color: MUTED, fontSize: 16 }}>×</button>
-                  </div>
-                ) : (
-                  <>
-                    <input value={clientQuery} onChange={e => setClientQuery(e.target.value)} placeholder="Search by email (or enter name below)…"
-                      style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid rgba(18,16,12,.2)", fontSize: 13, outline: "none" }} />
-                    {clientHits.length > 0 && (
-                      <div style={{ position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, background: "#fff", border: "1px solid rgba(18,16,12,.15)", borderRadius: 10, boxShadow: "0 6px 18px rgba(0,0,0,.1)", zIndex: 5, maxHeight: 180, overflowY: "auto" }}>
-                        {clientHits.map(c => (
-                          <button key={c.id} type="button" onClick={() => { setNewClientId(c.id); setNewClientLabel(`${c.full_name} <${c.email}>`); setClientHits([]); setNewClientName(""); }}
-                            style={{ display: "block", width: "100%", textAlign: "left", padding: "9px 12px", border: "none", background: "none", cursor: "pointer", fontSize: 13 }}>
-                            <div style={{ fontWeight: 600, color: INK }}>{c.full_name}</div>
-                            <div style={{ fontSize: 11.5, color: MUTED }}>{c.email}</div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                    <div style={{ fontSize: 11, color: MUTED, textAlign: "center", margin: "4px 0" }}>— or —</div>
-                    <input value={newClientName} onChange={e => setNewClientName(e.target.value)} placeholder="Enter client name manually"
-                      style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid rgba(18,16,12,.2)", fontSize: 13, outline: "none" }} />
-                  </>
-                )}
-              </label>
-              <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-                <span style={{ fontSize: 11.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".07em", color: MUTED }}>Workflow</span>
-                <select value={newWorkflow} onChange={e => setNewWorkflow(e.target.value)} style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid rgba(18,16,12,.2)", fontSize: 13, outline: "none" }}>
-                  <option value="property_purchase">Property Purchase</option>
-                  <option value="property_sale">Property Sale</option>
-                  <option value="general">General</option>
-                </select>
-              </label>
-              <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-                <span style={{ fontSize: 11.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".07em", color: MUTED }}>Matter title (optional)</span>
-                <input value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder="e.g. 12 Kingsway Ave purchase"
-                  style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid rgba(18,16,12,.2)", fontSize: 13, outline: "none" }} />
-              </label>
-            </div>
-            {createError && <div style={{ marginTop: 12, padding: "10px 12px", borderRadius: 8, background: "#fbeaea", border: "1px solid #eecaca", fontSize: 13, color: "#7a2020" }}>{createError}</div>}
-            <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
-              <button onClick={() => void createMatter()} disabled={creating || (!newClientId.trim() && !newClientName.trim())}
-                style={{ flex: 1, background: GREEN, color: CREAM, border: "none", borderRadius: 10, padding: "12px", fontSize: 14, fontWeight: 700, cursor: "pointer", opacity: creating || (!newClientId.trim() && !newClientName.trim()) ? 0.6 : 1 }}>
-                {creating ? "Creating…" : "Open Matter"}
-              </button>
-              <button onClick={resetModal} style={{ padding: "12px 20px", border: "1px solid rgba(18,16,12,.2)", borderRadius: 10, background: "#fff", fontSize: 13, cursor: "pointer" }}>Cancel</button>
-            </div>
-          </div>
         </div>
       )}
     </>
@@ -1518,7 +1444,7 @@ function MilestonePanel({ matterId, token, matter, onClose, inline }: {
                     <button type="button" onClick={() => { setEditingId(ms.id); setEditForm({ ...ms }); }}
                       style={{ ...S.ghostBtn, fontSize: ".72rem" }} title="Edit">✎</button>
                     <button type="button" onClick={() => deleteMilestone(ms.id)}
-                      style={{ ...S.ghostBtn, fontSize: ".72rem", color: "#a23b3b" }} title="Delete">✕</button>
+                      style={{ ...S.ghostBtn, fontSize: ".72rem", color: "#a23b3b" }} title="Remove milestone">✕</button>
                   </div>
                 </div>
               )}
@@ -1809,8 +1735,8 @@ function BlockedDatesPanel({ token }: { token: string }) {
     if (existing) {
       await supabase.rpc("fl_admin_unblock_slot", { p_token: token, p_id: existing.id });
     } else {
-      const { error } = await supabase.rpc("fl_admin_block_slot", { p_token: token, p_starts_at: iso, p_reason: "" });
-      if (error) { setErr("Something went wrong blocking that slot. Please report this issue to your developer."); setSaving(false); return; }
+      const { error } = await supabase.rpc("fl_admin_block_slot", { p_token: token, p_starts_at: iso });
+      if (error) { setErr(error.message); setSaving(false); return; }
     }
     await loadBlocked();
     setSaving(false);
@@ -2407,6 +2333,220 @@ function ReferralsTab({ leads, appts }: { leads: Lead[]; appts: Appointment[] })
 }
 
 // ---------------------------------------------------------------------------
+// Workflow Templates Tab — global step editor (affects NEW matters only)
+// ---------------------------------------------------------------------------
+interface WfTemplate { id: string; type: string; name: string; phases: WfPhase[]; }
+interface WfPhase { name: string; order: number; milestones: string[]; }
+
+function WorkflowTemplatesTab({ token }: { token: string }) {
+  const supabase = createClient();
+  const [templates, setTemplates] = useState<WfTemplate[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [addingPhase, setAddingPhase] = useState(false);
+  const [newPhaseName, setNewPhaseName] = useState("");
+  const [addingStep, setAddingStep] = useState<{ phaseOrder: number } | null>(null);
+  const [newStepName, setNewStepName] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    void (async () => {
+      const { data } = await supabase.rpc("fl_admin_workflow_templates_get", { p_token: token });
+      setTemplates((data as WfTemplate[]) ?? []);
+      if (data && (data as WfTemplate[]).length > 0) setSelected((data as WfTemplate[])[0].id);
+      setLoading(false);
+    })();
+  }, []);
+
+  async function addPhase() {
+    if (!selected || !newPhaseName.trim() || saving) return;
+    setSaving(true);
+    await supabase.rpc("fl_admin_workflow_add_phase", { p_token: token, p_template_id: selected, p_phase_name: newPhaseName.trim() });
+    const { data } = await supabase.rpc("fl_admin_workflow_templates_get", { p_token: token });
+    setTemplates((data as WfTemplate[]) ?? []);
+    setNewPhaseName(""); setAddingPhase(false); setSaving(false);
+  }
+
+  async function addStep(phaseOrder: number) {
+    if (!selected || !newStepName.trim() || saving) return;
+    setSaving(true);
+    await supabase.rpc("fl_admin_workflow_add_step", { p_token: token, p_template_id: selected, p_phase_order: phaseOrder, p_step_name: newStepName.trim() });
+    const { data } = await supabase.rpc("fl_admin_workflow_templates_get", { p_token: token });
+    setTemplates((data as WfTemplate[]) ?? []);
+    setNewStepName(""); setAddingStep(null); setSaving(false);
+  }
+
+  async function removeStep(phaseOrder: number, stepIdx: number) {
+    if (!selected || !confirm("Remove this step from the global template? This won't affect existing client matters.")) return;
+    await supabase.rpc("fl_admin_workflow_remove_step", { p_token: token, p_template_id: selected, p_phase_order: phaseOrder, p_step_index: stepIdx });
+    const { data } = await supabase.rpc("fl_admin_workflow_templates_get", { p_token: token });
+    setTemplates((data as WfTemplate[]) ?? []);
+  }
+
+  const tpl = templates.find(t => t.id === selected);
+
+  if (loading) return <div style={{ padding: 24, color: MUTED }}>Loading templates…</div>;
+
+  return (
+    <div style={{ padding: "1.25rem" }}>
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ fontWeight: 700, fontSize: 15, color: GREEN, marginBottom: 4 }}>Workflow Templates</div>
+        <div style={{ fontSize: ".82rem", color: MUTED }}>
+          Changes here affect <strong>new matters only</strong>. Existing client timelines are not modified.
+        </div>
+      </div>
+
+      {/* Template picker */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
+        {templates.map(t => (
+          <button key={t.id} type="button" onClick={() => setSelected(t.id)}
+            style={{ padding: "6px 14px", borderRadius: 8, border: `1px solid ${selected === t.id ? GREEN : "rgba(18,16,12,.2)"}`,
+              background: selected === t.id ? GREEN : "#fff", color: selected === t.id ? CREAM : INK,
+              fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+            {t.name}
+          </button>
+        ))}
+      </div>
+
+      {tpl && (
+        <>
+          {tpl.phases.sort((a, b) => a.order - b.order).map(phase => (
+            <div key={phase.order} style={{ marginBottom: 20, border: "1px solid rgba(18,16,12,.1)", borderRadius: 10, overflow: "hidden" }}>
+              <div style={{ padding: "10px 14px", background: "rgba(16,42,30,.06)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontWeight: 700, fontSize: 13, color: GREEN }}>{phase.name}</span>
+                <button type="button"
+                  onClick={() => { setAddingStep(addingStep?.phaseOrder === phase.order ? null : { phaseOrder: phase.order }); setNewStepName(""); }}
+                  style={{ fontSize: 11, padding: "3px 10px", borderRadius: 6, border: `1px solid ${GOLD}`,
+                    background: addingStep?.phaseOrder === phase.order ? GOLD : "transparent",
+                    color: addingStep?.phaseOrder === phase.order ? "#fff" : "#8a6a22", cursor: "pointer", fontWeight: 600 }}>
+                  {addingStep?.phaseOrder === phase.order ? "Cancel" : "+ Step"}
+                </button>
+              </div>
+              <div style={{ padding: "8px 14px" }}>
+                {phase.milestones.map((ms, idx) => (
+                  <div key={idx} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderBottom: "1px solid rgba(18,16,12,.05)" }}>
+                    <span style={{ fontSize: 13, flex: 1, color: INK }}>• {ms}</span>
+                    <button type="button" onClick={() => void removeStep(phase.order, idx)}
+                      title="Remove" style={{ background: "none", border: "none", cursor: "pointer", color: "#ccc", fontSize: 13, padding: "0 4px" }}>✕</button>
+                  </div>
+                ))}
+                {addingStep?.phaseOrder === phase.order && (
+                  <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+                    <input autoFocus value={newStepName} onChange={e => setNewStepName(e.target.value)}
+                      onKeyDown={e => { if (e.key === "Enter") void addStep(phase.order); if (e.key === "Escape") { setAddingStep(null); setNewStepName(""); } }}
+                      placeholder="New step name…"
+                      style={{ flex: 1, fontSize: 13, padding: "6px 10px", borderRadius: 8, border: `1px solid ${GOLD}`, outline: "none" }} />
+                    <button type="button" onClick={() => void addStep(phase.order)} disabled={saving || !newStepName.trim()}
+                      style={{ padding: "6px 14px", borderRadius: 8, border: "none", background: GREEN, color: CREAM, fontSize: 13, fontWeight: 600, cursor: "pointer", opacity: saving || !newStepName.trim() ? 0.5 : 1 }}>
+                      {saving ? "…" : "Add"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+
+          {/* Add phase */}
+          <div style={{ marginTop: 12 }}>
+            {!addingPhase ? (
+              <button type="button" onClick={() => setAddingPhase(true)}
+                style={{ ...S.ghostBtn, border: `1px dashed ${GOLD}`, color: "#8a6a22", fontSize: 13 }}>
+                + Add phase
+              </button>
+            ) : (
+              <div style={{ display: "flex", gap: 6 }}>
+                <input autoFocus value={newPhaseName} onChange={e => setNewPhaseName(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter") void addPhase(); if (e.key === "Escape") { setAddingPhase(false); setNewPhaseName(""); } }}
+                  placeholder="Phase name…"
+                  style={{ flex: 1, fontSize: 13, padding: "6px 10px", borderRadius: 8, border: `1px solid ${GOLD}`, outline: "none" }} />
+                <button type="button" onClick={() => void addPhase()} disabled={saving || !newPhaseName.trim()}
+                  style={{ padding: "6px 14px", borderRadius: 8, border: "none", background: GREEN, color: CREAM, fontSize: 13, fontWeight: 600, cursor: "pointer", opacity: saving || !newPhaseName.trim() ? 0.5 : 1 }}>
+                  {saving ? "…" : "Add Phase"}
+                </button>
+                <button type="button" onClick={() => { setAddingPhase(false); setNewPhaseName(""); }}
+                  style={{ ...S.ghostBtn, fontSize: 13 }}>Cancel</button>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Recycle Bin Tab
+// ---------------------------------------------------------------------------
+const TABLE_LABEL: Record<string, string> = {
+  ferguson_leads: "Lead",
+  fl_clients: "Client",
+  fl_client_matters: "Matter",
+  appointments: "Appointment",
+  fl_matter_notes: "Milestone",
+};
+
+function RecycleBinTab({ items, onRestore, onPurge }: {
+  items: BinItem[];
+  token: string;
+  onRestore: (id: string) => void;
+  onPurge: (id: string) => void;
+}) {
+  if (items.length === 0) {
+    return (
+      <div style={{ padding: "3rem", textAlign: "center", color: MUTED }}>
+        <div style={{ fontSize: "2.5rem", marginBottom: 12 }}>🗑</div>
+        <div style={{ fontWeight: 600, fontSize: "1rem", color: INK }}>Recycle bin is empty</div>
+        <div style={{ marginTop: 6, fontSize: ".85rem" }}>Deleted items appear here and are permanently removed after 30 days.</div>
+      </div>
+    );
+  }
+  return (
+    <div style={{ padding: "1.25rem" }}>
+      <div style={{ marginBottom: 16, fontSize: ".85rem", color: MUTED }}>
+        Items are automatically purged 30 days after deletion. Restore or permanently delete them below.
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {items.map((item) => (
+          <div key={item.id} style={{
+            display: "flex", alignItems: "center", gap: 12,
+            padding: "0.75rem 1rem", borderRadius: 10,
+            border: "1px solid rgba(18,16,12,.08)", background: "#fff",
+          }}>
+            <span style={{
+              fontSize: ".7rem", fontWeight: 700, letterSpacing: ".04em", textTransform: "uppercase",
+              padding: "2px 8px", borderRadius: 6, background: "rgba(200,166,92,.12)", color: "#8a6a22",
+              whiteSpace: "nowrap",
+            }}>
+              {TABLE_LABEL[item.source_table] ?? item.source_table}
+            </span>
+            <span style={{ flex: 1, fontWeight: 500, fontSize: ".88rem", color: INK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {item.label ?? "—"}
+            </span>
+            <span style={{ fontSize: ".78rem", color: MUTED, whiteSpace: "nowrap" }}>
+              Deleted {fmtDate(item.deleted_at)}
+            </span>
+            <span style={{
+              fontSize: ".75rem", fontWeight: 600, whiteSpace: "nowrap",
+              color: item.days_left <= 5 ? "#a23b3b" : item.days_left <= 14 ? "#8a6a22" : MUTED,
+            }}>
+              {item.days_left}d left
+            </span>
+            <button type="button" onClick={() => onRestore(item.id)}
+              style={{ ...S.ghostBtn, fontSize: ".78rem", padding: "4px 10px", color: "#2f7a52", border: "1px solid #2f7a52" }}>
+              Restore
+            </button>
+            <button type="button" onClick={() => onPurge(item.id)}
+              style={{ ...S.ghostBtn, fontSize: ".78rem", padding: "4px 10px", color: "#a23b3b", border: "1px solid #a23b3b" }}>
+              Delete forever
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Invites
 // ---------------------------------------------------------------------------
 function randomCode(): string {
@@ -2687,11 +2827,10 @@ const KANBAN_COLS = [
   { key: "closed",              label: "Closed" },
 ];
 
-function KanbanView({ matters, onStage, onExpand, onDelete }: {
+function KanbanView({ matters, onStage, onExpand }: {
   matters: Matter[];
   onStage: (id: string, s: string) => void;
   onExpand?: (id: string) => void;
-  onDelete?: (id: string) => void;
 }) {
   if (matters.length === 0) return <Empty>No matters yet.</Empty>;
   return (
@@ -2706,13 +2845,7 @@ function KanbanView({ matters, onStage, onExpand, onDelete }: {
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {cards.map(m => (
                 <div key={m.id} style={{ background: "#fff", border: "1px solid rgba(18,16,12,.09)", borderRadius: 8, padding: "12px 14px", boxShadow: "0 2px 8px -4px rgba(0,0,0,.15)" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 3 }}>
-                    <div style={{ fontWeight: 600, fontSize: ".82rem", color: GREEN }}>{m.client_name || "—"}</div>
-                    {onDelete && (
-                      <button type="button" onClick={() => onDelete(m.id)} title="Delete matter"
-                        style={{ background: "none", border: "none", cursor: "pointer", color: "#c0392b", fontSize: 13, padding: "0 0 0 4px", lineHeight: 1 }}>🗑</button>
-                    )}
-                  </div>
+                  <div style={{ fontWeight: 600, fontSize: ".82rem", color: GREEN, marginBottom: 3 }}>{m.client_name || "—"}</div>
                   <div style={{ fontSize: ".7rem", color: MUTED, marginBottom: 8 }}>{m.matter_type || "—"} · {m.ref}</div>
                   <select value={m.stage} onChange={e => onStage(m.id, e.target.value)}
                     style={{ width: "100%", fontSize: ".7rem", padding: "4px 6px", borderRadius: 6, border: "1px solid rgba(18,16,12,.15)", background: "#faf8f2", color: INK, cursor: "pointer" }}>
@@ -3084,16 +3217,22 @@ interface CmsClientHit {
 }
 
 const MS_COLORS: Record<string, { bg: string; color: string; border: string }> = {
-  pending:     { bg: "#f5f5f5", color: "#888",    border: "#ddd" },
-  in_progress: { bg: "#fdf3d9", color: "#8a6a22", border: "#e8d090" },
-  done:        { bg: "#dff0df", color: "#1a4d28", border: "#a5d4a5" },
-  blocked:     { bg: "#fbeaea", color: "#7a2020", border: "#eecaca" },
+  pending:        { bg: "#f5f5f5", color: "#888",    border: "#ddd" },
+  in_progress:    { bg: "#fdf3d9", color: "#8a6a22", border: "#e8d090" },
+  done:           { bg: "#dff0df", color: "#1a4d28", border: "#a5d4a5" },
+  blocked:        { bg: "#fbeaea", color: "#7a2020", border: "#eecaca" },
+  not_applicable: { bg: "#f0f0f0", color: "#999",    border: "#ccc" },
+};
+
+const MS_LABELS: Record<string, string> = {
+  pending: "pending", in_progress: "in progress", done: "done",
+  blocked: "blocked", not_applicable: "N/A",
 };
 
 const MATTER_STATUS_OPTS = ["intake","in_progress","awaiting_client","awaiting_third_party","completed","on_hold"];
-const MILESTONE_STATUS_OPTS = ["pending","in_progress","done","blocked"];
+const MILESTONE_STATUS_OPTS = ["pending","in_progress","done","not_applicable"];
 
-function CmsTab({ token }: { token: string }) {
+function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n: number) => void }) {
   const supabase = createClient();
   const [matters, setMatters] = useState<CmsMatter[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
@@ -3103,6 +3242,7 @@ function CmsTab({ token }: { token: string }) {
   const [kyc, setKyc] = useState<CmsKyc | null>(null);
   const [payments, setPayments] = useState<CmsPayment[]>([]);
   const [tab, setTab] = useState<"timeline"|"messages"|"files"|"kyc"|"payments">("timeline");
+  const [unreadByMatter, setUnreadByMatter] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
   const [msgText, setMsgText] = useState("");
@@ -3142,6 +3282,9 @@ function CmsTab({ token }: { token: string }) {
       const { data } = await supabase.rpc("fl_admin_cms_matters", { p_token: token });
       setMatters((data as CmsMatter[]) ?? []);
       setLoading(false);
+      // Load per-matter unread counts in the background
+      const res = await fetch(`/api/admin/cms/unread-count?token=${encodeURIComponent(token)}`).then(r => r.json()).catch(() => null);
+      if (res?.count !== undefined) onUnreadChange?.(res.count as number);
     })();
   }, []);
 
@@ -3155,14 +3298,17 @@ function CmsTab({ token }: { token: string }) {
       matter ? supabase.rpc("fl_admin_cms_kyc_get", { p_token: token, p_client_id: matter.client_id }) : Promise.resolve({ data: null }),
       supabase.rpc("fl_admin_cms_payments", { p_token: token, p_matter_id: id }),
     ]);
+    const loadedMessages = (msgRes.data as CmsMessage[]) ?? [];
     setMilestones((mRes.data as CmsMilestone[]) ?? []);
-    setMessages((msgRes.data as CmsMessage[]) ?? []);
+    setMessages(loadedMessages);
     setFiles((fRes.data as CmsFile[]) ?? []);
     const kycRows = kRes.data as CmsKyc[] | null;
     setKyc(kycRows?.[0] ?? null);
     setKycNotes(kycRows?.[0]?.reviewer_notes ?? "");
     setPayments((pRes.data as CmsPayment[]) ?? []);
     setDetailLoading(false);
+    const unread = loadedMessages.filter(m => m.sender_type === "client" && !m.read_at).length;
+    setUnreadByMatter(prev => ({ ...prev, [id]: unread }));
   }
 
   async function notifyClient(matterId: string, kind: "milestone" | "message", milestoneName?: string) {
@@ -3184,9 +3330,38 @@ function CmsTab({ token }: { token: string }) {
     if (status === "done" && m && selected) void notifyClient(selected, "milestone", m.name);
   }
 
-  async function setMilestoneDue(id: string, dueAt: string) {
-    await supabase.rpc("fl_admin_cms_set_milestone_due", { p_token: token, p_id: id, p_due_at: dueAt || null });
-    setMilestones(prev => prev.map(x => x.id === id ? { ...x, due_at: dueAt || null } : x));
+  const [addingStepPhase, setAddingStepPhase] = useState<{ order: number; name: string } | null>(null);
+  const [newStepName, setNewStepName] = useState("");
+  const [savingStep, setSavingStep] = useState(false);
+
+  async function addStep() {
+    if (!selected || !addingStepPhase || !newStepName.trim() || savingStep) return;
+    setSavingStep(true);
+    const { data, error } = await supabase.rpc("fl_admin_cms_add_step", {
+      p_token: token,
+      p_matter_id: selected,
+      p_phase_order: addingStepPhase.order,
+      p_phase_name: addingStepPhase.name,
+      p_name: newStepName.trim(),
+    });
+    if (!error && data) {
+      const newMs: CmsMilestone = {
+        id: data as string, matter_id: selected,
+        phase_order: addingStepPhase.order, phase_name: addingStepPhase.name,
+        name: newStepName.trim(), status: "pending",
+        due_at: null, completed_at: null, notes: null,
+        created_at: new Date().toISOString(),
+      };
+      setMilestones(prev => [...prev, newMs]);
+    }
+    setNewStepName(""); setAddingStepPhase(null);
+    setSavingStep(false);
+  }
+
+  async function deleteStep(id: string) {
+    if (!confirm("Remove this step from this client's matter?")) return;
+    await supabase.rpc("fl_admin_cms_delete_step", { p_token: token, p_id: id });
+    setMilestones(prev => prev.filter(m => m.id !== id));
   }
 
   async function updateMatterStatus(id: string, status: string) {
@@ -3350,7 +3525,14 @@ function CmsTab({ token }: { token: string }) {
             <div style={{ fontSize: 11, fontWeight: 700, color: "#8a6a22", textTransform: "uppercase", letterSpacing: ".1em", marginBottom: 2 }}>
               {m.workflow_type?.replace(/_/g, " ") || m.matter_type}
             </div>
-            <div style={{ fontSize: 13.5, fontWeight: 600, color: INK }}>{m.title || m.client_name}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ fontSize: 13.5, fontWeight: 600, color: INK }}>{m.title || m.client_name}</span>
+              {(unreadByMatter[m.id] ?? 0) > 0 && (
+                <span style={{ background: "#c0392b", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 999, padding: "1px 5px", minWidth: 16, textAlign: "center" }}>
+                  {unreadByMatter[m.id]}
+                </span>
+              )}
+            </div>
             <div style={{ fontSize: 12, color: MUTED, marginTop: 2 }}>{m.client_email}</div>
             <div style={{ marginTop: 4, display: "flex", gap: 6 }}>
               <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, background: "rgba(18,16,12,.07)", borderRadius: 999, padding: "2px 7px" }}>{m.status}</span>
@@ -3400,19 +3582,35 @@ function CmsTab({ token }: { token: string }) {
 
             {/* Tabs */}
             <div style={{ display: "flex", borderBottom: `1px solid rgba(18,16,12,.1)`, background: "#fafaf8" }}>
-              {(["timeline","messages","files","kyc","payments"] as const).map(t => (
-                <button key={t} onClick={() => setTab(t)} style={{
+              {(["timeline","messages","files","kyc","payments"] as const).map(t => {
+                const unreadClientMsgs = messages.filter(m => m.sender_type === "client" && !m.read_at).length;
+                return (
+                <button key={t} onClick={async () => {
+                  setTab(t);
+                  if (t === "messages" && selected && unreadClientMsgs > 0) {
+                    // Mark all client messages read for this matter
+                    await fetch("/api/admin/cms/mark-read", {
+                      method: "POST", headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ token, matterId: selected }),
+                    });
+                    setMessages(prev => prev.map(m =>
+                      m.sender_type === "client" && !m.read_at ? { ...m, read_at: new Date().toISOString() } : m
+                    ));
+                    if (selected) setUnreadByMatter(prev => ({ ...prev, [selected]: 0 }));
+                    onUnreadChange?.(0);
+                  }
+                }} style={{
                   padding: "10px 18px", fontSize: 13, fontWeight: 600, border: "none",
                   background: "none", cursor: "pointer", color: tab === t ? INK : MUTED,
                   borderBottom: tab === t ? `2px solid ${GOLD}` : "2px solid transparent",
                 }}>
-                  {t === "messages" ? `Messages (${messages.length})`
+                  {t === "messages" ? `Messages${unreadClientMsgs > 0 ? ` (${unreadClientMsgs})` : ""}`
                     : t === "files" ? `Files (${files.length})`
                     : t === "kyc" ? `KYC/AML${kyc && kyc.status !== "approved" ? " •" : ""}`
                     : t === "payments" ? `Payments (${payments.length})`
                     : "Timeline"}
                 </button>
-              ))}
+              );})}
             </div>
 
             <div style={{ flex: 1, overflowY: "auto", padding: "20px" }}>
@@ -3422,13 +3620,22 @@ function CmsTab({ token }: { token: string }) {
                   {phaseList.length === 0 ? (
                     <p style={{ color: MUTED, fontSize: 14 }}>No milestones. This matter may not have a workflow template.</p>
                   ) : phaseList.map(([orderStr, phase]) => {
-                    const done = phase.items.filter(i => i.status === "done").length;
-                    const pct = Math.round((done / phase.items.length) * 100);
+                    const countable = phase.items.filter(i => i.status !== "not_applicable");
+                    const done = countable.filter(i => i.status === "done").length;
+                    const pct = countable.length ? Math.round((done / countable.length) * 100) : 100;
+                    const isAddingHere = addingStepPhase?.order === Number(orderStr);
                     return (
                       <div key={orderStr} style={{ marginBottom: 26 }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
                           <span style={{ fontWeight: 700, fontSize: 14, color: GREEN }}>{phase.name}</span>
-                          <span style={{ fontSize: 12, color: MUTED }}>{done}/{phase.items.length}</span>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <span style={{ fontSize: 12, color: MUTED }}>{done}/{countable.length}</span>
+                            <button type="button"
+                              onClick={() => { setAddingStepPhase(isAddingHere ? null : { order: Number(orderStr), name: phase.name }); setNewStepName(""); }}
+                              style={{ fontSize: 11, padding: "2px 8px", borderRadius: 6, border: `1px solid ${GOLD}`, background: isAddingHere ? GOLD : "transparent", color: isAddingHere ? "#fff" : "#8a6a22", cursor: "pointer", fontWeight: 600 }}>
+                              {isAddingHere ? "Cancel" : "+ Step"}
+                            </button>
+                          </div>
                         </div>
                         <div style={{ height: 4, background: "#eee", borderRadius: 4, marginBottom: 10, overflow: "hidden" }}>
                           <div style={{ width: `${pct}%`, height: "100%", background: pct === 100 ? "#1a4d28" : GOLD, borderRadius: 4, transition: "width .3s" }} />
@@ -3439,20 +3646,18 @@ function CmsTab({ token }: { token: string }) {
                             <div key={m.id} style={{
                               display: "flex", alignItems: "center", gap: 10,
                               padding: "8px 10px", borderRadius: 8, marginBottom: 4,
-                              background: m.status === "in_progress" ? "#fffbf0" : "#fff",
+                              background: m.status === "in_progress" ? "#fffbf0" : m.status === "not_applicable" ? "#f8f8f8" : "#fff",
                               border: `1px solid ${m.status === "in_progress" ? "#f0e4b0" : "rgba(18,16,12,.08)"}`,
+                              opacity: m.status === "not_applicable" ? 0.6 : 1,
                             }}>
-                              <span style={{ fontSize: 13, flex: 1, color: m.status === "done" ? MUTED : INK,
-                                textDecoration: m.status === "done" ? "line-through" : "none" }}>
+                              <span style={{ fontSize: 13, flex: 1, display: "flex", alignItems: "center", gap: 6,
+                                color: m.status === "done" ? "#2e7d32" : m.status === "not_applicable" ? MUTED : INK,
+                                fontWeight: m.status === "done" ? 600 : 400,
+                                textDecoration: m.status === "not_applicable" ? "line-through" : "none" }}>
+                                {m.status === "done" && <span style={{ fontSize: 12, color: "#2e7d32" }}>✅</span>}
+                                {m.status === "not_applicable" && <span style={{ fontSize: 12 }}>—</span>}
                                 {m.name}
                               </span>
-                              <input
-                                type="date"
-                                title="Due date (drives weekly digest deadline alerts)"
-                                value={m.due_at ? m.due_at.slice(0, 10) : ""}
-                                onChange={e => setMilestoneDue(m.id, e.target.value ? new Date(e.target.value).toISOString() : "")}
-                                style={{ fontSize: 11.5, padding: "3px 6px", borderRadius: 7, border: "1px solid rgba(18,16,12,.15)", color: MUTED }}
-                              />
                               <select
                                 value={m.status}
                                 onChange={e => updateMilestone(m.id, e.target.value)}
@@ -3461,11 +3666,29 @@ function CmsTab({ token }: { token: string }) {
                                   border: `1px solid ${mc.border}`, background: mc.bg, color: mc.color, cursor: "pointer",
                                 }}
                               >
-                                {MILESTONE_STATUS_OPTS.map(o => <option key={o} value={o}>{o.replace("_", " ")}</option>)}
+                                {MILESTONE_STATUS_OPTS.map(o => <option key={o} value={o}>{MS_LABELS[o] ?? o}</option>)}
                               </select>
+                              <button type="button" onClick={() => deleteStep(m.id)}
+                                title="Remove step" style={{ background: "none", border: "none", cursor: "pointer", color: "#ccc", fontSize: 14, padding: "0 2px" }}>✕</button>
                             </div>
                           );
                         })}
+                        {isAddingHere && (
+                          <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+                            <input
+                              autoFocus
+                              value={newStepName}
+                              onChange={e => setNewStepName(e.target.value)}
+                              onKeyDown={e => { if (e.key === "Enter") void addStep(); if (e.key === "Escape") { setAddingStepPhase(null); setNewStepName(""); } }}
+                              placeholder="Step name…"
+                              style={{ flex: 1, fontSize: 13, padding: "6px 10px", borderRadius: 8, border: `1px solid ${GOLD}`, outline: "none" }}
+                            />
+                            <button type="button" onClick={() => void addStep()} disabled={savingStep || !newStepName.trim()}
+                              style={{ padding: "6px 14px", borderRadius: 8, border: "none", background: GREEN, color: CREAM, fontSize: 13, fontWeight: 600, cursor: "pointer", opacity: savingStep || !newStepName.trim() ? 0.5 : 1 }}>
+                              {savingStep ? "…" : "Add"}
+                            </button>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -3739,10 +3962,6 @@ function CmsTab({ token }: { token: string }) {
     </div>
   );
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Zoom Setup Tab
-// ─────────────────────────────────────────────────────────────────────────────
 function ZoomSetupTab({ token }: { token: string }) {
   const [testing, setTesting] = useState(false);
   const [status, setStatus] = useState<null | {

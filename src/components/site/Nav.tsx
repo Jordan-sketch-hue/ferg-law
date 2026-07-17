@@ -15,7 +15,7 @@ const NAV_LINKS = [
 
 const LOGIN_LINKS = [
   { href: "/directory/client-login", label: "Client Portal" },
-  { href: "/directory/login", label: "Partner Login" },
+  { href: "/directory/login", label: "Are you a real estate professional?" },
 ] as const;
 
 const HOME_LINKS = [
@@ -81,26 +81,21 @@ export default function Nav() {
             ))}
           </nav>
 
-          <div className="nav-cta">
-            <a className="btn btn-gold nav-get-started" href="/directory/client-login">
+          <div className="nav-right">
+            <a className="btn btn-gold nav-get-started" href="/booking">
               Get started
             </a>
+            <button
+              className={`menu-btn${menuOpen ? " active" : ""}`}
+              id="menuBtn"
+              aria-label="Menu"
+              onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }}
+            >
+              <span></span>
+              <span></span>
+              <span></span>
+            </button>
           </div>
-
-          <a className="btn btn-gold nav-mobile-cta" href="/directory/client-login">
-            Get started
-          </a>
-
-          <button
-            className={`menu-btn${menuOpen ? " active" : ""}`}
-            id="menuBtn"
-            aria-label="Menu"
-            onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }}
-          >
-            <span></span>
-            <span></span>
-            <span></span>
-          </button>
         </div>
       </header>
 
@@ -154,8 +149,8 @@ export default function Nav() {
           </a>
         ))}
         <div className="drawer-cta">
-          <a className="btn btn-gold" href="/directory/client-login" onClick={closeMenu}>
-            Get started
+          <a className="btn btn-gold" href="/booking" onClick={closeMenu}>
+            Book a Consultation
           </a>
         </div>
       </nav>
@@ -191,11 +186,8 @@ export default function Nav() {
         .drawer-login-link{ display:block; padding:.45rem 0; font-size:1rem; color:var(--fg); text-decoration:none; font-weight:500; border-bottom:1px solid var(--line); opacity:.8; }
 
         .nav-links{ gap:1.4rem; flex:1; justify-content:center; }
-        .nav-mobile-cta{ display:none; font-size:.82rem; padding:.4rem .9rem; }
-        @media(max-width:768px){
-          .nav-mobile-cta{ display:inline-flex; }
-          .nav-cta{ display:none; }
-        }
+        .nav-right{ display:flex; align-items:center; gap:12px; flex-shrink:0; margin-left:1rem; }
+        .nav-get-started{ font-size:.85rem; padding:.45rem 1.1rem; white-space:nowrap; }
         @media(max-width:1200px){
           .nav-links a, .nav-links .nav-home-inline{ font-size:.78rem; }
           .nav-links{ gap:1rem; }
@@ -203,6 +195,9 @@ export default function Nav() {
         @media(max-width:1000px){
           .nav-links a, .nav-links .nav-home-inline{ font-size:.72rem; }
           .nav-links{ gap:.7rem; }
+        }
+        @media(max-width:480px){
+          .nav-get-started{ display:none; }
         }
       `}</style>
     </>
