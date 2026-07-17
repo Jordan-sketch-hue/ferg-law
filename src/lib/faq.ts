@@ -180,7 +180,7 @@ export const FAQ_GROUPS: FaqGroup[] = [
       },
       {
         q: "How much down payment is usually required?",
-        a: "The amount varies depending on the transaction and financing arrangements.\n\nFor many property purchases, a down payment of approximately 10% is commonly required upon signing the Agreement for Sale. However, specific requirements may differ depending on the seller, developer, or lending institution.",
+        a: "The deposit amount is negotiated per transaction — there is no fixed percentage. It depends on the seller, developer, and financing arrangements. Ferguson Law will confirm the right figure for your specific deal during your consultation.",
       },
       {
         q: "What additional costs should I budget for?",

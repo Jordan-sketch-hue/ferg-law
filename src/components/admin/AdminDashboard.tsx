@@ -3220,13 +3220,11 @@ const MS_COLORS: Record<string, { bg: string; color: string; border: string }> =
   pending:        { bg: "#f5f5f5", color: "#888",    border: "#ddd" },
   in_progress:    { bg: "#fdf3d9", color: "#8a6a22", border: "#e8d090" },
   done:           { bg: "#dff0df", color: "#1a4d28", border: "#a5d4a5" },
-  blocked:        { bg: "#fbeaea", color: "#7a2020", border: "#eecaca" },
   not_applicable: { bg: "#f0f0f0", color: "#999",    border: "#ccc" },
 };
 
 const MS_LABELS: Record<string, string> = {
-  pending: "pending", in_progress: "in progress", done: "done",
-  blocked: "blocked", not_applicable: "N/A",
+  pending: "pending", in_progress: "in progress", done: "done", not_applicable: "N/A",
 };
 
 const MATTER_STATUS_OPTS = ["intake","in_progress","awaiting_client","awaiting_third_party","completed","on_hold"];
