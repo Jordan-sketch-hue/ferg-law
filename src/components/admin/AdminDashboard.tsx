@@ -1809,8 +1809,8 @@ function BlockedDatesPanel({ token }: { token: string }) {
     if (existing) {
       await supabase.rpc("fl_admin_unblock_slot", { p_token: token, p_id: existing.id });
     } else {
-      const { error } = await supabase.rpc("fl_admin_block_slot", { p_token: token, p_starts_at: iso });
-      if (error) { setErr(error.message); setSaving(false); return; }
+      const { error } = await supabase.rpc("fl_admin_block_slot", { p_token: token, p_starts_at: iso, p_reason: "" });
+      if (error) { setErr("Something went wrong blocking that slot. Please report this issue to your developer."); setSaving(false); return; }
     }
     await loadBlocked();
     setSaving(false);
