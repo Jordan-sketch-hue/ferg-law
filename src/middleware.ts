@@ -2,6 +2,14 @@ import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function middleware(request: NextRequest) {
+  const host = request.headers.get("host") ?? "";
+  if (host.includes("vercel.app")) {
+    const url = request.nextUrl.clone();
+    url.host = "fergusonlawja.com";
+    url.port = "";
+    return NextResponse.redirect(url, { status: 301 });
+  }
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -41,5 +49,5 @@ export const config = {
   // logged into the separate client portal). The client portal below already
   // self-gates in directory/client/page.tsx; this middleware adds a
   // belt-and-suspenders redirect for it specifically.
-  matcher: ["/directory/client/:path*"],
+  matcher: ["/directory/client/:path*", "/((?!_next/static|_next/image|favicon).*)"],
 };

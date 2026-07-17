@@ -59,7 +59,7 @@ const COSTS = [
     n: "07",
     name: "Mortgage Processing Fee",
     who: "Purchaser pays",
-    pct: "1–2% of loan amount",
+    pct: "1–3% of loan amount",
     desc: "Charged by the lender for processing and approving the mortgage application. Varies by institution.",
   },
   {
