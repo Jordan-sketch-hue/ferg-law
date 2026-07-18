@@ -615,7 +615,7 @@ export default function AdminDashboard() {
     return (
       <div style={S.authWrap}>
         <div style={S.authCard}>
-          <div style={S.brandMark}>Ferguson Law</div>
+          <img src="/img/logo-ferguson.webp" alt="Ferguson Law" style={{ width: 120, marginBottom: 12, objectFit: "contain" }} />
           <h1 style={S.authTitle}>Back office</h1>
           {loginMode === "account" ? (
             <>
@@ -1733,9 +1733,11 @@ function BlockedDatesPanel({ token }: { token: string }) {
     const existing = blocked.find(b => new Date(b.starts_at).toISOString() === new Date(iso).toISOString());
     setSaving(true); setErr(null);
     if (existing) {
-      await supabase.rpc("fl_admin_unblock_slot", { p_token: token, p_id: existing.id });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any).rpc("fl_admin_unblock_slot", { p_token: token, p_id: existing.id });
     } else {
-      const { error } = await supabase.rpc("fl_admin_block_slot", { p_token: token, p_starts_at: iso });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any).rpc("fl_admin_block_slot", { p_token: token, p_starts_at: iso }) as { error: { message: string } | null };
       if (error) { setErr(error.message); setSaving(false); return; }
     }
     await loadBlocked();
@@ -1743,7 +1745,8 @@ function BlockedDatesPanel({ token }: { token: string }) {
   }
 
   async function unblock(id: string) {
-    await supabase.rpc("fl_admin_unblock_slot", { p_token: token, p_id: id });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any).rpc("fl_admin_unblock_slot", { p_token: token, p_id: id });
     void loadBlocked();
   }
 
@@ -3190,6 +3193,7 @@ interface CmsKyc {
   source_of_funds: string | null;
   is_pep: boolean;
   pep_details: string | null;
+  aml_declared: boolean;
   submitted_at: string | null;
   reviewed_at: string | null;
   reviewer_notes: string | null;
@@ -3595,7 +3599,11 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                       m.sender_type === "client" && !m.read_at ? { ...m, read_at: new Date().toISOString() } : m
                     ));
                     if (selected) setUnreadByMatter(prev => ({ ...prev, [selected]: 0 }));
-                    onUnreadChange?.(0);
+                    try {
+                      const r = await fetch(`/api/admin/cms/unread-count?token=${encodeURIComponent(token)}`);
+                      const j = await r.json() as { count: number };
+                      onUnreadChange?.(j.count ?? 0);
+                    } catch { /* swallow */ }
                   }
                 }} style={{
                   padding: "10px 18px", fontSize: 13, fontWeight: 600, border: "none",
@@ -3783,13 +3791,14 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                           fontSize: 12, fontWeight: 700, padding: "4px 12px", borderRadius: 999,
                           background: kyc.status === "approved" ? "rgba(47,122,82,.16)" : kyc.status === "flagged" ? "rgba(122,32,32,.12)" : "rgba(200,166,92,.2)",
                           color: kyc.status === "approved" ? "#2f7a52" : kyc.status === "flagged" ? "#7a2020" : "#8a6a22",
-                        }}>{kyc.status}</span>
+                        }}>{{ pending: "Pending review", approved: "Approved", flagged: "Flagged" }[kyc.status] ?? kyc.status}</span>
                         {kyc.submitted_at && <span style={{ fontSize: 12, color: MUTED }}>Submitted {fmtDate(kyc.submitted_at)}</span>}
                       </div>
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
                         {[["Full legal name", kyc.full_legal_name], ["Date of birth", kyc.date_of_birth], ["Nationality", kyc.nationality],
                           ["TRN", kyc.trn], ["ID type", kyc.id_type], ["ID number", kyc.id_number], ["Address", kyc.address],
-                          ["Source of funds", kyc.source_of_funds], ["Politically exposed?", kyc.is_pep ? "Yes" : "No"]].map(([label, val]) => (
+                          ["Source of funds", kyc.source_of_funds], ["Politically exposed?", kyc.is_pep ? "Yes" : "No"],
+                          ["AML declaration", kyc.aml_declared ? "✓ Declared" : "Not declared"]].map(([label, val]) => (
                           <div key={label as string}>
                             <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 2 }}>{label}</div>
                             <div style={{ fontSize: 13.5, color: INK }}>{val || "—"}</div>
