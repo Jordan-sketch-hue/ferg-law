@@ -79,7 +79,7 @@ export default function HomeFlagship({
           <style>{HomeBadgeCSS}</style>
         </div>
 
-        <style>{`.hf-ebook-cover{display:block;flex-shrink:0}.hf-ebook-cover:hover img{transform:scale(1.03);transition:transform .2s ease}.hf-ebook-cover img{transition:transform .2s ease}@media(max-width:640px){.hf-ebook-cover{display:none}}`}</style>
+        <style>{`.hf-ebook-cover{display:block;flex-shrink:0}.hf-ebook-cover:hover img{transform:scale(1.03);transition:transform .2s ease}.hf-ebook-cover img{transition:transform .2s ease}@media(max-width:640px){.hf-ebook-cover{display:none}}@media(max-width:768px){.home-grid .steps-card{display:none}.home-grid .home-photo{display:none}}`}</style>
 
         <div className="home-grid">
           <div className="home-photo reveal">
