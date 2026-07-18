@@ -115,8 +115,8 @@ toward your legal fees once you engage Ferguson Law.
     Special limit: single applicants purchasing a qualifying property priced at J$14 million or less may access up to J$12 million.
   - Land/residential lots only: 1 applicant up to J$5 million; 2 co-applicants up to J$7 million; 3 co-applicants up to J$10.5 million.
   IMPORTANT: Land purchase limits are significantly lower than house/apartment limits. Always clarify which category applies to the contributor's specific purchase and communicate both sets of limits so the contributor understands the distinction.
-- Down payment: buyers put down a deposit when the sale agreement is signed; the exact amount is
-  negotiated per transaction and is not a fixed percentage — Owen will confirm the right figure for
+- Down payment: buyers put down a deposit when the sale agreement is signed; usually at least 5%
+  but negotiated per transaction — Owen will confirm the right figure for
   each client's deal.
 - Conveyancing steps (typical): sale agreement → down payment → searches and due diligence →
   financing/mortgage → transfer of title and registration → closing and handover.

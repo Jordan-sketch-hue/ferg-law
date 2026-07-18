@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useMemo,
   useState,
@@ -31,22 +32,22 @@ export function BookingProvider({ children }: { children: ReactNode }) {
   // replaces the original `open()`'s step/inQuiz reset without a setState effect.
   const [openCount, setOpenCount] = useState(0);
 
+  const openBooking = useCallback(() => {
+    setOpenCount((c) => c + 1);
+    setOpen(true);
+  }, []);
+
+  const closeBooking = useCallback(() => setOpen(false), []);
+
   const value = useMemo<BookingContextValue>(
-    () => ({
-      open,
-      openBooking: () => {
-        setOpenCount((c) => c + 1);
-        setOpen(true);
-      },
-      closeBooking: () => setOpen(false),
-    }),
-    [open],
+    () => ({ open, openBooking, closeBooking }),
+    [open, openBooking, closeBooking],
   );
 
   return (
     <BookingContext.Provider value={value}>
       {children}
-      <BookingModal key={openCount} open={open} onClose={value.closeBooking} />
+      <BookingModal key={openCount} open={open} onClose={closeBooking} />
     </BookingContext.Provider>
   );
 }

@@ -14,8 +14,8 @@ const NAV_LINKS = [
 ] as const;
 
 const LOGIN_LINKS = [
+  { href: "/directory/login", label: "Partner Login" },
   { href: "/directory/client-login", label: "Client Portal" },
-  { href: "/directory/login", label: "Are you a real estate professional?" },
 ] as const;
 
 const HOME_LINKS = [
@@ -126,6 +126,16 @@ export default function Nav() {
             {l.label}
           </a>
         ))}
+        {LOGIN_LINKS.map((l) => (
+          <a
+            key={l.href}
+            href={l.href}
+            onClick={closeMenu}
+            className="drawer-login-link"
+          >
+            {l.label}
+          </a>
+        ))}
         {HOME_LINKS.map((l) => (
           <a
             key={l.href}
@@ -134,16 +144,6 @@ export default function Nav() {
             rel={l.external ? "noopener" : undefined}
             onClick={(e) => { closeMenu(); handleNavClick(e, l.href); }}
             className="drawer-home-link"
-          >
-            {l.label}
-          </a>
-        ))}
-        {LOGIN_LINKS.map((l) => (
-          <a
-            key={l.href}
-            href={l.href}
-            onClick={closeMenu}
-            className="drawer-login-link"
           >
             {l.label}
           </a>
