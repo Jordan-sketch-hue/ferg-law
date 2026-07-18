@@ -40,10 +40,10 @@ export default function Home() {
             sale, and transfer.
           </p>
           <div className="hero-cta">
-            <BookButton className="btn btn-gold hero-cta-primary">
+            <a className="btn btn-gold hero-cta-primary" href="/get-started">
               <span data-edit="hero.ctaPrimary">Get started</span>{" "}
               <ArrowIcon />
-            </BookButton>
+            </a>
             <a className="btn btn-light" href="/buyers-guide">
               H.O.M.E.™ Buyers Guide
             </a>
@@ -111,7 +111,7 @@ export default function Home() {
               Ferguson Law – practice areas
             </span>
             <h2>
-              Property closings, contracts and life transitions done with care.
+              Your new home and other major goals accomplished.
             </h2>
             <p className="lead">
               Real estate is our focus, and we also support businesses, families, creators and athletes with straightforward legal guidance and trusted execution.
@@ -147,7 +147,7 @@ export default function Home() {
             </div>
             {/* 4 — Sports Law */}
             <div className="serv reveal">
-              <img className="serv-media" src="/img/p-track.jpg" data-edit-img="images.serviceImg5" alt="Sports law – contracts and representation for athletes" loading="lazy" />
+              <img className="serv-media" src="/img/sports-law.jpg" data-edit-img="images.serviceImg5" alt="Sports law – contracts and representation for athletes" loading="lazy" />
               <div className="num">04</div>
               <h3 data-edit="services.items.5.title">Sports Law</h3>
               <p data-edit="services.items.5.body">Contracts, image rights and representation for athletes, clubs and sporting bodies.</p>

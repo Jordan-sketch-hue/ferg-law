@@ -82,7 +82,7 @@ export default function Nav() {
           </nav>
 
           <div className="nav-right">
-            <a className="btn btn-gold nav-get-started" href="/booking">
+            <a className="btn btn-gold nav-get-started" href="/get-started">
               Get started
             </a>
             <button
@@ -149,8 +149,8 @@ export default function Nav() {
           </a>
         ))}
         <div className="drawer-cta">
-          <a className="btn btn-gold" href="/booking" onClick={closeMenu}>
-            Book a Consultation
+          <a className="btn btn-gold" href="/get-started" onClick={closeMenu}>
+            Get started
           </a>
         </div>
       </nav>
@@ -197,7 +197,7 @@ export default function Nav() {
           .nav-links{ gap:.7rem; }
         }
         @media(max-width:480px){
-          .nav-get-started{ display:none; }
+          .nav-get-started{ font-size:.75rem; padding:.4rem .8rem; }
         }
       `}</style>
     </>
