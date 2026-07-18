@@ -615,7 +615,7 @@ export default function AdminDashboard() {
     return (
       <div style={S.authWrap}>
         <div style={S.authCard}>
-          <img src="/img/logo-ferguson.webp" alt="Ferguson Law" style={{ width: 120, marginBottom: 12, objectFit: "contain" }} />
+          <div style={S.brandMark}>Ferguson Law</div>
           <h1 style={S.authTitle}>Back office</h1>
           {loginMode === "account" ? (
             <>
