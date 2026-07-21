@@ -9,7 +9,6 @@ const NAV_LINKS = [
   { href: "/#about", label: "About" },
   { href: "/#services", label: "Services" },
   { href: "/directory", label: "Find a Pro" },
-  { href: "/faq", label: "FAQ" },
   { href: "/#contact", label: "Contact" },
 ] as const;
 
@@ -18,16 +17,22 @@ const LOGIN_LINKS = [
   { href: "/directory/client-login", label: "Client Portal" },
 ] as const;
 
-const HOME_LINKS = [
-  { href: SITE.homeApp, label: "H.O.M.E.™ by Ferguson Law", external: true },
-  { href: "/buyers-guide", label: "Buyer's Guide", external: false },
-  { href: "/explainers", label: "Explainers", external: false },
-  { href: "/glossary", label: "Glossary", external: false },
+const HOME_LINK = { href: SITE.homeApp, label: "H.O.M.E.™ by Ferguson Law", external: true };
+
+const RESOURCE_LINKS = [
+  { href: "/buyers-guide", label: "Buyer's Guide" },
+  { href: "/explainers", label: "Explainers" },
+  { href: "/glossary", label: "Glossary" },
+  { href: "/faq", label: "FAQ" },
 ] as const;
 
 export default function Nav() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [resourcesOpen, setResourcesOpen] = useState(false);
+  const resourcesRef = useRef<HTMLDivElement>(null);
+  const [loginOpen, setLoginOpen] = useState(false);
+  const loginRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
 
   function handleNavClick(e: React.MouseEvent<HTMLAnchorElement>, href: string) {
@@ -49,6 +54,20 @@ export default function Nav() {
     return () => { document.body.style.overflow = ""; };
   }, [menuOpen]);
 
+  useEffect(() => {
+    if (!resourcesOpen && !loginOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (resourcesRef.current && !resourcesRef.current.contains(e.target as Node)) {
+        setResourcesOpen(false);
+      }
+      if (loginRef.current && !loginRef.current.contains(e.target as Node)) {
+        setLoginOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [resourcesOpen, loginOpen]);
+
   const closeMenu = () => setMenuOpen(false);
 
   return (
@@ -66,22 +85,52 @@ export default function Nav() {
             {NAV_LINKS.map((l) => (
               <a key={l.href} href={l.href}>{l.label}</a>
             ))}
-            <span className="nav-divider" aria-hidden="true" />
-            {HOME_LINKS.map((l) => (
-              <a
-                key={l.href}
-                href={l.href}
-                target={l.external ? "_blank" : undefined}
-                rel={l.external ? "noopener" : undefined}
-                className="nav-home-inline"
-                onClick={(e) => handleNavClick(e, l.href)}
+            {/* Resources dropdown */}
+            <div className="nav-resources-wrap" ref={resourcesRef}>
+              <button
+                className="nav-resources-btn"
+                onClick={() => setResourcesOpen((v) => !v)}
+                aria-expanded={resourcesOpen}
               >
-                {l.label}
-              </a>
-            ))}
+                Resources <span className="nav-caret" aria-hidden="true">▾</span>
+              </button>
+              {resourcesOpen && (
+                <div className="nav-resources-dropdown">
+                  {RESOURCE_LINKS.map((l) => (
+                    <a key={l.href} href={l.href} onClick={() => setResourcesOpen(false)}>{l.label}</a>
+                  ))}
+                </div>
+              )}
+            </div>
+            <span className="nav-divider" aria-hidden="true" />
+            <a
+              href={HOME_LINK.href}
+              target="_blank"
+              rel="noopener"
+              className="nav-home-inline"
+            >
+              {HOME_LINK.label}
+            </a>
           </nav>
 
           <div className="nav-right">
+            {/* Log in — Owen: make log-ins stand out, beside Get started */}
+            <div className="nav-login-wrap" ref={loginRef}>
+              <button
+                className="nav-login-btn"
+                onClick={() => setLoginOpen((v) => !v)}
+                aria-expanded={loginOpen}
+              >
+                Log in <span className="nav-caret" aria-hidden="true">▾</span>
+              </button>
+              {loginOpen && (
+                <div className="nav-resources-dropdown nav-login-dropdown">
+                  {LOGIN_LINKS.map((l) => (
+                    <a key={l.href} href={l.href} onClick={() => setLoginOpen(false)}>{l.label}</a>
+                  ))}
+                </div>
+              )}
+            </div>
             <a className="btn btn-gold nav-get-started" href="/get-started">
               Get started
             </a>
@@ -136,14 +185,21 @@ export default function Nav() {
             {l.label}
           </a>
         ))}
-        {HOME_LINKS.map((l) => (
+        <a
+          href={HOME_LINK.href}
+          target="_blank"
+          rel="noopener"
+          onClick={closeMenu}
+          className="drawer-home-link"
+        >
+          {HOME_LINK.label}
+        </a>
+        {RESOURCE_LINKS.map((l) => (
           <a
             key={l.href}
             href={l.href}
-            target={l.external ? "_blank" : undefined}
-            rel={l.external ? "noopener" : undefined}
-            onClick={(e) => { closeMenu(); handleNavClick(e, l.href); }}
-            className="drawer-home-link"
+            onClick={closeMenu}
+            className="drawer-home-link drawer-resource-link"
           >
             {l.label}
           </a>
@@ -185,9 +241,49 @@ export default function Nav() {
         /* Mobile drawer portal login links */
         .drawer-login-link{ display:block; padding:.45rem 0; font-size:1rem; color:var(--fg); text-decoration:none; font-weight:500; border-bottom:1px solid var(--line); opacity:.8; }
 
+        /* Resources dropdown */
+        .nav-resources-wrap{ position:relative; display:inline-flex; align-items:center; }
+        .nav-resources-btn{
+          background:none; border:none; cursor:pointer; padding:0;
+          font:inherit; font-size:.85rem; font-weight:500;
+          color:var(--fg); display:flex; align-items:center; gap:.25rem;
+          transition:opacity .15s;
+        }
+        .nav-resources-btn:hover{ opacity:.7; }
+        .nav-caret{ font-size:.65rem; line-height:1; }
+        .nav-resources-dropdown{
+          position:absolute; top:calc(100% + 10px); left:50%; transform:translateX(-50%);
+          background:var(--surface,#fff); border:1px solid var(--line);
+          border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,.12);
+          min-width:160px; overflow:hidden; z-index:200;
+        }
+        .nav-resources-dropdown a{
+          display:block; padding:.6rem 1rem; font-size:.85rem;
+          color:var(--fg); text-decoration:none;
+          transition:background .12s;
+        }
+        .nav-resources-dropdown a:hover{ background:var(--surface-alt,#f5f5f5); }
+
+        /* Mobile drawer resource sub-links */
+        .drawer-resource-link{ font-size:.9rem !important; padding-left:1rem !important; opacity:.85; }
+
         .nav-links{ gap:1.4rem; flex:1; justify-content:center; }
         .nav-right{ display:flex; align-items:center; gap:12px; flex-shrink:0; margin-left:1rem; }
         .nav-get-started{ font-size:.85rem; padding:.45rem 1.1rem; white-space:nowrap; }
+
+        /* Log in — prominent, beside Get started (Owen's ask) */
+        .nav-login-wrap{ position:relative; }
+        .nav-login-btn{
+          background:none; cursor:pointer; font:inherit;
+          font-size:.85rem; font-weight:600; white-space:nowrap;
+          color:var(--gold-deep,#8a6d1f); border:1.5px solid var(--gold-deep,#8a6d1f);
+          border-radius:999px; padding:.42rem 1rem;
+          display:flex; align-items:center; gap:.3rem;
+          transition:background .15s, color .15s;
+        }
+        .nav-login-btn:hover{ background:var(--gold-deep,#8a6d1f); color:#fff; }
+        .nav-login-dropdown{ left:auto; right:0; transform:none; }
+        @media(max-width:760px){ .nav-login-wrap{ display:none; } }
         @media(max-width:1200px){
           .nav-links a, .nav-links .nav-home-inline{ font-size:.78rem; }
           .nav-links{ gap:1rem; }

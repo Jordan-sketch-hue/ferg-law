@@ -25,7 +25,7 @@ const ROLES: Role[] = [
     moments: [
       {
         headline: "You reach out. We talk.",
-        body: `A ${CONSULT_DURATION_MIN}-minute call with Owen Ferguson — ${CONSULT_FEE_DISPLAY}. By the time it ends, you know the real cost of purchase, what the process actually involves, and what to watch for before you sign a single page. Most clients say it was money well spent.`,
+        body: `A ${CONSULT_DURATION_MIN}-minute call with Owen Ferguson — ${CONSULT_FEE_DISPLAY}, credited toward your legal fees once you engage Ferguson Law. By the time it ends, you know the real cost of purchase, what the process actually involves, and what to watch for before you sign a single page.`,
       },
       {
         headline: "We need to know who you are.",
@@ -44,8 +44,8 @@ const ROLES: Role[] = [
         body: "NHT benefit, bank mortgage, or cash — we coordinate with everyone. We tell each party exactly what they need. We track the conditions. You focus on the move.",
       },
       {
-        headline: "Closing day.",
-        body: "Transfer tax is paid. Documents go to the NLA. Every figure is accounted for. The keys change hands.",
+        headline: "The Closing process.",
+        body: "This stage unfolds over days, not a single afternoon. Transfer tax is paid, documents are lodged with the NLA, every figure is accounted for — and then the keys change hands.",
       },
       {
         headline: "Your title arrives.",
@@ -61,11 +61,11 @@ const ROLES: Role[] = [
     moments: [
       {
         headline: "Before you accept an offer, we talk.",
-        body: `A ${CONSULT_DURATION_MIN}-minute call (${CONSULT_FEE_DISPLAY}) before anything is signed. You'll know exactly what you owe in transfer tax, what your attorney's role is, and what happens if the buyer doesn't close. The conversation that saves you from the surprises.`,
+        body: `A ${CONSULT_DURATION_MIN}-minute call (${CONSULT_FEE_DISPLAY}, credited toward your legal fees once you engage us) before anything is signed. You'll know exactly what you owe in transfer tax, what your attorney's role is, and what happens if the buyer doesn't close.`,
       },
       {
-        headline: "Your identity goes on record.",
-        body: "Jamaican law requires it. Your ID, TRN, AML declaration, source-of-funds documentation. We handle this before any documents are exchanged. You're clear before you commit.",
+        headline: "We confirm your identity.",
+        body: "Jamaican law requires it. Your ID, TRN, and proof of address — submitted securely before any documents are exchanged. We handle this before the agreement is signed. You're clear before you commit.",
       },
       {
         headline: "The agreement is drafted in your favour.",
@@ -88,19 +88,19 @@ const ROLES: Role[] = [
   {
     id: "professional",
     label: "Professional",
-    tagline: "You serve buyers, sellers, or lenders in the Jamaican property market. Here's how you fit into the H.O.M.E. platform.",
+    tagline: "You serve buyers, sellers, or lenders in the Jamaican property market. Here's how you fit into the H.O.M.E.™ platform.",
     moments: [
       {
-        headline: "You create a profile on H.O.M.E.",
+        headline: "You create a profile on H.O.M.E.™",
         body: "The joint platform operated by Ferguson Law. Your services, your coverage area, your credentials — listed clearly for the clients who need you.",
-        cta: { label: "Go to H.O.M.E.", href: `${SITE.homeApp}onboarding?role=agent` },
+        cta: { label: "Go to H.O.M.E.™", href: `${SITE.homeApp}onboarding?role=agent` },
       },
       {
         headline: "Ferguson Law verifies you.",
         body: "Your professional license and registration are confirmed before your profile goes live. Clients see a verified badge. Your reputation stays protected.",
       },
       {
-        headline: "Qualified clients come to you.",
+        headline: "Qualified clients come to you (where applicable).",
         body: "When a buyer, seller, or lender on the platform reaches a stage that requires your services, they're matched to you based on role, location, and stage. No cold leads. They're already in the process.",
       },
       {
@@ -294,28 +294,31 @@ function GetStartedContent() {
             ))}
           </div>
 
-          {role.explainer && (
-            <div style={S.explainerStrip}>
-              <span style={{ color: MUTED, fontSize: ".88rem" }}>Want the full legal picture?</span>
-              <Link href={role.explainer} style={S.explainerLink}>
-                Read the {role.label}&apos;s Guide &rarr;
-              </Link>
-            </div>
-          )}
         </div>
       </section>
 
-      {/* CTA */}
+      {/* CTA — Client Portal is the main feature; consultation available, not the headline */}
       <section style={S.ctaBand}>
         <div style={S.ctaInner}>
           <div>
             <h2 style={S.ctaH2}>Ready when you are.</h2>
             <p style={S.ctaSub}>
-              A {CONSULT_DURATION_MIN}-minute consultation with Owen Ferguson. {CONSULT_FEE_DISPLAY}. No commitment — just clarity on where you stand.
+              {role.id === "professional"
+                ? "Your partner dashboard is where your listings, referrals and verification live. Log in to get started."
+                : `Your client journey lives in the Ferguson Law Client Portal — log in 24/7 and see exactly what stage your matter is at. Prefer to talk first? A ${CONSULT_DURATION_MIN}-minute consultation with Owen Ferguson is ${CONSULT_FEE_DISPLAY}, credited toward your legal fees once you engage us.`}
             </p>
           </div>
           <div style={S.ctaBtns}>
-            <button onClick={openBooking} style={S.goldBtn}>Book a Consultation</button>
+            {role.id === "professional" ? (
+              <a href={SITE.homeApp} target="_blank" rel="noopener" style={S.goldLink}>
+                Partner login
+              </a>
+            ) : (
+              <Link href="/directory/client-login" style={S.goldLink}>
+                Client portal
+              </Link>
+            )}
+            <button onClick={openBooking} style={S.ghostBtn}>Book a Consultation</button>
             <a
               href={waLink("Hi Ferguson Law — I'd like to learn more about working with you.")}
               target="_blank"
@@ -327,6 +330,18 @@ function GetStartedContent() {
           </div>
         </div>
       </section>
+
+      {/* Explainer — deliberately AFTER the portal CTA (no diversions before it) */}
+      {role.explainer && (
+        <section style={{ background: CREAM, padding: "0 24px" }}>
+          <div style={{ ...S.explainerStrip, maxWidth: 880, margin: "0 auto", borderTop: "none", padding: "22px 0 26px" }}>
+            <span style={{ color: MUTED, fontSize: ".88rem" }}>Want the full legal picture?</span>
+            <Link href={role.explainer} style={S.explainerLink}>
+              Explainer &rarr;
+            </Link>
+          </div>
+        </section>
+      )}
 
       {/* Pillars */}
       <section style={S.pillarsSection}>
@@ -344,7 +359,7 @@ function GetStartedContent() {
               },
               {
                 t: "You're not chasing updates.",
-                d: "Your client portal tracks every milestone. When something moves, you know. When we need something from you, you hear about it.",
+                d: "The Ferguson Law CLIENT PORTAL tracks every milestone. Log in 24/7 and see exactly what stage your matter is at. When something moves, you know. When we need something from you, you hear about it.",
               },
             ].map((p) => (
               <div key={p.t} style={S.pillar}>
@@ -464,6 +479,11 @@ const S: Record<string, React.CSSProperties> = {
     padding: "14px 28px", borderRadius: 12, background: GOLD,
     color: GREEN, fontWeight: 700, fontSize: ".95rem",
     border: "none", cursor: "pointer", whiteSpace: "nowrap",
+  },
+  goldLink: {
+    padding: "14px 28px", borderRadius: 12, background: GOLD,
+    color: GREEN, fontWeight: 700, fontSize: ".95rem",
+    textDecoration: "none", display: "inline-block", whiteSpace: "nowrap",
   },
   ghostBtn: {
     padding: "14px 24px", borderRadius: 12,

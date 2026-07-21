@@ -37,13 +37,23 @@ export default function ClientLoginPage() {
     if (password.length < 6) return setErr("Password must be at least 6 characters.");
     if (!agreedToTerms) return setErr("Please agree to the Terms of Service and Privacy Policy to continue.");
     setBusy(true);
-    const res = await fetch("/api/auth/client-signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: email.trim(), password, name: name.trim(), phone: phone.trim(), intent }),
-    });
-    const json = await res.json() as { ok?: boolean; error?: string };
-    if (!res.ok || json.error) {
+    let json: { ok?: boolean; error?: string };
+    let resOk = false;
+    try {
+      const res = await fetch("/api/auth/client-signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), password, name: name.trim(), phone: phone.trim(), intent }),
+      });
+      resOk = res.ok;
+      json = (await res.json()) as { ok?: boolean; error?: string };
+    } catch {
+      // network failure or a non-JSON server error — always tell the user why signup stopped
+      setErr("We couldn't reach the server to create your account. Please check your connection and try again.");
+      setBusy(false);
+      return;
+    }
+    if (!resOk || json.error) {
       setErr(json.error ?? "Sign up failed. Please try again.");
       setBusy(false);
       return;
@@ -72,7 +82,15 @@ export default function ClientLoginPage() {
   return (
     <div className="dir-wrap">
       <div className="dir-form">
-        <h1 style={{ marginBottom: 4 }}>{tab === "login" ? "Client portal" : "Create your account"}</h1>
+        {tab === "login" && (
+          <div style={{ marginBottom: 20, padding: "14px 16px", borderRadius: 12, background: "linear-gradient(135deg,#0e2518,#1a3828)", color: "#fff" }}>
+            <div style={{ fontWeight: 700, fontSize: ".85rem", marginBottom: 4, color: "var(--gold,#c8a65c)", textTransform: "uppercase", letterSpacing: ".1em" }}>Ferguson Law Client Portal</div>
+            <p style={{ margin: 0, fontSize: ".88rem", lineHeight: 1.55, color: "rgba(246,242,234,.85)" }}>
+              The Ferguson Law Client Portal tracks every milestone in your matter. Log in 24/7 to view updates, communicate with your attorney, and access documents — all in one place.
+            </p>
+          </div>
+        )}
+        <h1 style={{ marginBottom: 4 }}>{tab === "login" ? "Sign in" : "Create your account"}</h1>
         <p className="lede">
           {tab === "login"
             ? "Track your property matter and connect with your professionals."
@@ -170,7 +188,7 @@ export default function ClientLoginPage() {
           )}
         </div>
         <div className="dform-alt" style={{ paddingTop: 8 }}>
-          Are you a professional?{" "}
+          Are you a real estate professional?{" "}
           <Link href="/directory/login">Partner login →</Link>
         </div>
       </div>

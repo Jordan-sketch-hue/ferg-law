@@ -177,13 +177,13 @@ export function sendWeeklyClientDigest(
   const alertsHtml = data.alerts.length ? `
     <div style="margin:0 0 22px;padding:14px 16px;border-radius:10px;background:#fbeaea;border:1px solid #eecaca;">
       <div style="font-size:12px;font-weight:bold;letter-spacing:.05em;text-transform:uppercase;color:#7a2020;margin-bottom:8px;">Alerts</div>
-      ${data.alerts.map(a => `<div style="font-size:14px;color:#7a2020;margin-bottom:4px;">⚠ <strong>${escapeHtml(a.milestoneName)}</strong> — ${a.daysRemaining} day${a.daysRemaining === 1 ? "" : "s"} remaining</div>`).join("")}
+      ${data.alerts.map(a => `<div style="font-size:14px;color:#7a2020;margin-bottom:4px;"><strong>Note:</strong> <strong>${escapeHtml(a.milestoneName)}</strong> — ${a.daysRemaining} day${a.daysRemaining === 1 ? "" : "s"} remaining</div>`).join("")}
     </div>` : "";
 
   const changesHtml = data.recentChanges.length ? `
     <div style="margin:0 0 20px;">
       <div style="font-size:12px;font-weight:bold;letter-spacing:.05em;text-transform:uppercase;color:#9a8f7a;margin-bottom:8px;">Recent progress</div>
-      ${data.recentChanges.map(c => `<div style="font-size:14px;color:#3a3a3a;margin-bottom:5px;">✓ <strong>${escapeHtml(c.milestoneName)}</strong> — ${escapeHtml(statusLabel(c.newStatus))}</div>`).join("")}
+      ${data.recentChanges.map(c => `<div style="font-size:14px;color:#3a3a3a;margin-bottom:5px;">&ndash; <strong>${escapeHtml(c.milestoneName)}</strong> &mdash; ${escapeHtml(statusLabel(c.newStatus))}</div>`).join("")}
     </div>` : "";
 
   const awaitingHtml = data.awaitingClient.length ? `

@@ -4,6 +4,7 @@ import { systemPrompt } from "@/lib/chat/prompt";
 import { CHAT_TOOLS, executeTool } from "@/lib/chat/tools";
 import { generateReply, hasAnyLLMKey, type ChatMsg } from "@/lib/chat/llm";
 import { SITE } from "@/lib/site";
+import { notifyOwenWA } from "@/lib/wa-notify";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -101,6 +102,9 @@ export async function POST(req: Request) {
         .from("chat_conversations")
         .update({ last_message_at: new Date().toISOString(), unread_for_agent: 1 })
         .eq("id", cid);
+      void notifyOwenWA(
+        `Ferguson Law Live Chat — visitor requested a human agent.\nName: ${visitor.name || "website visitor"}\nView: https://ferguson-law.vercel.app/agent`,
+      );
       return Response.json({
         conversationId: cid,
         status: "waiting_agent",
@@ -117,17 +121,20 @@ export async function POST(req: Request) {
         body: incoming,
       });
     }
+    const isLiveChat = status === "agent" || status === "waiting_agent";
     await supabase
       .from("chat_conversations")
       .update({
         last_message_at: new Date().toISOString(),
-        unread_for_agent:
-          status === "agent" || status === "waiting_agent" ? 1 : 0,
+        unread_for_agent: isLiveChat ? 1 : 0,
       })
       .eq("id", cid);
 
     // --- A human is handling this thread — do NOT call the model -----------
-    if (status === "agent" || status === "waiting_agent") {
+    if (isLiveChat) {
+      void notifyOwenWA(
+        `Ferguson Law Live Chat — new message from visitor.\nFrom: ${visitor.name || "website visitor"}\nMessage: ${incoming.substring(0, 120)}\nView: https://ferguson-law.vercel.app/agent`,
+      );
       return Response.json({ conversationId: cid, status, handledByHuman: true });
     }
 

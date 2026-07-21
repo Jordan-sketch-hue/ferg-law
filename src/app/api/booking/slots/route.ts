@@ -92,17 +92,23 @@ async function fetchBlockedSlots(allSlots: string[]): Promise<Set<number>> {
 
 function groupByDay(allSlots: string[], taken: Set<number>, blocked: Set<number>): Day[] {
   const map = new Map<string, Day>();
+  const seenLabels = new Map<string, Set<string>>();
   for (const iso of allSlots) {
     const key = dayKey(iso);
     let day = map.get(key);
     if (!day) {
       day = { date: key, label: dateChipLabel(iso), slots: [] };
       map.set(key, day);
+      seenLabels.set(key, new Set());
     }
+    const label = slotTimeLabel(iso);
+    const dayLabels = seenLabels.get(key)!;
+    if (dayLabels.has(label)) continue;
+    dayLabels.add(label);
     const ms = new Date(iso).getTime();
     day.slots.push({
       iso,
-      label: slotTimeLabel(iso),
+      label,
       available: !taken.has(ms) && !blocked.has(ms),
     });
   }

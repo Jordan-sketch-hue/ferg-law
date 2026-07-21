@@ -6,6 +6,7 @@ import Reveal from "@/components/site/Reveal";
 import HomeFlagship from "@/components/site/HomeFlagship";
 import Footer from "@/components/site/Footer";
 import HeroCarousel from "@/components/site/HeroCarousel";
+import ChatLink from "@/components/site/ChatLink";
 
 const ArrowIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
@@ -196,18 +197,18 @@ export default function Home() {
               A lawyer who understands the <em>money</em>, too.
             </h2>
             <p className="lead" data-edit="about.lead">
-              <strong>Owen K. Ferguson, JP</strong> founded the firm on a single
-              principle: legal counsel should be honest, practical, and financially
-              grounded. He has served Jamaica&apos;s banking and financial sector
-              for more than 20 years, and has practised as an Attorney-at-Law for
-              over 10.
+              Ferguson Law is built on a rare combination &mdash; deep legal
+              expertise paired with two decades in banking and finance. The
+              firm&apos;s founder, Owen K. Ferguson, JP, has practised as an
+              Attorney-at-Law for over 10 years, on top of 20+ years in
+              Jamaica&apos;s banking and financial services sector.
             </p>
             <p className="about-p" data-edit="about.body2">
-              A 2013 graduate of the Norman Manley Law School, Owen holds
-              post-graduate qualifications in law and business administration from
-              the University of London. That combination lets him guide first-time
-              buyers, businesses, investors, and the Jamaican diaspora through
-              complex property transactions without the usual legal fog.
+              A 2013 graduate of the Norman Manley Law School with post-graduate
+              studies in both Law and Business Administration from the University
+              of London, Owen pairs these disciplines to make complex transactions
+              genuinely clear &mdash; for first-time buyers, businesses, investors
+              and overseas Jamaicans alike.
             </p>
             <ul className="creds">
               <li>Attorney-at-Law · 10+ years</li>
@@ -512,7 +513,7 @@ export default function Home() {
               </BookButton>
             </div>
             {/* Chat live */}
-            <a className="reach-card reveal" href="#chat" aria-label="Open live chat">
+            <ChatLink>
               <div className="reach-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
               </div>
@@ -520,7 +521,7 @@ export default function Home() {
               <h4>Chat live</h4>
               <p>Talk to our AI assistant right now – available 24/7, answers questions about any matter.</p>
               <span className="btn btn-gold reach-btn">Start a chat</span>
-            </a>
+            </ChatLink>
             {/* WhatsApp */}
             <a className="reach-card reveal" href={waLink()} target="_blank" rel="noopener">
               <div className="reach-icon">

@@ -1,5 +1,6 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { BookingProvider, useBooking } from "@/components/site/BookingProvider";
 import Nav from "@/components/site/Nav";
 import Footer from "@/components/site/Footer";
@@ -19,8 +20,20 @@ const TESTIMONIALS = [
 ];
 
 function BookingContent() {
-  const { openBooking } = useBooking();
+  const { open, openBooking } = useBooking();
+  const router = useRouter();
+  const hasOpened = useRef(false);
+
   useEffect(() => { openBooking(); }, [openBooking]);
+
+  // When modal is closed after having been opened, go back to homepage
+  useEffect(() => {
+    if (open) {
+      hasOpened.current = true;
+    } else if (hasOpened.current) {
+      router.push("/");
+    }
+  }, [open, router]);
 
   return (
     <main style={{ background: "var(--paper)", paddingBottom: "4rem" }}>

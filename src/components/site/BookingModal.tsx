@@ -502,7 +502,7 @@ export default function BookingModal({
                   key={svc.id}
                   className={`svc-opt${service === svc.id ? " sel" : ""}`}
                   data-id={svc.id}
-                  onClick={() => setService(svc.id)}
+                  onClick={() => { setService(svc.id); setStep(1); }}
                 >
                   <span
                     className="so-ic"
@@ -516,7 +516,7 @@ export default function BookingModal({
                 </button>
               ))}
             </div>
-            <button className="helper-link" id="helperBtn" onClick={openHelper}>
+            <button className="helper-link" id="helperBtn" onClick={openHelper} style={{ marginTop: "0.5rem" }}>
               Not sure where to start? Help me choose →
             </button>
           </div>
@@ -746,6 +746,21 @@ export default function BookingModal({
                   </p>
                 </>
               )}
+              <div
+                style={{
+                  marginTop: 16,
+                  padding: "11px 14px",
+                  borderRadius: 10,
+                  background: "#f6f2ea",
+                  border: "1px solid #e7ddcc",
+                  fontSize: ".78rem",
+                  color: "#6b5c3e",
+                  lineHeight: 1.55,
+                }}
+              >
+                <b style={{ display: "block", marginBottom: 3, color: "#102a1e" }}>AML/CFT Declaration</b>
+                By confirming this booking, you acknowledge that the funds used to pay any legal fees are derived from legitimate sources and are not connected to money laundering, the financing of terrorism, or any other unlawful activity, as required under Jamaica's Proceeds of Crime Act and the Terrorism Prevention Act.
+              </div>
               {submitError && (
                 <p className="sub" role="alert" style={{ color: "#b3261e" }}>
                   {submitError}{" "}

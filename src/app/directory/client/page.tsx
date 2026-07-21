@@ -25,6 +25,7 @@ interface KycRecord {
   id_doc_url: string | null;
   source_of_funds: string | null;
   is_pep: boolean;
+  aml_declared: boolean;
   submitted_at: string | null;
   status: string;
   reviewer_notes: string | null;
@@ -624,14 +625,17 @@ function MatterPane({
                               textDecoration: m.status === "done" ? "line-through" : "none",
                               flex: 1,
                             }}>{m.name}</span>
+                            <span style={{
+                              fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 6,
+                              background: MILESTONE_DOT[m.status]?.bg ?? "#f0f0f0",
+                              color: MILESTONE_DOT[m.status]?.color ?? "#888",
+                              border: `1px solid ${MILESTONE_DOT[m.status]?.color ?? "#ccc"}22`,
+                              whiteSpace: "nowrap", flexShrink: 0,
+                            }}>
+                              {{ pending: "pending", in_progress: "in progress", done: "done", blocked: "pending" }[m.status] ?? "pending"}
+                            </span>
                             {m.status === "done" && m.completed_at && (
                               <span style={{ fontSize: 11, color: "var(--muted)" }}>{fmt(m.completed_at)}</span>
-                            )}
-                            {m.status === "in_progress" && (
-                              <span style={{ fontSize: 11, fontWeight: 600, color: "#C8A65C" }}>Active</span>
-                            )}
-                            {m.status === "blocked" && (
-                              <span style={{ fontSize: 11, fontWeight: 600, color: "#7a2020" }}>Blocked</span>
                             )}
                           </div>
                         );
@@ -828,6 +832,7 @@ function KycTab({ kyc, loading, submitting, error, submitted, onSubmit }: {
     id_number: kyc?.id_number ?? "",
     source_of_funds: kyc?.source_of_funds ?? "",
     is_pep: kyc?.is_pep ?? false,
+    aml_declared: kyc?.aml_declared ?? false,
   });
 
   useEffect(() => {
@@ -841,6 +846,7 @@ function KycTab({ kyc, loading, submitting, error, submitted, onSubmit }: {
       id_number: kyc.id_number ?? "",
       source_of_funds: kyc.source_of_funds ?? "",
       is_pep: kyc.is_pep ?? false,
+      aml_declared: kyc.aml_declared ?? false,
     });
   }, [kyc]);
 
@@ -932,6 +938,13 @@ function KycTab({ kyc, loading, submitting, error, submitted, onSubmit }: {
               </span>
             </label>
           </div>
+            <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", marginTop: 8 }}>
+              <input type="checkbox" required checked={form.aml_declared} onChange={e => set("aml_declared", e.target.checked)}
+                style={{ marginTop: 3, flexShrink: 0, accentColor: "var(--gold)", width: 16, height: 16 }} />
+              <span style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.5 }}>
+                I declare that all funds used in this transaction are from lawful sources and are not the proceeds of crime or any unlawful activity. I authorize Ferguson Law to verify the source of these funds where required by law.
+              </span>
+            </label>
           <button type="submit" disabled={submitting} className="btn btn-gold" style={{ marginTop: 20, width: "100%" }}>
             {submitting ? "Submitting…" : isSubmitted ? "Re-submit KYC" : "Submit KYC"}
           </button>

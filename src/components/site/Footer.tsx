@@ -73,6 +73,9 @@ export default function Footer() {
             © <span id="yr">{year}</span> Ferguson Law. All rights reserved ·
             Kingston, Jamaica.
           </div>
+          <div style={{ marginTop: "0.5rem", fontSize: ".78rem", color: "rgba(246,242,234,.5)" }}>
+            H.O.M.E.™ by Ferguson Law – Home Ownership Made Easy™ · Informational content is not legal advice.
+          </div>
         </div>
       </div>
     </footer>

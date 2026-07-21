@@ -13,6 +13,8 @@ export const SITE = {
   whatsappDisplay: "(876) 320-0235",
   email: "contact@fergusonlawja.com",
   website: "https://fergusonlawja.com",
+  // Booking
+  bookingUrl: "https://fergusonlawja.com/booking",
   // External products
   homeApp: "https://home.fergusonlawja.com/",
   ebookApp: "https://home.fergusonlawja.com/ebook",

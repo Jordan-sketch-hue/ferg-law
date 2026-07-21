@@ -158,7 +158,7 @@ export default function EmailPopup() {
                 <select value={interest} onChange={(e) => setInterest(e.target.value)}>
                   <option value="consultation">Book a consultation</option>
                   <option value="conveyancing">Property conveyancing / title transfer</option>
-                  <option value="home-listing">Join the H.O.M.E. professional directory</option>
+                  <option value="home-listing">Join the H.O.M.E.™ professional directory</option>
                   <option value="corporate">Corporate & commercial law</option>
                   <option value="family">Family law</option>
                   <option value="other">Other enquiry</option>

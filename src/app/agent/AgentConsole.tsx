@@ -262,7 +262,7 @@ export default function AgentConsole() {
       <aside style={S.sidebar}>
         <div style={S.sideHead}>
           <span style={S.sideTitle}>Conversations</span>
-          <span style={S.badge}>{convos.length}</span>
+          <span style={S.badge}>{convos.filter((c) => c.unread_for_agent > 0).length || convos.length}</span>
         </div>
         <div style={S.convList}>
           {convos.length === 0 && (
@@ -293,9 +293,11 @@ export default function AgentConsole() {
                     {c.status === "waiting_agent" ? "waiting" : "live"}
                   </span>
                 </div>
-                <div style={S.convMeta}>
-                  {c.visitor_phone || c.visitor_email || "—"} ·{" "}
-                  {fmtTime(c.last_message_at)}
+                <div style={{ ...S.convMeta, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span>{c.visitor_phone || c.visitor_email || "—"} · {fmtTime(c.last_message_at)}</span>
+                  {c.unread_for_agent > 0 && (
+                    <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#e53935", flexShrink: 0 }} />
+                  )}
                 </div>
               </button>
             );

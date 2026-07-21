@@ -97,8 +97,8 @@ the same for any matter. Legal fees for the work itself are separate, depend on 
 specifics, and are confirmed by the firm directly. Your consultation fee is credited
 toward your legal fees once you engage Ferguson Law.
 
-## H.O.M.E. — Home Ownership Made Easy
-- ${SITE.name} powers H.O.M.E., a platform that guides Jamaicans (at home and abroad)
+## H.O.M.E.™ by Ferguson Law — Home Ownership Made Easy
+- ${SITE.name} powers H.O.M.E.™ by Ferguson Law, a platform that guides Jamaicans (at home and abroad)
   through buying a home, step by step.
 - The journey has four stages: Assess → Find → Finance → Close.
   - Assess: understand your readiness, budget and eligibility.

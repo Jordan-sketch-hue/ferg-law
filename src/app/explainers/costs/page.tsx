@@ -25,14 +25,14 @@ const COSTS = [
     name: "Stamp Duty",
     who: "Both parties pay",
     pct: "$5,000",
-    desc: "A government duty on the transfer documents. Both buyer and seller pay this at closing.",
+    desc: "A government duty on the transfer documents. Both buyer and seller pay this at closing. Each party pays half of this amount.",
   },
   {
     n: "03",
     name: "Registration Fee",
     who: "Both parties pay",
     pct: "0.5% of Selling price",
-    desc: "A charge to the National Land Agency to register the title in the new owner's name. Both buyer and seller pay this fee.",
+    desc: "A charge to the National Land Agency to register the title in the new owner's name. Both buyer and seller pay this fee. Each party pays half of this amount.",
   },
   {
     n: "04",

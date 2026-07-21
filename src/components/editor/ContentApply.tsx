@@ -31,12 +31,15 @@ export default function ContentApply() {
         const supabase = createClient();
         const { data, error } = await supabase
           .from("homeready_site_content")
-          .select("content")
+          .select("content, updated_at")
           .eq("id", PUBLISHED_ID)
           .maybeSingle();
 
         if (cancelled || error || !data?.content) return;
-        applyContent(data.content as Record<string, unknown>);
+        const cacheBuster = data.updated_at
+          ? String(new Date(data.updated_at).getTime())
+          : String(Date.now());
+        applyContent(data.content as Record<string, unknown>, cacheBuster);
       } catch {
         // Fail silent — public visitors keep the default baked-in copy.
       }
@@ -51,7 +54,7 @@ export default function ContentApply() {
 }
 
 /** Patch every editable node from the stored content document. */
-export function applyContent(content: Record<string, unknown>) {
+export function applyContent(content: Record<string, unknown>, cacheBuster?: string) {
   document.querySelectorAll<HTMLElement>("[data-edit]").forEach((el) => {
     const value = getByPath(content, el.getAttribute("data-edit") || "");
     if (typeof value === "string") el.textContent = value;
@@ -62,7 +65,12 @@ export function applyContent(content: Record<string, unknown>) {
     .forEach((el) => {
       const value = getByPath(content, el.getAttribute("data-edit-img") || "");
       if (typeof value === "string" && value) {
-        el.setAttribute("src", value);
+        // Bust the Supabase CDN cache so re-uploaded files always load fresh.
+        const src =
+          cacheBuster && value.includes("supabase.co/storage")
+            ? `${value}?t=${cacheBuster}`
+            : value;
+        el.setAttribute("src", src);
         if (el.tagName === "VIDEO" && typeof (el as HTMLVideoElement).load === "function") {
           (el as HTMLVideoElement).load();
         }
