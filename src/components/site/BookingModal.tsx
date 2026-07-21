@@ -421,7 +421,7 @@ export default function BookingModal({
     ["Brief description", notes.trim() || "—"],
   ];
 
-  const waConfirmHref = `${waLink()}&text=${encodeURIComponent(
+  const waConfirmHref = `${waLink()}?text=${encodeURIComponent(
     `Hi Ferguson Law — I booked a consultation.\nRef: ${ref}\nService: ${
       sv ? sv.t : ""
     }\nWhen: ${dateLabel ?? ""} · ${slotLabel ?? ""}\nName: ${fName} ${lName}`,

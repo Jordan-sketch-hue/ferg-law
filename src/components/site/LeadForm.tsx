@@ -64,7 +64,7 @@ export default function LeadForm() {
         `Hi Ferguson Law — ${lead.name} (${lead.phone})\n${lead.message}`,
       );
       setErrorHtml(
-        `Couldn’t send just now — <a href="${waLink()}&text=${txt}" target="_blank" rel="noopener">tap to reach us on WhatsApp</a>.`,
+        `Couldn’t send just now — <a href="${waLink()}?text=${txt}" target="_blank" rel="noopener">tap to reach us on WhatsApp</a>.`,
       );
       setSending(false);
     }
