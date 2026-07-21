@@ -310,9 +310,9 @@ function GetStartedContent() {
           </div>
           <div style={S.ctaBtns}>
             {role.id === "professional" ? (
-              <a href={SITE.homeApp} target="_blank" rel="noopener" style={S.goldLink}>
+              <Link href="/directory/login" style={S.goldLink}>
                 Partner login
-              </a>
+              </Link>
             ) : (
               <Link href="/directory/client-login" style={S.goldLink}>
                 Client portal
