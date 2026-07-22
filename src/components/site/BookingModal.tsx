@@ -385,7 +385,8 @@ export default function BookingModal({
   const sv = SERVICES.find((s) => s.id === service);
 
   // Consultation fee for the review step (skipped when an invite makes it free).
-  const fee = service ? consultFee(service) : 0;
+  // Default to the flat J$8,000 rate so J$0 never appears as a displayed price.
+  const fee = service ? consultFee(service) : 8000;
 
   // Human labels for the chosen day/slot, resolved from the fetched data.
   const dateLabel = selectedDay?.label ?? null;
@@ -493,7 +494,7 @@ export default function BookingModal({
               </div>
             )}
             <p className="sub">
-              Pick the service closest to your need — we&apos;ll confirm the
+              Pick the service closest to your need - we&apos;ll confirm the
               details on the call.
             </p>
             <div className="svc-grid" id="svcGrid">
@@ -524,7 +525,7 @@ export default function BookingModal({
           {/* STEP 1b — recommender */}
           <div className={`mstep${isActive("quiz") ? " active" : ""}`} data-step="quiz">
             <h3>Let&apos;s find the right fit.</h3>
-            <p className="sub">Three quick questions — no commitment.</p>
+            <p className="sub">Three quick questions - no commitment.</p>
             <div id="quizBox">
               {QUIZ.map((item, qi) => (
                 <div className="quiz-q" key={qi}>

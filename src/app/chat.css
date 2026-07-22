@@ -301,9 +301,17 @@
     height: 100dvh;
     max-height: 100dvh;
     border-radius: 0;
+    /* Push content below iOS notch/status bar */
+    padding-top: env(safe-area-inset-top);
   }
   .fl-chat-launch {
     right: 16px;
     bottom: 16px;
+  }
+  /* Larger tap target on mobile */
+  .fl-chat-close {
+    width: 44px;
+    height: 44px;
+    font-size: 1.1rem;
   }
 }
