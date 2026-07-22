@@ -294,15 +294,16 @@
 
 @media (max-width: 480px) {
   .fl-chat-panel {
+    /* Position below the iOS notch — panel never slides under status bar */
+    top: env(safe-area-inset-top, 0px);
     right: 0;
     bottom: 0;
-    width: 100vw;
-    max-width: 100vw;
-    height: 100dvh;
-    max-height: 100dvh;
+    left: 0;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    max-height: none;
     border-radius: 0;
-    /* Push content below iOS notch/status bar */
-    padding-top: env(safe-area-inset-top);
   }
   .fl-chat-launch {
     right: 16px;
