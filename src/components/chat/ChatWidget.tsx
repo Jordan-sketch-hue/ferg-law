@@ -31,6 +31,13 @@ const GREETING: Msg = {
 
 const HIDE_CHAT_PATHS = ["/booking", "/directory/client", "/directory/client-login"];
 
+function linkify(text: string): string {
+  return text.replace(
+    /(https?:\/\/[^\s<>"]+)/g,
+    (url) => `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline">${url}</a>`,
+  );
+}
+
 export default function ChatWidget() {
   const pathname = usePathname();
   const bookingCtx = useContext(BookingContext);
@@ -63,6 +70,29 @@ export default function ChatWidget() {
       /* ignore */
     }
   }, [convId]);
+
+  // --- Load conversation history on open ------------------------------------
+  const historyLoadedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!open || !convId || historyLoadedRef.current === convId) return;
+    historyLoadedRef.current = convId;
+    const supabase = createClient();
+    supabase
+      .from("chat_messages")
+      .select("id, role, body")
+      .eq("conversation_id", convId)
+      .order("created_at", { ascending: true })
+      .limit(50)
+      .then(({ data }) => {
+        if (!data?.length) return;
+        const loaded: Msg[] = data
+          .filter((m) => m.body && (m.role === "visitor" || m.role === "bot" || m.role === "agent"))
+          .map((m) => ({ id: m.id, role: m.role as Role, body: m.body! }));
+        if (!loaded.length) return;
+        seenIds.current = new Set(["greeting", ...loaded.map((m) => m.id)]);
+        setMessages([GREETING, ...loaded]);
+      });
+  }, [open, convId]);
 
   // --- Auto-scroll to bottom on new messages / open ------------------------
   useEffect(() => {
@@ -184,21 +214,11 @@ export default function ChatWidget() {
     return () => window.removeEventListener("keydown", onEsc);
   }, [open]);
 
-  // Open when #chat hash is set (e.g. "Start a chat" button).
+  // Open via custom event (fired by ChatLink) — avoids Next.js router interference.
   useEffect(() => {
-    const check = () => {
-      if (window.location.hash === "#chat") {
-        setOpen(true);
-        window.history.replaceState(
-          null,
-          "",
-          window.location.pathname + window.location.search,
-        );
-      }
-    };
-    check(); // handle page load with #chat already in URL
-    window.addEventListener("hashchange", check);
-    return () => window.removeEventListener("hashchange", check);
+    const handler = () => setOpen(true);
+    window.addEventListener("fl:open-chat", handler);
+    return () => window.removeEventListener("fl:open-chat", handler);
   }, []);
 
   const talkToPerson = useCallback(async () => {
@@ -312,7 +332,9 @@ export default function ChatWidget() {
               {m.role === "agent" && (
                 <span className="fl-msg-who">Ferguson Law team</span>
               )}
-              {m.body}
+              {m.role === "bot"
+                ? <span dangerouslySetInnerHTML={{ __html: linkify(m.body) }} />
+                : m.body}
             </div>
           );
         })}

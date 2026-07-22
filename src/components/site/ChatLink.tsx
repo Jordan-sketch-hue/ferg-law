@@ -3,9 +3,7 @@ import type { ReactNode } from "react";
 
 export default function ChatLink({ children }: { children: ReactNode }) {
   function open() {
-    // Clear hash first so hashchange always fires, even if already #chat
-    window.history.replaceState(null, "", window.location.pathname);
-    window.location.hash = "chat";
+    window.dispatchEvent(new CustomEvent("fl:open-chat"));
   }
   return (
     <div
