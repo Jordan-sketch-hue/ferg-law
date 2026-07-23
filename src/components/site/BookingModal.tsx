@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { waLink } from "@/lib/site";
@@ -70,7 +70,7 @@ const QUIZ: QuizQuestion[] = [
   {
     q: "How soon do you need help?",
     opts: [
-      { l: "Urgently — this week", w: { divorce: 1, corporate: 1 } },
+      { l: "Urgently â€” this week", w: { divorce: 1, corporate: 1 } },
       { l: "In the next month", w: { realestate: 1, family: 1 } },
       { l: "Just exploring options", w: { ip: 1, sports: 1 } },
     ],
@@ -78,10 +78,10 @@ const QUIZ: QuizQuestion[] = [
 ];
 
 const LABELS = [
-  "Step 1 of 4 · Choose a service",
-  "Step 2 of 4 · Date & time",
-  "Step 3 of 4 · Your details",
-  "Step 4 of 4 · Review & confirm",
+  "Step 1 of 4 Â· Choose a service",
+  "Step 2 of 4 Â· Date & time",
+  "Step 3 of 4 Â· Your details",
+  "Step 4 of 4 Â· Review & confirm",
 ];
 
 const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -190,7 +190,7 @@ export default function BookingModal({
   // Fetch live availability whenever the date/time step is reached for a
   // service whose slots we haven't loaded yet. `loadedFor` is the service the
   // current `days` belong to; while it lags `service` we show the loading
-  // state (derived, not stored — so no setState runs synchronously here).
+  // state (derived, not stored â€” so no setState runs synchronously here).
   const [loadedFor, setLoadedFor] = useState<string | null>(null);
   const slotsLoading =
     step === 1 && !inQuiz && !!service && loadedFor !== service && !slotsError;
@@ -254,7 +254,7 @@ export default function BookingModal({
     return false;
   };
 
-  // recommender scoring — runs whenever all questions answered
+  // recommender scoring â€” runs whenever all questions answered
   function scoreQuiz(picks: Record<number, number>) {
     if (Object.keys(picks).length < QUIZ.length) return;
     const score: Record<string, number> = {};
@@ -309,7 +309,7 @@ export default function BookingModal({
           phone: phone.trim(),
           notes: notes.trim(),
           recommender,
-          // Only sent when a valid invite is applied → server books free.
+          // Only sent when a valid invite is applied â†’ server books free.
           inviteCode: inviteValid ? inviteCode : null,
         }),
       });
@@ -318,7 +318,7 @@ export default function BookingModal({
         | null;
 
       if (!res.ok || !data || !data.ok || !data.ref) {
-        // 409 means the slot was just taken — push the visitor back to pick again.
+        // 409 means the slot was just taken â€” push the visitor back to pick again.
         if (res.status === 409) {
           setSlotsFor(null); // force a fresh availability fetch
           setLoadedFor(null);
@@ -404,8 +404,8 @@ export default function BookingModal({
         ? "Done"
         : submitting
           ? freeBooking
-            ? "Booking…"
-            : "Redirecting…"
+            ? "Bookingâ€¦"
+            : "Redirectingâ€¦"
           : confirmLabel
       : "Continue";
   const headLabel = inQuiz ? "Find the right service" : LABELS[step];
@@ -413,19 +413,19 @@ export default function BookingModal({
 
   const reviewRows: [string, string][] = [
     ["Attorney", "Owen K. Ferguson, JP"],
-    ["Service", sv ? sv.t : "—"],
-    ["Date", dateLabel || "—"],
-    ["Time", slotLabel || "—"],
-    ["Name", `${fName} ${lName}`.trim() || "—"],
-    ["Email", email || "—"],
-    ["Phone", phone || "—"],
-    ["Brief description", notes.trim() || "—"],
+    ["Service", sv ? sv.t : "â€”"],
+    ["Date", dateLabel || "â€”"],
+    ["Time", slotLabel || "â€”"],
+    ["Name", `${fName} ${lName}`.trim() || "â€”"],
+    ["Email", email || "â€”"],
+    ["Phone", phone || "â€”"],
+    ["Brief description", notes.trim() || "â€”"],
   ];
 
   const waConfirmHref = `${waLink()}?text=${encodeURIComponent(
-    `Hi Ferguson Law — I booked a consultation.\nRef: ${ref}\nService: ${
+    `Hi Ferguson Law â€” I booked a consultation.\nRef: ${ref}\nService: ${
       sv ? sv.t : ""
-    }\nWhen: ${dateLabel ?? ""} · ${slotLabel ?? ""}\nName: ${fName} ${lName}`,
+    }\nWhen: ${dateLabel ?? ""} Â· ${slotLabel ?? ""}\nName: ${fName} ${lName}`,
   )}`;
 
   // active-step helper for the .mstep visibility
@@ -455,7 +455,7 @@ export default function BookingModal({
               <span className="crest">F</span> Ferguson Law
             </div>
             <button className="mclose" id="mClose" aria-label="Close" onClick={onClose}>
-              ×
+              ✕
             </button>
           </div>
           <div className="steps" id="steps">
@@ -474,7 +474,7 @@ export default function BookingModal({
         </div>
 
         <div className="modal-body" id="modalBody">
-          {/* STEP 1 — service */}
+          {/* STEP 1 â€” service */}
           <div className={`mstep${isActive(0) ? " active" : ""}`} data-step="0">
             <h3>What can we help with?</h3>
             {freeBooking && (
@@ -490,7 +490,7 @@ export default function BookingModal({
                   fontWeight: 600,
                 }}
               >
-                ✓ Complimentary consultation invite applied
+                âœ“ Complimentary consultation invite applied
               </div>
             )}
             <p className="sub">
@@ -518,11 +518,11 @@ export default function BookingModal({
               ))}
             </div>
             <button className="helper-link" id="helperBtn" onClick={openHelper} style={{ marginTop: "0.5rem" }}>
-              Not sure where to start? Help me choose →
+              Not sure where to start? Help me choose â†’
             </button>
           </div>
 
-          {/* STEP 1b — recommender */}
+          {/* STEP 1b â€” recommender */}
           <div className={`mstep${isActive("quiz") ? " active" : ""}`} data-step="quiz">
             <h3>Let&apos;s find the right fit.</h3>
             <p className="sub">Three quick questions - no commitment.</p>
@@ -552,24 +552,24 @@ export default function BookingModal({
               style={{ display: recService ? "block" : "none" }}
             >
               <div className="rl">Recommended</div>
-              <h4 id="recName">{recService ? recService.t : "—"}</h4>
+              <h4 id="recName">{recService ? recService.t : "â€”"}</h4>
               <p id="recWhy">
                 {recService
                   ? "Based on your answers, this is the best place to start. You can change it on the next step."
-                  : "—"}
+                  : "â€”"}
               </p>
             </div>
           </div>
 
-          {/* STEP 2 — date & time */}
+          {/* STEP 2 â€” date & time */}
           <div className={`mstep${isActive(1) ? " active" : ""}`} data-step="1">
             <h3>Choose a date &amp; time.</h3>
             <p className="sub">
-              Consultations run Monday–Friday. All times shown in Jamaica (EST).
+              Consultations run Mondayâ€“Friday. All times shown in Jamaica (EST).
             </p>
             {slotsLoading ? (
               <p className="sub" aria-live="polite">
-                Loading available times…
+                Loading available timesâ€¦
               </p>
             ) : slotsError ? (
               <p className="sub" aria-live="polite">
@@ -624,7 +624,7 @@ export default function BookingModal({
             )}
           </div>
 
-          {/* STEP 3 — details */}
+          {/* STEP 3 â€” details */}
           <div className={`mstep${isActive(2) ? " active" : ""}`} data-step="2">
             <h3>Your details.</h3>
             <p className="sub">
@@ -692,14 +692,14 @@ export default function BookingModal({
               <textarea
                 id="notes"
                 rows={2}
-                placeholder="A sentence about what you need…"
+                placeholder="A sentence about what you needâ€¦"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
               />
             </div>
           </div>
 
-          {/* STEP 4 — review / success */}
+          {/* STEP 4 â€” review / success */}
           <div className={`mstep${isActive(3) ? " active" : ""}`} data-step="3">
             <div id="reviewWrap" style={{ display: bookingDone ? "none" : "block" }}>
               <h3>Review &amp; confirm.</h3>
@@ -727,12 +727,12 @@ export default function BookingModal({
                     fontWeight: 600,
                   }}
                 >
-                  ✓ Complimentary consultation invite applied — no payment needed.
+                  âœ“ Complimentary consultation invite applied â€” no payment needed.
                 </div>
               ) : (
                 <>
                   <p className="sub" style={{ marginTop: 16 }}>
-                    Consultation fee: <b>{formatJmd(fee)}</b> (≈US$50) — paid
+                    Consultation fee: <b>{formatJmd(fee)}</b> (â‰ˆUS$50) â€” paid
                     securely to confirm your booking.
                   </p>
                   <p
@@ -776,7 +776,7 @@ export default function BookingModal({
               id="successWrap"
               style={{ display: bookingDone ? "block" : "none" }}
             >
-              <div className="check">✓</div>
+              <div className="check">âœ“</div>
               <h3>You&apos;re booked.</h3>
               <p>
                 A confirmation is on its way to your email and WhatsApp.
@@ -807,7 +807,7 @@ export default function BookingModal({
             </button>
           ) : (
             <button className="mback" id="mBack" hidden={backHidden} onClick={onBack}>
-              ← Back
+              â† Back
             </button>
           )}
           <button
@@ -823,3 +823,4 @@ export default function BookingModal({
     </div>
   );
 }
+
