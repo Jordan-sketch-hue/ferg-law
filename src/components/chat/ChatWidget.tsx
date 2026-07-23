@@ -29,7 +29,7 @@ const GREETING: Msg = {
   body: `Hi 👋 Welcome to ${SITE.name}. I'm here to help with our services, fees, buying a home in Jamaica, or booking a consultation. What would you like to know?`,
 };
 
-const HIDE_CHAT_PATHS = ["/booking", "/directory/client", "/directory/client-login"];
+const HIDE_CHAT_PATHS = ["/directory/client", "/directory/client-login"];
 
 function linkify(text: string): string {
   return text.replace(
