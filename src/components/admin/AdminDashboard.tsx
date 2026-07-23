@@ -1750,6 +1750,30 @@ function BlockedDatesPanel({ token }: { token: string }) {
     void loadBlocked();
   }
 
+  async function blockEntireDay() {
+    const toBlock = daySlots.filter(iso => !blockedSet.has(new Date(iso).toISOString()));
+    if (!toBlock.length) return;
+    setSaving(true); setErr(null);
+    await Promise.all(toBlock.map(iso =>
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabase as any).rpc("fl_admin_block_slot", { p_token: token, p_starts_at: iso })
+    ));
+    await loadBlocked();
+    setSaving(false);
+  }
+
+  async function unblockEntireDay() {
+    const toUnblock = blocked.filter(b => daySlots.includes(new Date(b.starts_at).toISOString()));
+    if (!toUnblock.length) return;
+    setSaving(true);
+    await Promise.all(toUnblock.map(b =>
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabase as any).rpc("fl_admin_unblock_slot", { p_token: token, p_id: b.id })
+    ));
+    await loadBlocked();
+    setSaving(false);
+  }
+
   const fmtTime = (iso: string) =>
     new Date(iso).toLocaleTimeString("en-JM", { hour: "2-digit", minute: "2-digit", timeZone: "America/Jamaica" });
 
@@ -1770,6 +1794,21 @@ function BlockedDatesPanel({ token }: { token: string }) {
           style={{ ...S.fieldInput, width: 170 }} />
         {loadingSlots && <span style={{ color: MUTED, fontSize: ".82rem" }}>Loading slots…</span>}
       </div>
+
+      {pickedDate && !loadingSlots && daySlots.length > 0 && (
+        <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+          <button onClick={() => void blockEntireDay()} disabled={saving}
+            style={{ padding: "6px 16px", borderRadius: 999, fontSize: ".8rem", fontWeight: 700,
+              background: "#fbeaea", border: "1.5px solid #eecaca", color: "#7a2020", cursor: saving ? "not-allowed" : "pointer" }}>
+            Block entire day
+          </button>
+          <button onClick={() => void unblockEntireDay()} disabled={saving}
+            style={{ padding: "6px 16px", borderRadius: 999, fontSize: ".8rem", fontWeight: 700,
+              background: "#f0f7f0", border: "1.5px solid #b7d9b7", color: "#2d6a2d", cursor: saving ? "not-allowed" : "pointer" }}>
+            Unblock entire day
+          </button>
+        </div>
+      )}
 
       {pickedDate && !loadingSlots && (
         <div style={{ marginBottom: 22 }}>
@@ -3936,9 +3975,35 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                 <span style={{ fontSize: 11.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".07em", color: MUTED }}>Workflow</span>
                 <select value={newWorkflow} onChange={e => setNewWorkflow(e.target.value)}
                   style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid rgba(18,16,12,.2)", fontSize: 13, outline: "none" }}>
-                  <option value="property_purchase">Property Purchase</option>
-                  <option value="property_sale">Property Sale</option>
-                  <option value="general">General</option>
+                  <optgroup label="Conveyancing">
+                    <option value="property_purchase">Property Purchase</option>
+                    <option value="property_sale">Property Sale</option>
+                  </optgroup>
+                  <optgroup label="Estate &amp; Family">
+                    <option value="estate_administration">Estate Administration</option>
+                    <option value="probate">Probate</option>
+                    <option value="declaration_of_ownership">Declaration of Ownership</option>
+                    <option value="family_settlement">Family Settlement</option>
+                  </optgroup>
+                  <optgroup label="Commercial">
+                    <option value="commercial_lease">Commercial Lease</option>
+                    <option value="business_acquisition">Business Acquisition</option>
+                    <option value="shareholders_agreement">Shareholders Agreement</option>
+                    <option value="joint_venture">Joint Venture</option>
+                  </optgroup>
+                  <optgroup label="Mortgages &amp; Finance">
+                    <option value="mortgage_transaction">Mortgage Transaction</option>
+                    <option value="refinancing">Refinancing</option>
+                    <option value="discharge_of_mortgage">Discharge of Mortgage</option>
+                  </optgroup>
+                  <optgroup label="Notarial &amp; Diaspora">
+                    <option value="notarial_services">Notarial Services</option>
+                    <option value="power_of_attorney">Power of Attorney</option>
+                    <option value="diaspora_purchase">Diaspora Purchase</option>
+                  </optgroup>
+                  <optgroup label="Other">
+                    <option value="general">General Matter</option>
+                  </optgroup>
                 </select>
               </label>
               <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
