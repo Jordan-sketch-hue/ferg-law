@@ -2390,6 +2390,8 @@ function WorkflowTemplatesTab({ token }: { token: string }) {
   const [addingStep, setAddingStep] = useState<{ phaseOrder: number } | null>(null);
   const [newStepName, setNewStepName] = useState("");
   const [saving, setSaving] = useState(false);
+  const [undoStack, setUndoStack] = useState<{ phaseOrder: number; name: string; templateId: string } | null>(null);
+  const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     void (async () => {
@@ -2419,10 +2421,26 @@ function WorkflowTemplatesTab({ token }: { token: string }) {
   }
 
   async function removeStep(phaseOrder: number, stepIdx: number) {
-    if (!selected || !confirm("Remove this step from the global template? This won't affect existing client matters.")) return;
+    if (!selected) return;
+    const tplNow = templates.find(t => t.id === selected);
+    const phase = tplNow?.phases.find(p => p.order === phaseOrder);
+    const stepName = phase?.milestones[stepIdx];
+    if (!stepName || !confirm("Remove this step from the global template? This won't affect existing client matters.")) return;
     await supabase.rpc("fl_admin_workflow_remove_step", { p_token: token, p_template_id: selected, p_phase_order: phaseOrder, p_step_index: stepIdx });
     const { data } = await supabase.rpc("fl_admin_workflow_templates_get", { p_token: token });
     setTemplates((data as WfTemplate[]) ?? []);
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    setUndoStack({ phaseOrder, name: stepName, templateId: selected });
+    undoTimerRef.current = setTimeout(() => setUndoStack(null), 8000);
+  }
+
+  async function undoRemoveStep() {
+    if (!undoStack) return;
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    await supabase.rpc("fl_admin_workflow_add_step", { p_token: token, p_template_id: undoStack.templateId, p_phase_order: undoStack.phaseOrder, p_step_name: undoStack.name });
+    const { data } = await supabase.rpc("fl_admin_workflow_templates_get", { p_token: token });
+    setTemplates((data as WfTemplate[]) ?? []);
+    setUndoStack(null);
   }
 
   const tpl = templates.find(t => t.id === selected);
@@ -2437,6 +2455,19 @@ function WorkflowTemplatesTab({ token }: { token: string }) {
           Changes here affect <strong>new matters only</strong>. Existing client timelines are not modified.
         </div>
       </div>
+
+      {/* Undo banner */}
+      {undoStack && (
+        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "9px 14px", marginBottom: 14, borderRadius: 8, background: "#1a3a2a", color: CREAM, fontSize: 13 }}>
+          <span style={{ flex: 1 }}>Step removed: <strong>"{undoStack.name}"</strong></span>
+          <button type="button" onClick={() => void undoRemoveStep()}
+            style={{ padding: "4px 14px", borderRadius: 6, border: "none", background: GOLD, color: "#fff", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
+            Undo
+          </button>
+          <button type="button" onClick={() => { if (undoTimerRef.current) clearTimeout(undoTimerRef.current); setUndoStack(null); }}
+            style={{ background: "none", border: "none", color: CREAM, opacity: 0.6, cursor: "pointer", fontSize: 16, lineHeight: 1 }}>✕</button>
+        </div>
+      )}
 
       {/* Template picker */}
       <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
@@ -3374,28 +3405,46 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
   const [addingStepPhase, setAddingStepPhase] = useState<{ order: number; name: string } | null>(null);
   const [newStepName, setNewStepName] = useState("");
   const [savingStep, setSavingStep] = useState(false);
+  const [stepScope, setStepScope] = useState<"matter" | "global">("matter");
 
   async function addStep() {
     if (!selected || !addingStepPhase || !newStepName.trim() || savingStep) return;
     setSavingStep(true);
+    const stepName = newStepName.trim();
+
+    if (stepScope === "global") {
+      const activeMatterData = matters.find(m => m.id === selected);
+      const wfType = activeMatterData?.workflow_type;
+      if (wfType) {
+        const { data: tplData } = await supabase.rpc("fl_admin_workflow_templates_get", { p_token: token });
+        const tpl = (tplData as WfTemplate[] ?? []).find(t => t.type === wfType);
+        if (tpl) {
+          await supabase.rpc("fl_admin_workflow_add_step", {
+            p_token: token, p_template_id: tpl.id,
+            p_phase_order: addingStepPhase.order, p_step_name: stepName,
+          });
+        }
+      }
+    }
+
     const { data, error } = await supabase.rpc("fl_admin_cms_add_step", {
       p_token: token,
       p_matter_id: selected,
       p_phase_order: addingStepPhase.order,
       p_phase_name: addingStepPhase.name,
-      p_name: newStepName.trim(),
+      p_name: stepName,
     });
     if (!error && data) {
       const newMs: CmsMilestone = {
         id: data as string, matter_id: selected,
         phase_order: addingStepPhase.order, phase_name: addingStepPhase.name,
-        name: newStepName.trim(), status: "pending",
+        name: stepName, status: "pending",
         due_at: null, completed_at: null, notes: null,
         created_at: new Date().toISOString(),
       };
       setMilestones(prev => [...prev, newMs]);
     }
-    setNewStepName(""); setAddingStepPhase(null);
+    setNewStepName(""); setAddingStepPhase(null); setStepScope("matter");
     setSavingStep(false);
   }
 
@@ -3719,19 +3768,32 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                           );
                         })}
                         {isAddingHere && (
-                          <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
-                            <input
-                              autoFocus
-                              value={newStepName}
-                              onChange={e => setNewStepName(e.target.value)}
-                              onKeyDown={e => { if (e.key === "Enter") void addStep(); if (e.key === "Escape") { setAddingStepPhase(null); setNewStepName(""); } }}
-                              placeholder="Step name…"
-                              style={{ flex: 1, fontSize: 13, padding: "6px 10px", borderRadius: 8, border: `1px solid ${GOLD}`, outline: "none" }}
-                            />
-                            <button type="button" onClick={() => void addStep()} disabled={savingStep || !newStepName.trim()}
-                              style={{ padding: "6px 14px", borderRadius: 8, border: "none", background: GREEN, color: CREAM, fontSize: 13, fontWeight: 600, cursor: "pointer", opacity: savingStep || !newStepName.trim() ? 0.5 : 1 }}>
-                              {savingStep ? "…" : "Add"}
-                            </button>
+                          <div style={{ marginTop: 6 }}>
+                            <div style={{ display: "flex", gap: 6, marginBottom: 6 }}>
+                              {(["matter", "global"] as const).map(scope => (
+                                <button key={scope} type="button" onClick={() => setStepScope(scope)}
+                                  style={{ flex: 1, padding: "5px 0", borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: "pointer",
+                                    border: `1px solid ${stepScope === scope ? GREEN : "rgba(18,16,12,.18)"}`,
+                                    background: stepScope === scope ? GREEN : "#fff",
+                                    color: stepScope === scope ? CREAM : MUTED }}>
+                                  {scope === "matter" ? "This matter only" : `All ${activeMatter.workflow_type?.replace(/_/g, " ") || "matters"}`}
+                                </button>
+                              ))}
+                            </div>
+                            <div style={{ display: "flex", gap: 6 }}>
+                              <input
+                                autoFocus
+                                value={newStepName}
+                                onChange={e => setNewStepName(e.target.value)}
+                                onKeyDown={e => { if (e.key === "Enter") void addStep(); if (e.key === "Escape") { setAddingStepPhase(null); setNewStepName(""); setStepScope("matter"); } }}
+                                placeholder="Step name…"
+                                style={{ flex: 1, fontSize: 13, padding: "6px 10px", borderRadius: 8, border: `1px solid ${GOLD}`, outline: "none" }}
+                              />
+                              <button type="button" onClick={() => void addStep()} disabled={savingStep || !newStepName.trim()}
+                                style={{ padding: "6px 14px", borderRadius: 8, border: "none", background: GREEN, color: CREAM, fontSize: 13, fontWeight: 600, cursor: "pointer", opacity: savingStep || !newStepName.trim() ? 0.5 : 1 }}>
+                                {savingStep ? "…" : "Add"}
+                              </button>
+                            </div>
                           </div>
                         )}
                       </div>
