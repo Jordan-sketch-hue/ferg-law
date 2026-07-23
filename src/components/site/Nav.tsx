@@ -131,6 +131,15 @@ export default function Nav() {
                 </div>
               )}
             </div>
+            <button
+              className="nav-search-btn"
+              aria-label="Search"
+              onClick={() => window.dispatchEvent(new CustomEvent("fl:open-search"))}
+            >
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+            </button>
             <a className="btn btn-gold nav-get-started" href="/get-started">
               Get started
             </a>
@@ -283,6 +292,12 @@ export default function Nav() {
         }
         .nav-login-btn:hover{ background:var(--gold-deep,#8a6d1f); color:#fff; }
         .nav-login-dropdown{ left:auto; right:0; transform:none; }
+        .nav-search-btn{
+          background:none; border:none; cursor:pointer; padding:6px;
+          color:#5a5a5a; display:flex; align-items:center; border-radius:8px;
+          transition:background .15s, color .15s;
+        }
+        .nav-search-btn:hover{ background:#f0ece4; color:#1a1a1a; }
         @media(max-width:760px){ .nav-login-wrap{ display:none; } }
         @media(max-width:1200px){
           .nav-links a, .nav-links .nav-home-inline{ font-size:.78rem; }

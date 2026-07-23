@@ -3,6 +3,7 @@ import { Fraunces, Inter } from "next/font/google";
 import "./globals.css";
 import ChatWidget from "@/components/chat/ChatWidget";
 import ContentApply from "@/components/editor/ContentApply";
+import SearchModal from "@/components/site/SearchModal";
 import EditorOverlay from "@/components/editor/EditorOverlay";
 
 const fraunces = Fraunces({
@@ -170,6 +171,7 @@ export default function RootLayout({
         {children}
         <ChatWidget />
         <ContentApply />
+        <SearchModal />
         <EditorOverlay />
         <script
           type="application/ld+json"
