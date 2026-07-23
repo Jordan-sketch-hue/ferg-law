@@ -14,9 +14,9 @@ const ArrowIcon = () => (
 const PILLS = ["20-min call", "Real answers", "No obligation", "Online or in-person"];
 
 const TESTIMONIALS = [
-  { quote: "I'm in Toronto and thought buying back home would be a nightmare. Ferguson Law handled everything — I signed online and got my title without one stressful day off work.", name: "Marcus R.", role: "Diaspora buyer" },
-  { quote: "The readiness score told me the truth — I wasn't ready yet. Six months later I was. No other lawyer ever made it that clear or that human.", name: "Keisha L.", role: "First-time buyer" },
-  { quote: "They understood the money and the law. Closing costs, NHT, the contract — explained like a friend would, not a textbook. Keys in hand in weeks.", name: "Andre & Shanice", role: "New homeowners" },
+  { quote: "I'm in Toronto and thought buying back home would be a nightmare. Ferguson Law handled everything - I signed online and got my title without one stressful day off work.", name: "Marcus R.", role: "Diaspora buyer" },
+  { quote: "The readiness score told me the truth - I wasn't ready yet. Six months later I was. No other lawyer ever made it that clear or that human.", name: "Keisha L.", role: "First-time buyer" },
+  { quote: "They understood the money and the law. Closing costs, NHT, the contract - explained like a friend would, not a textbook. Keys in hand in weeks.", name: "Andre & Shanice", role: "New homeowners" },
 ];
 
 function BookingContent() {
@@ -42,7 +42,7 @@ function BookingContent() {
         <p style={{ fontFamily: "var(--serif)", fontSize: "0.78rem", letterSpacing: "0.13em", textTransform: "uppercase", color: "var(--gold)", margin: "0 0 1rem" }}>Ferguson Law</p>
         <h1 style={{ fontFamily: "var(--serif)", fontSize: "clamp(1.9rem,4vw,2.7rem)", color: "var(--ink)", margin: "0 0 1rem", lineHeight: 1.1 }}>Book a Consultation</h1>
         <p style={{ color: "var(--ink-light)", lineHeight: 1.65, margin: "0 0 1.75rem" }}>
-          20 minutes with our attorney — real answers for your specific situation. Pick a service and a time that works for you.
+          20 minutes with our attorney - real answers for your specific situation. Pick a service and a time that works for you.
         </p>
         {/* Trust pills */}
         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", justifyContent: "center", marginBottom: "1.75rem" }}>
