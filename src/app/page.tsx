@@ -393,7 +393,7 @@ export default function Home() {
               <div className="stars">★★★★★</div>
               <p className="q" data-edit="stories.items.0.quote">
                 I&apos;m in Toronto and thought buying back home would be a
-                nightmare. Ferguson Law handled everything – I signed online and
+                nightmare. Ferguson Law handled everything - I signed online and
                 got my title without one stressful day off work.
               </p>
               <div className="tperson">
@@ -415,7 +415,7 @@ export default function Home() {
             <div className="tcard reveal">
               <div className="stars">★★★★★</div>
               <p className="q" data-edit="stories.items.1.quote">
-                The readiness score told me the truth – I wasn&apos;t ready yet.
+                The readiness score told me the truth - I wasn&apos;t ready yet.
                 Six months later I was. No other lawyer ever made it that clear or
                 that human.
               </p>
@@ -439,7 +439,7 @@ export default function Home() {
               <div className="stars">★★★★★</div>
               <p className="q" data-edit="stories.items.2.quote">
                 They understood the money <em>and</em> the law. Closing costs,
-                NHT, the contract – explained like a friend would, not a textbook.
+                NHT, the contract - explained like a friend would, not a textbook.
                 Keys in hand in weeks.
               </p>
               <div className="tperson">
