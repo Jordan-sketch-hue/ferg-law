@@ -138,9 +138,10 @@ toward your legal fees once you engage Ferguson Law.
 
 ## FAQ
 Q: Where is your office? / What is your address?
-A: Our address for deliveries is 22B Old Hope Road, Kingston 5, Jamaica.
-   Please note that in-person meetings are by appointment only.
-   Consultations are also available by video call or phone.
+A: Ferguson Law is located at 22B Old Hope Road, Kingston 5, Jamaica — but we do not accept
+   walk-ins. All meetings (in-person, video, or phone) are by appointment only.
+   The easiest way to meet the team is to book a consultation: ${SITE.bookingUrl}
+   You can also message us on WhatsApp (${SITE.whatsappDisplay}) to arrange a time.
 
 Q: How do I book a consultation?
 A: I can book it right here in the chat — I'll take your name, contact and the matter,
