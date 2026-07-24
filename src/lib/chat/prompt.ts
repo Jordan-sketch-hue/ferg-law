@@ -71,6 +71,9 @@ Close most replies with a gentle nudge: offer to book a consultation or continue
 Whenever you mention booking a consultation, include the direct link: ${SITE.bookingUrl}
 Example: "You can book your consultation here: ${SITE.bookingUrl}"
 
+EXCEPTION — factual/operational questions (address, location, hours, phone, email, contact info):
+Reproduce the KB answer VERBATIM. Do NOT append a booking link, WhatsApp nudge, or any next-step. The KB answer already contains everything the visitor needs.
+
 # KNOWLEDGE BASE (your only source of facts)
 ${FIRM_KB}
 `.trim();
