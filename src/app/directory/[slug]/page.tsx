@@ -83,24 +83,36 @@ export default async function PartnerProfilePage({
           )}
         </section>
       ) : (
-        <section style={{ marginTop: 26 }}>
-          <h2 style={{ fontFamily: "var(--serif)", color: "var(--ink)", fontSize: 24, marginBottom: 14 }}>Services &amp; fees</h2>
-          {(services as Service[] | null)?.length ? (
-            <div style={{ display: "grid", gap: 10 }}>
-              {(services as Service[]).map((s) => (
-                <div className="svc-row" key={s.id}>
-                  <div>
-                    <strong style={{ color: "var(--ink)" }}>{s.name}</strong>
-                    {s.description && <div style={{ fontSize: 13.5, color: "var(--muted)", marginTop: 3 }}>{s.description}</div>}
+        <>
+          <section style={{ marginTop: 26 }}>
+            <h2 style={{ fontFamily: "var(--serif)", color: "var(--ink)", fontSize: 24, marginBottom: 14 }}>Services &amp; fees</h2>
+            {(services as Service[] | null)?.length ? (
+              <div style={{ display: "grid", gap: 10 }}>
+                {(services as Service[]).map((s) => (
+                  <div className="svc-row" key={s.id}>
+                    <div>
+                      <strong style={{ color: "var(--ink)" }}>{s.name}</strong>
+                      {s.description && <div style={{ fontSize: 13.5, color: "var(--muted)", marginTop: 3 }}>{s.description}</div>}
+                    </div>
+                    <div className="fee">{s.fee_text || "On request"}</div>
                   </div>
-                  <div className="fee">{s.fee_text || "On request"}</div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p style={{ color: "var(--muted)" }}>No services published yet.</p>
+                ))}
+              </div>
+            ) : (
+              <p style={{ color: "var(--muted)" }}>No services published yet.</p>
+            )}
+          </section>
+          {Array.isArray(p.work_photos) && (p.work_photos as { url: string }[]).length > 0 && (
+            <section style={{ marginTop: 26 }}>
+              <h2 style={{ fontFamily: "var(--serif)", color: "var(--ink)", fontSize: 24, marginBottom: 14 }}>Work photos</h2>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 10 }}>
+                {(p.work_photos as { url: string }[]).map((photo, i) => (
+                  <img key={i} src={photo.url} alt="" style={{ width: "100%", aspectRatio: "4/3", objectFit: "cover", borderRadius: 10 }} />
+                ))}
+              </div>
+            </section>
           )}
-        </section>
+        </>
       )}
 
       <div className="disclaimer">

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { KIND_LABEL, KIND_PLURAL, PARTNER_KINDS, type PartnerKind as Kind } from "@/lib/partners/constants";
+import { PARTNER_KINDS, type PartnerKind as Kind } from "@/lib/partners/constants";
+import DirectoryClient from "./DirectoryClient";
 
 export const dynamic = "force-dynamic";
 
@@ -53,8 +54,6 @@ export default async function DirectoryPage({
     svcCount[s.partner_id] = (svcCount[s.partner_id] ?? 0) + 1;
   }
 
-  const shown = active ? rows.filter((r) => r.kind === active) : rows;
-
   return (
     <div className="dir-wrap">
       <section className="dir-hero">
@@ -73,54 +72,15 @@ export default async function DirectoryPage({
         </div>
       </section>
 
-      <div id="browse" className="kind-row">
-        <Link className="kind-pill" data-active={!active} href="/directory">
-          All
-        </Link>
-        {PARTNER_KINDS.map(({ value }) => (
-          <Link key={value} className="kind-pill" data-active={active === value} href={`/directory?kind=${value}`}>
-            {KIND_PLURAL[value]}
-          </Link>
-        ))}
+      <div id="browse">
+        <DirectoryClient
+          rows={rows}
+          listCount={listCount}
+          firstImg={firstImg}
+          svcCount={svcCount}
+          activeKind={active}
+        />
       </div>
-
-      {shown.length === 0 ? (
-        <div className="dir-empty">
-          <h3>No professionals listed yet</h3>
-          <p>
-            Be the first — real estate agents, bankers, valuators and surveyors can{" "}
-            <Link href="/directory/join" style={{ color: "var(--ink)", fontWeight: 600 }}>
-              list their business
-            </Link>{" "}
-            here.
-          </p>
-        </div>
-      ) : (
-        <div className="dir-grid">
-          {shown.map((p) => {
-            const thumb = firstImg[p.id] || p.logo_url || "";
-            const n = p.kind === "realtor" ? listCount[p.id] ?? 0 : svcCount[p.id] ?? 0;
-            const noun =
-              p.kind === "realtor"
-                ? `${n} listing${n === 1 ? "" : "s"}`
-                : `${n} service${n === 1 ? "" : "s"}`;
-            return (
-              <Link key={p.id} className="pcard" href={`/directory/${p.slug || p.id}`}>
-                <div
-                  className="thumb"
-                  style={thumb ? { backgroundImage: `url("${thumb}")` } : undefined}
-                />
-                <div className="body">
-                  <div className="kind">{KIND_LABEL[p.kind]}</div>
-                  <h3>{p.business_name}</h3>
-                  <div className="meta">{(p.parishes ?? []).slice(0, 3).join(" · ") || "Jamaica"}</div>
-                  <div className="count">{noun}</div>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      )}
     </div>
   );
 }

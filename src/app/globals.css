@@ -26,7 +26,7 @@
     --sans:var(--font-inter),'Inter',system-ui,sans-serif;
   }
   *{margin:0;padding:0;box-sizing:border-box}
-  html{scroll-behavior:smooth}
+  html{scroll-behavior:smooth;scrollbar-gutter:stable}
   body{
     font-family:var(--sans);color:var(--text);background:var(--paper);
     line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden;

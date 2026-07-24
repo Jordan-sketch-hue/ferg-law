@@ -27,6 +27,7 @@ export interface Partner {
   slug: string | null;
   status: "pending" | "approved" | "suspended";
   featured: boolean;
+  work_photos: Media[];
 }
 
 export interface Listing {

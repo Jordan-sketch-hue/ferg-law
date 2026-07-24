@@ -70,7 +70,7 @@ export default function BuyersGuidePage() {
                 color: "rgba(246,242,234,.78)",
               }}
             >
-              Everything a Jamaican home buyer needs to know — from readiness to registered
+              Everything a Jamaican home buyer needs to know - from readiness to registered
               title. Plain English. Backed by a Ferguson Law attorney.
             </p>
             <div style={{ display: "flex", gap: ".9rem", flexWrap: "wrap" }}>
@@ -99,18 +99,18 @@ export default function BuyersGuidePage() {
             </h2>
             <p className="lead" style={{ color: "rgba(246,242,234,.78)" }}>
               The H.O.M.E.™ Buyers Guide covers the entire home-buying process from
-              first question to keys in hand — written for Jamaicans at home and abroad.
+              first question to keys in hand - written for Jamaicans at home and abroad.
             </p>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(280px,1fr))", gap: "1.2rem", marginTop: "2rem" }}>
             {[
-              { n: "01", t: "Know If You&apos;re Ready", d: "Assess your financial position, credit, and savings — before you start shopping." },
-              { n: "02", t: "Understanding the Costs", d: "Transfer tax, stamp duty, attorney fees, valuation, survey — every figure explained." },
+              { n: "01", t: "Know If You&apos;re Ready", d: "Assess your financial position, credit, and savings - before you start shopping." },
+              { n: "02", t: "Understanding the Costs", d: "Transfer tax, stamp duty, attorney fees, valuation, survey - every figure explained." },
               { n: "03", t: "NHT &amp; Financing", d: "How to access your NHT benefits, qualify for a mortgage, and calculate your down payment." },
-              { n: "04", t: "Finding Your Team", d: "Vetted real estate agents, valuators, surveyors, and lenders — the professionals you need." },
+              { n: "04", t: "Finding Your Team", d: "Vetted real estate agents, valuators, surveyors, and lenders - the professionals you need." },
               { n: "05", t: "The Agreement for Sale", d: "What the contract means, what to watch for, and why your attorney must review it." },
               { n: "06", t: "From Contract to Title", d: "The legal steps from signed agreement to your name on a registered title." },
-              { n: "07", t: "Buying from Overseas", d: "Power of attorney, source of funds, remote signing — what diaspora buyers need to know." },
+              { n: "07", t: "Buying from Overseas", d: "Power of attorney, source of funds, remote signing - what diaspora buyers need to know." },
               { n: "08", t: "Protecting Your Investment", d: "Fraud warning signs, due diligence, and why a Ferguson Law attorney is your strongest safeguard." },
             ].map((item) => (
               <div key={item.n} className="serv reveal" style={{ padding: "1.6rem 1.4rem", background: "rgba(255,255,255,.07)", borderColor: "rgba(255,255,255,.12)" }}>
@@ -135,7 +135,7 @@ export default function BuyersGuidePage() {
             </span>
             <h2 style={{ color: "#fff", margin: "0 0 .6rem" }}>Get Your Copy Today</h2>
             <p style={{ color: "rgba(246,242,234,.72)", margin: 0, maxWidth: 460, fontSize: "1rem", lineHeight: 1.6 }}>
-              Instant access to the complete home-buying guide — plain English, attorney-backed.
+              Instant access to the complete home-buying guide - plain English, attorney-backed.
             </p>
           </div>
           <EbookPaymentGate />
@@ -150,7 +150,7 @@ export default function BuyersGuidePage() {
         <div className="wrap" style={{ maxWidth: 600 }}>
           <span className="eyebrow" style={{ color: "var(--gold)" }}>Ready to take the next step?</span>
           <h2 style={{ color: "#fff", margin: ".6rem 0 1rem" }}>
-            Start with a free readiness check — or speak with our attorney.
+            Start with a free readiness check - or speak with our attorney.
           </h2>
           <p style={{ color: "rgba(246,242,234,.78)", marginBottom: "1.8rem" }}>
             The H.O.M.E.™ readiness assessment tells you exactly where you stand in 3 minutes.

@@ -49,7 +49,7 @@ export default function FaqPage() {
           <span className="eyebrow">Answers, up front</span>
           <h1>Frequently asked questions</h1>
           <p className="lead">
-            Clear, practical answers about working with Ferguson Law — including
+            Clear, practical answers about working with Ferguson Law - including
             everything overseas buyers need to know before purchasing property
             in Jamaica.
           </p>

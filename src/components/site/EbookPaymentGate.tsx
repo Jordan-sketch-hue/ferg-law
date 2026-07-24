@@ -70,7 +70,7 @@ export default function EbookPaymentGate({ onPurchaseStart }: EbookGateProps) {
         Unlock the H.O.M.E.™ Guide
       </h3>
       <p style={{ color: "rgba(246,242,234,.7)", margin: "0 0 1.5rem", fontSize: ".95rem" }}>
-        $20 USD / 3,000 JMD — instant access to download or read online.
+        $20 USD / 3,000 JMD - instant access to download or read online.
       </p>
 
       <form onSubmit={handleSubmit}>

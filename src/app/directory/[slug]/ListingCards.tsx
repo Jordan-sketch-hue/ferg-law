@@ -2,6 +2,36 @@
 import { useState } from "react";
 import type { Listing } from "@/lib/partners/constants";
 
+function PhotoCarousel({ images }: { images: string[] }) {
+  const [idx, setIdx] = useState(0);
+  if (!images.length) return null;
+  return (
+    <div style={{ position: "relative", width: "100%", aspectRatio: "16/9", background: "#000", borderRadius: "18px 18px 0 0", overflow: "hidden" }}>
+      <img src={images[idx]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+      {images.length > 1 && (
+        <>
+          <button
+            onClick={() => setIdx((i) => (i - 1 + images.length) % images.length)}
+            style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", background: "rgba(0,0,0,.5)", color: "#fff", border: "none", borderRadius: 999, width: 32, height: 32, cursor: "pointer", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center" }}
+            aria-label="Previous"
+          >‹</button>
+          <button
+            onClick={() => setIdx((i) => (i + 1) % images.length)}
+            style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "rgba(0,0,0,.5)", color: "#fff", border: "none", borderRadius: 999, width: 32, height: 32, cursor: "pointer", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center" }}
+            aria-label="Next"
+          >›</button>
+          <div style={{ position: "absolute", bottom: 8, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 5 }}>
+            {images.map((_, i) => (
+              <button key={i} onClick={() => setIdx(i)} aria-label={`Photo ${i + 1}`}
+                style={{ width: 7, height: 7, borderRadius: 999, border: "none", cursor: "pointer", background: i === idx ? "#fff" : "rgba(255,255,255,.45)", padding: 0 }} />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function fmt(n: number) {
   return "J$" + n.toLocaleString();
 }
@@ -59,19 +89,12 @@ export default function ListingCards({ listings }: { listings: Listing[] }) {
             onClick={(e) => e.stopPropagation()}
           >
             {(() => {
-              const cover = (active.media ?? []).find((m: { type: string }) => m.type === "image");
+              const images = (active.media ?? [])
+                .filter((m: { type: string }) => m.type === "image")
+                .map((m: { url: string }) => m.url);
               return (
                 <>
-                  {cover && (
-                    <div
-                      style={{
-                        width: "100%", aspectRatio: "16/9",
-                        backgroundImage: `url("${(cover as { url: string }).url}")`,
-                        backgroundSize: "cover", backgroundPosition: "center",
-                        borderRadius: "18px 18px 0 0",
-                      }}
-                    />
-                  )}
+                  {images.length > 0 && <PhotoCarousel images={images} />}
                   <div style={{ padding: "20px 24px 28px" }}>
                     <button
                       onClick={() => setActive(null)}

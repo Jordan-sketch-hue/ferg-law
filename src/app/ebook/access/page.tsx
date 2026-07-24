@@ -114,7 +114,7 @@ export default function EbookAccessPage() {
                 <a className="btn btn-gold" href="/buyers-guide">
                   Try Again <ArrowIcon />
                 </a>
-                <a className="btn btn-light" href="/contact">
+                <a className="btn btn-light" href="/#contact">
                   Contact Us
                 </a>
               </div>

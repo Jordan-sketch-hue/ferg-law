@@ -42,6 +42,11 @@ function JoinForm() {
     setBusy(true);
     try {
       await registerPartner(email.trim(), password, kind, business.trim());
+      fetch("/api/directory/partner-joined", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: business.trim(), kind, email: email.trim() }),
+      }).catch(() => {});
       router.push("/directory/dashboard");
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Something went wrong.");

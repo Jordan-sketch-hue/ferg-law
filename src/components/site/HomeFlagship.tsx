@@ -63,7 +63,7 @@ export default function HomeFlagship({
           )}
 
           <p className="sub" data-edit="home.sub">
-            <strong>H.O.M.E.™ by Ferguson Law</strong> — the home-ownership platform built for Jamaicans at home and abroad. Assess your readiness, find trusted professionals, and complete your purchase with Ferguson Law handling the legal work. <strong>Diaspora-friendly</strong> — sign and settle from anywhere.
+            <strong>H.O.M.E.™ by Ferguson Law</strong> - the home-ownership platform built for Jamaicans at home and abroad. Assess your readiness, find trusted professionals, and complete your purchase with Ferguson Law handling the legal work. <strong>Diaspora-friendly</strong> - sign and settle from anywhere.
           </p>
           <div className="hf-actions">
             <HomeBadge href={SITE.homeApp} external dark={!light}>

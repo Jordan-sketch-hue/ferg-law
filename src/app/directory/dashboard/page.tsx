@@ -70,14 +70,17 @@ export default function DashboardPage() {
       {me.kind === "realtor" ? (
         <ListingsManager partnerId={me.id} />
       ) : (
-        <ServicesManager
-          partnerId={me.id}
-          kindLabel={
-            me.kind === "surveyor" ? "survey"
-            : me.kind === "loan_officer" ? "banking"
-            : "valuation"
-          }
-        />
+        <>
+          <ServicesManager
+            partnerId={me.id}
+            kindLabel={
+              me.kind === "surveyor" ? "survey"
+              : me.kind === "loan_officer" ? "banking"
+              : "valuation"
+            }
+          />
+          <WorkPhotosManager partnerId={me.id} />
+        </>
       )}
     </div>
   );
@@ -142,7 +145,7 @@ function ProfileCard({ me, onSaved }: { me: Partner; onSaved: (p: Partner) => vo
           alt=""
         />
         <label className="btn btn-ghost" style={{ cursor: "pointer" }}>
-          Upload logo
+          Upload logo/profile pic
           <input type="file" accept="image/*" hidden onChange={(e) => onLogo(e.target.files?.[0])} />
         </label>
       </div>
@@ -506,11 +509,11 @@ function ListingsManager({ partnerId }: { partnerId: string }) {
         <div style={{ display: "flex", gap: 10 }}>
           <div className="dform-field" style={{ flex: 1 }}>
             <label>Beds</label>
-            <input type="number" value={form.bedrooms ?? ""} onChange={(e) => setForm({ ...form, bedrooms: e.target.value as unknown as number })} />
+            <input type="number" min="0" step="0.5" value={form.bedrooms ?? ""} onChange={(e) => setForm({ ...form, bedrooms: e.target.value as unknown as number })} />
           </div>
           <div className="dform-field" style={{ flex: 1 }}>
             <label>Baths</label>
-            <input type="number" value={form.bathrooms ?? ""} onChange={(e) => setForm({ ...form, bathrooms: e.target.value as unknown as number })} />
+            <input type="number" min="1" step="0.5" value={form.bathrooms ?? ""} onChange={(e) => setForm({ ...form, bathrooms: e.target.value as unknown as number })} />
           </div>
         </div>
         <div className="dform-field">
@@ -527,6 +530,80 @@ function ListingsManager({ partnerId }: { partnerId: string }) {
           )}
         </div>
       </div>
+    </section>
+  );
+}
+
+/* ---------------- work photos (non-realtors) ---------------- */
+function WorkPhotosManager({ partnerId }: { partnerId: string }) {
+  const [photos, setPhotos] = useState<{ type: "image" | "video"; url: string }[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [ok, setOk] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const p = await getMe();
+      if (p?.work_photos?.length) setPhotos(p.work_photos);
+    })();
+  }, []);
+
+  async function onFiles(files: FileList | null) {
+    if (!files?.length) return;
+    setUploading(true);
+    try {
+      const added: { type: "image" | "video"; url: string }[] = [];
+      for (const file of Array.from(files)) added.push(await uploadMedia(partnerId, file));
+      setPhotos((prev) => [...prev, ...added]);
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  function remove(i: number) {
+    setPhotos((prev) => prev.filter((_, idx) => idx !== i));
+  }
+
+  async function save() {
+    setBusy(true);
+    setOk(false);
+    try {
+      await updateProfile({ work_photos: photos } as Parameters<typeof updateProfile>[0]);
+      setOk(true);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className="dash-section">
+      <h2>Work photos</h2>
+      <p style={{ color: "var(--muted)", fontSize: 14, marginBottom: 14 }}>
+        Upload photos of your completed work. They appear on your public profile.
+      </p>
+      {ok && <div className="dform-ok">Saved.</div>}
+      <label className="btn btn-ghost" style={{ cursor: "pointer", display: "inline-flex", marginBottom: 12 }}>
+        {uploading ? "Uploading…" : "Add photos"}
+        <input type="file" accept="image/*" multiple hidden onChange={(e) => onFiles(e.target.files)} />
+      </label>
+      {photos.length > 0 && (
+        <div className="thumbs" style={{ marginBottom: 14 }}>
+          {photos.map((m, i) => (
+            <div key={i} style={{ position: "relative", display: "inline-block" }}>
+              <img className="t" src={m.url} alt="" />
+              <button
+                type="button"
+                onClick={() => remove(i)}
+                style={{ position: "absolute", top: 2, right: 2, background: "rgba(0,0,0,.55)", color: "#fff", border: "none", borderRadius: 999, width: 20, height: 20, cursor: "pointer", fontSize: 12, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center" }}
+                aria-label="Remove"
+              >×</button>
+            </div>
+          ))}
+        </div>
+      )}
+      <button className="btn btn-gold" onClick={save} disabled={busy || uploading}>
+        {busy ? "Saving…" : "Save photos"}
+      </button>
     </section>
   );
 }

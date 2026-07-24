@@ -75,7 +75,7 @@ export default function LeadForm() {
       {!success ? (
         <>
           <div className="lead-or">
-            <span>Or send a message — we&apos;ll reply within one business day.</span>
+            <span>Or send a message - we&apos;ll reply within one business day.</span>
           </div>
           <form id="leadForm" className="lead-form" noValidate onSubmit={onSubmit}>
             <div className="two">
@@ -180,7 +180,7 @@ export default function LeadForm() {
           <div className="check">✓</div>
           <h3>Message received.</h3>
           <p>
-            Thank you — Ferguson Law has your details and will be in touch
+            Thank you - Ferguson Law has your details and will be in touch
             shortly.
           </p>
         </div>

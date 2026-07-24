@@ -3406,6 +3406,9 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
   const [newStepName, setNewStepName] = useState("");
   const [savingStep, setSavingStep] = useState(false);
   const [stepScope, setStepScope] = useState<"matter" | "global">("matter");
+  const [editingStepId, setEditingStepId] = useState<string | null>(null);
+  const [editingStepName, setEditingStepName] = useState("");
+  const [savingEditStep, setSavingEditStep] = useState(false);
 
   async function addStep() {
     if (!selected || !addingStepPhase || !newStepName.trim() || savingStep) return;
@@ -3452,6 +3455,17 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
     if (!confirm("Remove this step from this client's matter?")) return;
     await supabase.rpc("fl_admin_cms_delete_step", { p_token: token, p_id: id });
     setMilestones(prev => prev.filter(m => m.id !== id));
+  }
+
+  async function saveEditStep(id: string) {
+    const name = editingStepName.trim();
+    if (!name || savingEditStep) return;
+    setSavingEditStep(true);
+    await supabase.rpc("fl_admin_cms_update_step", { p_token: token, p_id: id, p_name: name });
+    setMilestones(prev => prev.map(m => m.id === id ? { ...m, name } : m));
+    setEditingStepId(null);
+    setEditingStepName("");
+    setSavingEditStep(false);
   }
 
   async function updateMatterStatus(id: string, status: string) {
@@ -3574,7 +3588,8 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
       setNewClientId(""); setNewClientLabel(""); setClientQuery(""); setClientHits([]); setNewTitle(""); setNewClientName("");
       void loadDetail(data as string);
     } catch (err) {
-      setCreateError(err instanceof Error ? err.message : String(err));
+      const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? String(err);
+      setCreateError(msg);
     } finally {
       setCreating(false);
     }
@@ -3744,14 +3759,41 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                               border: `1px solid ${m.status === "in_progress" ? "#f0e4b0" : "rgba(18,16,12,.08)"}`,
                               opacity: m.status === "not_applicable" ? 0.6 : 1,
                             }}>
-                              <span style={{ fontSize: 13, flex: 1, display: "flex", alignItems: "center", gap: 6,
-                                color: m.status === "done" ? "#2e7d32" : m.status === "not_applicable" ? MUTED : INK,
-                                fontWeight: m.status === "done" ? 600 : 400,
-                                textDecoration: m.status === "not_applicable" ? "line-through" : "none" }}>
-                                {m.status === "done" && <span style={{ fontSize: 12, color: "#2e7d32" }}>✅</span>}
-                                {m.status === "not_applicable" && <span style={{ fontSize: 12 }}>—</span>}
-                                {m.name}
-                              </span>
+                              {editingStepId === m.id ? (
+                                <span style={{ flex: 1, display: "flex", alignItems: "center", gap: 6 }}>
+                                  <input
+                                    autoFocus
+                                    value={editingStepName}
+                                    onChange={e => setEditingStepName(e.target.value)}
+                                    onKeyDown={e => {
+                                      if (e.key === "Enter") void saveEditStep(m.id);
+                                      if (e.key === "Escape") { setEditingStepId(null); setEditingStepName(""); }
+                                    }}
+                                    style={{ flex: 1, fontSize: 13, padding: "3px 8px", borderRadius: 7, border: `1px solid ${GOLD}`, outline: "none" }}
+                                  />
+                                  <button type="button" onClick={() => void saveEditStep(m.id)} disabled={savingEditStep || !editingStepName.trim()}
+                                    style={{ padding: "3px 10px", borderRadius: 7, border: "none", background: GREEN, color: CREAM, fontSize: 12, fontWeight: 600, cursor: "pointer", opacity: savingEditStep ? 0.5 : 1 }}>
+                                    {savingEditStep ? "…" : "Save"}
+                                  </button>
+                                  <button type="button" onClick={() => { setEditingStepId(null); setEditingStepName(""); }}
+                                    style={{ padding: "3px 8px", borderRadius: 7, border: `1px solid rgba(18,16,12,.15)`, background: "#fff", color: MUTED, fontSize: 12, cursor: "pointer" }}>
+                                    Cancel
+                                  </button>
+                                </span>
+                              ) : (
+                                <span
+                                  onClick={() => { setEditingStepId(m.id); setEditingStepName(m.name); }}
+                                  title="Click to edit step name"
+                                  style={{ fontSize: 13, flex: 1, display: "flex", alignItems: "center", gap: 6,
+                                    color: m.status === "done" ? "#2e7d32" : m.status === "not_applicable" ? MUTED : INK,
+                                    fontWeight: m.status === "done" ? 600 : 400,
+                                    textDecoration: m.status === "not_applicable" ? "line-through" : "none",
+                                    cursor: "text" }}>
+                                  {m.status === "done" && <span style={{ fontSize: 12, color: "#2e7d32" }}>✅</span>}
+                                  {m.status === "not_applicable" && <span style={{ fontSize: 12 }}>—</span>}
+                                  {m.name}
+                                </span>
+                              )}
                               <select
                                 value={m.status}
                                 onChange={e => updateMilestone(m.id, e.target.value)}
@@ -3961,7 +4003,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                     <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 10, border: "1px solid rgba(18,16,12,.1)", background: "#fff", marginBottom: 8 }}>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: 13.5, fontWeight: 700, color: INK, textTransform: "capitalize" }}>
-                          {p.kind} · JMD {p.amount_jmd.toLocaleString()}
+                          {p.kind} · JMD ${p.amount_jmd.toLocaleString("en-JM")}
                         </div>
                         <div style={{ fontSize: 11.5, color: MUTED }}>
                           {p.method?.replace("_"," ") || "—"}{p.reference ? ` · ${p.reference}` : ""} · {fmtDate(p.created_at)}
@@ -4058,8 +4100,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                     <option value="refinancing">Refinancing</option>
                     <option value="discharge_of_mortgage">Discharge of Mortgage</option>
                   </optgroup>
-                  <optgroup label="Notarial &amp; Diaspora">
-                    <option value="notarial_services">Notarial Services</option>
+                  <optgroup label="Diaspora">
                     <option value="power_of_attorney">Power of Attorney</option>
                     <option value="diaspora_purchase">Diaspora Purchase</option>
                   </optgroup>
