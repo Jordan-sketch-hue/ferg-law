@@ -32,6 +32,38 @@ import { createPayment } from "@/lib/payments/wipay";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+async function createZoomMeeting(topic: string, startsAt: string, duration: number): Promise<string | null> {
+  const accountId = process.env.ZOOM_ACCOUNT_ID;
+  const clientId = process.env.ZOOM_CLIENT_ID;
+  const clientSecret = process.env.ZOOM_CLIENT_SECRET;
+  if (!accountId || !clientId || !clientSecret) return null;
+  try {
+    const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
+    const tokenRes = await fetch(
+      `https://zoom.us/oauth/token?grant_type=account_credentials&account_id=${accountId}`,
+      { method: "POST", headers: { Authorization: `Basic ${credentials}` } },
+    );
+    if (!tokenRes.ok) return null;
+    const { access_token } = await tokenRes.json() as { access_token: string };
+    const meetingRes = await fetch("https://api.zoom.us/v2/users/me/meetings", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${access_token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        topic,
+        type: 2,
+        start_time: startsAt,
+        duration,
+        settings: { join_before_host: true, waiting_room: false },
+      }),
+    });
+    if (!meetingRes.ok) return null;
+    const data = await meetingRes.json() as { join_url: string };
+    return data.join_url;
+  } catch {
+    return null;
+  }
+}
+
 const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type Body = {
@@ -98,8 +130,8 @@ export async function POST(req: NextRequest) {
   if (!emailRe.test(email)) {
     return Response.json({ ok: false, error: "A valid email is required." }, { status: 400 });
   }
-  if (phone.replace(/\D/g, "").length < 7) {
-    return Response.json({ ok: false, error: "A valid phone number is required." }, { status: 400 });
+  if (phone !== "" && phone.replace(/\D/g, "").length < 7) {
+    return Response.json({ ok: false, error: "Please enter a valid phone number or leave it blank." }, { status: 400 });
   }
 
   const duration = serviceDuration(service);
@@ -203,9 +235,16 @@ export async function POST(req: NextRequest) {
         extraMeta: { invite: inviteCode, payment: "free" },
       });
 
+      // Auto-create Daily.co room (non-fatal — booking always succeeds)
+      let meetingUrl: string | undefined;
+      try {
+        const url = await createZoomMeeting(`Ferguson Law Consultation`, startsIso, duration);
+        if (url) meetingUrl = url;
+      } catch { /* swallow */ }
+
       // Confirmation email fires now (free bookings are immediately confirmed).
       try {
-        await sendBookingConfirmation({ to: email, name, service: title, whenLabel, ref });
+        await sendBookingConfirmation({ to: email, name, service: title, whenLabel, ref, meetingUrl });
       } catch {
         /* swallow — booking already saved */
       }

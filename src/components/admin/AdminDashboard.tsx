@@ -185,7 +185,7 @@ interface HomeProperty {
   status: string;
 }
 
-type Tab = "overview" | "leads" | "bookings" | "clients" | "matters" | "cms" | "calendar" | "chats" | "invites" | "directory" | "availability" | "home_pros" | "home_listings" | "email" | "inquiries" | "referrals" | "recycle_bin" | "workflows" | "zoom";
+type Tab = "overview" | "leads" | "bookings" | "clients" | "matters" | "cms" | "calendar" | "chats" | "invites" | "directory" | "availability" | "home_pros" | "home_listings" | "email" | "inquiries" | "referrals" | "recycle_bin" | "workflows" | "zoom" | "feedback";
 
 interface BinItem {
   id: string;
@@ -409,6 +409,33 @@ export default function AdminDashboard() {
     })();
     return () => { cancelled = true; };
   }, [token, fetchAll]);
+
+  // Realtime subscription — re-fetch partner/home-pro queues instantly on any change
+  useEffect(() => {
+    if (!token) return;
+    if (tab !== "directory" && tab !== "home_pros") return;
+    const supabase = createClient();
+    const hdrs = { "apikey": HR_KEY, "Authorization": `Bearer ${HR_KEY}` };
+
+    async function refetch() {
+      if (tab === "directory") {
+        const res = await supabase.rpc("fl_admin_partners", { p_token: token });
+        if (res.data) setListings(res.data as Listing[]);
+      }
+      if (tab === "home_pros") {
+        const res = await fetch(`${HR_URL}/rest/v1/home_professional_profiles?verified=eq.false&order=created_at.desc`, { headers: hdrs });
+        const pros = await res.json().catch(() => null);
+        if (Array.isArray(pros)) setHomePros(pros as HomePro[]);
+      }
+    }
+
+    const channel = supabase
+      .channel("partner-queue-watch")
+      .on("postgres_changes", { event: "*", schema: "public", table: "fl_partners" }, () => void refetch())
+      .subscribe();
+
+    return () => { void supabase.removeChannel(channel); };
+  }, [token, tab]);
 
   // Mutations
   const setLeadStatus = useCallback(async (id: string, status: string) => {
@@ -711,7 +738,7 @@ export default function AdminDashboard() {
         {loadError && <div style={S.errorBar}>{loadError}</div>}
 
         <div style={{ ...S.tabs, background: "#fff", border: "1px solid rgba(18,16,12,.07)", borderRadius: "12px 12px 0 0" }}>
-          {(["overview","leads","bookings","clients","matters","cms","calendar","chats","email","invites","directory","availability","home_pros","home_listings","inquiries","referrals","workflows","recycle_bin","zoom"] as Tab[]).map((t) => (
+          {(["overview","leads","bookings","clients","matters","cms","calendar","chats","email","invites","directory","availability","home_pros","home_listings","inquiries","referrals","workflows","recycle_bin","zoom","feedback"] as Tab[]).map((t) => (
             <TabBtn key={t} active={tab === t} onClick={() => setTab(t)}
               label={
                 t === "overview" ? "Overview" :
@@ -723,7 +750,8 @@ export default function AdminDashboard() {
                 t === "referrals" ? "Referrals" :
                 t === "recycle_bin" ? "🗑 Bin" :
                 t === "workflows" ? "Workflows" :
-                t === "zoom" ? "Zoom" :
+                t === "zoom" ? "Meetings" :
+                t === "feedback" ? "Tester Feedback" :
                 t.charAt(0).toUpperCase() + t.slice(1)
               }
               count={
@@ -779,6 +807,7 @@ export default function AdminDashboard() {
           )}
           {tab === "workflows" && token && <WorkflowTemplatesTab token={token} />}
           {tab === "zoom" && token && <ZoomSetupTab token={token} />}
+          {tab === "feedback" && token && <TesterFeedbackTab token={token} />}
         </div>
       </div>
     </div>
@@ -1352,6 +1381,13 @@ function MilestonePanel({ matterId, token, matter, onClose, inline }: {
       p_due_date: merged.due_date ?? null,
       p_notify_client: merged.notify_client,
     });
+    if (patch.status === "completed" && existing.status !== "completed") {
+      void fetch("/api/admin/cms/notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, matterId, kind: "milestone", milestoneName: merged.title }),
+      });
+    }
     await load();
   }
 
@@ -3326,6 +3362,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
   const [newClientId, setNewClientId] = useState("");
   const [newClientLabel, setNewClientLabel] = useState("");
   const [newClientName, setNewClientName] = useState("");
+  const [newClientEmail, setNewClientEmail] = useState("");
   const [newWorkflow, setNewWorkflow] = useState("property_purchase");
   const [newTitle, setNewTitle] = useState("");
   const [creating, setCreating] = useState(false);
@@ -3573,19 +3610,31 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
     setCreating(true);
     setCreateError(null);
     try {
+      const emailParam = newClientId ? null : (newClientEmail.trim().toLowerCase() || null);
       const { data, error } = await supabase.rpc("fl_admin_cms_open_matter", {
         p_token: token,
         p_client_id: newClientId || null,
         p_workflow_type: newWorkflow,
         p_title: newTitle || null,
         p_client_name: newClientId ? null : (newClientName.trim() || null),
+        p_client_email: emailParam,
       });
       if (error) throw error;
       if (!data) throw new Error("No matter ID returned — check the RPC returned a value.");
+
+      // Send portal invite if client has no account but email was provided
+      if (!newClientId && emailParam) {
+        void fetch("/api/admin/cms/invite-client", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-admin-token": token },
+          body: JSON.stringify({ email: emailParam, clientName: newClientName.trim() || undefined, matterTitle: newTitle.trim() || undefined }),
+        }).catch(() => null);
+      }
+
       const { data: refreshed } = await supabase.rpc("fl_admin_cms_matters", { p_token: token });
       setMatters((refreshed as CmsMatter[]) ?? []);
       setOpenMatter(false);
-      setNewClientId(""); setNewClientLabel(""); setClientQuery(""); setClientHits([]); setNewTitle(""); setNewClientName("");
+      setNewClientId(""); setNewClientLabel(""); setClientQuery(""); setClientHits([]); setNewTitle(""); setNewClientName(""); setNewClientEmail("");
       void loadDetail(data as string);
     } catch (err) {
       const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? String(err);
@@ -4068,10 +4117,19 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                         ))}
                       </div>
                     )}
-                    <div style={{ fontSize: 11, color: MUTED, textAlign: "center", margin: "4px 0" }}>— or —</div>
+                    <div style={{ fontSize: 11, color: MUTED, textAlign: "center", margin: "4px 0" }}>— or enter manually —</div>
                     <input value={newClientName} onChange={e => setNewClientName(e.target.value)}
-                      placeholder="Enter client name manually"
+                      placeholder="Client name"
                       style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid rgba(18,16,12,.2)", fontSize: 13, outline: "none" }} />
+                    <input value={newClientEmail} onChange={e => setNewClientEmail(e.target.value)}
+                      placeholder="Client email (to send portal invite)"
+                      type="email"
+                      style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid rgba(18,16,12,.2)", fontSize: 13, outline: "none" }} />
+                    {newClientEmail.trim() && (
+                      <div style={{ fontSize: 11.5, color: "#b8872a", display: "flex", alignItems: "center", gap: 5 }}>
+                        <span>Invite email will be sent when matter is created</span>
+                      </div>
+                    )}
                   </>
                 )}
               </label>
@@ -4079,34 +4137,8 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                 <span style={{ fontSize: 11.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".07em", color: MUTED }}>Workflow</span>
                 <select value={newWorkflow} onChange={e => setNewWorkflow(e.target.value)}
                   style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid rgba(18,16,12,.2)", fontSize: 13, outline: "none" }}>
-                  <optgroup label="Conveyancing">
-                    <option value="property_purchase">Property Purchase</option>
-                    <option value="property_sale">Property Sale</option>
-                  </optgroup>
-                  <optgroup label="Estate &amp; Family">
-                    <option value="estate_administration">Estate Administration</option>
-                    <option value="probate">Probate</option>
-                    <option value="declaration_of_ownership">Declaration of Ownership</option>
-                    <option value="family_settlement">Family Settlement</option>
-                  </optgroup>
-                  <optgroup label="Commercial">
-                    <option value="commercial_lease">Commercial Lease</option>
-                    <option value="business_acquisition">Business Acquisition</option>
-                    <option value="shareholders_agreement">Shareholders Agreement</option>
-                    <option value="joint_venture">Joint Venture</option>
-                  </optgroup>
-                  <optgroup label="Mortgages &amp; Finance">
-                    <option value="mortgage_transaction">Mortgage Transaction</option>
-                    <option value="refinancing">Refinancing</option>
-                    <option value="discharge_of_mortgage">Discharge of Mortgage</option>
-                  </optgroup>
-                  <optgroup label="Diaspora">
-                    <option value="power_of_attorney">Power of Attorney</option>
-                    <option value="diaspora_purchase">Diaspora Purchase</option>
-                  </optgroup>
-                  <optgroup label="Other">
-                    <option value="general">General Matter</option>
-                  </optgroup>
+                  <option value="property_purchase">Property Purchase</option>
+                  <option value="property_sale">Property Sale</option>
                 </select>
               </label>
               <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
@@ -4139,180 +4171,171 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
 }
 function ZoomSetupTab({ token }: { token: string }) {
   const [testing, setTesting] = useState(false);
-  const [status, setStatus] = useState<null | {
-    ok: boolean; status?: string; email?: string; displayName?: string; missing?: string[]; error?: string;
-  }>(null);
+  const [status, setStatus] = useState<null | { ok: boolean; status?: string; email?: string; missing?: string[]; error?: string }>(null);
+  const [creating, setCreating] = useState(false);
+  const [joinUrl, setJoinUrl] = useState<string | null>(null);
+  const [createErr, setCreateErr] = useState<string | null>(null);
 
   async function testConnection() {
-    setTesting(true);
-    setStatus(null);
+    setTesting(true); setStatus(null);
     try {
       const r = await fetch("/api/admin/zoom/test", { headers: { "x-admin-token": token } });
       setStatus(await r.json());
-    } catch {
-      setStatus({ ok: false, error: "Network error — check your connection." });
-    } finally {
-      setTesting(false);
-    }
+    } catch { setStatus({ ok: false, error: "Network error." }); }
+    finally { setTesting(false); }
   }
 
-  const STEP_NUM: React.CSSProperties = {
-    display: "inline-flex", alignItems: "center", justifyContent: "center",
-    width: 28, height: 28, borderRadius: "50%", background: GOLD, color: CREAM,
-    fontWeight: 800, fontSize: 13, flexShrink: 0, marginTop: 1,
-  };
+  async function createMeeting() {
+    setCreating(true); setCreateErr(null); setJoinUrl(null);
+    try {
+      const r = await fetch("/api/admin/zoom/create-meeting", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, topic: "Ferguson Law Consultation", start_time: new Date().toISOString(), duration_minutes: 60 }),
+      });
+      const d = await r.json() as { ok: boolean; join_url?: string; error?: string };
+      if (d.ok && d.join_url) setJoinUrl(d.join_url);
+      else setCreateErr(d.error ?? "Could not create meeting.");
+    } catch { setCreateErr("Network error."); }
+    finally { setCreating(false); }
+  }
+
+  const CODE: React.CSSProperties = { display: "inline-block", background: "#f0ece4", borderRadius: 5, padding: "1px 7px", fontFamily: "monospace", fontSize: 13, color: "#4a3f2f" };
+  const SECTION: React.CSSProperties = { background: "#fff", borderRadius: 14, padding: "24px 28px", marginBottom: 18, border: "1px solid rgba(18,16,12,.08)" };
+  const STEP_NUM: React.CSSProperties = { display: "inline-flex", alignItems: "center", justifyContent: "center", width: 28, height: 28, borderRadius: "50%", background: GOLD, color: CREAM, fontWeight: 800, fontSize: 13, flexShrink: 0, marginTop: 1 };
   const STEP_ROW: React.CSSProperties = { display: "flex", gap: 14, alignItems: "flex-start", marginBottom: 20 };
-  const STEP_BODY: React.CSSProperties = { fontSize: 14, lineHeight: 1.65, color: INK };
-  const CODE: React.CSSProperties = {
-    display: "inline-block", background: "#f0ece4", borderRadius: 5,
-    padding: "1px 7px", fontFamily: "monospace", fontSize: 13, color: "#4a3f2f",
-  };
-  const SECTION: React.CSSProperties = {
-    background: "#fff", borderRadius: 14, padding: "24px 28px", marginBottom: 18,
-    border: "1px solid rgba(18,16,12,.08)",
-  };
 
   return (
-    <div style={{ maxWidth: 680, margin: "0 auto", padding: "28px 0" }}>
+    <div style={{ maxWidth: 720, margin: "0 auto", padding: "28px 0" }}>
 
       <div style={{ marginBottom: 28 }}>
-        <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: 22, fontWeight: 700, margin: 0, color: INK }}>
-          Zoom Integration
-        </h2>
-        <p style={{ marginTop: 6, color: MUTED, fontSize: 14 }}>
-          Connect your Zoom account so you can create and manage consultation meetings directly from this dashboard.
-          Setup takes about 5 minutes and only needs to be done once.
-        </p>
+        <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: 22, fontWeight: 700, margin: 0, color: INK }}>Video Consultations</h2>
+        <p style={{ marginTop: 6, color: MUTED, fontSize: 14 }}>Powered by Zoom — clients get a join link in their confirmation email. Click below to start an instant meeting.</p>
       </div>
 
+      {/* ── INSTANT MEETING ── */}
+      <div style={{ ...SECTION, display: "flex", flexDirection: "column", gap: 14 }}>
+        <p style={{ fontWeight: 700, fontSize: 15, margin: 0, color: INK }}>Start an instant consultation</p>
+        <p style={{ fontSize: 13, color: MUTED, margin: 0 }}>Creates a Zoom meeting now and gives you the join link.</p>
+        <button
+          onClick={() => void createMeeting()}
+          disabled={creating}
+          style={{ background: GOLD, color: CREAM, border: "none", borderRadius: 8, padding: "12px 24px", fontWeight: 700, fontSize: 14, cursor: "pointer", opacity: creating ? 0.7 : 1, alignSelf: "flex-start" }}
+        >
+          {creating ? "Creating meeting…" : "Create instant meeting"}
+        </button>
+        {joinUrl && (
+          <div style={{ background: "#f0f7f0", border: "1px solid #b2dfb5", borderRadius: 10, padding: "16px 20px" }}>
+            <p style={{ margin: "0 0 10px", fontWeight: 700, fontSize: 14, color: "#1e5c22" }}>Meeting ready</p>
+            <a
+              href={joinUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ display: "inline-block", background: "#2D8CFF", color: "#fff", borderRadius: 8, padding: "10px 22px", fontWeight: 700, fontSize: 14, textDecoration: "none" }}
+            >
+              Join on Zoom ↗
+            </a>
+            <p style={{ margin: "10px 0 0", fontSize: 12, color: MUTED, wordBreak: "break-all" }}>{joinUrl}</p>
+          </div>
+        )}
+        {createErr && <p style={{ color: "#c0392b", fontSize: 13, margin: 0 }}>{createErr}</p>}
+      </div>
+
+      {/* ── STATUS ── */}
       {status && (
-        <div style={{
-          borderRadius: 10, padding: "14px 18px", marginBottom: 24, fontSize: 14,
-          background: status.ok ? "#edf7ee" : "#fdf0f0",
-          border: `1px solid ${status.ok ? "#b2dfb5" : "#f5c6c6"}`,
-          color: status.ok ? "#1e5c22" : "#7a1515",
-        }}>
+        <div style={{ borderRadius: 10, padding: "14px 18px", marginBottom: 18, fontSize: 14, background: status.ok ? "#edf7ee" : "#fdf0f0", border: `1px solid ${status.ok ? "#b2dfb5" : "#f5c6c6"}`, color: status.ok ? "#1e5c22" : "#7a1515" }}>
           {status.ok
-            ? `Connected as ${status.displayName ?? status.email ?? "Zoom user"}${status.email ? ` (${status.email})` : ""}`
+            ? `Connected — Zoom account: ${status.email ?? "active"}`
             : status.status === "not_configured"
-              ? `Not configured yet. Missing environment variables: ${(status.missing ?? []).join(", ")}`
-              : `Error: ${status.error}`
-          }
+              ? `Not configured. Add ${(status.missing ?? []).join(", ")} to Vercel env vars.`
+              : `Error: ${status.error}`}
         </div>
       )}
 
       <div style={SECTION}>
-        <p style={{ fontWeight: 700, fontSize: 15, marginBottom: 18, color: INK }}>Step 1 — Create a Zoom Server-to-Server OAuth App</p>
+        <p style={{ fontWeight: 700, fontSize: 15, marginBottom: 18, color: INK }}>Setup (one-time)</p>
         {[
-          { n: 1, body: <>Go to <a href="https://marketplace.zoom.us" target="_blank" rel="noopener noreferrer" style={{ color: GOLD }}>marketplace.zoom.us</a> and sign in with the Zoom account you host meetings from.</> },
-          { n: 2, body: <>In the top-right menu click <strong>Develop</strong> → <strong>Build App</strong>.</> },
-          { n: 3, body: <>Find the <strong>"Server-to-Server OAuth"</strong> card and click <strong>Create</strong>. <span style={{ color: MUTED, fontSize: 13 }}>(This type runs with your credentials only — clients never need to authorise anything.)</span></> },
-          { n: 4, body: <>Give the app a name, e.g. <em>"Ferguson Law"</em>, then click <strong>Create</strong>.</> },
+          { n: 1, body: <>In your Zoom Server-to-Server OAuth app, copy the <strong>Account ID</strong>, <strong>Client ID</strong>, and <strong>Client Secret</strong>.</> },
+          { n: 2, body: <>Go to your <a href="https://vercel.com/dashboard" target="_blank" rel="noopener noreferrer" style={{ color: GOLD }}>Vercel dashboard</a> → <strong>ferguson-law</strong> → <strong>Settings → Environment Variables</strong> → add these three:<br /><br />
+            <span style={CODE}>ZOOM_ACCOUNT_ID</span><br />
+            <span style={CODE}>ZOOM_CLIENT_ID</span><br />
+            <span style={CODE}>ZOOM_CLIENT_SECRET</span><br /><br />
+            Save for all environments.</> },
+          { n: 3, body: <>Redeploy, then click <strong>Test Connection</strong> below.</> },
         ].map(({ n, body }) => (
           <div key={n} style={STEP_ROW}>
             <span style={STEP_NUM}>{n}</span>
-            <div style={STEP_BODY}>{body}</div>
+            <div style={{ fontSize: 14, lineHeight: 1.65, color: INK }}>{body}</div>
           </div>
         ))}
-      </div>
-
-      <div style={SECTION}>
-        <p style={{ fontWeight: 700, fontSize: 15, marginBottom: 18, color: INK }}>Step 2 — Copy credentials and add scopes</p>
-        {[
-          {
-            n: 5, body: <>
-              On the <strong>App Credentials</strong> tab copy these three values — you&apos;ll need them in Step 3:
-              <ul style={{ marginTop: 10, paddingLeft: 18, lineHeight: 2 }}>
-                <li><span style={CODE}>Account ID</span></li>
-                <li><span style={CODE}>Client ID</span></li>
-                <li><span style={CODE}>Client Secret</span> <em style={{ color: MUTED, fontSize: 12 }}>(click the eye icon to reveal)</em></li>
-              </ul>
-            </>
-          },
-          {
-            n: 6, body: <>
-              Click the <strong>Scopes</strong> tab → <strong>+ Add Scopes</strong> → search for{" "}
-              <span style={CODE}>meeting:write:admin</span> → tick it and save.{" "}
-              <span style={{ color: MUTED, fontSize: 13 }}>This lets the app create and manage meetings on your behalf.</span>
-            </>
-          },
-          { n: 7, body: <>Click the <strong>Activation</strong> tab → <strong>Activate your app</strong>.</> },
-        ].map(({ n, body }) => (
-          <div key={n} style={STEP_ROW}>
-            <span style={STEP_NUM}>{n}</span>
-            <div style={STEP_BODY}>{body}</div>
-          </div>
-        ))}
-      </div>
-
-      <div style={SECTION}>
-        <p style={{ fontWeight: 700, fontSize: 15, marginBottom: 18, color: INK }}>Step 3 — Add credentials to Vercel</p>
-        {[
-          {
-            n: 8, body: <>
-              Go to your <a href="https://vercel.com/dashboard" target="_blank" rel="noopener noreferrer" style={{ color: GOLD }}>Vercel dashboard</a>
-              {" → "}<strong>ferguson-law</strong> → <strong>Settings</strong> → <strong>Environment Variables</strong>.
-            </>
-          },
-          {
-            n: 9, body: <>
-              Add these three variables for <strong>all environments</strong> (Production, Preview, Development):
-              <div style={{ marginTop: 12, display: "grid", rowGap: 8 }}>
-                {([
-                  ["ZOOM_ACCOUNT_ID", "Your Account ID from Step 5"],
-                  ["ZOOM_CLIENT_ID", "Your Client ID from Step 5"],
-                  ["ZOOM_CLIENT_SECRET", "Your Client Secret from Step 5"],
-                ] as [string, string][]).map(([k, desc]) => (
-                  <div key={k} style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-                    <span style={CODE}>{k}</span>
-                    <span style={{ color: MUTED, fontSize: 13 }}>{desc}</span>
-                  </div>
-                ))}
-              </div>
-            </>
-          },
-          {
-            n: 10, body: <>
-              After saving, go to <strong>Deployments</strong> and click <strong>Redeploy</strong> on the latest build.
-              {" "}<span style={{ color: MUTED, fontSize: 13 }}>Vercel only picks up new env vars when you redeploy.</span>
-            </>
-          },
-        ].map(({ n, body }) => (
-          <div key={n} style={STEP_ROW}>
-            <span style={STEP_NUM}>{n}</span>
-            <div style={STEP_BODY}>{body}</div>
-          </div>
-        ))}
-      </div>
-
-      <div style={SECTION}>
-        <p style={{ fontWeight: 700, fontSize: 15, marginBottom: 12, color: INK }}>Step 4 — Verify the connection</p>
-        <p style={{ fontSize: 14, color: MUTED, marginBottom: 20 }}>
-          After redeploying, come back here and click below to confirm everything is working.
-        </p>
-        <button
-          onClick={() => void testConnection()}
-          disabled={testing}
-          style={{
-            background: GOLD, color: CREAM, border: "none", borderRadius: 10,
-            padding: "12px 26px", fontWeight: 700, fontSize: 14, cursor: "pointer",
-            opacity: testing ? 0.7 : 1,
-          }}
-        >
-          {testing ? "Testing…" : "Test Zoom Connection"}
+        <button onClick={() => void testConnection()} disabled={testing} style={{ marginTop: 8, background: GOLD, color: CREAM, border: "none", borderRadius: 10, padding: "11px 24px", fontWeight: 700, fontSize: 14, cursor: "pointer", opacity: testing ? 0.7 : 1 }}>
+          {testing ? "Testing…" : "Test Connection"}
         </button>
       </div>
 
       <div style={{ ...SECTION, background: "#f9f7f3" }}>
-        <p style={{ fontWeight: 700, fontSize: 14, marginBottom: 10, color: INK }}>What you get once connected</p>
+        <p style={{ fontWeight: 700, fontSize: 14, marginBottom: 10, color: INK }}>How it works</p>
         <ul style={{ fontSize: 13.5, lineHeight: 1.9, color: MUTED, paddingLeft: 18, margin: 0 }}>
-          <li>Create a Zoom meeting link directly from any Booking or Matter in this admin.</li>
-          <li>The meeting link is emailed to the client automatically.</li>
-          <li>Meetings are created in the <strong>America/Jamaica</strong> timezone by default.</li>
-          <li>Waiting room and host video are enabled by default for all meetings.</li>
+          <li>When a client books and pays, a Zoom meeting is auto-created and the join link goes in their confirmation email.</li>
+          <li>Click "Create instant meeting" here to get your host join link — opens Zoom in a new tab.</li>
+          <li>Meetings use join-before-host so clients can enter without waiting.</li>
         </ul>
       </div>
 
+    </div>
+  );
+}
+
+interface TesterFeedbackRow {
+  id: string; created_at: string; tester_name: string; tester_role: string;
+  persona: string; site_tested: string; device_type: string; rating: number;
+  what_worked: string; what_didnt: string; suggestions: string; would_use: boolean | null;
+}
+
+function TesterFeedbackTab({ token }: { token: string }) {
+  const [rows, setRows] = useState<TesterFeedbackRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const supabase = createClient();
+
+  useEffect(() => {
+    void (async () => {
+      const { data } = await supabase.rpc("fl_admin_test_feedback", { p_token: token });
+      setRows((data as TesterFeedbackRow[]) ?? []);
+      setLoading(false);
+    })();
+  }, [token]);
+
+  if (loading) return <div style={{ padding: 24, color: "#888" }}>Loading feedback...</div>;
+  if (!rows.length) return <div style={{ padding: 24, color: "#888" }}>No feedback submitted yet.</div>;
+
+  return (
+    <div style={{ padding: "20px 0" }}>
+      <div style={{ marginBottom: 16, fontSize: 13, color: "#888" }}>{rows.length} submission{rows.length !== 1 ? "s" : ""}</div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {rows.map(r => (
+          <div key={r.id} style={{ background: "#fff", borderRadius: 12, padding: "16px 20px", border: "1px solid #ede8de" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
+              <div>
+                <span style={{ fontWeight: 700, fontSize: 14, color: "#10211c" }}>{r.tester_name}</span>
+                <span style={{ color: "#888", fontSize: 12, marginLeft: 8 }}>{r.tester_role}</span>
+              </div>
+              <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                <span style={{ background: "#f0ede6", borderRadius: 6, padding: "3px 10px", fontSize: 12, fontWeight: 600, color: "#10211c" }}>{r.persona?.split(" — ")[0]}</span>
+                {r.device_type && <span style={{ background: "#f0ede6", borderRadius: 6, padding: "3px 10px", fontSize: 12, color: "#555" }}>{r.device_type}</span>}
+                <span style={{ background: "#c9a86a", color: "#10211c", borderRadius: 6, padding: "3px 10px", fontSize: 12, fontWeight: 700 }}>{"★".repeat(r.rating)}</span>
+              </div>
+            </div>
+            <div style={{ fontSize: 11.5, color: "#888", marginBottom: 8 }}>
+              {r.site_tested && <span>{r.site_tested} &nbsp;·&nbsp; </span>}
+              {new Date(r.created_at).toLocaleDateString("en-JM", { day: "numeric", month: "short", year: "numeric" })}
+              {r.would_use !== null && <span> &nbsp;·&nbsp; Would use: <strong>{r.would_use ? "Yes" : "No"}</strong></span>}
+            </div>
+            {r.what_worked && <p style={{ fontSize: 13, color: "#333", margin: "6px 0 0" }}><strong>Worked:</strong> {r.what_worked}</p>}
+            {r.what_didnt && <p style={{ fontSize: 13, color: "#333", margin: "6px 0 0" }}><strong>Didn&apos;t work:</strong> {r.what_didnt}</p>}
+            {r.suggestions && <p style={{ fontSize: 13, color: "#333", margin: "6px 0 0" }}><strong>Suggestions:</strong> {r.suggestions}</p>}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
