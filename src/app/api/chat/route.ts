@@ -24,7 +24,6 @@ function cannedReply(): string {
   return `Thanks for reaching out to ${SITE.name}. Our live assistant isn't connected right now, but I can still help you get moving:
 
 • Book a consultation and the team will confirm a time.
-• Tap "Talk to a person" above and a team member will join this chat.
 • Or message us on WhatsApp at ${SITE.whatsappDisplay}.
 
 How would you like to continue?`;
@@ -61,6 +60,7 @@ export async function POST(req: Request) {
       }
     }
 
+    const isNewConversation = !conversationId;
     if (!conversationId) {
       const { data, error } = await supabase
         .from("chat_conversations")
@@ -122,12 +122,17 @@ export async function POST(req: Request) {
       });
     }
     const isLiveChat = status === "agent" || status === "waiting_agent";
+    const convUpdate: Record<string, unknown> = {
+      last_message_at: new Date().toISOString(),
+      unread_for_agent: isLiveChat ? 1 : 0,
+    };
+    // Stamp the first message as intent for lead nurture
+    if (isNewConversation && incoming) {
+      convUpdate.meta = { intent: incoming.slice(0, 80) };
+    }
     await supabase
       .from("chat_conversations")
-      .update({
-        last_message_at: new Date().toISOString(),
-        unread_for_agent: isLiveChat ? 1 : 0,
-      })
+      .update(convUpdate)
       .eq("id", cid);
 
     // --- A human is handling this thread — do NOT call the model -----------
@@ -165,60 +170,70 @@ export async function POST(req: Request) {
     let requestedHuman = false;
     const sideEffects: Record<string, unknown>[] = [];
 
-    const anthropicKey = process.env.ANTHROPIC_API_KEY;
+    // Strip BOM (﻿) that Windows/Vercel env occasionally prepends
+    const anthropicKey = process.env.ANTHROPIC_API_KEY?.replace(/^﻿/, "");
 
+    let anthropicFailed = false;
     if (anthropicKey) {
       // --- Anthropic path: full tool-use loop (best experience) ------------
-      const anthropic = new Anthropic({ apiKey: anthropicKey });
-      const convo: Anthropic.MessageParam[] = messages.map((m) => ({
-        role: m.role,
-        content: m.content,
-      }));
-      for (let loop = 0; loop < MAX_TOOL_LOOPS; loop++) {
-        const resp = await anthropic.messages.create({
-          model: MODEL,
-          max_tokens: 1024,
-          system,
-          tools: CHAT_TOOLS,
-          messages: convo,
-        });
-        const textParts = resp.content
-          .filter((b): b is Anthropic.TextBlock => b.type === "text")
-          .map((b) => b.text);
-        if (textParts.length) finalText = textParts.join("\n").trim();
-        const toolUses = resp.content.filter(
-          (b): b is Anthropic.ToolUseBlock => b.type === "tool_use",
-        );
-        if (resp.stop_reason !== "tool_use" || toolUses.length === 0) break;
-        convo.push({ role: "assistant", content: resp.content });
-        const toolResults: Anthropic.ToolResultBlockParam[] = [];
-        for (const tu of toolUses) {
-          const result = await executeTool(
-            tu.name,
-            (tu.input ?? {}) as Record<string, unknown>,
-            cid,
-          );
-          sideEffects.push(result.meta);
-          if (result.ref) ref = result.ref;
-          if (result.requestedHuman) requestedHuman = true;
-          toolResults.push({
-            type: "tool_result",
-            tool_use_id: tu.id,
-            content: result.content,
+      try {
+        const anthropic = new Anthropic({ apiKey: anthropicKey });
+        const convo: Anthropic.MessageParam[] = messages.map((m) => ({
+          role: m.role,
+          content: m.content,
+        }));
+        for (let loop = 0; loop < MAX_TOOL_LOOPS; loop++) {
+          const resp = await anthropic.messages.create({
+            model: MODEL,
+            max_tokens: 1500,
+            system,
+            tools: CHAT_TOOLS,
+            messages: convo,
           });
+          const textParts = resp.content
+            .filter((b): b is Anthropic.TextBlock => b.type === "text")
+            .map((b) => b.text);
+          if (textParts.length) finalText = textParts.join("\n").trim();
+          const toolUses = resp.content.filter(
+            (b): b is Anthropic.ToolUseBlock => b.type === "tool_use",
+          );
+          if (resp.stop_reason !== "tool_use" || toolUses.length === 0) break;
+          convo.push({ role: "assistant", content: resp.content });
+          const toolResults: Anthropic.ToolResultBlockParam[] = [];
+          for (const tu of toolUses) {
+            const result = await executeTool(
+              tu.name,
+              (tu.input ?? {}) as Record<string, unknown>,
+              cid,
+            );
+            sideEffects.push(result.meta);
+            if (result.ref) ref = result.ref;
+            if (result.requestedHuman) requestedHuman = true;
+            toolResults.push({
+              type: "tool_result",
+              tool_use_id: tu.id,
+              content: result.content,
+            });
+          }
+          convo.push({ role: "user", content: toolResults });
         }
-        convo.push({ role: "user", content: toolResults });
+      } catch (anthropicErr) {
+        console.warn("[chat] Anthropic unavailable, falling back to free LLM:", anthropicErr instanceof Error ? anthropicErr.message : String(anthropicErr));
+        anthropicFailed = true;
       }
-      if (!finalText) finalText = cannedReply();
-    } else if (hasAnyLLMKey()) {
-      // --- Free-LLM path: Groq → Gemini → OpenRouter (text-only) -----------
-      const res = await generateReply({ system, messages });
-      finalText = res.ok ? res.text : cannedReply();
-      if (res.ok) sideEffects.push({ provider: res.provider });
-    } else {
-      // --- No key at all: graceful canned reply ----------------------------
-      finalText = cannedReply();
-      sideEffects.push({ fallback: "no_api_key" });
+      if (!finalText && !anthropicFailed) finalText = `I'd be happy to help with that. For your specific situation, I'd recommend speaking directly with our team — you can book a consultation here:\n${SITE.bookingUrl}\nOr reach us on WhatsApp at ${SITE.whatsappDisplay}.`;
+    }
+    if (!finalText && (anthropicFailed || !anthropicKey)) {
+      if (hasAnyLLMKey()) {
+        // --- Free-LLM path: Groq → Gemini → OpenRouter (text-only) -----------
+        const res = await generateReply({ system, messages });
+        finalText = res.ok ? res.text : cannedReply();
+        if (res.ok) sideEffects.push({ provider: res.provider });
+      } else {
+        // --- No key at all: graceful canned reply ----------------------------
+        finalText = cannedReply();
+        sideEffects.push({ fallback: "no_api_key" });
+      }
     }
 
     // --- Persist the bot reply --------------------------------------------

@@ -45,18 +45,29 @@ export async function POST(req: NextRequest) {
     // Fire welcome email (best-effort)
     void sendWelcomeToClient(email.trim().toLowerCase(), name.trim()).catch(() => null);
 
-    // Open an intake matter immediately so the client lands straight in the
-    // portal's active-matter view instead of an empty "no matters yet" screen.
-    if (data.user?.id) {
-      const { error: matterErr } = await admin.rpc("fl_open_matter", {
-        p_client_id: data.user.id,
-        p_workflow_type: intent ?? "general",
-        p_title: null,
+    const userId = data.user?.id;
+    const normalEmail = email.trim().toLowerCase();
+
+    if (userId) {
+      // Link any matters Owen pre-created with this email
+      const { data: linked, error: linkErr } = await admin.rpc("fl_link_pending_matters", {
+        p_user_id: userId,
+        p_email: normalEmail,
       });
-      if (matterErr) console.error("fl_open_matter failed on signup:", matterErr.message);
+      if (linkErr) console.error("fl_link_pending_matters failed:", linkErr.message);
+
+      // Only open a fresh intake matter if no pending matters were linked
+      if (!linked || linked === 0) {
+        const { error: matterErr } = await admin.rpc("fl_open_matter", {
+          p_client_id: userId,
+          p_workflow_type: intent ?? "general",
+          p_title: null,
+        });
+        if (matterErr) console.error("fl_open_matter failed on signup:", matterErr.message);
+      }
     }
 
-    return NextResponse.json({ ok: true, userId: data.user?.id });
+    return NextResponse.json({ ok: true, userId });
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "Unknown error" }, { status: 500 });
   }

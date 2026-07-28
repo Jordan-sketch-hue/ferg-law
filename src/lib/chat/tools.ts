@@ -1,6 +1,8 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { createAdminClient } from "@/lib/supabase/server";
 import { createClient } from "@/lib/supabase/client";
+import { notifyOwenWA } from "@/lib/wa-notify";
+import { sendBookingConfirmation } from "@/lib/email/send";
 
 /**
  * Chat tool schemas + executors (server-only).
@@ -82,6 +84,41 @@ export const CHAT_TOOLS: Anthropic.Tool[] = [
         reason: {
           type: "string",
           description: "Short reason a human is needed.",
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    name: "search_web",
+    description:
+      "Search the web for current information about Jamaica home-buying, NHT policies, conveyancing law, property transfer taxes, mortgage rates, or related real-estate topics. Use ONLY for questions about Jamaica property law, NHT, conveyancing procedures, or Ferguson Law topics where the knowledge base lacks a specific answer. Do NOT use for general or off-topic queries.",
+    input_schema: {
+      type: "object",
+      properties: {
+        query: {
+          type: "string",
+          description:
+            "A focused search query, e.g. 'NHT benefit amount Jamaica 2025' or 'Jamaica stamp duty rate property transfer'.",
+        },
+      },
+      required: ["query"],
+    },
+  },
+  {
+    name: "lookup_booking",
+    description:
+      "Look up an existing booking by reference number (e.g. FL-XXXXXX) or by email address. Use when the visitor asks about a booking they already made.",
+    input_schema: {
+      type: "object",
+      properties: {
+        ref: {
+          type: "string",
+          description: "Booking reference, e.g. FL-7K3Q9A.",
+        },
+        email: {
+          type: "string",
+          description: "Email address used when booking.",
         },
       },
       required: [],
@@ -332,6 +369,22 @@ export async function executeTool(
       ? ` at ${jamaicaLabel(new Date(slotIso))} Jamaica time`
       : "";
 
+    // Notify Owen via WhatsApp
+    void notifyOwenWA(
+      `New booking via website chat.\nName: ${leadName}\nService: ${service ?? "Consultation"}\nRef: ${ref}${slotIso ? `\nSlot: ${jamaicaLabel(new Date(slotIso))} JA time` : preferred ? `\nPreferred: ${preferred}` : ""}\nContact: ${phone ?? email ?? "none provided"}`,
+    );
+
+    // Send confirmation email to client if email was provided
+    if (email) {
+      void sendBookingConfirmation({
+        to: email,
+        name: leadName,
+        ref,
+        service: service ?? "Consultation",
+        whenLabel: slotIso ? jamaicaLabel(new Date(slotIso)) : preferred ?? "To be confirmed",
+      });
+    }
+
     return {
       content: `Booking saved${slotLabel}. Reference: ${ref}. The firm will confirm${slotIso ? "" : " a time"} with ${leadName}${
         phone || email ? ` via ${phone ?? email}` : ""
@@ -404,6 +457,144 @@ export async function executeTool(
         "A team member has been notified and will join this chat shortly. Reassure the visitor and let them know they can also use WhatsApp.",
       meta: { tool: name, reason },
       requestedHuman: true,
+    };
+  }
+
+  // -------------------------------------------------------------------------
+  // search_web — Tavily search scoped to Jamaica property / NHT topics
+  // -------------------------------------------------------------------------
+  if (name === "search_web") {
+    const query = str(input.query);
+    if (!query) {
+      return { content: "No query provided.", meta: { tool: name } };
+    }
+    const tavilyKey = process.env.TAVILY_API_KEY;
+    if (!tavilyKey) {
+      return {
+        content: "Web search is not configured. Please rely on the knowledge base.",
+        meta: { tool: name, error: "TAVILY_API_KEY not set" },
+      };
+    }
+
+    const queryNormalized = query.toLowerCase().trim().replace(/\s+/g, " ");
+    const CACHE_TTL_DAYS = 7;
+
+    // --- Check cache first ---------------------------------------------------
+    try {
+      const { data: cached } = await supabase
+        .from("chat_search_cache")
+        .select("result, refreshed_at")
+        .eq("query_normalized", queryNormalized)
+        .maybeSingle();
+
+      if (cached) {
+        const age = Date.now() - new Date(cached.refreshed_at).getTime();
+        if (age < CACHE_TTL_DAYS * 24 * 60 * 60 * 1000) {
+          // Increment hit count async (best-effort)
+          supabase.rpc("increment_search_cache_hit", { p_query: queryNormalized }).then(() => null, () => null);
+          return { content: cached.result, meta: { tool: name, query, cached: true } };
+        }
+      }
+    } catch {
+      // Cache miss — proceed to live search
+    }
+
+    // --- Live Tavily search --------------------------------------------------
+    try {
+      const res = await fetch("https://api.tavily.com/search", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          api_key: tavilyKey,
+          query,
+          search_depth: "basic",
+          max_results: 4,
+          include_answer: true,
+          include_domains: [
+            "nhts.gov.jm", "jis.gov.jm", "mof.gov.jm",
+            "jamaicalaw.gov.jm", "statin.gov.jm", "boj.org.jm",
+            "ncbja.com", "scotiabank.com", "jnbank.com", "jmmb.com",
+            "sagicorjamaica.com", "vmbs.com.jm",
+          ],
+        }),
+      });
+      const data = await res.json().catch(() => ({})) as {
+        answer?: string;
+        results?: Array<{ title: string; url: string; content: string }>;
+      };
+      const answer = data.answer?.trim();
+      const snippets = (data.results ?? [])
+        .slice(0, 3)
+        .map((r) => `[${r.title}](${r.url}): ${r.content.slice(0, 300)}`)
+        .join("\n\n");
+      const content = [
+        answer ? `Summary: ${answer}` : "",
+        snippets,
+      ].filter(Boolean).join("\n\n") || "No results found.";
+
+      // --- Save to cache async -----------------------------------------------
+      if (content && content !== "No results found.") {
+        void supabase.from("chat_search_cache").upsert({
+          query_normalized: queryNormalized,
+          query,
+          result: content,
+          hit_count: 0,
+          refreshed_at: new Date().toISOString(),
+        }, { onConflict: "query_normalized" });
+      }
+
+      return { content, meta: { tool: name, query, cached: false } };
+    } catch (e) {
+      return {
+        content: "Web search failed. Please rely on the knowledge base for now.",
+        meta: { tool: name, error: String(e) },
+      };
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // lookup_booking
+  // -------------------------------------------------------------------------
+  if (name === "lookup_booking") {
+    const ref = str(input.ref);
+    const email = str(input.email);
+
+    if (!ref && !email) {
+      return {
+        content: "Please ask the visitor for their booking reference (e.g. FL-XXXXXX) or the email address they used when booking.",
+        meta: { tool: name },
+      };
+    }
+
+    let query = supabase
+      .from("ferguson_leads")
+      .select("ref, name, service, preferred_date, preferred_time, status, created_at");
+
+    if (ref) {
+      query = query.eq("ref", ref.toUpperCase());
+    } else if (email) {
+      query = query.eq("email", email).order("created_at", { ascending: false }).limit(1);
+    }
+
+    const { data, error } = await query.maybeSingle();
+
+    if (error || !data) {
+      return {
+        content: `No booking found${ref ? ` for reference ${ref}` : ` for email ${email}`}. Please double-check the reference or email address, or ask the visitor to contact the firm on WhatsApp.`,
+        meta: { tool: name, error: error?.message },
+      };
+    }
+
+    const row = data as {
+      ref: string; name: string; service: string | null;
+      preferred_date: string | null; preferred_time: string | null;
+      status: string | null; created_at: string;
+    };
+
+    const when = [row.preferred_date, row.preferred_time].filter(Boolean).join(" ");
+    return {
+      content: `Booking found. Reference: ${row.ref}. Name: ${row.name}. Service: ${row.service ?? "Consultation"}${when ? `. Slot/preferred time: ${when}` : ""}. Status: ${row.status ?? "pending"}. The firm will be in touch to confirm.`,
+      meta: { tool: name, ref: row.ref },
     };
   }
 

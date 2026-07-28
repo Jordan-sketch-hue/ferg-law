@@ -14,6 +14,7 @@ export type SendBookingConfirmationArgs = {
   service: string;
   whenLabel: string;
   ref: string;
+  meetingUrl?: string;
 };
 
 export type SendResult =
@@ -29,7 +30,7 @@ export async function sendBookingConfirmation(
   const key = process.env.RESEND_API_KEY;
   if (!key) return { skipped: true };
 
-  const { to, name, service, whenLabel, ref } = args;
+  const { to, name, service, whenLabel, ref, meetingUrl } = args;
   const firstName = (name || "").trim().split(/\s+/)[0] || "there";
 
   const wa = waLink(
@@ -42,8 +43,8 @@ export async function sendBookingConfirmation(
       from: FROM,
       to,
       subject: `Consultation booked — ${ref}`,
-      html: buildHtml({ firstName, service, whenLabel, ref, wa }),
-      text: buildText({ firstName, service, whenLabel, ref, wa }),
+      html: buildHtml({ firstName, service, whenLabel, ref, wa, meetingUrl }),
+      text: buildText({ firstName, service, whenLabel, ref, wa, meetingUrl }),
     });
     if (error) return { ok: false, error: error.message || String(error) };
     return { ok: true, id: data?.id };
@@ -89,6 +90,101 @@ export async function sendBookingReminder(
         body: `Your Ferguson Law consultation is <strong>${soon}</strong>. The details are below — reply or tap WhatsApp if anything needs to change.`,
       }),
       text: buildText({ firstName, service, whenLabel, ref, wa }),
+    });
+    if (error) return { ok: false, error: error.message || String(error) };
+    return { ok: true, id: data?.id };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+export type SendNurtureEmailArgs = {
+  to: string;
+  name: string;
+  intent?: string | null;
+};
+
+/** Lead nurture — sent 24-72h after a chat that didn't convert to a booking. */
+export async function sendNurtureEmail(args: SendNurtureEmailArgs): Promise<SendResult> {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) return { skipped: true };
+
+  const { to, name, intent } = args;
+  const firstName = (name || "").trim().split(/\s+/)[0] || "there";
+  const topic = intent ? ` about ${intent.toLowerCase()}` : "";
+  const waMsg = `Hi Ferguson Law, I had a question${topic} and would like to continue.`;
+  const wa = waLink(waMsg);
+  const bookingUrl = SITE.bookingUrl;
+
+  const html = `<!doctype html>
+<html lang="en">
+  <head>
+    <meta name="color-scheme" content="light" />
+    <meta name="supported-color-schemes" content="light" />
+  </head>
+  <body style="margin:0;padding:0;background:#f4f1ec;font-family:Georgia,'Times New Roman',serif;color:#1c1c1c;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f1ec;padding:40px 16px;">
+      <tr><td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e7e1d6;">
+          <tr>
+            <td style="background:#10211c;padding:34px 40px;">
+              <div style="font-size:13px;letter-spacing:3px;text-transform:uppercase;color:#c9a86a;">Ferguson Law</div>
+              <div style="font-size:13px;color:#9fb3ab;margin-top:6px;">${SITE.tagline}</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:44px 40px 8px;">
+              <p style="font-size:26px;line-height:1.3;margin:0 0 22px;color:#10211c;">Still have questions, ${escapeHtml(firstName)}?</p>
+              <p style="font-size:16px;line-height:1.75;margin:0 0 28px;color:#3a3a3a;">
+                You reached out to Ferguson Law${topic ? ` with a question${topic}` : ""} and we want to make sure you get the help you need. When you are ready, booking a consultation is the fastest way to get clear answers for your specific situation.
+              </p>
+              <p style="font-size:16px;line-height:1.75;margin:0 0 28px;color:#3a3a3a;">
+                Every consultation is a flat J$8,000 for 20 minutes. Your fee is credited toward your legal work once you engage us.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 40px 12px;" align="center">
+              <a href="${bookingUrl}" style="display:inline-block;background:#c9a86a;color:#10211c;text-decoration:none;font-size:15px;font-weight:bold;padding:14px 34px;border-radius:9px;">Book a consultation</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:12px 40px 40px;">
+              <p style="font-size:14px;line-height:1.65;margin:0 0 8px;color:#6b6b6b;">Prefer to message us directly?</p>
+              <a href="${wa}" style="font-size:14px;color:#c9a86a;">WhatsApp: ${SITE.whatsappDisplay}</a>
+              <hr style="border:none;border-top:1px solid #ece6da;margin:28px 0 18px;" />
+              <p style="font-size:12px;line-height:1.6;margin:0;color:#aaa;">
+                Ferguson Law, 22B Old Hope Road, Kingston 5, Jamaica.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td></tr>
+    </table>
+  </body>
+</html>`;
+
+  const text = [
+    `Still have questions, ${firstName}?`,
+    ``,
+    `You reached out to Ferguson Law${topic ? ` about${topic}` : ""} and we want to make sure you get the help you need.`,
+    ``,
+    `Book a consultation: ${bookingUrl}`,
+    `Every consultation is a flat J$8,000 for 20 minutes. Your fee is credited toward your legal work once you engage us.`,
+    ``,
+    `WhatsApp: ${SITE.whatsappDisplay}`,
+    ``,
+    `Ferguson Law, 22B Old Hope Road, Kingston 5, Jamaica.`,
+  ].join("\n");
+
+  try {
+    const resend = new Resend(key);
+    const { data, error } = await resend.emails.send({
+      from: FROM,
+      to,
+      subject: `Your question to Ferguson Law`,
+      html,
+      text,
     });
     if (error) return { ok: false, error: error.message || String(error) };
     return { ok: true, id: data?.id };
@@ -167,11 +263,14 @@ function buildHtml(d: {
   wa: string;
   lead?: string;
   body?: string;
+  meetingUrl?: string;
 }): string {
   const lead = d.lead || `You're booked, ${escapeHtml(d.firstName)}.`;
   const body =
     d.body ||
-    `Thank you for choosing Ferguson Law. Your consultation is reserved. We'll send a secure intake link before we meet.`;
+    (d.meetingUrl
+      ? `Thank you for choosing Ferguson Law. Your consultation is reserved. Use the link below to join your video call at your scheduled time.`
+      : `Thank you for choosing Ferguson Law. Your consultation is reserved. We'll send a secure intake link before we meet.`);
   return `<!doctype html>
 <html lang="en">
   <head>
@@ -212,8 +311,15 @@ function buildHtml(d: {
                 </table>
               </td>
             </tr>
+            ${d.meetingUrl ? `<tr>
+              <td style="padding:28px 40px 0 40px;" align="center">
+                <a href="${escapeHtml(d.meetingUrl)}" style="display:inline-block;background:#0B1E10;color:#C9A961;text-decoration:none;font-size:15px;font-weight:bold;padding:14px 30px;border-radius:9px;">
+                  Join Video Consultation
+                </a>
+              </td>
+            </tr>` : ""}
             <tr>
-              <td style="padding:34px 40px 8px 40px;" align="center">
+              <td style="padding:${d.meetingUrl ? "16px" : "34px"} 40px 8px 40px;" align="center">
                 <a href="${d.wa}" style="display:inline-block;background:#c9a86a;color:#10211c;text-decoration:none;font-size:15px;font-weight:bold;padding:14px 30px;border-radius:9px;">
                   Confirm on WhatsApp
                 </a>
@@ -257,16 +363,20 @@ function buildText(d: {
   whenLabel: string;
   ref: string;
   wa: string;
+  meetingUrl?: string;
 }): string {
   return [
     `You're booked, ${d.firstName}.`,
     ``,
     `Thank you for choosing Ferguson Law. Your consultation is reserved.`,
-    `We'll send a secure intake link before we meet.`,
+    d.meetingUrl
+      ? `Use the link below to join your video call at your scheduled time.`
+      : `We'll send a secure intake link before we meet.`,
     ``,
     `Service:   ${d.service}`,
     `When:      ${d.whenLabel}`,
     `Reference: ${d.ref}`,
+    ...(d.meetingUrl ? [``, `Join video call: ${d.meetingUrl}`] : []),
     ``,
     `Confirm on WhatsApp: ${d.wa}`,
     ``,

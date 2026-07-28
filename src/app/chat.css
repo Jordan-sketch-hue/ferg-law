@@ -291,25 +291,56 @@
   color: var(--muted, #69736d);
   margin-top: 7px;
 }
+.fl-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  padding: 6px 14px 10px;
+}
+.fl-chip {
+  background: var(--paper, #f6f2ea);
+  border: 1px solid var(--line, #d9d5cc);
+  color: var(--ink, #1a2e1f);
+  border-radius: 20px;
+  font-size: 0.8rem;
+  padding: 5px 13px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.fl-chip:hover {
+  background: var(--gold-light, #e8ddc0);
+  border-color: var(--gold, #b59a4f);
+}
 
 @media (max-width: 480px) {
   .fl-chat-panel {
-    /* Position below the iOS notch — panel never slides under status bar */
-    top: env(safe-area-inset-top, 0px);
+    /* Four-corner stretch — no height/width needed, no conflict with dvh */
+    position: fixed;
+    top: 0;
     right: 0;
     bottom: 0;
     left: 0;
     width: 100%;
     max-width: 100%;
-    height: auto;
-    max-height: none;
+    height: 100%;
+    max-height: 100%;
     border-radius: 0;
+  }
+  /* Safe area padding lives in header/footer so the body fills the gap cleanly */
+  .fl-chat-header {
+    padding-top: calc(15px + env(safe-area-inset-top, 0px));
+  }
+  .fl-chat-foot {
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+  .fl-chat-body {
+    /* min-height: 0 is required for flex children to shrink-scroll */
+    min-height: 0;
   }
   .fl-chat-launch {
     right: 16px;
-    bottom: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
   }
-  /* Larger tap target on mobile */
   .fl-chat-close {
     width: 44px;
     height: 44px;

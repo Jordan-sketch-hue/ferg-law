@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Owen K. Ferguson JP — Ferguson Law</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0D0B08;color:#fff;font-family:'Courier New',monospace;min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px}
+.card{max-width:360px;width:100%}
+.gold{color:#C9A961}
+h1{font-family:Georgia,serif;font-size:2.4rem;font-weight:700;line-height:1.1;margin-bottom:6px}
+.firm{font-family:Georgia,serif;font-style:italic;font-size:1.2rem;color:#C9A961;margin-bottom:20px}
+.rule{border:none;border-top:1px solid rgba(201,169,97,0.35);margin:20px 0}
+.info{font-size:0.95rem;line-height:2;color:rgba(255,255,255,0.8)}
+.info a{color:#C9A961;text-decoration:none}
+.btn{display:inline-block;margin-top:28px;padding:14px 32px;background:#C9A961;color:#0D0B08;font-family:'Courier New',monospace;font-weight:700;font-size:0.85rem;letter-spacing:.12em;text-transform:uppercase;text-decoration:none;border-radius:2px;cursor:pointer}
+.redir{margin-top:18px;font-size:0.75rem;color:rgba(255,255,255,0.35);letter-spacing:.08em}
+.bar{width:0;height:2px;background:#C9A961;margin:10px auto 0;transition:width 3s linear}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="gold" style="font-size:.75rem;letter-spacing:.18em;margin-bottom:16px">ATTORNEY-AT-LAW &nbsp;·&nbsp; JUSTICE OF THE PEACE</div>
+  <h1>Owen K.<br>Ferguson</h1>
+  <div class="firm">Ferguson Law</div>
+  <hr class="rule">
+  <div class="info">
+    <a href="tel:8768405862">(876) 840-5862</a><br>
+    <a href="mailto:owen@fergusonlawja.com">owen@fergusonlawja.com</a><br>
+    <a href="https://fergusonlawja.com">fergusonlawja.com</a><br>
+    <span style="color:rgba(255,255,255,0.45);font-size:.85rem">Kingston, Jamaica</span>
+  </div>
+  <a class="btn" id="dl" href="#" download="Owen-Ferguson-FergusonLaw.vcf">Save Contact</a>
+  <div class="redir">Redirecting to website in <span id="count">4</span>s…</div>
+  <div class="bar" id="bar"></div>
+</div>
+<script>
+var vcard=[
+  'BEGIN:VCARD',
+  'VERSION:3.0',
+  'N:Ferguson;Owen;K.;;JP',
+  'FN:Owen K. Ferguson JP',
+  'ORG:Ferguson Law',
+  'TITLE:Attorney-at-Law, Justice of the Peace',
+  'TEL;TYPE=CELL,VOICE:(876) 840-5862',
+  'EMAIL;TYPE=WORK:owen@fergusonlawja.com',
+  'URL:https://fergusonlawja.com',
+  'ADR;TYPE=WORK:;;Kingston;;; ;Jamaica',
+  'NOTE:Real Estate & Conveyancing · Commercial Law · Wills & Estates · IP & Sports Law',
+  'END:VCARD'
+].join('\r\n');
+
+var blob=new Blob([vcard],{type:'text/vcard'});
+var url=URL.createObjectURL(blob);
+document.getElementById('dl').href=url;
+// auto-trigger download
+setTimeout(function(){document.getElementById('dl').click();},600);
+
+// countdown + redirect
+var n=4;
+var bar=document.getElementById('bar');
+bar.style.width='100%';
+var iv=setInterval(function(){
+  n--;
+  document.getElementById('count').textContent=n;
+  if(n<=0){clearInterval(iv);window.location.href='https://fergusonlawja.com';}
+},1000);
+</script>
+</body>
+</html>

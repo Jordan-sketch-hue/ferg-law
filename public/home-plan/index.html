@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>H.O.M.E.™ — Soft Launch Plan</title>
+<style>
+:root{--gold:#C9A961;--dark:#0B1E10;--ink:#1C1A17;--cream:#FAFAF6;--warm:#F5F1E8;--muted:#6B6558}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Georgia,serif;background:#E8E6E1;color:var(--ink);font-size:13px;line-height:1.6}
+button.print-btn{position:fixed;top:16px;right:16px;background:var(--dark);color:var(--gold);font-family:'Courier New',monospace;font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;border:none;padding:10px 20px;cursor:pointer;z-index:999;border-left:3px solid var(--gold)}
+button.print-btn:hover{background:var(--gold);color:var(--dark)}
+.page{width:210mm;min-height:297mm;margin:0 auto 24px;background:#fff;padding:16mm 15mm;position:relative;box-shadow:0 4px 24px rgba(0,0,0,0.1)}
+.cover{background:var(--dark);color:#fff;padding:20mm 18mm;display:flex;flex-direction:column;justify-content:space-between}
+.ey{font-family:'Courier New',monospace;font-size:8px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
+.cover h1{font-size:48px;font-weight:700;line-height:1.0;margin-bottom:6px}
+.cover h1 em{font-style:italic;color:var(--gold)}
+.cover-sub{font-family:'Courier New',monospace;font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:.07em;margin-bottom:28px}
+.gr{height:2px;background:var(--gold);width:48px;margin:20px 0}
+.cover-desc{font-size:14px;line-height:1.8;color:rgba(255,255,255,0.7);max-width:380px;font-style:italic}
+.cover-foot{display:flex;justify-content:space-between;align-items:flex-end;border-top:1px solid rgba(255,255,255,0.1);padding-top:16px;margin-top:16px}
+.cover-logo{font-size:18px;font-style:italic;color:var(--gold)}
+.cover-meta{font-family:'Courier New',monospace;font-size:8px;color:rgba(255,255,255,0.3);letter-spacing:.07em;text-align:right;line-height:1.8}
+.stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-top:1px solid rgba(201,169,97,0.2);margin-top:24px}
+.stat{padding:14px 0;border-right:1px solid rgba(201,169,97,0.2)}
+.stat:last-child{border-right:none}
+.stat-n{font-size:28px;font-weight:700;color:var(--gold);line-height:1}
+.stat-l{font-family:'Courier New',monospace;font-size:7px;color:rgba(255,255,255,0.4);letter-spacing:.1em;text-transform:uppercase;margin-top:3px}
+/* page headers */
+.ph{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid var(--gold);padding-bottom:8px;margin-bottom:20px}
+.ph-label{font-family:'Courier New',monospace;font-size:8px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
+.ph-num{font-family:'Courier New',monospace;font-size:8px;color:var(--muted)}
+h2{font-size:24px;font-weight:700;margin-bottom:3px;color:var(--dark)}
+.intro{font-size:12px;color:var(--muted);max-width:480px;margin-bottom:18px;line-height:1.7;font-style:italic}
+h3{font-size:10px;font-family:'Courier New',monospace;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--dark);margin:18px 0 8px;border-left:3px solid var(--gold);padding-left:8px}
+/* deliverable table */
+table{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:11px}
+th{font-family:'Courier New',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid rgba(201,169,97,0.3);padding:6px 8px;text-align:left;font-weight:700}
+td{padding:6px 8px;border-bottom:1px solid rgba(0,0,0,0.05);vertical-align:top}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--warm)}
+.tag{display:inline-block;font-family:'Courier New',monospace;font-size:7px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:2px 6px;border-radius:2px;margin:1px 2px 1px 0}
+.tag-reel{background:rgba(201,169,97,0.15);color:#7A5200}
+.tag-feed{background:rgba(11,30,16,0.08);color:var(--dark)}
+.tag-story{background:rgba(201,169,97,0.08);color:var(--muted)}
+.tag-car{background:#E8F0E8;color:#0B3020}
+.tag-paid{background:#FFF0E0;color:#8B3A00}
+.wk-badge{display:inline-block;font-family:'Courier New',monospace;font-size:8px;font-weight:700;background:var(--dark);color:var(--gold);padding:2px 7px;border-radius:2px}
+/* tools box */
+.tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.tool-card{border:1px solid rgba(201,169,97,0.2);border-left:3px solid var(--gold);padding:10px 12px;background:var(--cream)}
+.tool-name{font-family:'Courier New',monospace;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dark);margin-bottom:3px}
+.tool-desc{font-size:10px;color:var(--muted);line-height:1.5}
+.tool-url{font-family:'Courier New',monospace;font-size:8px;color:var(--gold);margin-top:3px}
+/* creative mockups */
+.creatives-wrap{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px}
+.mock{background:#0B1E10;border-radius:4px;overflow:hidden}
+.mock-label{font-family:'Courier New',monospace;font-size:7px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:6px 10px;background:rgba(201,169,97,0.15);color:var(--gold);border-bottom:1px solid rgba(201,169,97,0.2)}
+.mock-body{padding:10px}
+.mock-tag-row{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px}
+.mock-copy{font-size:10px;color:rgba(255,255,255,0.8);line-height:1.5;margin-bottom:6px}
+.mock-hook{font-size:12px;font-weight:700;color:#fff;line-height:1.2;margin-bottom:4px}
+.mock-cta{font-family:'Courier New',monospace;font-size:8px;color:var(--gold);letter-spacing:.08em}
+.mock-spec{font-family:'Courier New',monospace;font-size:7px;color:rgba(255,255,255,0.3);margin-top:6px;border-top:1px solid rgba(255,255,255,0.06);padding-top:5px}
+/* reel mockup */
+.reel-mock{background:#111;border-radius:4px;overflow:hidden;aspect-ratio:9/16;max-height:180px;position:relative}
+.reel-overlay{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:10px;background:linear-gradient(transparent 30%,rgba(0,0,0,0.8))}
+.reel-bg{position:absolute;inset:0;background:linear-gradient(135deg,#0B1E10 0%,#1A3A24 50%,#0B1E10 100%);opacity:.9}
+.reel-text{position:relative;z-index:1}
+.reel-hook{font-size:13px;font-weight:700;color:#fff;line-height:1.2;margin-bottom:4px}
+.reel-sub{font-size:9px;color:rgba(255,255,255,0.7);font-style:italic}
+.reel-bar{height:2px;background:var(--gold);width:40px;margin:5px 0}
+.reel-cta{font-family:'Courier New',monospace;font-size:7px;font-weight:700;color:var(--gold);letter-spacing:.1em;text-transform:uppercase}
+.reel-icons{position:absolute;right:8px;bottom:40px;display:flex;flex-direction:column;align-items:center;gap:8px;z-index:1}
+.reel-icon{font-size:16px;color:#fff}
+.reel-spec{font-family:'Courier New',monospace;font-size:7px;color:rgba(255,255,255,0.35);margin-top:4px}
+.story-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.story-frame{background:#0B1E10;border-radius:4px;aspect-ratio:9/16;padding:10px 8px;display:flex;flex-direction:column;justify-content:space-between;border:1px solid rgba(201,169,97,0.15);min-height:100px}
+.story-top{font-family:'Courier New',monospace;font-size:7px;color:var(--gold);font-weight:700;letter-spacing:.1em}
+.story-mid{font-size:11px;font-weight:700;color:#fff;line-height:1.2}
+.story-bot{font-family:'Courier New',monospace;font-size:7px;color:rgba(255,255,255,0.4);letter-spacing:.08em}
+.car-slides-row{display:flex;gap:6px;overflow:hidden;margin-bottom:6px}
+.car-s{background:#0B3020;border-radius:3px;flex:0 0 80px;aspect-ratio:1;padding:8px;display:flex;flex-direction:column;justify-content:space-between;border:1px solid rgba(201,169,97,0.2)}
+.car-s-n{font-family:'Courier New',monospace;font-size:7px;color:var(--gold);font-weight:700}
+.car-s-t{font-size:9px;font-weight:700;color:#fff;line-height:1.2}
+/* 60/30/10 bar */
+.rule-bar{display:flex;height:18px;border-radius:3px;overflow:hidden;margin:8px 0}
+.rule-seg{display:flex;align-items:center;justify-content:center;font-family:'Courier New',monospace;font-size:7px;font-weight:700;letter-spacing:.06em;color:#fff}
+.seg-60{flex:60;background:#0B3020}
+.seg-30{flex:30;background:#C9A961;color:#0B1E10}
+.seg-10{flex:10;background:#8B3A00}
+/* tone table */
+.tone-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.tone-col{border:1px solid rgba(0,0,0,0.08);padding:10px 12px}
+.tone-head{font-family:'Courier New',monospace;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;color:var(--dark)}
+.tone-item{font-size:10px;color:var(--muted);padding:3px 0;border-bottom:1px solid rgba(0,0,0,0.04);line-height:1.4}
+.tone-item:last-child{border-bottom:none}
+.tone-item b{color:var(--ink)}
+/* kpi */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid rgba(201,169,97,0.2);margin-bottom:18px}
+.kpi{padding:12px 14px;border-right:1px solid rgba(201,169,97,0.15)}
+.kpi:last-child{border-right:none}
+.kpi-n{font-size:22px;font-weight:700;color:var(--dark);line-height:1}
+.kpi-l{font-family:'Courier New',monospace;font-size:7px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-top:3px}
+/* lead magnet */
+.funnel{display:flex;flex-direction:column;gap:0;margin-bottom:16px}
+.funnel-step{display:flex;align-items:flex-start;gap:10px;padding:8px 12px;border-left:3px solid var(--gold);margin-bottom:4px;background:var(--cream)}
+.funnel-n{font-family:'Courier New',monospace;font-size:9px;font-weight:700;color:var(--gold);min-width:20px}
+.funnel-t{font-size:11px;font-weight:700;color:var(--dark);margin-bottom:1px}
+.funnel-d{font-size:10px;color:var(--muted)}
+/* next steps */
+.check-list{list-style:none;margin-bottom:16px}
+.check-list li{padding:6px 0;border-bottom:1px solid rgba(0,0,0,0.06);font-size:11px;display:flex;align-items:flex-start;gap:8px}
+.check-list li:last-child{border-bottom:none}
+.chk{width:12px;height:12px;border:1.5px solid var(--gold);border-radius:2px;flex-shrink:0;margin-top:1px}
+@media print{
+  .print-btn{display:none}
+  .page,.no-pp{width:210mm;margin:0;box-shadow:none;page-break-after:always}
+  body{background:#fff}
+}
+</style>
+</head>
+<body>
+<button class="print-btn" onclick="window.print()">SAVE AS PDF</button>
+
+<!-- ── COVER ── -->
+<div class="page cover">
+  <div>
+    <div class="ey">Confidential · Strategy Document</div>
+    <h1>H.O.M.E.<em>™</em><br>Soft Launch<br>Plan</h1>
+    <div class="cover-sub">BY FERGUSON LAW · KINGSTON, JAMAICA · 2025</div>
+    <div class="gr"></div>
+    <div class="cover-desc">A 6-week content + outreach strategy to establish H.O.M.E.™ across social platforms and convert buyers, realtors, and professionals into active partners.</div>
+  </div>
+  <div>
+    <div class="stats-bar">
+      <div class="stat"><div class="stat-n">3</div><div class="stat-l">Audiences</div></div>
+      <div class="stat"><div class="stat-n">6</div><div class="stat-l">Weeks</div></div>
+      <div class="stat"><div class="stat-n">18+</div><div class="stat-l">Deliverables</div></div>
+      <div class="stat"><div class="stat-n">$0</div><div class="stat-l">Tool Cost</div></div>
+    </div>
+    <div class="cover-foot">
+      <div class="cover-logo">Ferguson Law</div>
+      <div class="cover-meta">Owen K. Ferguson JP<br>Attorney-at-Law<br>(876) 840-5862</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PAGE 2: AUDIENCES + TONE ── -->
+<div class="page">
+  <div class="ph"><div class="ph-label">Section 01 — Audience + Voice</div><div class="ph-num">02 / 06</div></div>
+  <h2>Who We're Talking To</h2>
+  <p class="intro">Three distinct audiences. Each gets different content. Same brand, different door.</p>
+
+  <table>
+    <thead><tr><th>Audience</th><th>Core Pain</th><th>Our Hook</th><th>Primary Platform</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><b>Buyers / Sellers</b><br><span style="font-size:10px;color:var(--muted)">Local JA + diaspora</span></td>
+        <td>No idea what the process costs or how long it takes</td>
+        <td>"We tell you everything upfront."</td>
+        <td>Instagram · Facebook · WhatsApp</td>
+      </tr>
+      <tr>
+        <td><b>REALTORs</b><br><span style="font-size:10px;color:var(--muted)">JA-based agents</span></td>
+        <td>Attorneys slow deals down, no visibility on progress</td>
+        <td>"Your client. Your deal. Our support."</td>
+        <td>LinkedIn · WhatsApp DM</td>
+      </tr>
+      <tr>
+        <td><b>Bankers / Surveyors / Valuers</b><br><span style="font-size:10px;color:var(--muted)">Professional network</span></td>
+        <td>No single attorney who coordinates all parties seamlessly</td>
+        <td>"One point of contact for the whole transaction."</td>
+        <td>LinkedIn · Email</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Voice + Tone</h3>
+  <div class="tone-grid">
+    <div class="tone-col">
+      <div class="tone-head" style="color:#0B3020">✓ Do</div>
+      <div class="tone-item"><b>Warm authority</b> — confident, never cold</div>
+      <div class="tone-item"><b>Plain English</b> — explain legal terms simply</div>
+      <div class="tone-item"><b>Empathy first</b> — acknowledge the stress, then solve</div>
+      <div class="tone-item"><b>Specific numbers</b> — real costs, real timelines</div>
+      <div class="tone-item"><b>JA-rooted</b> — speak to local reality and diaspora pride</div>
+    </div>
+    <div class="tone-col">
+      <div class="tone-head" style="color:#8B3A00">✗ Don't</div>
+      <div class="tone-item">Legal jargon without explanation</div>
+      <div class="tone-item">Hard sell or pressure language</div>
+      <div class="tone-item">Generic "we're the best" claims</div>
+      <div class="tone-item">Overcrowded captions — no walls of text</div>
+      <div class="tone-item">Stock-photo people that don't look Jamaican</div>
+    </div>
+  </div>
+
+  <h3>60 / 30 / 10 Content Rule</h3>
+  <div class="rule-bar">
+    <div class="rule-seg seg-60">60% EDUCATE</div>
+    <div class="rule-seg seg-30">30% WARM</div>
+    <div class="rule-seg seg-10">10%</div>
+  </div>
+  <table>
+    <thead><tr><th>Split</th><th>Content Type</th><th>Example</th></tr></thead>
+    <tbody>
+      <tr><td><span class="tag tag-feed">60% Educate</span></td><td>How-to posts, explainers, cost breakdowns, myth-busting</td><td>"What does a conveyancing attorney actually do?"</td></tr>
+      <tr><td><span class="tag tag-car">30% Warm</span></td><td>Success stories (anon), process previews, referral partner spotlights</td><td>"First H.O.M.E.™ transaction — how it went."</td></tr>
+      <tr><td><span class="tag tag-paid">10% CTA</span></td><td>Direct offers — free consultation, checklist download, book now</td><td>"Book a free 20-min call. Limited slots this week."</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ── PAGE 3: DELIVERABLES ── -->
+<div class="page">
+  <div class="ph"><div class="ph-label">Section 02 — Content Deliverables</div><div class="ph-num">03 / 06</div></div>
+  <h2>18 Content Deliverables</h2>
+  <p class="intro">Every piece is production-ready using free tools — Pexels/Pixabay for video, Azure Neural TTS for voiceover, Canva for graphics.</p>
+
+  <h3>Reels (Video)</h3>
+  <table>
+    <thead><tr><th>#</th><th>Title</th><th>Hook (first 3 sec)</th><th>Format</th><th>Stock Source</th><th>VO</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>R1</td>
+        <td>Process in 60 Seconds</td>
+        <td>"Most people don't know this about buying property in Jamaica."</td>
+        <td><span class="tag tag-reel">Reel 9:16</span> 45–60s</td>
+        <td>Pexels: "keys handover", "signing documents"</td>
+        <td>Azure Neural — <i>en-JM-NayomiNeural</i></td>
+      </tr>
+      <tr>
+        <td>R2</td>
+        <td>Buy From Abroad — Diaspora</td>
+        <td>"You live in New York. Your family's in Kingston. This is how you buy."</td>
+        <td><span class="tag tag-reel">Reel 9:16</span> 30–45s</td>
+        <td>Pexels: "airplane window", "Kingston aerial", "family reunion"</td>
+        <td>Azure Neural — <i>en-US-AvaNeural</i></td>
+      </tr>
+      <tr>
+        <td>R3</td>
+        <td>Meet the Attorney</td>
+        <td>Owen to-camera — 20s intro of H.O.M.E.™</td>
+        <td><span class="tag tag-reel">Reel 9:16</span> 20–30s</td>
+        <td>Own footage — Owen on camera</td>
+        <td>Owen's voice (no VO needed)</td>
+      </tr>
+      <tr>
+        <td>R4</td>
+        <td>Realtor Partnership</td>
+        <td>"If you're a realtor and your deals are getting stuck — watch this."</td>
+        <td><span class="tag tag-reel">Reel 9:16</span> 30s</td>
+        <td>Pexels: "realtor showing house", "handshake"</td>
+        <td>Azure Neural — <i>en-JM-NayomiNeural</i></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Feed Posts (Single Image)</h3>
+  <table>
+    <thead><tr><th>#</th><th>Title</th><th>Copy Direction</th><th>Format</th><th>Platform</th></tr></thead>
+    <tbody>
+      <tr><td>F1</td><td>Real Cost Breakdown</td><td>Infographic: J$15M property — stamp duty, legal fees, transfer tax. No fluff.</td><td><span class="tag tag-feed">Feed 1:1</span></td><td>IG · FB</td></tr>
+      <tr><td>F2</td><td>Timeline Reality Check</td><td>"How long does it actually take? Week-by-week breakdown." Dark green card.</td><td><span class="tag tag-feed">Feed 1:1</span></td><td>IG · FB</td></tr>
+      <tr><td>F3</td><td>Myth Buster</td><td>"Myth: You don't need an attorney if the deal is simple." Gold card, bold refutation.</td><td><span class="tag tag-feed">Feed 4:5</span></td><td>IG</td></tr>
+      <tr><td>F4</td><td>Realtor Collab Offer</td><td>Direct to realtors: referral arrangement, transaction visibility, client protection.</td><td><span class="tag tag-feed">Feed 1:1</span></td><td>LinkedIn · IG</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Carousels</h3>
+  <table>
+    <thead><tr><th>#</th><th>Title</th><th>Slides</th><th>Audience</th></tr></thead>
+    <tbody>
+      <tr><td>C1</td><td>The 5-Step Process</td><td>Cover + 5 steps + CTA = 7 slides. Dark green bg, gold numbers, clean Courier text.</td><td>Buyers / Sellers</td></tr>
+      <tr><td>C2</td><td>Costs You Didn't Know About</td><td>5 hidden costs + "How we protect you from surprises" CTA slide.</td><td>Buyers</td></tr>
+      <tr><td>C3</td><td>Why Realtors Choose H.O.M.E.™</td><td>4 reasons + referral offer slide. Lighter cream bg, professional tone.</td><td>REALTORs</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Stories</h3>
+  <table>
+    <thead><tr><th>#</th><th>Series</th><th>Slides</th><th>Cadence</th></tr></thead>
+    <tbody>
+      <tr><td>S1</td><td>Daily Quick Tips</td><td>Single 9:16 card — "Today's property tip." Gold border, dark bg. Template reused daily.</td><td>Daily</td></tr>
+      <tr><td>S2</td><td>3-Part Story Arc</td><td>Slide 1: Problem → Slide 2: What happens without us → Slide 3: Book now CTA</td><td>Weekly</td></tr>
+      <tr><td>S3</td><td>Countdown / Announcement</td><td>Story series for soft launch day — "H.O.M.E.™ is here" announcement</td><td>Launch week</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Targeted / Paid Posts</h3>
+  <table>
+    <thead><tr><th>#</th><th>Ad</th><th>Targeting</th><th>Creative</th><th>Budget</th></tr></thead>
+    <tbody>
+      <tr><td>P1</td><td>Diaspora Home Buyer</td><td>JA-born 28–55 in US / UK / Canada</td><td>Reel R2 + "Book free call" CTA button</td><td>US$50 test — Wk 5</td></tr>
+      <tr><td>P2</td><td>Local Buyer</td><td>JA, 25–45, income interest in property</td><td>Feed F1 cost infographic + "Get your free checklist"</td><td>US$30 test — Wk 5</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ── PAGE 4: PRODUCTION TOOLS ── -->
+<div class="page">
+  <div class="ph"><div class="ph-label">Section 03 — Production Stack</div><div class="ph-num">04 / 06</div></div>
+  <h2>Free Production Tools</h2>
+  <p class="intro">Every deliverable above is producible at $0/month using the stack below.</p>
+
+  <h3>Video &amp; Stock Footage</h3>
+  <div class="tools-grid">
+    <div class="tool-card">
+      <div class="tool-name">Pexels</div>
+      <div class="tool-desc">Thousands of free 4K clips — search "Kingston Jamaica", "property signing", "luxury home", "diaspora family", "aerial city"</div>
+      <div class="tool-url">pexels.com/videos</div>
+    </div>
+    <div class="tool-card">
+      <div class="tool-name">Pixabay</div>
+      <div class="tool-desc">Free video + images, no attribution required. Use for B-roll: documents, keys, skyline, handshakes.</div>
+      <div class="tool-url">pixabay.com/videos</div>
+    </div>
+    <div class="tool-card">
+      <div class="tool-name">CapCut (free)</div>
+      <div class="tool-desc">Reel editing — trim clips, add captions, background music, transitions. Export 9:16 1080p. Works on phone or desktop.</div>
+      <div class="tool-url">capcut.com</div>
+    </div>
+    <div class="tool-card">
+      <div class="tool-name">Canva Free</div>
+      <div class="tool-desc">Feed posts, carousels, story frames. Use H.O.M.E.™ colors (#0B1E10 + #C9A961). Batch export all slides.</div>
+      <div class="tool-url">canva.com</div>
+    </div>
+  </div>
+
+  <h3>AI Voiceover — Azure Neural TTS (Free Tier)</h3>
+  <div class="tools-grid">
+    <div class="tool-card">
+      <div class="tool-name">Azure Neural TTS</div>
+      <div class="tool-desc">500,000 characters/month FREE. Best voices for H.O.M.E.™ reels:<br><br>
+        <b>en-JM-NayomiNeural</b> — Jamaican female, warm<br>
+        <b>en-JM-OrianNeural</b> — Jamaican male, authoritative<br>
+        <b>en-US-AvaNeural</b> — US diaspora content<br>
+        <b>en-GB-SoniaNeural</b> — UK diaspora content</div>
+      <div class="tool-url">speech.microsoft.com/portal → Try out</div>
+    </div>
+    <div class="tool-card">
+      <div class="tool-name">ElevenLabs Free</div>
+      <div class="tool-desc">10,000 chars/month free. More natural than Azure for short-form. Use for Reel intro hooks (first 3–5 seconds) where delivery matters most.</div>
+      <div class="tool-url">elevenlabs.io</div>
+    </div>
+  </div>
+
+  <h3>Scheduling &amp; Distribution</h3>
+  <table>
+    <thead><tr><th>Tool</th><th>Use</th><th>Cost</th></tr></thead>
+    <tbody>
+      <tr><td><b>Meta Business Suite</b></td><td>Schedule IG + FB posts &amp; reels up to 75 days ahead</td><td>Free</td></tr>
+      <tr><td><b>LinkedIn native scheduler</b></td><td>Schedule professional posts directly in app</td><td>Free</td></tr>
+      <tr><td><b>WhatsApp Broadcast</b></td><td>Send plan + PDF to realtor/professional list from Owen's phone</td><td>Free</td></tr>
+      <tr><td><b>Mailchimp Free</b></td><td>Email nurture sequence — up to 500 contacts, 1,000 sends/month</td><td>Free</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Reel Production Workflow</h3>
+  <table>
+    <thead><tr><th>Step</th><th>Action</th><th>Tool</th><th>Time</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Write script (30–60 words per reel)</td><td>Claude / own notes</td><td>10 min</td></tr>
+      <tr><td>2</td><td>Generate voiceover from script</td><td>Azure TTS → export MP3</td><td>2 min</td></tr>
+      <tr><td>3</td><td>Download 3–5 stock clips</td><td>Pexels / Pixabay</td><td>5 min</td></tr>
+      <tr><td>4</td><td>Edit: drop VO + clips, add captions + music</td><td>CapCut</td><td>20 min</td></tr>
+      <tr><td>5</td><td>Export 9:16 1080p, schedule via Meta Suite</td><td>CapCut → Meta Suite</td><td>3 min</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ── PAGE 5: TIMELINE ── -->
+<div class="page">
+  <div class="ph"><div class="ph-label">Section 04 — 6-Week Schedule</div><div class="ph-num">05 / 06</div></div>
+  <h2>6-Week Launch Schedule</h2>
+  <p class="intro">One phase per week. Each week has a named deliverable set — not just content types.</p>
+
+  <table>
+    <thead><tr><th>Week</th><th>Theme</th><th>Deliverables</th><th>Platform</th><th>Rule</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><span class="wk-badge">WK 1</span></td>
+        <td><b>Foundation</b></td>
+        <td>Set up IG/FB/LinkedIn under H.O.M.E.™ branding. Publish: Reel R3 (Owen intro), Carousel C1 (5 Steps), Story S3 (launch announcement). Pin carousel to all profiles.</td>
+        <td>IG · FB · LinkedIn</td>
+        <td><span class="tag tag-feed">60%</span></td>
+      </tr>
+      <tr>
+        <td><span class="wk-badge">WK 2</span></td>
+        <td><b>Educate</b></td>
+        <td>Feed F1 (cost breakdown), Feed F2 (timeline), Carousel C2 (hidden costs), Daily Stories S1 (5×), WhatsApp broadcast to Owen's personal network.</td>
+        <td>IG · FB · WA</td>
+        <td><span class="tag tag-feed">60%</span></td>
+      </tr>
+      <tr>
+        <td><span class="wk-badge">WK 3</span></td>
+        <td><b>Realtor Push</b></td>
+        <td>Reel R4 (realtor pitch), Carousel C3 (why realtors choose HOME), Feed F4 (collab offer). DM 20 realtors on WA/LinkedIn with this deck + carousel.</td>
+        <td>LinkedIn · WA · IG</td>
+        <td><span class="tag tag-car">30%</span></td>
+      </tr>
+      <tr>
+        <td><span class="wk-badge">WK 4</span></td>
+        <td><b>Professionals</b></td>
+        <td>Feed F3 (myth buster), LinkedIn article on working with H.O.M.E.™. WA broadcast to mortgage officers, valuers, surveyors. Invite onto H.O.M.E.™ Preferred Professionals list.</td>
+        <td>LinkedIn · WA · IG</td>
+        <td><span class="tag tag-car">30%</span></td>
+      </tr>
+      <tr>
+        <td><span class="wk-badge">WK 5</span></td>
+        <td><b>Diaspora + Paid</b></td>
+        <td>Reel R1 + R2 go live. Launch paid ads: P1 (diaspora) + P2 (local buyer) — US$80 total test budget. Activate free checklist download. Start capturing emails via Mailchimp.</td>
+        <td>IG Ads · FB Ads · Email</td>
+        <td><span class="tag tag-paid">10% CTA</span></td>
+      </tr>
+      <tr>
+        <td><span class="wk-badge">WK 6</span></td>
+        <td><b>Close + Review</b></td>
+        <td>Follow up Wk 3 realtor outreach. Formalise 3 referral arrangements. Post first "transaction complete" social proof (anon). Review ad results. Begin 5-email nurture sequence to captured leads.</td>
+        <td>All channels</td>
+        <td><span class="tag tag-feed">Mix</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Lead Magnet Funnel</h3>
+  <div class="funnel">
+    <div class="funnel-step"><div class="funnel-n">01</div><div><div class="funnel-t">Free Checklist — "10 Things to Do Before You Buy in Jamaica"</div><div class="funnel-d">Linked in every bio + story swipe-up. Captured via Mailchimp landing page.</div></div></div>
+    <div class="funnel-step"><div class="funnel-n">02</div><div><div class="funnel-t">Instant email delivery + welcome message from Owen</div><div class="funnel-d">Mailchimp auto-send. Establishes personal connection before they book.</div></div></div>
+    <div class="funnel-step"><div class="funnel-n">03</div><div><div class="funnel-t">5-email nurture over 15 days (every 3 days)</div><div class="funnel-d">E1: Checklist recap · E2: Cost breakdown · E3: Timeline reality · E4: FAQ · E5: Book your consultation CTA</div></div></div>
+    <div class="funnel-step"><div class="funnel-n">04</div><div><div class="funnel-t">Free 20-min consultation via fergusonlawja.com/booking</div><div class="funnel-d">Low-friction entry. Owen converts on the call.</div></div></div>
+  </div>
+</div>
+
+<!-- ── PAGE 6: KPIs + NEXT STEPS ── -->
+<div class="page">
+  <div class="ph"><div class="ph-label">Section 05 — KPIs &amp; Next Steps</div><div class="ph-num">06 / 06</div></div>
+  <h2>Targets &amp; Accountability</h2>
+  <p class="intro">Wk 6 review checkpoint — these numbers tell us if the launch worked.</p>
+
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-n">500</div><div class="kpi-l">IG Followers by Wk 6</div></div>
+    <div class="kpi"><div class="kpi-n">3</div><div class="kpi-l">Realtor referral deals signed</div></div>
+    <div class="kpi"><div class="kpi-n">100</div><div class="kpi-l">Email list by Wk 6</div></div>
+    <div class="kpi"><div class="kpi-n">10</div><div class="kpi-l">Consultation bookings</div></div>
+  </div>
+
+  <h3>Owen's Action Checklist</h3>
+  <ul class="check-list">
+    <li><div class="chk"></div>Create IG / FB / LinkedIn under <b>@home.fergusonlaw</b> handle</li>
+    <li><div class="chk"></div>Record 20-second to-camera intro (Reel R3) — phone, good light, speak naturally</li>
+    <li><div class="chk"></div>Compile list of 20+ realtors (WhatsApp numbers + LinkedIn)</li>
+    <li><div class="chk"></div>Compile list of bankers / valuers / surveyors (WhatsApp + email)</li>
+    <li><div class="chk"></div>Confirm referral arrangement terms to include in outreach</li>
+    <li><div class="chk"></div>Sign up: Azure (free TTS), Pexels, CapCut, Mailchimp, Meta Business Suite</li>
+    <li><div class="chk"></div>Approve free checklist copy before Mailchimp setup</li>
+    <li><div class="chk"></div>Approve ad creatives before Wk 5 spend</li>
+    <li><div class="chk"></div>Set aside US$80 for Wk 5 paid ad test</li>
+    <li><div class="chk"></div>Review ad results with JST at end of Wk 6</li>
+  </ul>
+
+  <h3>Content Cadence</h3>
+  <table>
+    <thead><tr><th>Platform</th><th>Frequency</th><th>Primary Format</th></tr></thead>
+    <tbody>
+      <tr><td>Instagram</td><td>Daily Stories · 3–4× Feed/week · 1–2 Reels/week</td><td>Reels, Carousels, Stories</td></tr>
+      <tr><td>Facebook</td><td>3–4×/week + Ads Wk 5</td><td>Feed posts, Paid reels</td></tr>
+      <tr><td>LinkedIn</td><td>2×/week</td><td>Articles, single posts, DMs</td></tr>
+      <tr><td>WhatsApp</td><td>1 broadcast/week per phase</td><td>PDF deck, plan copy</td></tr>
+      <tr><td>Email</td><td>Every 3 days from Wk 5 (automated)</td><td>5-email nurture sequence</td></tr>
+    </tbody>
+  </table>
+
+  <div style="margin-top:20px;padding:14px 16px;background:var(--dark);border-left:4px solid var(--gold)">
+    <div style="font-family:'Courier New',monospace;font-size:8px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:6px">Produced by J Supreme Tech</div>
+    <div style="font-size:11px;color:rgba(255,255,255,0.7);line-height:1.7">All creative production, scheduling, and technical setup handled by J Supreme Tech. Owen's only obligations: record the intro reel, approve content before publishing, and confirm referral terms. Everything else is managed.</div>
+    <div style="font-family:'Courier New',monospace;font-size:9px;color:var(--gold);margin-top:8px">(658) 218-2282 · jsupremetech.online</div>
+  </div>
+</div>
+
+</body>
+</html>

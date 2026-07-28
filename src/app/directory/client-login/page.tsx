@@ -25,9 +25,14 @@ export default function ClientLoginPage() {
     e.preventDefault();
     setErr(null);
     setBusy(true);
-    const { error } = await createClient().auth.signInWithPassword({ email: email.trim(), password });
-    if (error) { setErr(error.message); setBusy(false); return; }
-    router.push("/directory/client");
+    try {
+      const { error } = await createClient().auth.signInWithPassword({ email: email.trim(), password });
+      if (error) { setErr(error.message); setBusy(false); return; }
+      router.push("/directory/client");
+    } catch {
+      setErr("Could not reach the server. Please check your connection and try again.");
+      setBusy(false);
+    }
   }
 
   async function onSignup(e: React.FormEvent) {

@@ -26,16 +26,21 @@ const STORAGE_KEY = "fl_chat_conversation_id";
 const GREETING: Msg = {
   id: "greeting",
   role: "bot",
-  body: `Hi 👋 Welcome to ${SITE.name}. I'm here to help with our services, fees, buying a home in Jamaica, or booking a consultation. What would you like to know?`,
+  body: `Welcome to ${SITE.name}. I can help with our services, fees, buying a home in Jamaica, or booking a consultation. What would you like to know?`,
 };
 
 const HIDE_CHAT_PATHS = ["/directory/client", "/directory/client-login"];
 
 function linkify(text: string): string {
-  return text.replace(
-    /(https?:\/\/[^\s<>"]+)/g,
-    (url) => `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline">${url}</a>`,
-  );
+  return text
+    .replace(/\*\*(.*?)\*\*/g, "$1")
+    .replace(/\*(.*?)\*/g, "$1")
+    .replace(/\n- /g, "\n• ")
+    .replace(/\n/g, "<br>")
+    .replace(
+      /(https?:\/\/[^\s<>"]+)/g,
+      (url) => `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline">${url}</a>`,
+    );
 }
 
 export default function ChatWidget() {
@@ -343,6 +348,26 @@ export default function ChatWidget() {
             <span />
             <span />
             <span />
+          </div>
+        )}
+        {!sending && messages.length === 1 && messages[0].id === "greeting" && (
+          <div className="fl-chips">
+            {[
+              "Buying a property",
+              "Selling a property",
+              "Estate / Wills",
+              "Divorce / Family",
+              "Something else",
+            ].map((chip) => (
+              <button
+                key={chip}
+                type="button"
+                className="fl-chip"
+                onClick={() => send(chip)}
+              >
+                {chip}
+              </button>
+            ))}
           </div>
         )}
       </div>

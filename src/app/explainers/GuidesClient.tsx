@@ -46,7 +46,7 @@ export default function GuidesClient() {
             Explainers
           </h1>
           <p style={{ color: "rgba(246,242,234,.75)", maxWidth: 520, fontSize: "1rem", lineHeight: 1.65, margin: 0 }}>
-            Plain-English breakdowns of Jamaican property law — attorney-backed, no jargon.
+            Plain-English breakdowns of issues that you need to be aware of in Jamaican property transactions.
           </p>
         </div>
       </section>

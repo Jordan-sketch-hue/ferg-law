@@ -52,6 +52,25 @@ async function send(to: string, subject: string, html: string): Promise<SendResu
 }
 
 const PORTAL_URL = "https://fergusonlawja.com/directory/client";
+const SETTINGS_URL = "https://fergusonlawja.com/directory/settings";
+const SIGNUP_URL = "https://fergusonlawja.com/directory/client-login";
+
+export function sendClientPortalInvite(to: string, clientName: string, matterTitle?: string) {
+  const firstName = clientName.split(" ")[0];
+  const matterLine = matterTitle
+    ? `<p>Matter: <strong>${escapeHtml(matterTitle)}</strong></p>`
+    : "";
+  return send(
+    to,
+    "Your Ferguson Law client portal is ready",
+    shell(
+      `Hi ${escapeHtml(firstName)}, your matter is ready to view.`,
+      `${matterLine}Owen Ferguson has opened a matter on your behalf. Create your free account to access your portal — you can track progress, send messages, and upload documents securely.`,
+      "Create my account",
+      SIGNUP_URL,
+    ),
+  );
+}
 
 export function sendWelcomeToClient(to: string, clientName: string) {
   return send(
@@ -170,8 +189,10 @@ export function sendWeeklyClientDigest(
     awaitingClient: string[];
     nextStep: string | null;
     alerts: DigestAlert[];
+    clientName?: string;
   },
 ) {
+  const firstName = data.clientName ? data.clientName.split(" ")[0] : null;
   const statusLabel = (s: string) => s.replace(/_/g, " ");
 
   const alertsHtml = data.alerts.length ? `
@@ -204,14 +225,36 @@ export function sendWeeklyClientDigest(
       <div style="font-size:14px;color:#3a3a3a;">${escapeHtml(data.nextStep)}</div>
     </div>` : "";
 
+  const greeting = firstName
+    ? `Hi ${escapeHtml(firstName)}, here is your weekly update on ${escapeHtml(matterTitle)}.`
+    : `Here is your weekly update on ${escapeHtml(matterTitle)}.`;
+
+  const manageLink = `<p style="font-size:12px;color:#9a9a9a;text-align:center;margin:18px 0 0;"><a href="${SETTINGS_URL}" style="color:#9a8f7a;">Manage email preferences</a></p>`;
+
   return send(
     to,
-    `Your weekly update — ${matterTitle}`,
+    `Your weekly update on ${matterTitle}`,
     shell(
-      `Here's where things stand on ${escapeHtml(matterTitle)}.`,
-      `${alertsHtml}${changesHtml}${awaitingHtml}${pendingHtml}${forecastHtml}`,
+      greeting,
+      `${alertsHtml}${changesHtml}${awaitingHtml}${pendingHtml}${forecastHtml}${manageLink}`,
       "View my matter",
       PORTAL_URL,
+    ),
+  );
+}
+
+export function sendTestCompletionSummary(to: string, matterTitle: string, completedSteps: string[]) {
+  const listHtml = completedSteps
+    .map(s => `<div style="font-size:14px;color:#3a3a3a;padding:5px 0;border-bottom:1px solid #f0ede6;">${escapeHtml(s)}</div>`)
+    .join("");
+  return send(
+    to,
+    `Portal test complete — ${matterTitle}`,
+    shell(
+      "Your portal test run is done.",
+      `All ${completedSteps.length} milestones were advanced on <em>${escapeHtml(matterTitle)}</em>. Here is the full list of steps completed:<br/><br/>${listHtml}<br/>Log into the portal to confirm the final state, then submit your feedback.`,
+      "Submit feedback",
+      "https://fergusonlawja.com/testing",
     ),
   );
 }

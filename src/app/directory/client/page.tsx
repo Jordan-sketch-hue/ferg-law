@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { waLink } from "@/lib/site";
+import NotificationBell from "@/components/client/NotificationBell";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -357,7 +358,10 @@ export default function ClientDashboardPage() {
             {clientName ? `Welcome back, ${clientName.split(" ")[0]}` : "Your matters"}
           </h1>
         </div>
-        <button onClick={onSignOut} className="link-btn" style={{ fontSize: 13 }}>Sign out</button>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <NotificationBell />
+          <button onClick={onSignOut} className="link-btn" style={{ fontSize: 13 }}>Sign out</button>
+        </div>
       </div>
 
       {loading ? (

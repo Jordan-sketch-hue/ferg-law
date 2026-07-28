@@ -174,6 +174,7 @@ export async function generateReply(opts: {
     if (!fn) continue;
     const res = await fn(opts.system, opts.messages, maxTokens);
     if (res.ok) return res;
+    console.warn(`[chat] ${name} failed:`, res.error);
     last = res;
   }
   return last;

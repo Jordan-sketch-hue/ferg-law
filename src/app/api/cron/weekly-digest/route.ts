@@ -34,6 +34,8 @@ export async function GET(req: NextRequest) {
   const results: { matterId: string; sent: boolean; reason?: string }[] = [];
 
   for (const matter of matters ?? []) {
+    if (!matter.client_id) { results.push({ matterId: matter.id, sent: false, reason: "no client_id" }); continue; }
+
     const [{ data: milestones }, { data: log }, { data: userRes }] = await Promise.all([
       admin.from("fl_matter_milestones").select("name, phase_name, status, due_at").eq("matter_id", matter.id).order("phase_order").order("created_at"),
       admin.from("fl_milestone_status_log").select("milestone_name, phase_name, new_status, changed_at").eq("matter_id", matter.id).gte("changed_at", weekAgo).order("changed_at", { ascending: false }).limit(3),
@@ -42,6 +44,12 @@ export async function GET(req: NextRequest) {
 
     const email = userRes?.user?.email;
     if (!email) { results.push({ matterId: matter.id, sent: false, reason: "no email" }); continue; }
+    const clientName: string = (userRes?.user?.user_metadata?.full_name as string | undefined) || (userRes?.user?.user_metadata?.name as string | undefined) || email.split("@")[0];
+
+    // Check client's notification preferences
+    const { data: clientRow } = await admin.from("fl_clients").select("notification_prefs").eq("email", email).single();
+    const prefs = clientRow?.notification_prefs as Record<string, boolean> | null;
+    if (prefs && prefs.weekly_digest === false) { results.push({ matterId: matter.id, sent: false, reason: "opted out" }); continue; }
 
     const ms = milestones ?? [];
     const pending = ms.filter(m => m.status === "pending").map(m => m.name);
@@ -63,7 +71,7 @@ export async function GET(req: NextRequest) {
     }
 
     await sendWeeklyClientDigest(email, matter.title || matter.matter_type, {
-      recentChanges, pending, awaitingClient, nextStep, alerts,
+      recentChanges, pending, awaitingClient, nextStep, alerts, clientName,
     });
     results.push({ matterId: matter.id, sent: true });
   }

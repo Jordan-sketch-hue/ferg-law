@@ -23,28 +23,8 @@ export default function EbookPaymentGate({ onPurchaseStart }: EbookGateProps) {
     }
 
     setLoading(true);
-
-    try {
-      const res = await fetch("/api/ebook/purchase", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-
-      const data = (await res.json()) as { ok?: boolean; ref?: string; payUrl?: string; error?: string };
-
-      if (data.ok && data.payUrl) {
-        onPurchaseStart?.(data.ref || "", data.payUrl);
-        // Redirect to payment page
-        window.location.href = data.payUrl;
-      } else {
-        setError(data.error || "Could not initialize purchase.");
-      }
-    } catch {
-      setError("Network error. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+    // TEST MODE — bypass WiPay, grant direct access
+    window.location.href = "https://guide.fergusonlawja.com";
   };
 
   return (
@@ -129,7 +109,7 @@ export default function EbookPaymentGate({ onPurchaseStart }: EbookGateProps) {
             opacity: loading ? 0.6 : 1,
           }}
         >
-          {loading ? "Processing..." : "Purchase Now"}
+          {loading ? "Opening guide..." : "Access the Guide"}
         </button>
       </form>
 

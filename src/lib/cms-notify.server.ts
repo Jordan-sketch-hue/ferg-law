@@ -8,7 +8,6 @@
 import { createAdminClient } from "@/lib/supabase/server";
 import { sendWhatsAppText } from "@/lib/whatsapp.server";
 import {
-  sendMilestoneUpdate,
   sendNewMessageToClient,
   sendNewMessageToStaff,
   sendFileUploadedToStaff,
@@ -55,13 +54,30 @@ async function loadMatterContext(matterId: string): Promise<MatterContext | null
 export async function notifyMilestoneDone(matterId: string, milestoneName: string) {
   const ctx = await loadMatterContext(matterId);
   if (!ctx) return;
-  if (ctx.notifyEmail) await sendMilestoneUpdate(ctx.clientEmail, ctx.title, milestoneName).catch(() => null);
+  const supabase = createAdminClient();
+
+  // In-app notification (no per-milestone email — weekly digest handles email)
+  const userId = await getUserIdForMatter(matterId, supabase);
+  if (userId) {
+    await supabase.rpc("fl_notify_client", {
+      p_user_id: userId,
+      p_matter_id: matterId,
+      p_title: "Matter update",
+      p_body: `"${milestoneName}" has been completed on ${ctx.title}.`,
+    });
+  }
+
   if (ctx.notifyWhatsapp && ctx.phone) {
     await sendWhatsAppText(
       ctx.phone,
       `Ferguson Law update on ${ctx.title}: "${milestoneName}" is now complete. Log in to your client portal for the full timeline.`,
     ).catch(() => null);
   }
+}
+
+async function getUserIdForMatter(matterId: string, supabase: ReturnType<typeof createAdminClient>): Promise<string> {
+  const { data } = await supabase.from("fl_client_matters").select("client_id").eq("id", matterId).single();
+  return (data?.client_id as string) ?? "";
 }
 
 export async function notifyNewMessageToClient(matterId: string) {

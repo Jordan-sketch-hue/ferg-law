@@ -241,7 +241,7 @@ export default function BookingModal({
 
   const validDetails = useMemo(() => {
     const okEmail = emailRe.test(email.trim());
-    const okPhone = phone.replace(/\D/g, "").length >= 7;
+    const okPhone = phone.trim() === "" || phone.replace(/\D/g, "").length >= 7;
     return fName.trim() !== "" && lName.trim() !== "" && okEmail && okPhone;
   }, [fName, lName, email, phone]);
 
@@ -609,12 +609,11 @@ export default function BookingModal({
                   })}
                 </div>
                 <div className="slot-grid" id="slotGrid">
-                  {(selectedDay?.slots ?? []).map((s) => (
+                  {(selectedDay?.slots ?? []).filter((s) => s.available).map((s) => (
                     <button
                       key={s.iso}
                       className={`slot${slot === s.iso ? " sel" : ""}`}
-                      disabled={!s.available}
-                      onClick={() => s.available && setSlot(s.iso)}
+                      onClick={() => setSlot(s.iso)}
                     >
                       {s.label}
                     </button>
@@ -669,13 +668,13 @@ export default function BookingModal({
               <span className="errmsg">Enter a valid email</span>
             </div>
             <div className="field">
-              <label>WhatsApp / phone</label>
+              <label>WhatsApp / phone <span style={{fontSize:"0.8em",color:"var(--muted)",fontWeight:400}}>(optional)</span></label>
               <input
                 id="phone"
                 type="tel"
                 placeholder="+1 800 000 0000"
                 className={
-                  marked && phone.replace(/\D/g, "").length < 7 ? "err" : undefined
+                  marked && phone.trim() !== "" && phone.replace(/\D/g, "").length < 7 ? "err" : undefined
                 }
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}

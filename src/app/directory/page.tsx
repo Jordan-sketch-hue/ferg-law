@@ -12,6 +12,7 @@ interface PartnerRow {
   parishes: string[] | null;
   bio: string | null;
   logo_url: string | null;
+  work_photos: { type: string; url: string }[] | null;
   slug: string | null;
   featured: boolean;
 }
@@ -30,7 +31,7 @@ export default async function DirectoryPage({
   const [{ data: partners }, { data: listings }, { data: services }] = await Promise.all([
     sb
       .from("fl_partners")
-      .select("id,kind,business_name,parishes,bio,logo_url,slug,featured")
+      .select("id,kind,business_name,parishes,bio,logo_url,work_photos,slug,featured")
       .eq("status", "approved")
       .order("featured", { ascending: false })
       .order("business_name", { ascending: true }),

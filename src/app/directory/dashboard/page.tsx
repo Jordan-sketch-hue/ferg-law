@@ -117,8 +117,17 @@ function ProfileCard({ me, onSaved }: { me: Partner; onSaved: (p: Partner) => vo
 
   async function onLogo(file: File | undefined) {
     if (!file) return;
-    const m = await uploadMedia(me.id, file);
-    setF((s) => ({ ...s, logo_url: m.url }));
+    setBusy(true);
+    try {
+      const m = await uploadMedia(me.id, file);
+      setF((s) => ({ ...s, logo_url: m.url }));
+      await updateProfile({ logo_url: m.url });
+      const fresh = await getMe();
+      if (fresh) onSaved(fresh);
+      setOk(true);
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function save() {

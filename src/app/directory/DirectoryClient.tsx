@@ -11,6 +11,7 @@ interface PartnerRow {
   parishes: string[] | null;
   bio: string | null;
   logo_url: string | null;
+  work_photos: { type: string; url: string }[] | null;
   slug: string | null;
   featured: boolean;
 }
@@ -89,7 +90,8 @@ export default function DirectoryClient({ rows, listCount, firstImg, svcCount, a
       ) : (
         <div className="dir-grid">
           {filtered.map((p) => {
-            const thumb = firstImg[p.id] || p.logo_url || "";
+            const firstWorkPhoto = (p.work_photos ?? []).find((m) => m.type === "image")?.url ?? "";
+            const thumb = firstImg[p.id] || p.logo_url || firstWorkPhoto;
             const n = p.kind === "realtor" ? listCount[p.id] ?? 0 : svcCount[p.id] ?? 0;
             const noun =
               p.kind === "realtor"
