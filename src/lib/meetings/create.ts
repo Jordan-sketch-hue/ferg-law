@@ -11,10 +11,11 @@ export async function createMeetingRoom(
   startsAt: string,
   durationMinutes: number,
 ): Promise<MeetingResult | null> {
-  const daily = await tryDaily(startsAt, durationMinutes);
-  if (daily) return daily;
+  // Zoom is primary (confirmed working). Daily.co is fallback (requires payment method on account).
   const zoom = await tryZoom(topic, startsAt, durationMinutes);
   if (zoom) return zoom;
+  const daily = await tryDaily(startsAt, durationMinutes);
+  if (daily) return daily;
   return null;
 }
 

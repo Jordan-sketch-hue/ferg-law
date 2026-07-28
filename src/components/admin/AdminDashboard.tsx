@@ -4231,7 +4231,7 @@ function ZoomSetupTab({ token }: { token: string }) {
 
       <div style={{ marginBottom: 28 }}>
         <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: 22, fontWeight: 700, margin: 0, color: INK }}>Video Consultations</h2>
-        <p style={{ marginTop: 6, color: MUTED, fontSize: 14 }}>Powered by Zoom — clients get a join link in their confirmation email. Click below to start an instant meeting.</p>
+        <p style={{ marginTop: 6, color: MUTED, fontSize: 14 }}>Clients get a video call link in their confirmation email. Join from here or start an instant call below.</p>
       </div>
 
       {/* ── LIVE CALL IFRAME (Daily.co) ── */}
@@ -4252,7 +4252,7 @@ function ZoomSetupTab({ token }: { token: string }) {
       {/* ── INSTANT MEETING ── */}
       <div style={{ ...SECTION, display: "flex", flexDirection: "column", gap: 14 }}>
         <p style={{ fontWeight: 700, fontSize: 15, margin: 0, color: INK }}>Start an instant consultation</p>
-        <p style={{ fontSize: 13, color: MUTED, margin: 0 }}>Creates a Zoom meeting now and gives you the join link.</p>
+        <p style={{ fontSize: 13, color: MUTED, margin: 0 }}>Generates a video call room instantly — click Join to enter.</p>
         <button
           onClick={() => void createMeeting()}
           disabled={creating}
@@ -4357,9 +4357,9 @@ function ZoomSetupTab({ token }: { token: string }) {
       <div style={{ ...SECTION, background: "#f9f7f3" }}>
         <p style={{ fontWeight: 700, fontSize: 14, marginBottom: 10, color: INK }}>How it works</p>
         <ul style={{ fontSize: 13.5, lineHeight: 1.9, color: MUTED, paddingLeft: 18, margin: 0 }}>
-          <li>When a client books and pays, a Zoom meeting is auto-created and the join link goes in their confirmation email.</li>
-          <li>Click "Create instant meeting" here to get your host join link — opens Zoom in a new tab.</li>
-          <li>Meetings use join-before-host so clients can enter without waiting.</li>
+          <li>When a client books and pays, a video room is auto-created and the join link goes in their confirmation email.</li>
+          <li>Upcoming bookings appear above — click "Join on Zoom" to enter. Clients use their own link from the confirmation email to join the same call.</li>
+          <li>Clients can enter before you — no waiting room.</li>
         </ul>
       </div>
 
