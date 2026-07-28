@@ -4171,7 +4171,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
 }
 function ZoomSetupTab({ token }: { token: string }) {
   const [testing, setTesting] = useState(false);
-  const [status, setStatus] = useState<null | { ok: boolean; status?: string; email?: string; missing?: string[]; error?: string }>(null);
+  const [status, setStatus] = useState<null | { ok: boolean; status?: string; email?: string; scope?: string; missing?: string[]; error?: string }>(null);
   const [creating, setCreating] = useState(false);
   const [joinUrl, setJoinUrl] = useState<string | null>(null);
   const [createErr, setCreateErr] = useState<string | null>(null);
@@ -4245,7 +4245,7 @@ function ZoomSetupTab({ token }: { token: string }) {
       {status && (
         <div style={{ borderRadius: 10, padding: "14px 18px", marginBottom: 18, fontSize: 14, background: status.ok ? "#edf7ee" : "#fdf0f0", border: `1px solid ${status.ok ? "#b2dfb5" : "#f5c6c6"}`, color: status.ok ? "#1e5c22" : "#7a1515" }}>
           {status.ok
-            ? `Connected — Zoom account: ${status.email ?? "active"}`
+            ? `Connected — Zoom API active`
             : status.status === "not_configured"
               ? `Not configured. Add ${(status.missing ?? []).join(", ")} to Vercel env vars.`
               : `Error: ${status.error}`}

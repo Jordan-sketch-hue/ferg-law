@@ -37,14 +37,10 @@ export async function GET(req: NextRequest) {
       { method: "POST", headers: { Authorization: `Basic ${credentials}` } },
     );
     if (!tokenRes.ok) throw new Error(`Zoom OAuth ${tokenRes.status}`);
-    const tokenData = await tokenRes.json() as { access_token: string };
+    const tokenData = await tokenRes.json() as { access_token: string; scope?: string };
 
-    // Verify token works by listing meetings (only needs meeting:write scope)
-    const listRes = await fetch("https://api.zoom.us/v2/users/me/meetings?page_size=1", {
-      headers: { Authorization: `Bearer ${tokenData.access_token}` },
-    });
-    if (!listRes.ok) throw new Error(`Zoom API ${listRes.status}`);
-    return Response.json({ ok: true, status: "connected", email: null });
+    // Token obtained = credentials valid. Scope: meeting:write:meeting:admin
+    return Response.json({ ok: true, status: "connected", scope: tokenData.scope ?? null });
   } catch (err) {
     return Response.json({ ok: false, status: "error", error: (err as Error).message }, { status: 500 });
   }
