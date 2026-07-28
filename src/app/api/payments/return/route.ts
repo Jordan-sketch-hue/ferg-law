@@ -18,6 +18,36 @@ import { parseReturn } from "@/lib/payments/wipay";
 import { fullWhenLabel } from "@/lib/booking/format";
 import { sendBookingConfirmation } from "@/lib/email/send";
 
+async function createZoomMeeting(topic: string, startsAt: string, duration: number): Promise<string | null> {
+  const accountId = process.env.ZOOM_ACCOUNT_ID;
+  const clientId = process.env.ZOOM_CLIENT_ID;
+  const clientSecret = process.env.ZOOM_CLIENT_SECRET;
+  if (!accountId || !clientId || !clientSecret) return null;
+  try {
+    const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
+    const tokenRes = await fetch(
+      `https://zoom.us/oauth/token?grant_type=account_credentials&account_id=${accountId}`,
+      { method: "POST", headers: { Authorization: `Basic ${credentials}` } },
+    );
+    if (!tokenRes.ok) return null;
+    const { access_token } = await tokenRes.json() as { access_token: string };
+    const meetingRes = await fetch("https://api.zoom.us/v2/users/me/meetings", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${access_token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        topic,
+        type: 2,
+        start_time: startsAt,
+        duration,
+        settings: { join_before_host: true, waiting_room: false },
+      }),
+    });
+    if (!meetingRes.ok) return null;
+    const data = await meetingRes.json() as { join_url: string };
+    return data.join_url;
+  } catch { return null; }
+}
+
 function normaliseOrderId(value: string | undefined): string | null {
   const raw = (value || "").trim();
   if (!raw) return null;
@@ -90,6 +120,15 @@ export async function GET(req: NextRequest) {
 
   // Confirmation email fires once, only on the transition to paid.
   if (row?.newly_paid && row.r_email) {
+    let meetingUrl: string | undefined;
+    try {
+      const url = await createZoomMeeting("Ferguson Law Consultation", row.r_starts ?? new Date().toISOString(), 60);
+      if (url) {
+        meetingUrl = url;
+        await supabase.from("appointments").update({ meta: { zoom_url: url } }).eq("ref", ref);
+      }
+    } catch { /* swallow */ }
+
     try {
       await sendBookingConfirmation({
         to: row.r_email,
@@ -97,6 +136,7 @@ export async function GET(req: NextRequest) {
         service: row.r_service || "Consultation",
         whenLabel: row.r_starts ? fullWhenLabel(row.r_starts) : "",
         ref,
+        meetingUrl,
       });
     } catch {
       /* swallow — payment already settled */

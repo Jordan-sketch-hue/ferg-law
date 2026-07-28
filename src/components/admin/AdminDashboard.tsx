@@ -4169,12 +4169,29 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
     </div>
   );
 }
+interface UpcomingMeeting {
+  ref: string; name: string | null; service: string | null; starts_at: string; zoom_url: string | null;
+}
+
 function ZoomSetupTab({ token }: { token: string }) {
   const [testing, setTesting] = useState(false);
   const [status, setStatus] = useState<null | { ok: boolean; status?: string; email?: string; scope?: string; missing?: string[]; error?: string }>(null);
   const [creating, setCreating] = useState(false);
   const [joinUrl, setJoinUrl] = useState<string | null>(null);
   const [createErr, setCreateErr] = useState<string | null>(null);
+  const [upcoming, setUpcoming] = useState<UpcomingMeeting[]>([]);
+  const [loadingUpcoming, setLoadingUpcoming] = useState(true);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const r = await fetch("/api/admin/zoom/upcoming", { headers: { "x-admin-token": token } });
+        const d = await r.json() as { ok: boolean; meetings?: UpcomingMeeting[] };
+        if (d.ok) setUpcoming(d.meetings ?? []);
+      } catch { /* swallow */ }
+      finally { setLoadingUpcoming(false); }
+    })();
+  }, [token]);
 
   async function testConnection() {
     setTesting(true); setStatus(null);
@@ -4239,6 +4256,37 @@ function ZoomSetupTab({ token }: { token: string }) {
           </div>
         )}
         {createErr && <p style={{ color: "#c0392b", fontSize: 13, margin: 0 }}>{createErr}</p>}
+      </div>
+
+      {/* ── UPCOMING MEETINGS ── */}
+      <div style={SECTION}>
+        <p style={{ fontWeight: 700, fontSize: 15, marginBottom: 16, color: INK }}>Upcoming consultations</p>
+        {loadingUpcoming ? (
+          <p style={{ fontSize: 13, color: MUTED }}>Loading…</p>
+        ) : upcoming.length === 0 ? (
+          <p style={{ fontSize: 13, color: MUTED }}>No upcoming confirmed bookings. Zoom links appear here automatically when clients book and pay.</p>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {upcoming.map(m => {
+              const when = new Intl.DateTimeFormat("en-JM", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "America/Jamaica" }).format(new Date(m.starts_at));
+              return (
+                <div key={m.ref} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10, padding: "14px 18px", background: "#f9f7f3", borderRadius: 10, border: "1px solid rgba(0,0,0,.06)" }}>
+                  <div>
+                    <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: INK }}>{m.name ?? "Client"}</p>
+                    <p style={{ margin: "2px 0 0", fontSize: 12, color: MUTED }}>{m.service} · {when}</p>
+                  </div>
+                  {m.zoom_url ? (
+                    <a href={m.zoom_url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-block", background: "#2D8CFF", color: "#fff", borderRadius: 7, padding: "8px 18px", fontWeight: 700, fontSize: 13, textDecoration: "none", flexShrink: 0 }}>
+                      Join on Zoom ↗
+                    </a>
+                  ) : (
+                    <span style={{ fontSize: 12, color: MUTED, fontStyle: "italic" }}>No link yet</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* ── STATUS ── */}

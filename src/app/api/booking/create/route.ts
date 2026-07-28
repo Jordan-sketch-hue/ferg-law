@@ -235,11 +235,14 @@ export async function POST(req: NextRequest) {
         extraMeta: { invite: inviteCode, payment: "free" },
       });
 
-      // Auto-create Daily.co room (non-fatal — booking always succeeds)
+      // Auto-create Zoom meeting and store URL in meta (non-fatal — booking always succeeds)
       let meetingUrl: string | undefined;
       try {
         const url = await createZoomMeeting(`Ferguson Law Consultation`, startsIso, duration);
-        if (url) meetingUrl = url;
+        if (url) {
+          meetingUrl = url;
+          await supabase.from("appointments").update({ meta: { zoom_url: url } }).eq("ref", ref);
+        }
       } catch { /* swallow */ }
 
       // Confirmation email fires now (free bookings are immediately confirmed).
