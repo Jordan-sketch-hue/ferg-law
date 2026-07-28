@@ -25,13 +25,17 @@ export async function GET(req: NextRequest) {
   if (error) return Response.json({ ok: false, error: error.message }, { status: 500 });
 
   const meetings = (data ?? [])
-    .map(r => ({
-      ref: r.ref,
-      name: r.name,
-      service: r.service,
-      starts_at: r.starts_at,
-      zoom_url: (r.meta as Record<string, string> | null)?.zoom_url ?? null,
-    }));
+    .map(r => {
+      const meta = r.meta as Record<string, string> | null;
+      return {
+        ref: r.ref,
+        name: r.name,
+        service: r.service,
+        starts_at: r.starts_at,
+        meeting_url: meta?.meeting_url ?? meta?.zoom_url ?? null,
+        meeting_provider: meta?.meeting_provider ?? (meta?.zoom_url ? "zoom" : null),
+      };
+    });
 
   return Response.json({ ok: true, meetings });
 }

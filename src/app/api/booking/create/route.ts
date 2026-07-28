@@ -32,37 +32,7 @@ import { createPayment } from "@/lib/payments/wipay";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-async function createZoomMeeting(topic: string, startsAt: string, duration: number): Promise<string | null> {
-  const accountId = process.env.ZOOM_ACCOUNT_ID;
-  const clientId = process.env.ZOOM_CLIENT_ID;
-  const clientSecret = process.env.ZOOM_CLIENT_SECRET;
-  if (!accountId || !clientId || !clientSecret) return null;
-  try {
-    const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
-    const tokenRes = await fetch(
-      `https://zoom.us/oauth/token?grant_type=account_credentials&account_id=${accountId}`,
-      { method: "POST", headers: { Authorization: `Basic ${credentials}` } },
-    );
-    if (!tokenRes.ok) return null;
-    const { access_token } = await tokenRes.json() as { access_token: string };
-    const meetingRes = await fetch("https://api.zoom.us/v2/users/me/meetings", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${access_token}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        topic,
-        type: 2,
-        start_time: startsAt,
-        duration,
-        settings: { join_before_host: true, waiting_room: false },
-      }),
-    });
-    if (!meetingRes.ok) return null;
-    const data = await meetingRes.json() as { join_url: string };
-    return data.join_url;
-  } catch {
-    return null;
-  }
-}
+import { createMeetingRoom } from "@/lib/meetings/create";
 
 const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -235,13 +205,13 @@ export async function POST(req: NextRequest) {
         extraMeta: { invite: inviteCode, payment: "free" },
       });
 
-      // Auto-create Zoom meeting and store URL in meta (non-fatal — booking always succeeds)
+      // Auto-create meeting (Daily.co first, Zoom fallback) — non-fatal
       let meetingUrl: string | undefined;
       try {
-        const url = await createZoomMeeting(`Ferguson Law Consultation`, startsIso, duration);
-        if (url) {
-          meetingUrl = url;
-          await supabase.from("appointments").update({ meta: { zoom_url: url } }).eq("ref", ref);
+        const meeting = await createMeetingRoom("Ferguson Law Consultation", startsIso, duration);
+        if (meeting) {
+          meetingUrl = meeting.url;
+          await supabase.from("appointments").update({ meta: { meeting_url: meeting.url, meeting_provider: meeting.provider } }).eq("ref", ref);
         }
       } catch { /* swallow */ }
 

@@ -18,35 +18,7 @@ import { parseReturn } from "@/lib/payments/wipay";
 import { fullWhenLabel } from "@/lib/booking/format";
 import { sendBookingConfirmation } from "@/lib/email/send";
 
-async function createZoomMeeting(topic: string, startsAt: string, duration: number): Promise<string | null> {
-  const accountId = process.env.ZOOM_ACCOUNT_ID;
-  const clientId = process.env.ZOOM_CLIENT_ID;
-  const clientSecret = process.env.ZOOM_CLIENT_SECRET;
-  if (!accountId || !clientId || !clientSecret) return null;
-  try {
-    const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
-    const tokenRes = await fetch(
-      `https://zoom.us/oauth/token?grant_type=account_credentials&account_id=${accountId}`,
-      { method: "POST", headers: { Authorization: `Basic ${credentials}` } },
-    );
-    if (!tokenRes.ok) return null;
-    const { access_token } = await tokenRes.json() as { access_token: string };
-    const meetingRes = await fetch("https://api.zoom.us/v2/users/me/meetings", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${access_token}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        topic,
-        type: 2,
-        start_time: startsAt,
-        duration,
-        settings: { join_before_host: true, waiting_room: false },
-      }),
-    });
-    if (!meetingRes.ok) return null;
-    const data = await meetingRes.json() as { join_url: string };
-    return data.join_url;
-  } catch { return null; }
-}
+import { createMeetingRoom } from "@/lib/meetings/create";
 
 function normaliseOrderId(value: string | undefined): string | null {
   const raw = (value || "").trim();
@@ -122,10 +94,10 @@ export async function GET(req: NextRequest) {
   if (row?.newly_paid && row.r_email) {
     let meetingUrl: string | undefined;
     try {
-      const url = await createZoomMeeting("Ferguson Law Consultation", row.r_starts ?? new Date().toISOString(), 60);
-      if (url) {
-        meetingUrl = url;
-        await supabase.from("appointments").update({ meta: { zoom_url: url } }).eq("ref", ref);
+      const meeting = await createMeetingRoom("Ferguson Law Consultation", row.r_starts ?? new Date().toISOString(), 60);
+      if (meeting) {
+        meetingUrl = meeting.url;
+        await supabase.from("appointments").update({ meta: { meeting_url: meeting.url, meeting_provider: meeting.provider } }).eq("ref", ref);
       }
     } catch { /* swallow */ }
 

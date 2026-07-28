@@ -4170,14 +4170,16 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
   );
 }
 interface UpcomingMeeting {
-  ref: string; name: string | null; service: string | null; starts_at: string; zoom_url: string | null;
+  ref: string; name: string | null; service: string | null; starts_at: string;
+  meeting_url: string | null; meeting_provider: string | null;
 }
 
 function ZoomSetupTab({ token }: { token: string }) {
   const [testing, setTesting] = useState(false);
   const [status, setStatus] = useState<null | { ok: boolean; status?: string; email?: string; scope?: string; missing?: string[]; error?: string }>(null);
   const [creating, setCreating] = useState(false);
-  const [joinUrl, setJoinUrl] = useState<string | null>(null);
+  const [instantMeeting, setInstantMeeting] = useState<{ url: string; provider: string } | null>(null);
+  const [activeIframe, setActiveIframe] = useState<string | null>(null);
   const [createErr, setCreateErr] = useState<string | null>(null);
   const [upcoming, setUpcoming] = useState<UpcomingMeeting[]>([]);
   const [loadingUpcoming, setLoadingUpcoming] = useState(true);
@@ -4203,16 +4205,18 @@ function ZoomSetupTab({ token }: { token: string }) {
   }
 
   async function createMeeting() {
-    setCreating(true); setCreateErr(null); setJoinUrl(null);
+    setCreating(true); setCreateErr(null); setInstantMeeting(null);
     try {
       const r = await fetch("/api/admin/zoom/create-meeting", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token, topic: "Ferguson Law Consultation", start_time: new Date().toISOString(), duration_minutes: 60 }),
       });
-      const d = await r.json() as { ok: boolean; join_url?: string; error?: string };
-      if (d.ok && d.join_url) setJoinUrl(d.join_url);
-      else setCreateErr(d.error ?? "Could not create meeting.");
+      const d = await r.json() as { ok: boolean; url?: string; provider?: string; error?: string };
+      if (d.ok && d.url) {
+        setInstantMeeting({ url: d.url, provider: d.provider ?? "zoom" });
+        if (d.provider === "daily") setActiveIframe(d.url);
+      } else setCreateErr(d.error ?? "Could not create meeting.");
     } catch { setCreateErr("Network error."); }
     finally { setCreating(false); }
   }
@@ -4230,6 +4234,21 @@ function ZoomSetupTab({ token }: { token: string }) {
         <p style={{ marginTop: 6, color: MUTED, fontSize: 14 }}>Powered by Zoom — clients get a join link in their confirmation email. Click below to start an instant meeting.</p>
       </div>
 
+      {/* ── LIVE CALL IFRAME (Daily.co) ── */}
+      {activeIframe && (
+        <div style={{ ...SECTION, padding: 0, overflow: "hidden" }}>
+          <div style={{ padding: "12px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid rgba(0,0,0,.07)" }}>
+            <span style={{ fontWeight: 700, fontSize: 14, color: INK }}>Live consultation</span>
+            <div style={{ display: "flex", gap: 10 }}>
+              <a href={activeIframe} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: GOLD }}>Open in new tab ↗</a>
+              <button onClick={() => setActiveIframe(null)} style={{ fontSize: 12, background: "none", border: "1px solid #ddd", borderRadius: 6, padding: "4px 10px", cursor: "pointer", color: MUTED }}>Close</button>
+            </div>
+          </div>
+          <iframe src={activeIframe} allow="camera; microphone; fullscreen; display-capture; autoplay"
+            style={{ width: "100%", height: 520, border: "none", display: "block" }} />
+        </div>
+      )}
+
       {/* ── INSTANT MEETING ── */}
       <div style={{ ...SECTION, display: "flex", flexDirection: "column", gap: 14 }}>
         <p style={{ fontWeight: 700, fontSize: 15, margin: 0, color: INK }}>Start an instant consultation</p>
@@ -4241,18 +4260,24 @@ function ZoomSetupTab({ token }: { token: string }) {
         >
           {creating ? "Creating meeting…" : "Create instant meeting"}
         </button>
-        {joinUrl && (
+        {instantMeeting && (
           <div style={{ background: "#f0f7f0", border: "1px solid #b2dfb5", borderRadius: 10, padding: "16px 20px" }}>
-            <p style={{ margin: "0 0 10px", fontWeight: 700, fontSize: 14, color: "#1e5c22" }}>Meeting ready</p>
-            <a
-              href={joinUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ display: "inline-block", background: "#2D8CFF", color: "#fff", borderRadius: 8, padding: "10px 22px", fontWeight: 700, fontSize: 14, textDecoration: "none" }}
-            >
-              Join on Zoom ↗
-            </a>
-            <p style={{ margin: "10px 0 0", fontSize: 12, color: MUTED, wordBreak: "break-all" }}>{joinUrl}</p>
+            <p style={{ margin: "0 0 10px", fontWeight: 700, fontSize: 14, color: "#1e5c22" }}>
+              Meeting ready · {instantMeeting.provider === "daily" ? "Daily.co (embedded below)" : "Zoom"}
+            </p>
+            {instantMeeting.provider === "zoom" && (
+              <a href={instantMeeting.url} target="_blank" rel="noopener noreferrer"
+                style={{ display: "inline-block", background: "#2D8CFF", color: "#fff", borderRadius: 8, padding: "10px 22px", fontWeight: 700, fontSize: 14, textDecoration: "none" }}>
+                Join on Zoom ↗
+              </a>
+            )}
+            {instantMeeting.provider === "daily" && !activeIframe && (
+              <button onClick={() => setActiveIframe(instantMeeting.url)}
+                style={{ background: GREEN, color: GOLD, border: "none", borderRadius: 8, padding: "10px 22px", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>
+                Join call
+              </button>
+            )}
+            <p style={{ margin: "10px 0 0", fontSize: 11, color: MUTED, wordBreak: "break-all" }}>{instantMeeting.url}</p>
           </div>
         )}
         {createErr && <p style={{ color: "#c0392b", fontSize: 13, margin: 0 }}>{createErr}</p>}
@@ -4275,10 +4300,18 @@ function ZoomSetupTab({ token }: { token: string }) {
                     <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: INK }}>{m.name ?? "Client"}</p>
                     <p style={{ margin: "2px 0 0", fontSize: 12, color: MUTED }}>{m.service} · {when}</p>
                   </div>
-                  {m.zoom_url ? (
-                    <a href={m.zoom_url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-block", background: "#2D8CFF", color: "#fff", borderRadius: 7, padding: "8px 18px", fontWeight: 700, fontSize: 13, textDecoration: "none", flexShrink: 0 }}>
-                      Join on Zoom ↗
-                    </a>
+                  {m.meeting_url ? (
+                    m.meeting_provider === "daily" ? (
+                      <button onClick={() => setActiveIframe(m.meeting_url!)}
+                        style={{ background: GREEN, color: GOLD, border: "none", borderRadius: 7, padding: "8px 18px", fontWeight: 700, fontSize: 13, cursor: "pointer", flexShrink: 0 }}>
+                        Join call
+                      </button>
+                    ) : (
+                      <a href={m.meeting_url} target="_blank" rel="noopener noreferrer"
+                        style={{ display: "inline-block", background: "#2D8CFF", color: "#fff", borderRadius: 7, padding: "8px 18px", fontWeight: 700, fontSize: 13, textDecoration: "none", flexShrink: 0 }}>
+                        Join on Zoom ↗
+                      </a>
+                    )
                   ) : (
                     <span style={{ fontSize: 12, color: MUTED, fontStyle: "italic" }}>No link yet</span>
                   )}
