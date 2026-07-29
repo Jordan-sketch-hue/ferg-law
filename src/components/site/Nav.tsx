@@ -9,7 +9,7 @@ const NAV_LINKS = [
   { href: "/#about", label: "About" },
   { href: "/#services", label: "Services" },
   { href: "/directory", label: "Find a Pro" },
-  { href: "/get-started", label: "Consultation" },
+  { href: "/booking", label: "Consultation" },
   { href: "/#contact", label: "Contact" },
 ] as const;
 
@@ -115,6 +115,17 @@ export default function Nav() {
           </nav>
 
           <div className="nav-right">
+            {/* Mobile-only Consultation link — desktop already shows it inline in nav-links,
+                but that whole bar is display:none under the 1040px breakpoint, so mobile
+                users only ever saw it if they opened the hamburger drawer. Surface it
+                directly in the always-visible mobile bar too. */}
+            <a
+              href="/booking"
+              className="nav-consult-mobile"
+              onClick={(e) => handleNavClick(e, "/booking")}
+            >
+              Consultation
+            </a>
             {/* Log in — Owen: make log-ins stand out, beside Get started */}
             <div className="nav-login-wrap" ref={loginRef}>
               <button
@@ -299,6 +310,22 @@ export default function Nav() {
           transition:background .15s, color .15s;
         }
         .nav-search-btn:hover{ background:#f0ece4; color:#1a1a1a; }
+
+        /* Mobile-only Consultation link (hidden on desktop — nav-links already has it there) */
+        .nav-consult-mobile{
+          display:none;
+        }
+        @media(max-width:1040px){
+          .nav-consult-mobile{
+            display:inline-block; font-size:.75rem; font-weight:700;
+            color:var(--gold-deep,#8a6d1f); text-decoration:underline;
+            text-underline-offset:3px; white-space:nowrap;
+          }
+        }
+        @media(max-width:480px){
+          .nav-consult-mobile{ font-size:.68rem; }
+        }
+
         @media(max-width:760px){ .nav-login-wrap{ display:none; } }
         @media(max-width:1200px){
           .nav-links a, .nav-links .nav-home-inline{ font-size:.78rem; }

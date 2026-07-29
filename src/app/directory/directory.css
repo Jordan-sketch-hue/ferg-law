@@ -42,7 +42,7 @@
   overflow: hidden; text-decoration: none; color: inherit; display: flex; flex-direction: column;
   transition: box-shadow .2s, transform .2s; }
 .pcard:hover { box-shadow: 0 16px 40px -24px rgba(16,42,30,.4); transform: translateY(-2px); }
-.pcard .thumb { aspect-ratio: 16/10; background: #ece7db center/cover no-repeat; }
+.pcard .thumb { aspect-ratio: 16/10; background: #ece7db top center/cover no-repeat; }
 .pcard .body { padding: 16px 18px 18px; }
 .pcard .kind { font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
   color: var(--gold-deep); font-weight: 700; }
@@ -62,7 +62,7 @@
 .profile-head h1 { font-family: var(--serif); font-size: clamp(26px,4vw,38px); color: var(--ink); }
 .listing-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 16px; }
 .listing-card { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: #fff; }
-.listing-card .lmedia { aspect-ratio: 16/10; background: #ece7db center/cover no-repeat; }
+.listing-card .lmedia { aspect-ratio: 16/10; background: #ece7db top center/cover no-repeat; }
 .listing-card .lbody { padding: 13px 15px 15px; }
 .listing-card h4 { font-family: var(--serif); font-size: 18px; color: var(--ink); margin-bottom: 3px; }
 .listing-card .price { color: var(--gold-deep); font-weight: 700; font-size: 15px; }
