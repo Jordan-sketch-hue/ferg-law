@@ -99,7 +99,17 @@ export default function DirectoryClient({ rows, listCount, firstImg, svcCount, a
                 : `${n} service${n === 1 ? "" : "s"}`;
             return (
               <Link key={p.id} className="pcard" href={`/directory/${p.slug || p.id}`}>
-                <div className="thumb" style={thumb ? { backgroundImage: `url("${thumb}")` } : undefined} />
+                <div className="thumb">
+                  {thumb && (
+                    <img
+                      src={thumb}
+                      alt={p.business_name}
+                      width={600}
+                      height={375}
+                      style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%", display: "block" }}
+                    />
+                  )}
+                </div>
                 <div className="body">
                   <div className="kind">{KIND_LABEL[p.kind]}</div>
                   <h3>{p.business_name}</h3>

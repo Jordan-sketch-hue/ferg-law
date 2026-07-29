@@ -42,7 +42,7 @@
   overflow: hidden; text-decoration: none; color: inherit; display: flex; flex-direction: column;
   transition: box-shadow .2s, transform .2s; }
 .pcard:hover { box-shadow: 0 16px 40px -24px rgba(16,42,30,.4); transform: translateY(-2px); }
-.pcard .thumb { aspect-ratio: 16/10; background: #ece7db top center/cover no-repeat; }
+.pcard .thumb { aspect-ratio: 16/10; background: #ece7db; overflow: hidden; }
 .pcard .body { padding: 16px 18px 18px; }
 .pcard .kind { font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
   color: var(--gold-deep); font-weight: 700; }
