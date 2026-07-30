@@ -98,8 +98,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* BRAND FILM (animated logo + principal) – mobile only */}
-      <section className="section brand-film brand-film-mobile-only">
+      {/* BRAND FILM – mobile only, shown high up after trust strip */}
+      <section className="section brand-film brand-film-top-mobile">
         <div className="wrap bf-grid">
           <div className="bf-video reveal">
             <video
@@ -357,6 +357,53 @@ export default function Home() {
               <BookButton className="tag pstep-link">
                 Book now –
               </BookButton>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* BRAND FILM – desktop only, original position */}
+      <section className="section brand-film brand-film-desktop-only">
+        <div className="wrap bf-grid">
+          <div className="bf-video reveal">
+            <video
+              src="/img/ferguson-promo.mp4"
+              data-edit-img="images.promoVideo"
+              poster="/img/ferguson-promo-poster.jpg"
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="metadata"
+            ></video>
+          </div>
+          <div className="bf-copy reveal">
+            <img
+              className="bf-logo"
+              src="/img/logo-ferguson.png"
+              data-edit-img="images.logo"
+              alt="Ferguson Law"
+            />
+            <span className="eyebrow">One firm, the full practice</span>
+            <h2>
+              Deep legal expertise – and the <em>banking mind</em> behind it.
+            </h2>
+            <p>
+              From commercial, family and estate matters to conveyancing and
+              titles, Ferguson Law pairs legal and banking expertise under one
+              trusted name – for Jamaica and the diaspora.
+            </p>
+            <div className="bf-founder">
+              <img
+                src="/img/attorney-dark.jpg"
+                data-edit-img="images.founderPhotoDark"
+                alt="Owen K. Ferguson, JP"
+                style={{width:"132px",height:"132px",objectFit:"cover",borderRadius:"15px",objectPosition:"center top"}}
+              />
+              <div>
+                <span className="k">Principal Attorney-at-Law</span>
+                <b>Owen K. Ferguson, JP</b>
+              </div>
             </div>
           </div>
         </div>
