@@ -921,6 +921,10 @@
   .bf-founder b{display:block;font-family:var(--serif);font-size:1.12rem;color:var(--paper-2);margin-top:3px;font-weight:600}
   @media(max-width:820px){.bf-grid{grid-template-columns:1fr;gap:32px;text-align:center}
     .bf-logo{margin-inline:auto}.bf-copy p{margin-inline:auto}.bf-founder{justify-content:center}}
+  /* brand-film-top-mobile: shown only on mobile (high up after trust strip) */
+  @media(min-width:821px){.brand-film-top-mobile{display:none}}
+  /* brand-film-desktop-only: shown only on desktop (original position) */
+  @media(max-width:820px){.brand-film-desktop-only{display:none}}
 
 /* ===== Animated H.O.M.E. gold logo (reveal + living glow) ===== */
 @keyframes homeLogoReveal{
