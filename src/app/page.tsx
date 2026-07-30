@@ -41,10 +41,13 @@ export default function Home() {
             sale, and transfer.
           </p>
           <div className="hero-cta">
-            <a className="btn btn-gold hero-cta-primary" href="/get-started">
+            <a className="btn btn-gold hero-cta-primary" href="/booking">
               <span data-edit="hero.ctaPrimary">Get started</span>{" "}
               <ArrowIcon />
             </a>
+            <BookButton className="btn btn-light hero-cta-book">
+              Book a Consultation
+            </BookButton>
             <a className="btn btn-light" href="/buyers-guide">
               H.O.M.E.™ Buyers Guide
             </a>
