@@ -173,7 +173,8 @@ export default function BuyersGuidePage() {
       <section style={{ padding: "1rem 0", background: "#f6f2e9", textAlign: "center", borderTop: "1px solid var(--line)" }}>
         <div style={{ maxWidth: 980, margin: "0 auto", color: "#3d463f", fontSize: ".85rem" }}>
           <small>
-            H.O.M.E.™ by Ferguson Law – Home Ownership Made Easy™ · Informational only, not legal advice. © Ferguson Law. All rights reserved.
+            H.O.M.E.™ by Ferguson Law – Home Ownership Made Easy™ · Informational only, not legal advice.<br />
+            © Ferguson Law. All rights reserved.
           </small>
         </div>
       </section>

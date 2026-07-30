@@ -152,7 +152,7 @@ export default function Nav() {
                 <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
               </svg>
             </button>
-            <a className="btn btn-gold nav-get-started" href="/get-started">
+            <a className="btn btn-gold nav-get-started" href="/booking">
               Get started
             </a>
             <button
@@ -226,7 +226,7 @@ export default function Nav() {
           </a>
         ))}
         <div className="drawer-cta">
-          <a className="btn btn-gold" href="/get-started" onClick={closeMenu}>
+          <a className="btn btn-gold" href="/booking" onClick={closeMenu}>
             Get started
           </a>
         </div>

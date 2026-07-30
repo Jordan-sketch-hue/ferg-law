@@ -25,7 +25,7 @@ export default function Footer() {
               />
             </a>
             <p data-edit="footer.blurb">
-              Trusted counsel for individuals, families and businesses – in
+              Trusted counsel for individuals, families and businesses in
               Jamaica and around the world. H.O.M.E.™ by Ferguson Law helps
               buyers and sellers move from readiness to closing with clarity,
               protection and confidence.
