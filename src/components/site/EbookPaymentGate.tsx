@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 
@@ -47,7 +47,7 @@ export default function EbookPaymentGate({ onPurchaseStart }: EbookGateProps) {
           margin: "0 0 .5rem",
         }}
       >
-        Unlock the H.O.M.E.™ Guide
+        Unlock the H.O.M.E.® Guide
       </h3>
       <p style={{ color: "rgba(246,242,234,.7)", margin: "0 0 1.5rem", fontSize: ".95rem" }}>
         $20 USD / 3,000 JMD - instant access to download or read online.

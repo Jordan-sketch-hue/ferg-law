@@ -7,7 +7,7 @@ import Footer from "@/components/site/Footer";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Why Every Property Seller in Jamaica Needs an Attorney | H.O.M.E.™ by Ferguson Law",
+  title: "Why Every Property Seller in Jamaica Needs an Attorney | H.O.M.E.® by Ferguson Law",
   description: "Why every property seller in Jamaica needs an attorney – avoiding failed sales, protecting your proceeds and completing safely.",
 };
 
@@ -40,7 +40,7 @@ export default function GuidePage() {
       <article className="section guide-article">
         <div className="wrap g-wrap">
           <Link href="/explainers" className="g-back">™ All guides</Link>
-          <span className="eyebrow">H.O.M.E.™ by Ferguson Law – Seller Explainer</span>
+          <span className="eyebrow">H.O.M.E.® by Ferguson Law – Seller Explainer</span>
           <h1 className="g-h1">Why Every Property Seller in Jamaica Needs an Attorney</h1>
           <p className="g-sub">Selling Property Is More Than Finding a Buyer</p>
 
@@ -235,7 +235,7 @@ export default function GuidePage() {
         </div>
       </article>
       <p style={{ fontSize: ".75rem", color: "var(--muted)", textAlign: "center", padding: "1rem 1.5rem 0", borderTop: "1px solid var(--line)", marginTop: "2rem" }}>
-        H.O.M.E.™ Buyer&apos;s Guide. Informational only, not legal advice. © Ferguson Law. All rights reserved.
+        H.O.M.E.® Buyer&apos;s Guide. Informational only, not legal advice. © Ferguson Law. All rights reserved.
       </p>
       <Footer />
     </BookingProvider>

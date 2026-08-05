@@ -1,4 +1,4 @@
-/* eslint-disable @next/next/no-img-element */
+﻿/* eslint-disable @next/next/no-img-element */
 import { SITE } from "@/lib/site";
 import { HomeBadge, HomeBadgeCSS } from "@/components/site/HomeBadge";
 
@@ -23,10 +23,10 @@ export default function HomeFlagship({
   return (
     <section className={`section home-flagship${light ? " hf-light" : ""}`} id="home" style={{ position: "relative" }}>
       {/* Ebook cover — pinned to top-right of section */}
-      <a href="/buyers-guide" aria-label="Read the H.O.M.E.™ Buyers Guide" style={{ position: "absolute", top: "5rem", right: "6rem", zIndex: 2, display: "block" }} className="hf-ebook-cover">
+      <a href="/buyers-guide" aria-label="Read the H.O.M.E.® Buyers Guide" style={{ position: "absolute", top: "5rem", right: "6rem", zIndex: 2, display: "block" }} className="hf-ebook-cover">
         <img
           src="/img/home-ebook-cover.jpg"
-          alt="H.O.M.E.™ Buyers Guide — Ferguson Law"
+          alt="H.O.M.E.® Buyers Guide — Ferguson Law"
           style={{ width: 260, borderRadius: 18, boxShadow: "0 28px 70px rgba(0,0,0,.65)", display: "block" }}
         />
       </a>
@@ -44,7 +44,7 @@ export default function HomeFlagship({
             <div
               className="hlite hlite-lg"
               role="img"
-              aria-label="H.O.M.E.™ by Ferguson Law — Home Ownership Made Easy"
+              aria-label="H.O.M.E.® by Ferguson Law — Home Ownership Made Easy"
             >
               <div className="hlite-roof" aria-hidden="true"></div>
               <div className="hlite-acr">H.O.M.E.</div>
@@ -57,23 +57,23 @@ export default function HomeFlagship({
                 className="home-logo"
                 src="/img/home-gold-stack.png"
                 data-edit-img="images.homeLogo"
-                alt="H.O.M.E.™ by Ferguson Law — Home Ownership Made Easy"
+                alt="H.O.M.E.® by Ferguson Law — Home Ownership Made Easy"
               />
             </span>
           )}
 
           <p className="sub" data-edit="home.sub">
-            <strong>H.O.M.E.™ by Ferguson Law</strong> - the home-ownership platform built for Jamaicans at home and abroad. Assess your readiness, find trusted professionals, and complete your purchase with Ferguson Law handling the legal work. <strong>Diaspora-friendly</strong> - sign and settle from anywhere.
+            <strong>H.O.M.E.® by Ferguson Law</strong> - the home-ownership platform built for Jamaicans at home and abroad. Assess your readiness, find trusted professionals, and complete your purchase with Ferguson Law handling the legal work. <strong>Diaspora-friendly</strong> - sign and settle from anywhere.
           </p>
           <div className="hf-actions">
             <HomeBadge href={SITE.homeApp} external dark={!light}>
-              Visit H.O.M.E.™ by Ferguson Law
+              Visit H.O.M.E.® by Ferguson Law
             </HomeBadge>
             <HomeBadge href={`${SITE.homeApp}readiness`} external dark={!light}>
               Take the readiness assessment
             </HomeBadge>
             <HomeBadge href="/buyers-guide" dark={!light}>
-              H.O.M.E.™ Buyers Guide
+              H.O.M.E.® Buyers Guide
             </HomeBadge>
           </div>
           <style>{HomeBadgeCSS}</style>

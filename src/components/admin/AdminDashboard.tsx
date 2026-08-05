@@ -292,8 +292,9 @@ export default function AdminDashboard() {
       if (stored) {
         const supabase = createClient();
         const { data, error } = await supabase.rpc("fl_is_admin", { p_token: stored });
+        console.log("[admin-auth] fl_is_admin result:", { data, error, stored });
         if (cancelled) return;
-        if (!error && data === true) { setToken(stored); }
+        if (!error && !!data) { setToken(stored); }
         else { try { localStorage.removeItem(TOKEN_KEY); } catch { /* ignore */ } }
       } else {
         await Promise.resolve();
@@ -310,7 +311,8 @@ export default function AdminDashboard() {
     setVerifying(true); setAuthError(null);
     const supabase = createClient();
     const { data, error } = await supabase.rpc("fl_is_admin", { p_token: candidate });
-    if (!error && data === true) {
+    console.log("[admin-auth] submitCode result:", { data, error, candidate });
+    if (!error && !!data) {
       try { localStorage.setItem(TOKEN_KEY, candidate); } catch { /* ignore */ }
       setToken(candidate); setCodeInput("");
     } else { setAuthError("That access code was not recognised."); }
@@ -534,10 +536,12 @@ export default function AdminDashboard() {
   }, [token]);
 
   const cancelBooking = useCallback(async (id: string) => {
-    if (!token || !confirm("Cancel this booking?")) return;
-    const supabase = createClient();
-    await supabase.rpc("fl_admin_cancel_booking", { p_token: token, p_id: id });
+    if (!token || !confirm("Cancel this booking? The client will be emailed.")) return;
     setAppts((prev) => prev.map((a) => a.id === id ? { ...a, status: "cancelled" } : a));
+    await fetch("/api/admin/zoom/cancel", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, id }),
+    });
   }, [token]);
 
   const deactivateInvite = useCallback(async (code: string) => {
@@ -3638,7 +3642,22 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
       void loadDetail(data as string);
     } catch (err) {
       const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? String(err);
-      setCreateError(msg);
+      // Client has no portal account — send invite and guide admin
+      if (msg.toLowerCase().includes("client not found") && (newClientEmail.trim() || newClientId.trim())) {
+        const email = newClientEmail.trim() || "";
+        if (email) {
+          void fetch("/api/admin/cms/invite-client", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "x-admin-token": token },
+            body: JSON.stringify({ email, clientName: newClientName.trim() || undefined, matterTitle: newTitle.trim() || undefined }),
+          }).catch(() => null);
+          setCreateError(`No portal account found for ${email}. A sign-up invite has been sent. Once they log in, open their matter here.`);
+        } else {
+          setCreateError("Client not found. Enter their email address so we can send them a portal invite.");
+        }
+      } else {
+        setCreateError(msg);
+      }
     } finally {
       setCreating(false);
     }
@@ -3691,7 +3710,20 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
             <div style={{ marginTop: 4, display: "flex", gap: 6 }}>
               <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, background: "rgba(18,16,12,.07)", borderRadius: 999, padding: "2px 7px" }}>{m.status}</span>
               {m.kyc_status !== "approved" && (
-                <span style={{ fontSize: 11, fontWeight: 600, color: "#8a6a22", background: "rgba(200,166,92,.2)", borderRadius: 999, padding: "2px 7px" }}>KYC {m.kyc_status}</span>
+                <span
+                  title={
+                    m.kyc_status === "pending"
+                      ? "Client has not yet submitted their KYC/AML form. This is separate from matter milestones."
+                      : m.kyc_status === "submitted"
+                      ? "Client submitted KYC — go to the KYC tab to review and approve."
+                      : m.kyc_status === "flagged"
+                      ? "KYC flagged for review. Check the KYC tab."
+                      : ""
+                  }
+                  style={{ fontSize: 11, fontWeight: 600, color: "#8a6a22", background: "rgba(200,166,92,.2)", borderRadius: 999, padding: "2px 7px", cursor: "help" }}
+                >
+                  KYC {m.kyc_status}
+                </span>
               )}
             </div>
           </button>
@@ -3975,7 +4007,31 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
               {tab === "kyc" && (
                 <div style={{ maxWidth: 560 }}>
                   {!kyc ? (
-                    <p style={{ color: MUTED, fontSize: 13.5 }}>No KYC/AML submission on file yet for this client.</p>
+                    <div>
+                      <p style={{ color: MUTED, fontSize: 13.5, marginBottom: 14 }}>
+                        No KYC/AML submission on file yet. The client has not completed the identity form.
+                        If you have verified this client through other means, you can approve KYC manually.
+                      </p>
+                      {activeMatter && activeMatter.kyc_status !== "approved" && (
+                        <button
+                          onClick={async () => {
+                            if (!confirm("Mark KYC as approved for this client? Only do this if you have verified their identity through other means.")) return;
+                            const { error } = await supabase.rpc("fl_admin_cms_kyc_admin_override", {
+                              p_token: token, p_matter_id: activeMatter.id, p_status: "approved",
+                            });
+                            if (error) { alert("Error: " + error.message); return; }
+                            setMatters(prev => prev.map(m => m.id === activeMatter.id ? { ...m, kyc_status: "approved" } : m));
+                            alert("KYC marked as approved.");
+                          }}
+                          style={{ background: "#2f7a52", color: "#fff", border: "none", borderRadius: 10, padding: "10px 20px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+                        >
+                          Admin-approve KYC
+                        </button>
+                      )}
+                      {activeMatter && activeMatter.kyc_status === "approved" && (
+                        <span style={{ fontSize: 13, color: "#2f7a52", fontWeight: 700 }}>KYC approved (admin override)</span>
+                      )}
+                    </div>
                   ) : (
                     <>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
@@ -4170,8 +4226,119 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
   );
 }
 interface UpcomingMeeting {
-  ref: string; name: string | null; service: string | null; starts_at: string;
+  id: string; ref: string; name: string | null; service: string | null; starts_at: string;
   meeting_url: string | null; meeting_provider: string | null;
+}
+
+function MeetingRow({ meeting: m, token, onJoinIframe, onChange }: {
+  meeting: UpcomingMeeting; token: string;
+  onJoinIframe: (url: string) => void;
+  onChange: (updated: UpcomingMeeting | null) => void;
+}) {
+  const [busy, setBusy] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [rescheduling, setRescheduling] = useState(false);
+  const [newTime, setNewTime] = useState("");
+
+  const when = new Intl.DateTimeFormat("en-JM", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "America/Jamaica" }).format(new Date(m.starts_at));
+
+  const BTN: React.CSSProperties = { background: "#fff", color: INK, border: "1px solid rgba(18,16,12,.15)", borderRadius: 7, padding: "7px 14px", fontWeight: 600, fontSize: 12.5, cursor: "pointer" };
+
+  async function call(path: string, body: Record<string, unknown>) {
+    const r = await fetch(`/api/admin/zoom/${path}`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, id: m.id, ...body }),
+    });
+    return r.json() as Promise<{ ok: boolean; error?: string; url?: string; provider?: string; starts_at?: string }>;
+  }
+
+  async function resend() {
+    setBusy("resend"); setErr(null);
+    const d = await call("resend", {});
+    if (!d.ok) setErr(d.error ?? "Could not resend.");
+    setBusy(null);
+  }
+
+  async function recreate() {
+    setBusy("recreate"); setErr(null);
+    const d = await call("recreate", {});
+    if (d.ok && d.url) onChange({ ...m, meeting_url: d.url, meeting_provider: d.provider ?? "zoom" });
+    else setErr(d.error ?? "Could not generate a new link.");
+    setBusy(null);
+  }
+
+  async function cancel() {
+    if (!confirm("Cancel this consultation? The client will be emailed.")) return;
+    setBusy("cancel"); setErr(null);
+    const d = await call("cancel", {});
+    if (d.ok) onChange(null);
+    else { setErr(d.error ?? "Could not cancel."); setBusy(null); }
+  }
+
+  async function reschedule() {
+    if (!newTime) return;
+    setBusy("reschedule"); setErr(null);
+    // newTime is a wall-clock "YYYY-MM-DDTHH:mm" with no zone — the server
+    // interprets it as Jamaica time, so this works regardless of the admin's
+    // own browser timezone.
+    const d = await call("reschedule", { starts_at_wall: newTime });
+    if (d.ok && d.starts_at) { onChange({ ...m, starts_at: d.starts_at }); setRescheduling(false); setNewTime(""); }
+    else setErr(d.error ?? "Could not reschedule.");
+    setBusy(null);
+  }
+
+  return (
+    <div style={{ padding: "14px 18px", background: "#f9f7f3", borderRadius: 10, border: "1px solid rgba(0,0,0,.06)" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
+        <div>
+          <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: INK }}>{m.name ?? "Client"}</p>
+          <p style={{ margin: "2px 0 0", fontSize: 12, color: MUTED }}>{m.service} · {when}</p>
+        </div>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+          {m.meeting_url ? (
+            m.meeting_provider === "daily" ? (
+              <button onClick={() => onJoinIframe(m.meeting_url!)}
+                style={{ background: GREEN, color: GOLD, border: "none", borderRadius: 7, padding: "8px 18px", fontWeight: 700, fontSize: 13, cursor: "pointer", flexShrink: 0 }}>
+                Join call
+              </button>
+            ) : (
+              <a href={m.meeting_url} target="_blank" rel="noopener noreferrer"
+                style={{ display: "inline-block", background: GOLD, color: CREAM, borderRadius: 7, padding: "8px 18px", fontWeight: 700, fontSize: 13, textDecoration: "none", flexShrink: 0 }}>
+                Join call ↗
+              </a>
+            )
+          ) : (
+            <span style={{ fontSize: 12, color: MUTED, fontStyle: "italic" }}>No link yet</span>
+          )}
+          <button onClick={() => void resend()} disabled={!!busy} style={{ ...BTN, opacity: busy ? 0.6 : 1 }}>
+            {busy === "resend" ? "Sending…" : "Resend link"}
+          </button>
+          <button onClick={() => void recreate()} disabled={!!busy} style={{ ...BTN, opacity: busy ? 0.6 : 1 }}>
+            {busy === "recreate" ? "Generating…" : "New link"}
+          </button>
+          <button onClick={() => setRescheduling(v => !v)} disabled={!!busy} style={{ ...BTN, opacity: busy ? 0.6 : 1 }}>
+            Reschedule
+          </button>
+          <button onClick={() => void cancel()} disabled={!!busy}
+            style={{ ...BTN, color: "#a23b3b", borderColor: "rgba(162,59,59,.3)", opacity: busy ? 0.6 : 1 }}>
+            {busy === "cancel" ? "Cancelling…" : "Cancel"}
+          </button>
+        </div>
+      </div>
+      {rescheduling && (
+        <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(0,0,0,.06)" }}>
+          <input type="datetime-local" value={newTime} onChange={(e) => setNewTime(e.target.value)}
+            style={{ border: "1px solid rgba(18,16,12,.2)", borderRadius: 7, padding: "7px 10px", fontSize: 13 }} />
+          <button onClick={() => void reschedule()} disabled={!newTime || !!busy}
+            style={{ ...BTN, background: GOLD, color: CREAM, opacity: !newTime || busy ? 0.6 : 1 }}>
+            {busy === "reschedule" ? "Moving…" : "Confirm new time"}
+          </button>
+          <span style={{ fontSize: 11.5, color: MUTED }}>Jamaica time · client is emailed the new time.</span>
+        </div>
+      )}
+      {err && <p style={{ margin: "8px 0 0", fontSize: 12, color: "#a23b3b" }}>{err}</p>}
+    </div>
+  );
 }
 
 function ZoomSetupTab({ token }: { token: string }) {
@@ -4183,6 +4350,7 @@ function ZoomSetupTab({ token }: { token: string }) {
   const [createErr, setCreateErr] = useState<string | null>(null);
   const [upcoming, setUpcoming] = useState<UpcomingMeeting[]>([]);
   const [loadingUpcoming, setLoadingUpcoming] = useState(true);
+  const [showSetup, setShowSetup] = useState(false);
 
   useEffect(() => {
     void (async () => {
@@ -4234,7 +4402,7 @@ function ZoomSetupTab({ token }: { token: string }) {
         <p style={{ marginTop: 6, color: MUTED, fontSize: 14 }}>Clients get a video call link in their confirmation email. Join from here or start an instant call below.</p>
       </div>
 
-      {/* ── LIVE CALL IFRAME (Daily.co) ── */}
+      {/* ── LIVE CALL IFRAME ── */}
       {activeIframe && (
         <div style={{ ...SECTION, padding: 0, overflow: "hidden" }}>
           <div style={{ padding: "12px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid rgba(0,0,0,.07)" }}>
@@ -4263,12 +4431,12 @@ function ZoomSetupTab({ token }: { token: string }) {
         {instantMeeting && (
           <div style={{ background: "#f0f7f0", border: "1px solid #b2dfb5", borderRadius: 10, padding: "16px 20px" }}>
             <p style={{ margin: "0 0 10px", fontWeight: 700, fontSize: 14, color: "#1e5c22" }}>
-              Meeting ready · {instantMeeting.provider === "daily" ? "Daily.co (embedded below)" : "Zoom"}
+              Meeting ready{instantMeeting.provider === "daily" ? " · embedded below" : ""}
             </p>
             {instantMeeting.provider === "zoom" && (
               <a href={instantMeeting.url} target="_blank" rel="noopener noreferrer"
-                style={{ display: "inline-block", background: "#2D8CFF", color: "#fff", borderRadius: 8, padding: "10px 22px", fontWeight: 700, fontSize: 14, textDecoration: "none" }}>
-                Join on Zoom ↗
+                style={{ display: "inline-block", background: GOLD, color: CREAM, borderRadius: 8, padding: "10px 22px", fontWeight: 700, fontSize: 14, textDecoration: "none" }}>
+                Join call ↗
               </a>
             )}
             {instantMeeting.provider === "daily" && !activeIframe && (
@@ -4277,7 +4445,6 @@ function ZoomSetupTab({ token }: { token: string }) {
                 Join call
               </button>
             )}
-            <p style={{ margin: "10px 0 0", fontSize: 11, color: MUTED, wordBreak: "break-all" }}>{instantMeeting.url}</p>
           </div>
         )}
         {createErr && <p style={{ color: "#c0392b", fontSize: 13, margin: 0 }}>{createErr}</p>}
@@ -4285,39 +4452,22 @@ function ZoomSetupTab({ token }: { token: string }) {
 
       {/* ── UPCOMING MEETINGS ── */}
       <div style={SECTION}>
-        <p style={{ fontWeight: 700, fontSize: 15, marginBottom: 16, color: INK }}>Upcoming consultations</p>
+        <p style={{ fontWeight: 700, fontSize: 15, marginBottom: 4, color: INK }}>Upcoming consultations</p>
+        <p style={{ fontSize: 12, color: MUTED, margin: "0 0 16px" }}>Resend the link, generate a fresh one, move the time, or cancel — the client is emailed automatically for each.</p>
         {loadingUpcoming ? (
           <p style={{ fontSize: 13, color: MUTED }}>Loading…</p>
         ) : upcoming.length === 0 ? (
-          <p style={{ fontSize: 13, color: MUTED }}>No upcoming confirmed bookings. Zoom links appear here automatically when clients book and pay.</p>
+          <p style={{ fontSize: 13, color: MUTED }}>No upcoming confirmed bookings. Video call links appear here automatically when clients book and pay.</p>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {upcoming.map(m => {
-              const when = new Intl.DateTimeFormat("en-JM", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "America/Jamaica" }).format(new Date(m.starts_at));
-              return (
-                <div key={m.ref} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10, padding: "14px 18px", background: "#f9f7f3", borderRadius: 10, border: "1px solid rgba(0,0,0,.06)" }}>
-                  <div>
-                    <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: INK }}>{m.name ?? "Client"}</p>
-                    <p style={{ margin: "2px 0 0", fontSize: 12, color: MUTED }}>{m.service} · {when}</p>
-                  </div>
-                  {m.meeting_url ? (
-                    m.meeting_provider === "daily" ? (
-                      <button onClick={() => setActiveIframe(m.meeting_url!)}
-                        style={{ background: GREEN, color: GOLD, border: "none", borderRadius: 7, padding: "8px 18px", fontWeight: 700, fontSize: 13, cursor: "pointer", flexShrink: 0 }}>
-                        Join call
-                      </button>
-                    ) : (
-                      <a href={m.meeting_url} target="_blank" rel="noopener noreferrer"
-                        style={{ display: "inline-block", background: "#2D8CFF", color: "#fff", borderRadius: 7, padding: "8px 18px", fontWeight: 700, fontSize: 13, textDecoration: "none", flexShrink: 0 }}>
-                        Join on Zoom ↗
-                      </a>
-                    )
-                  ) : (
-                    <span style={{ fontSize: 12, color: MUTED, fontStyle: "italic" }}>No link yet</span>
-                  )}
-                </div>
-              );
-            })}
+            {upcoming.map(m => (
+              <MeetingRow key={m.id} meeting={m} token={token}
+                onJoinIframe={(url) => setActiveIframe(url)}
+                onChange={(updated) => setUpcoming(prev => updated === null
+                  ? prev.filter(x => x.id !== m.id)
+                  : prev.map(x => x.id === m.id ? updated : x).sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime()))}
+              />
+            ))}
           </div>
         )}
       </div>
@@ -4326,42 +4476,48 @@ function ZoomSetupTab({ token }: { token: string }) {
       {status && (
         <div style={{ borderRadius: 10, padding: "14px 18px", marginBottom: 18, fontSize: 14, background: status.ok ? "#edf7ee" : "#fdf0f0", border: `1px solid ${status.ok ? "#b2dfb5" : "#f5c6c6"}`, color: status.ok ? "#1e5c22" : "#7a1515" }}>
           {status.ok
-            ? `Connected — Zoom API active`
+            ? `Connected — video calling active`
             : status.status === "not_configured"
-              ? `Not configured. Add ${(status.missing ?? []).join(", ")} to Vercel env vars.`
+              ? `Not configured yet.`
               : `Error: ${status.error}`}
         </div>
       )}
-
-      <div style={SECTION}>
-        <p style={{ fontWeight: 700, fontSize: 15, marginBottom: 18, color: INK }}>Setup (one-time)</p>
-        {[
-          { n: 1, body: <>In your Zoom Server-to-Server OAuth app, copy the <strong>Account ID</strong>, <strong>Client ID</strong>, and <strong>Client Secret</strong>.</> },
-          { n: 2, body: <>Go to your <a href="https://vercel.com/dashboard" target="_blank" rel="noopener noreferrer" style={{ color: GOLD }}>Vercel dashboard</a> → <strong>ferguson-law</strong> → <strong>Settings → Environment Variables</strong> → add these three:<br /><br />
-            <span style={CODE}>ZOOM_ACCOUNT_ID</span><br />
-            <span style={CODE}>ZOOM_CLIENT_ID</span><br />
-            <span style={CODE}>ZOOM_CLIENT_SECRET</span><br /><br />
-            Save for all environments.</> },
-          { n: 3, body: <>Redeploy, then click <strong>Test Connection</strong> below.</> },
-        ].map(({ n, body }) => (
-          <div key={n} style={STEP_ROW}>
-            <span style={STEP_NUM}>{n}</span>
-            <div style={{ fontSize: 14, lineHeight: 1.65, color: INK }}>{body}</div>
-          </div>
-        ))}
-        <button onClick={() => void testConnection()} disabled={testing} style={{ marginTop: 8, background: GOLD, color: CREAM, border: "none", borderRadius: 10, padding: "11px 24px", fontWeight: 700, fontSize: 14, cursor: "pointer", opacity: testing ? 0.7 : 1 }}>
-          {testing ? "Testing…" : "Test Connection"}
-        </button>
-      </div>
 
       <div style={{ ...SECTION, background: "#f9f7f3" }}>
         <p style={{ fontWeight: 700, fontSize: 14, marginBottom: 10, color: INK }}>How it works</p>
         <ul style={{ fontSize: 13.5, lineHeight: 1.9, color: MUTED, paddingLeft: 18, margin: 0 }}>
           <li>When a client books and pays, a video room is auto-created and the join link goes in their confirmation email.</li>
-          <li>Upcoming bookings appear above — click "Join on Zoom" to enter. Clients use their own link from the confirmation email to join the same call.</li>
+          <li>Upcoming bookings appear above — click "Join call" to enter. Clients use their own link from the confirmation email to join the same call.</li>
           <li>Clients can enter before you — no waiting room.</li>
         </ul>
       </div>
+
+      <button onClick={() => setShowSetup(v => !v)} style={{ background: "none", border: "none", color: MUTED, fontSize: 12.5, cursor: "pointer", padding: "4px 0", textDecoration: "underline" }}>
+        {showSetup ? "Hide advanced setup" : "Advanced setup"}
+      </button>
+
+      {showSetup && (
+        <div style={{ ...SECTION, marginTop: 10 }}>
+          <p style={{ fontWeight: 700, fontSize: 15, marginBottom: 18, color: INK }}>Setup (one-time, technical)</p>
+          {[
+            { n: 1, body: <>In your video-calling provider&apos;s developer console, copy the <strong>Account ID</strong>, <strong>Client ID</strong>, and <strong>Client Secret</strong>.</> },
+            { n: 2, body: <>Go to your <a href="https://vercel.com/dashboard" target="_blank" rel="noopener noreferrer" style={{ color: GOLD }}>Vercel dashboard</a> → <strong>ferguson-law</strong> → <strong>Settings → Environment Variables</strong> → add these three:<br /><br />
+              <span style={CODE}>ZOOM_ACCOUNT_ID</span><br />
+              <span style={CODE}>ZOOM_CLIENT_ID</span><br />
+              <span style={CODE}>ZOOM_CLIENT_SECRET</span><br /><br />
+              Save for all environments.</> },
+            { n: 3, body: <>Redeploy, then click <strong>Test Connection</strong> below.</> },
+          ].map(({ n, body }) => (
+            <div key={n} style={STEP_ROW}>
+              <span style={STEP_NUM}>{n}</span>
+              <div style={{ fontSize: 14, lineHeight: 1.65, color: INK }}>{body}</div>
+            </div>
+          ))}
+          <button onClick={() => void testConnection()} disabled={testing} style={{ marginTop: 8, background: GOLD, color: CREAM, border: "none", borderRadius: 10, padding: "11px 24px", fontWeight: 700, fontSize: 14, cursor: "pointer", opacity: testing ? 0.7 : 1 }}>
+            {testing ? "Testing…" : "Test Connection"}
+          </button>
+        </div>
+      )}
 
     </div>
   );

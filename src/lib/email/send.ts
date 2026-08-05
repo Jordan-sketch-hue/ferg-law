@@ -98,6 +98,57 @@ export async function sendBookingReminder(
   }
 }
 
+export type SendBookingUpdateArgs = SendBookingConfirmationArgs & {
+  kind: "rescheduled" | "cancelled" | "link_updated";
+};
+
+/** Booking change notices: reschedule, cancellation, or a fresh call link. */
+export async function sendBookingUpdate(
+  args: SendBookingUpdateArgs,
+): Promise<SendResult> {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) return { skipped: true };
+
+  const { to, name, service, whenLabel, ref, meetingUrl, kind } = args;
+  const firstName = (name || "").trim().split(/\s+/)[0] || "there";
+  const wa = waLink(
+    `Hi Ferguson Law — about my consultation.\nRef: ${ref}\nService: ${service}\nWhen: ${whenLabel}`,
+  );
+
+  const copy = {
+    rescheduled: {
+      subject: `Your consultation time has changed — ${ref}`,
+      lead: `Your time has changed, ${escapeHtml(firstName)}.`,
+      body: `Your Ferguson Law consultation has been moved to a new time. The updated details are below.`,
+    },
+    cancelled: {
+      subject: `Your consultation has been cancelled — ${ref}`,
+      lead: `Your consultation has been cancelled, ${escapeHtml(firstName)}.`,
+      body: `Your Ferguson Law consultation (${escapeHtml(service)}, ${escapeHtml(whenLabel)}) has been cancelled. Reach out any time to rebook.`,
+    },
+    link_updated: {
+      subject: `New video call link — ${ref}`,
+      lead: `Here's your updated call link, ${escapeHtml(firstName)}.`,
+      body: `A fresh video call link has been generated for your consultation. Use the link below to join at your scheduled time.`,
+    },
+  }[kind];
+
+  try {
+    const resend = new Resend(key);
+    const { data, error } = await resend.emails.send({
+      from: FROM,
+      to,
+      subject: copy.subject,
+      html: buildHtml({ firstName, service, whenLabel, ref, wa, lead: copy.lead, body: copy.body, meetingUrl: kind === "cancelled" ? undefined : meetingUrl }),
+      text: buildText({ firstName, service, whenLabel, ref, wa, meetingUrl: kind === "cancelled" ? undefined : meetingUrl }),
+    });
+    if (error) return { ok: false, error: error.message || String(error) };
+    return { ok: true, id: data?.id };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
 export type SendNurtureEmailArgs = {
   to: string;
   name: string;

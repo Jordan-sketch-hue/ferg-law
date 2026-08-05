@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import Nav from "@/components/site/Nav";
@@ -72,7 +72,7 @@ export default function EbookAccessPage() {
                 Payment Successful
               </h1>
               <p style={{ color: "rgba(246,242,234,.78)", marginBottom: "2rem" }}>
-                Thank you! Your H.O.M.E.™ Buyers Guide is ready to download. We've also sent a
+                Thank you! Your H.O.M.E.® Buyers Guide is ready to download. We've also sent a
                 link to <strong>{email}</strong>.
               </p>
               <div style={{ display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" }}>

@@ -10,11 +10,19 @@ import { cookies } from "next/headers";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+interface CcContact {
+  name: string;
+  whatsapp?: string;
+  email?: string;
+}
+
 const DEFAULTS = {
   weekly_digest: true,
   milestone_updates: true,
   message_notifications: true,
   appointment_reminders: true,
+  whatsapp_updates: false,
+  cc_contacts: [] as CcContact[],
 };
 
 async function getAuthUser() {
@@ -39,7 +47,10 @@ export async function GET() {
     .eq("email", user.email)
     .single();
 
-  return Response.json({ ok: true, prefs: data?.notification_prefs ?? DEFAULTS });
+  const stored = (data?.notification_prefs ?? {}) as Record<string, unknown>;
+  const prefs = { ...DEFAULTS, ...stored, cc_contacts: (stored.cc_contacts as CcContact[]) ?? [] };
+
+  return Response.json({ ok: true, prefs });
 }
 
 export async function POST(req: NextRequest) {
@@ -49,11 +60,24 @@ export async function POST(req: NextRequest) {
   let body: Record<string, unknown>;
   try { body = await req.json(); } catch { return Response.json({ ok: false, error: "bad request" }, { status: 400 }); }
 
+  const rawCC = Array.isArray(body.cc_contacts) ? body.cc_contacts as unknown[] : [];
+  const ccContacts: CcContact[] = rawCC
+    .filter((c): c is Record<string, unknown> => typeof c === "object" && c !== null)
+    .map(c => ({
+      name: String(c.name ?? "").slice(0, 80),
+      whatsapp: c.whatsapp ? String(c.whatsapp).slice(0, 30) : undefined,
+      email: c.email ? String(c.email).slice(0, 120) : undefined,
+    }))
+    .filter(c => c.name && (c.whatsapp || c.email))
+    .slice(0, 5);
+
   const prefs = {
     weekly_digest: body.weekly_digest !== false,
     milestone_updates: body.milestone_updates !== false,
     message_notifications: body.message_notifications !== false,
     appointment_reminders: body.appointment_reminders !== false,
+    whatsapp_updates: body.whatsapp_updates === true,
+    cc_contacts: ccContacts,
   };
 
   const admin = createAdminClient();

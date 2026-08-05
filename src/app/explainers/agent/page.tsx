@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { BookingProvider, BookButton } from "@/components/site/BookingProvider";
 import Nav from "@/components/site/Nav";
 import Reveal from "@/components/site/Reveal";
@@ -96,7 +96,7 @@ export default function AgentExplainer() {
             marginBottom: "1rem",
           }}
         >
-          H.O.M.E.™ by Ferguson Law – Property Explainer
+          H.O.M.E.® by Ferguson Law – Property Explainer
         </span>
         <h1
           style={{

@@ -1,12 +1,12 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 import Footer from "@/components/site/Footer";
 import Nav from "@/components/site/Nav";
 import { BookingProvider } from "@/components/site/BookingProvider";
 
 export const metadata: Metadata = {
-  title: "H.O.M.E.™ Buyers Guide preview — Ferguson Law",
-  description: "Preview the H.O.M.E.™ Buyers Guide before unlocking the full paid guide.",
+  title: "H.O.M.E.® Buyers Guide preview — Ferguson Law",
+  description: "Preview the H.O.M.E.® Buyers Guide before unlocking the full paid guide.",
 };
 
 export default function BuyersGuidePreviewPage() {
@@ -16,7 +16,7 @@ export default function BuyersGuidePreviewPage() {
       <main style={{ background: "#f6f2ea", color: "#102a1e", padding: 24 }}>
         <div style={{ maxWidth: 900, margin: "0 auto", background: "#fff", borderRadius: 24, padding: 32, boxShadow: "0 24px 70px rgba(0,0,0,.08)" }}>
           <p style={{ margin: 0, textTransform: "uppercase", letterSpacing: ".18em", color: "#a8853e", fontWeight: 700, fontSize: ".76rem" }}>Preview</p>
-          <h1 style={{ fontSize: "2rem", margin: "0.4rem 0 0.7rem" }}>H.O.M.E.™ Buyers Guide overview</h1>
+          <h1 style={{ fontSize: "2rem", margin: "0.4rem 0 0.7rem" }}>H.O.M.E.® Buyers Guide overview</h1>
           <p style={{ lineHeight: 1.7 }}>
             This preview gives you a quick look at the guide&apos;s structure. The complete version is available after a one-time payment of US$20 / J$3,000.
           </p>
@@ -45,7 +45,7 @@ export default function BuyersGuidePreviewPage() {
       <Footer />
       <section style={{ padding: "1rem 0", background: "#f6f2e9", textAlign: "center", borderTop: "1px solid var(--line)" }}>
         <div style={{ maxWidth: 980, margin: "0 auto", color: "#3d463f", fontSize: ".85rem" }}>
-          <small>H.O.M.E.™ by Ferguson Law – Home Ownership Made Easy™ · Informational only, not legal advice. © Ferguson Law. All rights reserved.</small>
+          <small>H.O.M.E.® by Ferguson Law – Home Ownership Made Easy® · Informational only, not legal advice. © Ferguson Law. All rights reserved.</small>
         </div>
       </section>
     </BookingProvider>

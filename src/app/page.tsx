@@ -14,6 +14,13 @@ const ArrowIcon = () => (
   </svg>
 );
 
+const CalendarIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="4" width="18" height="18" rx="2"/>
+    <path d="M16 2v4M8 2v4M3 10h18"/>
+  </svg>
+);
+
 export default function Home() {
   return (
     <BookingProvider>
@@ -41,15 +48,15 @@ export default function Home() {
             sale, and transfer.
           </p>
           <div className="hero-cta">
-            <a className="btn btn-gold hero-cta-primary" href="/booking">
-              <span data-edit="hero.ctaPrimary">Get started</span>{" "}
-              <ArrowIcon />
+            <a className="btn btn-gold hero-cta-primary" href="/get-started">
+              <CalendarIcon />
+              <span data-edit="hero.ctaPrimary">Book a Consultation</span>
             </a>
             <BookButton className="btn btn-light hero-cta-book">
               Book a Consultation
             </BookButton>
             <a className="btn btn-light" href="/buyers-guide">
-              H.O.M.E.™ Buyers Guide
+              H.O.M.E.® Buyers Guide
             </a>
           </div>
           <div className="hero-proof">
@@ -101,6 +108,22 @@ export default function Home() {
         </div>
       </section>
 
+      {/* MOBILE-ONLY: promo video slot – appears after trust strip so the animation
+          is visible high on the page without scrolling (Owen feedback Jul 30) */}
+      <section className="brand-film brand-film--mobile-slot" aria-hidden="true">
+        <div className="bf-video-slot reveal">
+          <video
+            src="/img/ferguson-promo.mp4"
+            poster="/img/ferguson-promo-poster.jpg"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+          />
+        </div>
+      </section>
+
       {/* SERVICES / PRACTICE AREAS – the full firm, up front */}
       <section
         className="section"
@@ -133,7 +156,7 @@ export default function Home() {
               <img className="serv-media" src="/img/re-consult.jpg" data-edit-img="images.serviceImg1" alt="A couple outside their new Kingston property" loading="lazy" />
               <div className="num">01</div>
               <h3 data-edit="services.items.1.title">Real Estate &amp; Conveyancing</h3>
-              <p data-edit="services.items.1.body">Sales, purchases, titles and transfers – plus the H.O.M.E.™ home-ownership pathway for first-time and diaspora buyers.</p>
+              <p data-edit="services.items.1.body">Sales, purchases, titles and transfers – plus the H.O.M.E.® home-ownership pathway for first-time and diaspora buyers.</p>
             </div>
             {/* 2 — Divorce */}
             <div className="serv reveal">
@@ -255,7 +278,7 @@ export default function Home() {
               <div className="s-n" data-edit="process.steps.0.n">Step 01</div>
               <h3 data-edit="process.steps.0.title">Check Your Readiness</h3>
               <p data-edit="process.steps.0.body">
-                Take the free H.O.M.E.™ readiness assessment – know exactly where you stand before spending a dollar.
+                Take the free H.O.M.E.® readiness assessment – know exactly where you stand before spending a dollar.
               </p>
               <a className="tag pstep-link" href={`${SITE.homeApp}readiness`} target="_blank" rel="noopener">
                 Take the assessment –
@@ -271,7 +294,7 @@ export default function Home() {
               <div className="s-n" data-edit="process.steps.1.n">Step 02</div>
               <h3 data-edit="process.steps.1.title">Find Your Team</h3>
               <p data-edit="process.steps.1.body">
-                Browse vetted real estate agents, surveyors, valuators and lenders in the H.O.M.E.™ directory.
+                Browse vetted real estate agents, surveyors, valuators and lenders in the H.O.M.E.® directory.
               </p>
               <a className="tag pstep-link" href="/directory">
                 Find a professional –
@@ -287,14 +310,14 @@ export default function Home() {
               <div className="s-n" data-edit="process.steps.2.n">Step 03</div>
               <h3 data-edit="process.steps.2.title">Understand the Process</h3>
               <p data-edit="process.steps.2.body">
-                Read the free property explainers or download the full H.O.M.E.™ Buyers Guide – plain English, no jargon.
+                Read the free property explainers or download the full H.O.M.E.® Buyers Guide – plain English, no jargon.
               </p>
               <div style={{display:"flex",gap:"8px",flexWrap:"wrap"}}>
                 <a className="tag pstep-link" href="/explainers">
                   Explainers –
                 </a>
                 <a className="tag pstep-link" href={`${SITE.homeApp}ebook`} target="_blank" rel="noopener">
-                  H.O.M.E.™ Buyers Guide –
+                  H.O.M.E.® Buyers Guide –
                 </a>
               </div>
             </div>

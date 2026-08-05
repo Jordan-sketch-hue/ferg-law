@@ -211,7 +211,9 @@ export async function POST(req: NextRequest) {
         const meeting = await createMeetingRoom("Ferguson Law Consultation", startsIso, duration);
         if (meeting) {
           meetingUrl = meeting.url;
-          await supabase.from("appointments").update({ meta: { meeting_url: meeting.url, meeting_provider: meeting.provider } }).eq("ref", ref);
+          await supabase.from("appointments").update({
+            meta: { service_id: service, recommender, notes: notes || null, invite: inviteCode, meeting_url: meeting.url, meeting_provider: meeting.provider },
+          }).eq("ref", ref);
         }
       } catch { /* swallow */ }
 

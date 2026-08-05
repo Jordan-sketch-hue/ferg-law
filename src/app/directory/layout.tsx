@@ -1,11 +1,11 @@
-/* eslint-disable @next/next/no-img-element */
+﻿/* eslint-disable @next/next/no-img-element */
 import type { Metadata } from "next";
 import "./directory.css";
 
 export const metadata: Metadata = {
-  title: "Find a Professional — H.O.M.E.™ by Ferguson Law",
+  title: "Find a Professional — H.O.M.E.® by Ferguson Law",
   description:
-    "Browse vetted Jamaican real estate agents, bankers, land surveyors and valuators in the H.O.M.E.™ professional directory by Ferguson Law.",
+    "Browse vetted Jamaican real estate agents, bankers, land surveyors and valuators in the H.O.M.E.® professional directory by Ferguson Law.",
 };
 
 export default function DirectoryLayout({ children }: { children: React.ReactNode }) {
@@ -13,9 +13,9 @@ export default function DirectoryLayout({ children }: { children: React.ReactNod
     <>
       <header className="dir-header dir-header-dark">
         <div className="dir-wrap row">
-          <a className="dir-brand" href="/" aria-label="H.O.M.E.™ Professional Directory by Ferguson Law">
+          <a className="dir-brand" href="/" aria-label="H.O.M.E.® Professional Directory by Ferguson Law">
             <img src="/img/logo-ferguson.png" alt="Ferguson Law" />
-            <small>H.O.M.E.™ Professional Directory</small>
+            <small>H.O.M.E.® Professional Directory</small>
           </a>
           <nav className="dir-nav">
             <a href="/">Home</a>

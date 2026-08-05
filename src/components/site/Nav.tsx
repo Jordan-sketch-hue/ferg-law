@@ -18,7 +18,7 @@ const LOGIN_LINKS = [
   { href: "/directory/client-login", label: "Client Portal" },
 ] as const;
 
-const HOME_LINK = { href: SITE.homeApp, label: "H.O.M.E.™ by Ferguson Law", external: true };
+const HOME_LINK = { href: SITE.homeApp, label: "H.O.M.E.® by Ferguson Law", external: true };
 
 const RESOURCE_LINKS = [
   { href: "/buyers-guide", label: "Buyer's Guide" },
@@ -152,7 +152,7 @@ export default function Nav() {
                 <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
               </svg>
             </button>
-            <a className="btn btn-gold nav-get-started" href="/booking">
+            <a className="btn btn-gold nav-get-started" href="/get-started">
               Get started
             </a>
             <button
@@ -226,7 +226,7 @@ export default function Nav() {
           </a>
         ))}
         <div className="drawer-cta">
-          <a className="btn btn-gold" href="/booking" onClick={closeMenu}>
+          <a className="btn btn-gold" href="/get-started" onClick={closeMenu}>
             Get started
           </a>
         </div>

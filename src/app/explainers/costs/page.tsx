@@ -7,7 +7,7 @@ import Link from "next/link";
 import { SITE, CONSULT_DURATION_MIN } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "What a Property Purchase in Jamaica Really Costs | H.O.M.E.™ by Ferguson Law",
+  title: "What a Property Purchase in Jamaica Really Costs | H.O.M.E.® by Ferguson Law",
   description:
     "Transfer tax, stamp duty, attorney fees, valuation, survey — every closing cost explained so you're never surprised at the table.",
 };
@@ -116,7 +116,7 @@ export default function CostsExplainer() {
             marginBottom: "1rem",
           }}
         >
-          H.O.M.E.™ by Ferguson Law — Property Explainer
+          H.O.M.E.® by Ferguson Law — Property Explainer
         </span>
         <h1
           style={{

@@ -97,7 +97,9 @@ export async function GET(req: NextRequest) {
       const meeting = await createMeetingRoom("Ferguson Law Consultation", row.r_starts ?? new Date().toISOString(), 60);
       if (meeting) {
         meetingUrl = meeting.url;
-        await supabase.from("appointments").update({ meta: { meeting_url: meeting.url, meeting_provider: meeting.provider } }).eq("ref", ref);
+        const { data: existing } = await supabase.from("appointments").select("meta").eq("ref", ref).maybeSingle();
+        const prevMeta = (existing?.meta as Record<string, unknown> | null) ?? {};
+        await supabase.from("appointments").update({ meta: { ...prevMeta, meeting_url: meeting.url, meeting_provider: meeting.provider } }).eq("ref", ref);
       }
     } catch { /* swallow */ }
 

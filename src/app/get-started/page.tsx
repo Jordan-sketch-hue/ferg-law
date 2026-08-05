@@ -88,12 +88,12 @@ const ROLES: Role[] = [
   {
     id: "professional",
     label: "Professional",
-    tagline: "You serve buyers, sellers, or lenders in the Jamaican property market. Here's how you fit into the H.O.M.E.™ platform.",
+    tagline: "You serve buyers, sellers, or lenders in the Jamaican property market. Here's how you fit into the H.O.M.E.® platform.",
     moments: [
       {
-        headline: "You create a profile on H.O.M.E.™",
+        headline: "You create a profile on H.O.M.E.®",
         body: "The joint platform operated by Ferguson Law. Your services, your coverage area, your credentials, listed clearly for the clients who need you.",
-        cta: { label: "Go to H.O.M.E.™", href: `${SITE.homeApp}onboarding?role=agent` },
+        cta: { label: "Go to H.O.M.E.®", href: `${SITE.homeApp}onboarding?role=agent` },
       },
       {
         headline: "Ferguson Law verifies you.",

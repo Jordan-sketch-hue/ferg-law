@@ -96,7 +96,7 @@ export default function BankerExplainer() {
             marginBottom: "1rem",
           }}
         >
-          H.O.M.E.™ by Ferguson Law – Property Explainer
+          H.O.M.E.® by Ferguson Law – Property Explainer
         </span>
         <h1
           style={{

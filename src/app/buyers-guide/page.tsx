@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 import { CONSULT_DURATION_MIN } from "@/lib/site";
 import { BookingProvider, BookButton } from "@/components/site/BookingProvider";
@@ -10,9 +10,9 @@ import { HomeBadge, HomeBadgeCSS } from "@/components/site/HomeBadge";
 import EbookPaymentGate from "@/components/site/EbookPaymentGate";
 
 export const metadata: Metadata = {
-  title: "H.O.M.E.™ Buyer's Guide — Home Ownership Made Easy | Ferguson Law",
+  title: "H.O.M.E.® Buyer's Guide — Home Ownership Made Easy | Ferguson Law",
   description:
-    "The complete H.O.M.E.™ Buyers Guide by Ferguson Law — everything a Jamaican home buyer needs to know, from readiness to registered title.",
+    "The complete H.O.M.E.® Buyers Guide by Ferguson Law — everything a Jamaican home buyer needs to know, from readiness to registered title.",
 };
 
 const ArrowIcon = () => (
@@ -48,7 +48,7 @@ export default function BuyersGuidePage() {
                 marginBottom: "1rem",
               }}
             >
-              H.O.M.E.™ by Ferguson Law · Home Ownership Made Easy™
+              H.O.M.E.® by Ferguson Law · Home Ownership Made Easy®
             </span>
             <h1
               style={{
@@ -59,7 +59,7 @@ export default function BuyersGuidePage() {
                 color: "#fff",
               }}
             >
-              The H.O.M.E.™ Buyer's Guide
+              The H.O.M.E.® Buyer's Guide
             </h1>
             <p
               style={{
@@ -98,7 +98,7 @@ export default function BuyersGuidePage() {
               One guide. Every stage of <em>your journey.</em>
             </h2>
             <p className="lead" style={{ color: "rgba(246,242,234,.78)" }}>
-              The H.O.M.E.™ Buyers Guide covers the entire home-buying process from
+              The H.O.M.E.® Buyers Guide covers the entire home-buying process from
               first question to keys in hand - written for Jamaicans at home and abroad.
             </p>
           </div>
@@ -131,7 +131,7 @@ export default function BuyersGuidePage() {
         <div className="wrap">
           <div className="sec-head reveal" style={{ marginBottom: "2rem" }}>
             <span style={{ display: "inline-block", fontSize: ".72rem", letterSpacing: ".18em", textTransform: "uppercase", color: "var(--gold)", marginBottom: ".8rem" }}>
-              H.O.M.E.™ Buyer's Guide
+              H.O.M.E.® Buyer's Guide
             </span>
             <h2 style={{ color: "#fff", margin: "0 0 .6rem" }}>Get Your Copy Today</h2>
             <p style={{ color: "rgba(246,242,234,.72)", margin: 0, maxWidth: 460, fontSize: "1rem", lineHeight: 1.6 }}>
@@ -153,7 +153,7 @@ export default function BuyersGuidePage() {
             Start with a free readiness check - or speak with our attorney.
           </h2>
           <p style={{ color: "rgba(246,242,234,.78)", marginBottom: "1.8rem" }}>
-            The H.O.M.E.™ readiness assessment tells you exactly where you stand in 3 minutes.
+            The H.O.M.E.® readiness assessment tells you exactly where you stand in 3 minutes.
             When you&apos;re ready, book a {CONSULT_DURATION_MIN}-minute consultation with our attorney.
           </p>
           <div style={{ display: "flex", gap: ".9rem", justifyContent: "center", flexWrap: "wrap" }}>
@@ -173,7 +173,7 @@ export default function BuyersGuidePage() {
       <section style={{ padding: "1rem 0", background: "#f6f2e9", textAlign: "center", borderTop: "1px solid var(--line)" }}>
         <div style={{ maxWidth: 980, margin: "0 auto", color: "#3d463f", fontSize: ".85rem" }}>
           <small>
-            H.O.M.E.™ by Ferguson Law – Home Ownership Made Easy™ · Informational only, not legal advice.<br />
+            H.O.M.E.® by Ferguson Law – Home Ownership Made Easy® · Informational only, not legal advice.<br />
             © Ferguson Law. All rights reserved.
           </small>
         </div>

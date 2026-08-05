@@ -1,7 +1,7 @@
-/* eslint-disable @next/next/no-img-element */
+﻿/* eslint-disable @next/next/no-img-element */
 
 /**
- * Pill-badge CTA for H.O.M.E.™ links — matches the nav badge style.
+ * Pill-badge CTA for H.O.M.E.® links — matches the nav badge style.
  * Use whenever a button takes the user to the H.O.M.E. platform or its resources.
  * Pass dark={true} when the badge sits on a dark green/black background.
  */

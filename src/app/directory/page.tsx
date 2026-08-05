@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { PARTNER_KINDS, type PartnerKind as Kind } from "@/lib/partners/constants";
 import DirectoryClient from "./DirectoryClient";
@@ -58,7 +58,7 @@ export default async function DirectoryPage({
   return (
     <div className="dir-wrap">
       <section className="dir-hero">
-        <div className="eyebrow">H.O.M.E.™ by Ferguson Law · Find a Professional</div>
+        <div className="eyebrow">H.O.M.E.® by Ferguson Law · Find a Professional</div>
         <h1>Trusted real estate agents, surveyors, valuators &amp; bankers — in one place.</h1>
         <p>
           Browse vetted Jamaican property professionals listed with Ferguson Law. Real estate agents showcase listings; bankers, valuators and land surveyors publish their services and fees.

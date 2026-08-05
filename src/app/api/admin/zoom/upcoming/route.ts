@@ -14,28 +14,27 @@ export async function GET(req: NextRequest) {
   const { data: isAdmin } = await supabase.rpc("fl_is_admin", { p_token: token });
   if (!isAdmin) return Response.json({ ok: false, error: "unauthorized" }, { status: 401 });
 
-  const { data, error } = await supabase
-    .from("appointments")
-    .select("ref, name, service, starts_at, meta")
-    .eq("status", "confirmed")
-    .gte("starts_at", new Date().toISOString())
-    .order("starts_at", { ascending: true })
-    .limit(20);
+  // appointments has no anon SELECT policy — must go through the admin
+  // SECURITY DEFINER RPC (same pattern as every other admin/* fetch), not a raw table select.
+  const { data, error } = await supabase.rpc("fl_admin_appointments", { p_token: token });
 
   if (error) return Response.json({ ok: false, error: error.message }, { status: 500 });
 
-  const meetings = (data ?? [])
-    .map(r => {
-      const meta = r.meta as Record<string, string> | null;
-      return {
-        ref: r.ref,
-        name: r.name,
-        service: r.service,
-        starts_at: r.starts_at,
-        meeting_url: meta?.meeting_url ?? meta?.zoom_url ?? null,
-        meeting_provider: meta?.meeting_provider ?? (meta?.zoom_url ? "zoom" : null),
-      };
-    });
+  const now = Date.now();
+  type Row = { id: string; ref: string; name: string | null; service: string | null; starts_at: string; status: string; meta: Record<string, string> | null };
+  const meetings = ((data ?? []) as Row[])
+    .filter(r => r.status === "confirmed" && new Date(r.starts_at).getTime() >= now)
+    .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime())
+    .slice(0, 20)
+    .map(r => ({
+      id: r.id,
+      ref: r.ref,
+      name: r.name,
+      service: r.service,
+      starts_at: r.starts_at,
+      meeting_url: r.meta?.meeting_url ?? r.meta?.zoom_url ?? null,
+      meeting_provider: r.meta?.meeting_provider ?? (r.meta?.zoom_url ? "zoom" : null),
+    }));
 
   return Response.json({ ok: true, meetings });
 }

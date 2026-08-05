@@ -259,6 +259,19 @@ export function sendTestCompletionSummary(to: string, matterTitle: string, compl
   );
 }
 
+export function sendMilestoneToCC(to: string, ccName: string, matterTitle: string, milestoneName: string) {
+  return send(
+    to,
+    `Update on ${matterTitle} — Ferguson Law`,
+    shell(
+      `Hi ${escapeHtml(ccName.split(" ")[0])}, a step just moved forward.`,
+      `You are receiving this because a Ferguson Law client has added you as a notification contact on their matter, <em>${escapeHtml(matterTitle)}</em>.<br/><br/><strong>${escapeHtml(milestoneName)}</strong> has been completed. The client will receive a full update in their portal.`,
+      "Visit Ferguson Law",
+      "https://fergusonlawja.com",
+    ),
+  );
+}
+
 function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }

@@ -26,7 +26,7 @@ export default function Footer() {
             </a>
             <p data-edit="footer.blurb">
               Trusted counsel for individuals, families and businesses in
-              Jamaica and around the world. H.O.M.E.™ by Ferguson Law helps
+              Jamaica and around the world. H.O.M.E.® by Ferguson Law helps
               buyers and sellers move from readiness to closing with clarity,
               protection and confidence.
             </p>
@@ -37,8 +37,8 @@ export default function Footer() {
               <a href="/#about">About</a>
               <a href="/#services">Services</a>
               <a href="/#process">Process</a>
-              <a href="/#home">H.O.M.E.™ by Ferguson Law</a>
-              <a href="/buyers-guide#top">H.O.M.E.™ Buyers Guide</a>
+              <a href="/#home">H.O.M.E.® by Ferguson Law</a>
+              <a href="/buyers-guide#top">H.O.M.E.® Buyers Guide</a>
               <a href="/explainers">Explainers</a>
               <a href="/glossary">Property Glossary</a>
               <a href="/directory">Find a Pro</a>
@@ -74,7 +74,7 @@ export default function Footer() {
             Kingston, Jamaica.
           </div>
           <div style={{ marginTop: "0.5rem", fontSize: ".78rem", color: "rgba(246,242,234,.5)" }}>
-            H.O.M.E.™ by Ferguson Law – Home Ownership Made Easy™ · Informational content is not legal advice.
+            H.O.M.E.® by Ferguson Law – Home Ownership Made Easy® · Informational content is not legal advice.
           </div>
         </div>
       </div>

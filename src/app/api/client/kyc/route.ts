@@ -98,6 +98,14 @@ export async function POST(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+  // Sync kyc_status on all matters for this client: pending → submitted
+  // (approved/flagged matters are never downgraded back)
+  await admin
+    .from("fl_client_matters")
+    .update({ kyc_status: "submitted" })
+    .eq("client_id", user.id)
+    .eq("kyc_status", "pending");
+
   void sendKycSubmittedToStaff(
     user.user_metadata?.full_name || user.email?.split("@")[0] || "Client",
     user.email!,

@@ -7,7 +7,7 @@ import { waLink } from "@/lib/site";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Why Every Jamaican Property Buyer Needs an Attorney | H.O.M.E.™ by Ferguson Law",
+  title: "Why Every Jamaican Property Buyer Needs an Attorney | H.O.M.E.® by Ferguson Law",
   description: "Why every Jamaican property buyer needs an attorney – title searches, fraud protection, contracts and protecting your down payment.",
 };
 
@@ -48,7 +48,7 @@ export default function GuidePage() {
       <article className="section guide-article">
         <div className="wrap g-wrap">
           <Link href="/explainers" className="g-back">™ All guides</Link>
-          <span className="eyebrow">H.O.M.E.™ by Ferguson Law – Buyer Explainer</span>
+          <span className="eyebrow">H.O.M.E.® by Ferguson Law – Buyer Explainer</span>
           <h1 className="g-h1">Why Every Jamaican Property Buyer Needs an Attorney</h1>
           <p className="g-sub">Your Biggest Investment Deserves Your Strongest Protection</p>
 
@@ -196,7 +196,7 @@ export default function GuidePage() {
         </div>
       </article>
       <p style={{ fontSize: ".75rem", color: "var(--muted)", textAlign: "center", padding: "1rem 1.5rem 0", borderTop: "1px solid var(--line)", marginTop: "2rem" }}>
-        H.O.M.E.™ Buyer&apos;s Guide. Informational only, not legal advice. © Ferguson Law. All rights reserved.
+        H.O.M.E.® Buyer&apos;s Guide. Informational only, not legal advice. © Ferguson Law. All rights reserved.
       </p>
       <Footer />
     </BookingProvider>

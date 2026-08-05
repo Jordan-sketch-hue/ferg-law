@@ -1,11 +1,11 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { BookingProvider } from "@/components/site/BookingProvider";
 import Nav from "@/components/site/Nav";
 import Reveal from "@/components/site/Reveal";
 import Footer from "@/components/site/Footer";
 
 export const metadata: Metadata = {
-  title: "Jamaican Property Glossary — H.O.M.E.™ by Ferguson Law",
+  title: "Jamaican Property Glossary — H.O.M.E.® by Ferguson Law",
   description:
     "A plain-English glossary of Jamaican property terms — how they compare to UK and USA/Canada equivalents, for buyers at home and abroad.",
 };
@@ -147,7 +147,7 @@ export default function GlossaryPage() {
             marginBottom: "1rem",
           }}
         >
-          H.O.M.E.™ by Ferguson Law
+          H.O.M.E.® by Ferguson Law
         </span>
         <h1
           style={{

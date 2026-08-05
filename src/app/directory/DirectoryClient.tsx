@@ -99,14 +99,20 @@ export default function DirectoryClient({ rows, listCount, firstImg, svcCount, a
                 : `${n} service${n === 1 ? "" : "s"}`;
             return (
               <Link key={p.id} className="pcard" href={`/directory/${p.slug || p.id}`}>
-                <div className="thumb">
+                <div className="thumb" style={{ position: "relative" }}>
+                  <div style={{ width: "100%", height: "100%", background: "#1a1a1a", display: "flex", alignItems: "center", justifyContent: "center", position: "absolute", inset: 0 }}>
+                    <span style={{ fontSize: 48, fontWeight: 700, color: "#C49A38", fontFamily: "Georgia, serif", letterSpacing: 2 }}>
+                      {(p.business_name || "?")[0].toUpperCase()}
+                    </span>
+                  </div>
                   {thumb && (
                     <img
                       src={thumb}
                       alt={p.business_name}
                       width={600}
                       height={375}
-                      style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%", display: "block" }}
+                      style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%", display: "block", position: "relative", zIndex: 1 }}
+                      onError={(e) => { e.currentTarget.style.display = "none"; }}
                     />
                   )}
                 </div>
