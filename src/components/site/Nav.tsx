@@ -9,7 +9,6 @@ const NAV_LINKS = [
   { href: "/#about", label: "About" },
   { href: "/#services", label: "Services" },
   { href: "/directory", label: "Find a Pro" },
-  { href: "/booking", label: "Consultation" },
   { href: "/#contact", label: "Contact" },
 ] as const;
 
@@ -86,6 +85,11 @@ export default function Nav() {
             {NAV_LINKS.map((l) => (
               <a key={l.href} href={l.href}>{l.label}</a>
             ))}
+            {/* Consultation CTA — bubble button matching hero style */}
+            <a href="/booking" className="btn btn-gold nav-consult-pill">
+              Consultation
+            </a>
+
             {/* Resources dropdown */}
             <div className="nav-resources-wrap" ref={resourcesRef}>
               <button
@@ -226,13 +230,21 @@ export default function Nav() {
           </a>
         ))}
         <div className="drawer-cta">
-          <a className="btn btn-gold" href="/get-started" onClick={closeMenu}>
+          <a className="btn btn-gold" href="/booking" onClick={closeMenu}>
+            Book a Consultation
+          </a>
+          <a className="btn btn-ghost" href="/get-started" onClick={closeMenu} style={{ justifyContent: "center" }}>
             Get started
           </a>
         </div>
       </nav>
 
       <style>{`
+        /* Consultation pill in desktop nav */
+        a.nav-consult-pill{
+          font-size:.8rem; padding:.38rem 1.1rem; white-space:nowrap; flex-shrink:0;
+        }
+
         /* H.O.M.E. inline nav links */
         .nav-divider{
           display:inline-block; width:1px; height:14px;
@@ -311,19 +323,21 @@ export default function Nav() {
         }
         .nav-search-btn:hover{ background:#f0ece4; color:#1a1a1a; }
 
-        /* Mobile-only Consultation link (hidden on desktop — nav-links already has it there) */
+        /* Mobile-only Consultation pill — no shared btn/btn-gold classes so display:none can't be overridden */
         .nav-consult-mobile{
           display:none;
         }
         @media(max-width:1040px){
           .nav-consult-mobile{
-            display:inline-block; font-size:.75rem; font-weight:700;
-            color:var(--gold-deep,#8a6d1f); text-decoration:underline;
-            text-underline-offset:3px; white-space:nowrap;
+            display:inline-flex; align-items:center; justify-content:center;
+            font-size:.72rem; padding:.35rem .85rem; white-space:nowrap;
+            background:linear-gradient(135deg,#d4ac5f 0%,var(--gold,#c9a84c) 50%,#b8943c 100%);
+            color:#1a1200; font-weight:700; border-radius:999px;
+            text-decoration:none; flex-shrink:0; letter-spacing:.02em;
           }
         }
         @media(max-width:480px){
-          .nav-consult-mobile{ font-size:.68rem; }
+          .nav-consult-mobile{ font-size:.65rem; padding:.3rem .7rem; }
         }
 
         @media(max-width:760px){ .nav-login-wrap{ display:none; } }
