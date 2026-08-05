@@ -122,7 +122,7 @@ export default function SurveyorExplainer() {
         </p>
         <div style={{ display: "flex", gap: ".9rem", justifyContent: "center", flexWrap: "wrap" }}>
           <Link href="/explainers" style={{ color: "rgba(246,242,234,.6)", fontSize: ".9rem", textDecoration: "none" }}>
-            ™ Back to all Explainers
+            ← Back to all Explainers
           </Link>
         </div>
       </section>
