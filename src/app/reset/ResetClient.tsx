@@ -88,7 +88,7 @@ function RequestForm({ scope }: { scope: Scope }) {
       <form className="dir-form" onSubmit={onSubmit} noValidate>
         <h1>Forgot your password?</h1>
         <p className="lede">
-          Enter your {scope === "admin" ? "back-office" : scope === "client" ? "client portal" : "partner"} email and we&apos;ll send you a secure link to set a new one.
+          Enter your{" "}{scope === "admin" ? "back-office" : scope === "client" ? "client portal" : "partner"}{" "}email and we&apos;ll send you a secure link to set a new one.
         </p>
         <div className="dform-field">
           <label htmlFor="em">Email</label>
