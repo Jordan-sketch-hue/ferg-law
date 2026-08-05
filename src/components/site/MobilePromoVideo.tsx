@@ -7,24 +7,30 @@ export default function MobilePromoVideo() {
   useEffect(() => {
     const v = ref.current;
     if (!v) return;
+
+    const tryPlay = () => { if (v.paused) v.play().catch(() => {}); };
+
+    // Immediate attempt + retry when data is ready
+    tryPlay();
+    v.addEventListener("canplay", tryPlay);
+
+    // Retry on scroll-into-view (no disconnect — keep retrying if still paused)
     const obs = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          v.play().catch(() => {});
-          obs.disconnect();
-        }
-      },
+      ([entry]) => { if (entry.isIntersecting) tryPlay(); },
       { threshold: 0.1 }
     );
     obs.observe(v);
-    return () => obs.disconnect();
+
+    return () => {
+      obs.disconnect();
+      v.removeEventListener("canplay", tryPlay);
+    };
   }, []);
 
   return (
     <video
       ref={ref}
       src="/img/ferguson-promo.mp4"
-      poster="/img/ferguson-promo-poster.jpg"
       autoPlay
       muted
       loop

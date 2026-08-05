@@ -298,7 +298,7 @@ export default function Nav() {
         .nav-resources-dropdown a:hover{ background:var(--surface-alt,#f5f5f5); }
 
         /* Mobile drawer resource sub-links */
-        .drawer-resource-link{ font-size:.9rem !important; padding-left:1rem !important; opacity:.85; }
+        .drawer-resource-link{ font-size:.9rem !important; opacity:.85; }
 
         .nav-links{ gap:1.4rem; flex:1; justify-content:center; }
         .nav-right{ display:flex; align-items:center; gap:12px; flex-shrink:0; margin-left:1rem; }
