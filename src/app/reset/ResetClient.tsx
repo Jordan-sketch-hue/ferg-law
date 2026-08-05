@@ -5,15 +5,18 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-type Scope = "partner" | "admin";
+type Scope = "partner" | "admin" | "client";
 
 export default function ResetClient({
   token,
   request,
+  isRecovery,
 }: {
   token: string | null;
   request: Scope | null;
+  isRecovery?: boolean;
 }) {
+  if (isRecovery) return <ClientConsumeForm />;
   if (token) return <ConsumeForm token={token} />;
   if (request) return <RequestForm scope={request} />;
   return <Chooser />;
@@ -47,10 +50,14 @@ function RequestForm({ scope }: { scope: Scope }) {
     e.preventDefault();
     setBusy(true);
     try {
-      await fetch("/api/auth/forgot", {
+      const endpoint = scope === "client" ? "/api/auth/client-forgot" : "/api/auth/forgot";
+      const body = scope === "client"
+        ? { email: email.trim() }
+        : { scope, email: email.trim() };
+      await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ scope, email: email.trim() }),
+        body: JSON.stringify(body),
       });
     } catch {
       /* generic response either way */
@@ -68,7 +75,7 @@ function RequestForm({ scope }: { scope: Scope }) {
             If an account exists for <strong>{email.trim() || "that address"}</strong>, we&apos;ve sent a link to set a
             new password. It expires in one hour.
           </p>
-          <Link className="btn btn-ghost" href={scope === "admin" ? "/admin" : "/directory/login"} style={{ width: "100%" }}>
+          <Link className="btn btn-ghost" href={scope === "admin" ? "/admin" : scope === "client" ? "/directory/client-login" : "/directory/login"} style={{ width: "100%" }}>
             Back to sign in
           </Link>
         </div>
@@ -81,8 +88,7 @@ function RequestForm({ scope }: { scope: Scope }) {
       <form className="dir-form" onSubmit={onSubmit} noValidate>
         <h1>Forgot your password?</h1>
         <p className="lede">
-          Enter your {scope === "admin" ? "back-office" : "partner"} email and we&apos;ll send you a secure link to set a
-          new one.
+          Enter your {scope === "admin" ? "back-office" : scope === "client" ? "client portal" : "partner"} email and we&apos;ll send you a secure link to set a new one.
         </p>
         <div className="dform-field">
           <label htmlFor="em">Email</label>
@@ -100,8 +106,67 @@ function RequestForm({ scope }: { scope: Scope }) {
           {busy ? "Sending…" : "Email me a link"}
         </button>
         <div className="dform-alt">
-          <Link href={scope === "admin" ? "/admin" : "/directory/login"}>Back to sign in</Link>
+          <Link href={scope === "admin" ? "/admin" : scope === "client" ? "/directory/client-login" : "/directory/login"}>Back to sign in</Link>
         </div>
+      </form>
+    </div>
+  );
+}
+
+/* ---------- set a new password — client portal (Supabase recovery session) ---------- */
+function ClientConsumeForm() {
+  const router = useRouter();
+  const [pw, setPw] = useState("");
+  const [pw2, setPw2] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setErr(null);
+    if (pw.length < 8) return setErr("Use at least 8 characters.");
+    if (pw !== pw2) return setErr("The two passwords don't match.");
+    setBusy(true);
+    const sb = createClient();
+    const { error } = await sb.auth.updateUser({ password: pw });
+    setBusy(false);
+    if (error) return setErr("Your reset link has expired. Please request a new one.");
+    setDone(true);
+  }
+
+  if (done) {
+    return (
+      <div className="dir-wrap">
+        <div className="dir-form">
+          <h1>Password updated</h1>
+          <p className="lede">You can now sign in with your new password.</p>
+          <button className="btn btn-gold" onClick={() => router.push("/directory/client-login")} style={{ width: "100%" }}>
+            Go to sign in
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="dir-wrap">
+      <form className="dir-form" onSubmit={onSubmit} noValidate>
+        <h1>Set a new password</h1>
+        <p className="lede">Choose a new password for your client portal account.</p>
+        {err && <div className="dform-err">{err}</div>}
+        <div className="dform-field">
+          <label htmlFor="pw">New password</label>
+          <input id="pw" type="password" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} autoFocus />
+        </div>
+        <div className="dform-field">
+          <label htmlFor="pw2">Confirm password</label>
+          <input id="pw2" type="password" autoComplete="new-password" value={pw2} onChange={(e) => setPw2(e.target.value)} />
+        </div>
+        <button className="btn btn-gold" type="submit" disabled={busy} style={{ width: "100%" }}>
+          {busy ? "Saving…" : "Set password"}
+        </button>
+        <p className="lede" style={{ fontSize: 13, marginTop: 10 }}>At least 8 characters. Keep it private.</p>
       </form>
     </div>
   );

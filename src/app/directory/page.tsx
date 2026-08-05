@@ -33,6 +33,7 @@ export default async function DirectoryPage({
       .from("fl_partners")
       .select("id,kind,business_name,parishes,bio,logo_url,work_photos,slug,featured")
       .eq("status", "approved")
+      .not("slug", "is", null)
       .order("featured", { ascending: false })
       .order("business_name", { ascending: true }),
     sb.from("fl_partner_listings").select("partner_id,media").eq("status", "published"),

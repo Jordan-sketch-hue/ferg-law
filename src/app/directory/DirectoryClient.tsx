@@ -98,7 +98,7 @@ export default function DirectoryClient({ rows, listCount, firstImg, svcCount, a
                 ? `${n} listing${n === 1 ? "" : "s"}`
                 : `${n} service${n === 1 ? "" : "s"}`;
             return (
-              <Link key={p.id} className="pcard" href={`/directory/${p.slug || p.id}`}>
+              <Link key={p.id} className="pcard" href={`/directory/${p.slug}`}>
                 <div className="thumb" style={{ position: "relative" }}>
                   <div style={{ width: "100%", height: "100%", background: "#1a1a1a", display: "flex", alignItems: "center", justifyContent: "center", position: "absolute", inset: 0 }}>
                     <span style={{ fontSize: 48, fontWeight: 700, color: "#C49A38", fontFamily: "Georgia, serif", letterSpacing: 2 }}>

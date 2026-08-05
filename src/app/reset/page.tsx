@@ -10,9 +10,10 @@ export const metadata: Metadata = {
 export default async function ResetPage({
   searchParams,
 }: {
-  searchParams: Promise<{ token?: string; request?: string }>;
+  searchParams: Promise<{ token?: string; request?: string; type?: string; error?: string }>;
 }) {
   const sp = await searchParams;
-  const request = sp.request === "admin" || sp.request === "partner" ? sp.request : null;
-  return <ResetClient token={sp.token ?? null} request={request} />;
+  const request = sp.request === "admin" || sp.request === "partner" || sp.request === "client" ? sp.request : null;
+  const isRecovery = sp.type === "recovery";
+  return <ResetClient token={sp.token ?? null} request={request} isRecovery={isRecovery} />;
 }
