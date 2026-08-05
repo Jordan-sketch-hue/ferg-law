@@ -7,6 +7,7 @@ import HomeFlagship from "@/components/site/HomeFlagship";
 import Footer from "@/components/site/Footer";
 import HeroCarousel from "@/components/site/HeroCarousel";
 import ChatLink from "@/components/site/ChatLink";
+import MobilePromoVideo from "@/components/site/MobilePromoVideo";
 
 const ArrowIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
@@ -112,15 +113,7 @@ export default function Home() {
           is visible high on the page without scrolling (Owen feedback Jul 30) */}
       <section className="brand-film brand-film--mobile-slot" aria-hidden="true">
         <div className="bf-video-slot reveal">
-          <video
-            src="/img/ferguson-promo.mp4"
-            poster="/img/ferguson-promo-poster.jpg"
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="metadata"
-          />
+          <MobilePromoVideo />
         </div>
       </section>
 
