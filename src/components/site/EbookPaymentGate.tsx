@@ -16,15 +16,28 @@ export default function EbookPaymentGate({ onPurchaseStart }: EbookGateProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-
     if (!emailRe.test(email)) {
       setError("Please enter a valid email address.");
       return;
     }
-
     setLoading(true);
-    // TEST MODE — bypass WiPay, grant direct access
-    window.location.href = "https://guide.fergusonlawja.com";
+    try {
+      const res = await fetch("/api/ebook/purchase", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      const data = await res.json() as { ok?: boolean; payUrl?: string; error?: string };
+      if (data.payUrl) {
+        window.location.href = data.payUrl;
+      } else {
+        setError(data.error ?? "Could not start checkout. Please try again.");
+        setLoading(false);
+      }
+    } catch {
+      setError("Could not reach the server. Please check your connection.");
+      setLoading(false);
+    }
   };
 
   return (
@@ -49,8 +62,12 @@ export default function EbookPaymentGate({ onPurchaseStart }: EbookGateProps) {
       >
         Unlock the H.O.M.E.® Guide
       </h3>
-      <p style={{ color: "rgba(246,242,234,.7)", margin: "0 0 1.5rem", fontSize: ".95rem" }}>
-        $20 USD / 3,000 JMD - instant access to download or read online.
+      <div style={{ display: "flex", alignItems: "baseline", gap: ".5rem", margin: "0 0 .4rem" }}>
+        <span style={{ fontFamily: "var(--serif)", fontSize: "1.8rem", color: "var(--gold)", fontWeight: 700 }}>J$3,000</span>
+        <span style={{ color: "rgba(246,242,234,.55)", fontSize: ".9rem" }}>/ US$20</span>
+      </div>
+      <p style={{ color: "rgba(246,242,234,.7)", margin: "0 0 1.5rem", fontSize: ".9rem" }}>
+        Instant access to download or read online.
       </p>
 
       <form onSubmit={handleSubmit}>
@@ -89,7 +106,7 @@ export default function EbookPaymentGate({ onPurchaseStart }: EbookGateProps) {
         </div>
 
         {error && (
-          <p style={{ color: "#faa", fontSize: ".85rem", marginBottom: "1rem", margin: "0 0 1rem" }}>
+          <p style={{ color: "#faa", fontSize: ".85rem", margin: "0 0 1rem" }}>
             {error}
           </p>
         )}
@@ -109,7 +126,7 @@ export default function EbookPaymentGate({ onPurchaseStart }: EbookGateProps) {
             opacity: loading ? 0.6 : 1,
           }}
         >
-          {loading ? "Opening guide..." : "Access the Guide"}
+          {loading ? "Opening checkout..." : "Get the Guide — J$3,000"}
         </button>
       </form>
 
