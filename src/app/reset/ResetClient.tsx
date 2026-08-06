@@ -29,7 +29,10 @@ function Chooser() {
       <div className="dir-form">
         <h1>Reset your password</h1>
         <p className="lede">Which account do you need to reset?</p>
-        <Link className="btn btn-gold" href="/reset?request=partner" style={{ width: "100%", marginBottom: 10 }}>
+        <Link className="btn btn-gold" href="/reset?request=client" style={{ width: "100%", marginBottom: 10 }}>
+          Client portal account
+        </Link>
+        <Link className="btn btn-ghost" href="/reset?request=partner" style={{ width: "100%", marginBottom: 10 }}>
           Partner / directory account
         </Link>
         <Link className="btn btn-ghost" href="/reset?request=admin" style={{ width: "100%" }}>
