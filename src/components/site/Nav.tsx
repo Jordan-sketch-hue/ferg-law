@@ -26,6 +26,18 @@ const RESOURCE_LINKS = [
   { href: "/faq", label: "FAQ" },
 ] as const;
 
+const PenIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
+  </svg>
+);
+
+const CalIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
+  </svg>
+);
+
 export default function Nav() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -156,7 +168,12 @@ export default function Nav() {
                 <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
               </svg>
             </button>
+            <a className="btn btn-light nav-book-here" href="/booking">
+              <CalIcon />
+              Book here
+            </a>
             <a className="btn btn-gold nav-get-started" href="/get-started">
+              <PenIcon />
               Get started
             </a>
             <button
@@ -302,7 +319,8 @@ export default function Nav() {
 
         .nav-links{ gap:1.4rem; flex:1; justify-content:center; }
         .nav-right{ display:flex; align-items:center; gap:12px; flex-shrink:0; margin-left:1rem; }
-        .nav-get-started{ font-size:.85rem; padding:.45rem 1.1rem; white-space:nowrap; }
+        .nav-get-started{ font-size:.85rem; padding:.45rem 1.1rem; white-space:nowrap; display:inline-flex; align-items:center; gap:.35rem; }
+        .nav-book-here{ font-size:.85rem; padding:.45rem 1.1rem; white-space:nowrap; display:inline-flex; align-items:center; gap:.35rem; }
 
         /* Log in — prominent, beside Get started (Owen's ask) */
         .nav-login-wrap{ position:relative; }
@@ -340,7 +358,15 @@ export default function Nav() {
           .nav-consult-mobile{ font-size:.65rem; padding:.3rem .7rem; }
         }
 
-        @media(max-width:760px){ .nav-login-wrap{ display:none; } }
+        @media(max-width:760px){
+          .nav-login-wrap{ display:none; }
+          .nav-get-started{ display:none; }
+          .nav-book-here{ display:none; }
+          .logo-img{ width:140px !important; }
+        }
+        @media(max-width:480px){
+          .nav-search-btn{ display:none; }
+        }
         @media(max-width:1200px){
           .nav-links a, .nav-links .nav-home-inline{ font-size:.78rem; }
           .nav-links{ gap:1rem; }
