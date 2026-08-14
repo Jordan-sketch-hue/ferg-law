@@ -27,16 +27,17 @@ const RESOURCE_LINKS = [
 ] as const;
 
 const PenIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-    <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}>
+    <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
   </svg>
 );
 
 const CalIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}>
     <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
   </svg>
 );
+
 
 export default function Nav() {
   const [scrolled, setScrolled] = useState(false);
@@ -97,11 +98,6 @@ export default function Nav() {
             {NAV_LINKS.map((l) => (
               <a key={l.href} href={l.href}>{l.label}</a>
             ))}
-            {/* Consultation CTA — bubble button matching hero style */}
-            <a href="/booking" className="btn btn-gold nav-consult-pill">
-              Consultation
-            </a>
-
             {/* Resources dropdown */}
             <div className="nav-resources-wrap" ref={resourcesRef}>
               <button
@@ -131,18 +127,17 @@ export default function Nav() {
           </nav>
 
           <div className="nav-right">
-            {/* Mobile-only Consultation link — desktop already shows it inline in nav-links,
-                but that whole bar is display:none under the 1040px breakpoint, so mobile
-                users only ever saw it if they opened the hamburger drawer. Surface it
-                directly in the always-visible mobile bar too. */}
-            <a
-              href="/booking"
-              className="nav-consult-mobile"
-              onClick={(e) => handleNavClick(e, "/booking")}
+            {/* Utility — search first */}
+            <button
+              className="nav-search-btn nav-search-desktop"
+              aria-label="Search"
+              onClick={() => window.dispatchEvent(new CustomEvent("fl:open-search"))}
             >
-              Consultation
-            </a>
-            {/* Log in — Owen: make log-ins stand out, beside Get started */}
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+            </button>
+            {/* Log in */}
             <div className="nav-login-wrap" ref={loginRef}>
               <button
                 className="nav-login-btn"
@@ -159,23 +154,27 @@ export default function Nav() {
                 </div>
               )}
             </div>
-            <button
-              className="nav-search-btn"
-              aria-label="Search"
-              onClick={() => window.dispatchEvent(new CustomEvent("fl:open-search"))}
+            {/* Book here — desktop */}
+            <a
+              href="/booking"
+              className="btn btn-gold nav-consult-btn"
+              onClick={(e) => handleNavClick(e, "/booking")}
             >
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-              </svg>
-            </button>
-            <a className="btn btn-light nav-book-here" href="/booking">
-              <CalIcon />
-              Book here
+              <CalIcon /><span className="btn-label">Book here</span>
             </a>
+            {/* Book here — mobile only */}
+            <a
+              href="/booking"
+              className="btn btn-gold nav-consult-mobile"
+              onClick={(e) => handleNavClick(e, "/booking")}
+            >
+              <CalIcon /><span className="btn-label">Book here</span>
+            </a>
+            {/* Get started */}
             <a className="btn btn-gold nav-get-started" href="/get-started">
-              <PenIcon />
-              Get started
+              <PenIcon /><span className="btn-label">Get started</span>
             </a>
+            {/* Hamburger */}
             <button
               className={`menu-btn${menuOpen ? " active" : ""}`}
               id="menuBtn"
@@ -190,13 +189,13 @@ export default function Nav() {
         </div>
       </header>
 
-      {/* Mobile drawer + overlay */}
-      <div
-        className={`nav-overlay${menuOpen ? " show" : ""}`}
-        onClick={closeMenu}
-        aria-hidden="true"
-      />
-      <nav className={`nav-drawer${menuOpen ? " open" : ""}`}>
+      {/* Mobile drawer + overlay — wrapper clips fixed drawer to viewport so iOS doesn't zoom */}
+      <div className={`nav-drawer-clip${menuOpen ? " active" : ""}`} aria-hidden="true">
+        <div
+          className={`nav-overlay${menuOpen ? " show" : ""}`}
+          onClick={closeMenu}
+        />
+        <nav className={`nav-drawer${menuOpen ? " open" : ""}`}>
         {NAV_LINKS.map((l) => (
           <a
             key={l.href}
@@ -246,21 +245,37 @@ export default function Nav() {
             {l.label}
           </a>
         ))}
+        <button
+          className="drawer-search-btn"
+          onClick={() => { closeMenu(); window.dispatchEvent(new CustomEvent("fl:open-search")); }}
+          aria-label="Search"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          Search
+        </button>
         <div className="drawer-cta">
-          <a className="btn btn-gold" href="/booking" onClick={closeMenu}>
-            Book a Consultation
+          <a className="btn btn-ghost drawer-consult-btn" href="/booking" onClick={closeMenu}>
+            Book here
           </a>
-          <a className="btn btn-ghost" href="/get-started" onClick={closeMenu} style={{ justifyContent: "center" }}>
-            Get started
+          <a className="btn btn-gold" href="/get-started" onClick={closeMenu}>
+            <PenIcon /> Get started
           </a>
         </div>
       </nav>
+      </div>
 
       <style>{`
-        /* Consultation pill in desktop nav */
-        a.nav-consult-pill{
-          font-size:.8rem; padding:.38rem 1.1rem; white-space:nowrap; flex-shrink:0;
+        /* Drawer clip wrapper — position:fixed; overflow:hidden clips drawer to viewport
+           so iOS Safari doesn't detect off-screen translateX and zoom out the page */
+        .nav-drawer-clip{
+          position:fixed; inset:0; pointer-events:none;
+          overflow:hidden; z-index:9500;
         }
+        .nav-drawer-clip.active{ pointer-events:auto; }
+        .nav-drawer-clip .nav-overlay{ position:absolute; }
+        .nav-drawer-clip .nav-drawer{ position:absolute; }
 
         /* H.O.M.E. inline nav links */
         .nav-divider{
@@ -315,12 +330,12 @@ export default function Nav() {
         .nav-resources-dropdown a:hover{ background:var(--surface-alt,#f5f5f5); }
 
         /* Mobile drawer resource sub-links */
-        .drawer-resource-link{ font-size:.9rem !important; opacity:.85; }
+        .drawer-resource-link{ font-size:.9rem !important; padding-left:1rem !important; opacity:.85; }
+        .drawer-consult-btn{ width:100%; justify-content:center; margin-bottom:.5rem; border-color:var(--ink); color:var(--ink); }
 
         .nav-links{ gap:1.4rem; flex:1; justify-content:center; }
         .nav-right{ display:flex; align-items:center; gap:12px; flex-shrink:0; margin-left:1rem; }
-        .nav-get-started{ font-size:.85rem; padding:.45rem 1.1rem; white-space:nowrap; display:inline-flex; align-items:center; gap:.35rem; }
-        .nav-book-here{ font-size:.85rem; padding:.45rem 1.1rem; white-space:nowrap; display:inline-flex; align-items:center; gap:.35rem; }
+        .nav-get-started{ display:inline-flex; align-items:center; gap:6px; font-size:.85rem; padding:.45rem 1.1rem; white-space:nowrap; }
 
         /* Log in — prominent, beside Get started (Owen's ask) */
         .nav-login-wrap{ position:relative; }
@@ -340,33 +355,54 @@ export default function Nav() {
           transition:background .15s, color .15s;
         }
         .nav-search-btn:hover{ background:#f0ece4; color:#1a1a1a; }
+        @media(max-width:760px){ .nav-search-desktop{ display:none !important; } }
 
-        /* Mobile-only Consultation pill — no shared btn/btn-gold classes so display:none can't be overridden */
-        .nav-consult-mobile{
-          display:none;
+        /* Search row inside mobile drawer */
+        .drawer-search-btn{
+          display:flex; align-items:center; gap:.6rem;
+          width:100%; background:none; border:none; border-bottom:1px solid var(--line);
+          padding:.5rem 0; font:inherit; font-size:1rem; font-weight:500;
+          color:var(--fg); cursor:pointer; text-align:left;
         }
+        .drawer-search-btn:hover{ color:var(--gold-deep); }
+
+        /* Consultation button — desktop nav-right */
+        .nav-consult-btn{
+          font-size:.82rem; padding:.42rem 1rem; white-space:nowrap;
+          display:inline-flex; align-items:center; gap:6px;
+        }
+        @media(max-width:1040px){ .nav-consult-btn{ display:none; } }
+
+        /* Mobile-only Consultation button (shown when desktop button is hidden) */
+        .nav-consult-mobile{ display:none; }
         @media(max-width:1040px){
           .nav-consult-mobile{
-            display:inline-flex; align-items:center; justify-content:center;
-            font-size:.72rem; padding:.35rem .85rem; white-space:nowrap;
-            background:linear-gradient(135deg,#d4ac5f 0%,var(--gold,#c9a84c) 50%,#b8943c 100%);
-            color:#1a1200; font-weight:700; border-radius:999px;
-            text-decoration:none; flex-shrink:0; letter-spacing:.02em;
+            display:inline-flex !important; align-items:center; gap:6px;
+            font-size:.85rem; padding:.45rem 1.1rem; white-space:nowrap;
           }
         }
-        @media(max-width:480px){
-          .nav-consult-mobile{ font-size:.65rem; padding:.3rem .7rem; }
+        /* ≤440px (iPhone 15 Plus / 15 Pro Max + Samsung S24 Ultra) — reduce padding only, keep font readable */
+        @media(max-width:440px){
+          .nav-consult-mobile,.nav-get-started{
+            padding:.38rem .6rem !important; gap:5px !important;
+          }
+          .nav-right{ gap:8px !important; }
+        }
+        /* ≤395px (iPhone 14, narrow Androids) — first shrink tier */
+        @media(max-width:395px){
+          .nav-consult-mobile,.nav-get-started{
+            font-size:.78rem !important; padding:.42rem .8rem !important; gap:5px !important;
+          }
+        }
+        /* ≤375px — tightest (360px class phones) */
+        @media(max-width:375px){
+          .nav-consult-mobile,.nav-get-started{
+            font-size:.75rem !important; padding:.4rem .6rem !important; gap:4px !important;
+          }
+          .nav-right{ gap:7px !important; }
         }
 
-        @media(max-width:760px){
-          .nav-login-wrap{ display:none; }
-          .nav-get-started{ display:none; }
-          .nav-book-here{ display:none; }
-          .logo-img{ width:140px !important; }
-        }
-        @media(max-width:480px){
-          .nav-search-btn{ display:none; }
-        }
+        @media(max-width:760px){ .nav-login-wrap{ display:none; } }
         @media(max-width:1200px){
           .nav-links a, .nav-links .nav-home-inline{ font-size:.78rem; }
           .nav-links{ gap:1rem; }
@@ -374,9 +410,6 @@ export default function Nav() {
         @media(max-width:1000px){
           .nav-links a, .nav-links .nav-home-inline{ font-size:.72rem; }
           .nav-links{ gap:.7rem; }
-        }
-        @media(max-width:480px){
-          .nav-get-started{ font-size:.75rem; padding:.4rem .8rem; }
         }
       `}</style>
     </>

@@ -119,7 +119,7 @@ const ROLES: Role[] = [
     tagline: "You've made a difficult decision. Here's how Ferguson Law carries the legal weight from here.",
     moments: [
       {
-        headline: "You talk to our Attorney first. (it won't necessarily be me)",
+        headline: "You talk to our Attorney first.",
         body: "A 20-minute Consultation call. No judgment, just clarity on the steps in the process, how long it takes and what your rights are. Consultation fee: $8,000 (credited towards your full Legal fee when you engage Ferguson Law).",
       },
       {
@@ -378,7 +378,7 @@ function GetStartedContent() {
               },
               {
                 t: "You're not chasing updates.",
-                d: "The Ferguson Law Client Portal tracks every milestone. Log in 24/7 and see exactly what stage your matter is at. When something moves, you know. When we need something from you, you hear about it.",
+                d: "The Ferguson Law CLIENT PORTAL tracks every milestone. Log in 24/7 and see exactly what stage your matter is at. When something moves, you know. When we need something from you, you hear about it.",
               },
             ].map((p) => (
               <div key={p.t} style={S.pillar}>
@@ -417,10 +417,7 @@ const S: Record<string, React.CSSProperties> = {
     display: "flex", alignItems: "center", justifyContent: "space-between",
     gap: 12, flexWrap: "wrap",
   },
-  stickyLabel: {
-    fontSize: ".88rem", fontWeight: 600,
-    color: "rgba(251,248,241,.82)", whiteSpace: "nowrap",
-  },
+  stickyLabel: { fontSize: ".88rem", fontWeight: 600, color: "rgba(251,248,241,.82)", whiteSpace: "nowrap" },
   stickyBtns: { display: "flex", gap: 10, flexWrap: "wrap", flexShrink: 0 },
   stickyGold: {
     padding: "9px 20px", borderRadius: 10, background: GOLD,

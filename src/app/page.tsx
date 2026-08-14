@@ -7,7 +7,7 @@ import HomeFlagship from "@/components/site/HomeFlagship";
 import Footer from "@/components/site/Footer";
 import HeroCarousel from "@/components/site/HeroCarousel";
 import ChatLink from "@/components/site/ChatLink";
-import MobilePromoVideo from "@/components/site/MobilePromoVideo";
+import PromoVideo from "@/components/site/PromoVideo";
 
 const ArrowIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
@@ -16,15 +16,9 @@ const ArrowIcon = () => (
 );
 
 const CalendarIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}>
     <rect x="3" y="4" width="18" height="18" rx="2"/>
     <path d="M16 2v4M8 2v4M3 10h18"/>
-  </svg>
-);
-
-const PenIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
   </svg>
 );
 
@@ -55,12 +49,11 @@ export default function Home() {
             sale, and transfer.
           </p>
           <div className="hero-cta">
-            <a className="btn btn-gold hero-cta-primary" href="/get-started">
-              <PenIcon />
-              <span data-edit="hero.ctaPrimary">Get started</span>
+            <a className="btn btn-gold hero-cta-primary" href="/get-started" style={{display:"inline-flex",alignItems:"center",gap:6}}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+              <span data-edit="hero.ctaPrimary">Book here</span>
             </a>
             <BookButton className="btn btn-light hero-cta-book">
-              <CalendarIcon />
               Book here
             </BookButton>
             <a className="btn btn-light" href="/buyers-guide">
@@ -119,8 +112,8 @@ export default function Home() {
       {/* MOBILE-ONLY: promo video slot – appears after trust strip so the animation
           is visible high on the page without scrolling (Owen feedback Jul 30) */}
       <section className="brand-film brand-film--mobile-slot" aria-hidden="true">
-        <div className="bf-video-slot reveal">
-          <MobilePromoVideo />
+        <div className="bf-video-slot">
+          <PromoVideo src="/img/ferguson-promo.mp4" poster="/img/ferguson-promo-poster.jpg" />
         </div>
       </section>
 
@@ -202,7 +195,7 @@ export default function Home() {
         <div className="wrap about-grid">
           <div className="about-photo reveal">
             <img
-              src="/img/founder.webp"
+              src="/img/owen-founder-portrait.jpg"
               data-edit-img="images.founderPhoto"
               alt="Owen K. Ferguson, JP – Founder &amp; Principal Attorney-at-Law"
             />
@@ -223,7 +216,7 @@ export default function Home() {
               A lawyer who understands the <em>money</em>, too.
             </h2>
             <p className="lead" data-edit="about.lead">
-              Ferguson Law is built on a rare combination &mdash; deep legal
+              Ferguson Law is built on a rare combination. Deep legal
               expertise paired with two decades in banking and finance. The
               firm&apos;s founder, Owen K. Ferguson, JP, has practised as an
               Attorney-at-Law for over 10 years, on top of 20+ years in
@@ -233,8 +226,15 @@ export default function Home() {
               A 2013 graduate of the Norman Manley Law School with post-graduate
               studies in both Law and Business Administration from the University
               of London, Owen pairs these disciplines to make complex transactions
-              genuinely clear &mdash; for first-time buyers, businesses, investors
+              genuinely clear, for first-time buyers, businesses, investors
               and overseas Jamaicans alike.
+            </p>
+            <p className="about-p" data-edit="about.body3">
+              As a Justice of the Peace and member of both the Jamaican Bar Association and
+              the International Bar Association, Owen brings institutional standing alongside
+              personal, attentive service. Whether the matter is a first property purchase,
+              a complex commercial deal, a will, or a family estate, clients leave
+              with clarity, not confusion.
             </p>
             <ul className="creds">
               <li>Attorney-at-Law · 10+ years</li>
@@ -294,7 +294,7 @@ export default function Home() {
               <div className="s-n" data-edit="process.steps.1.n">Step 02</div>
               <h3 data-edit="process.steps.1.title">Find Your Team</h3>
               <p data-edit="process.steps.1.body">
-                Browse vetted real estate agents, surveyors, valuators and lenders in the H.O.M.E.® directory.
+                Browse real estate agents, surveyors, valuators and lenders in the H.O.M.E.® directory.
               </p>
               <a className="tag pstep-link" href="/directory">
                 Find a professional –
@@ -374,7 +374,7 @@ export default function Home() {
             </p>
             <div className="bf-founder">
               <img
-                src="/img/attorney-dark.jpg"
+                src="/img/owen-founder-portrait.jpg"
                 data-edit-img="images.founderPhotoDark"
                 alt="Owen K. Ferguson, JP"
                 style={{width:"132px",height:"132px",objectFit:"cover",borderRadius:"15px",objectPosition:"center top"}}
@@ -545,7 +545,7 @@ export default function Home() {
               </div>
               <img className="reach-photo" src="/img/reach-chat.webp" alt="Chat live with us" />
               <h4>Chat live</h4>
-              <p>Talk to our AI assistant right now – available 24/7 to answer questions about buying or selling property in Jamaica.</p>
+              <p>Talk to our AI assistant right now – available 24/7 for general property and legal queries.</p>
               <span className="btn btn-gold reach-btn">Start a chat</span>
             </ChatLink>
             {/* WhatsApp */}
