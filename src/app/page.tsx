@@ -16,9 +16,15 @@ const ArrowIcon = () => (
 );
 
 const CalendarIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="3" y="4" width="18" height="18" rx="2"/>
     <path d="M16 2v4M8 2v4M3 10h18"/>
+  </svg>
+);
+
+const PenIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
   </svg>
 );
 
@@ -50,12 +56,12 @@ export default function Home() {
           </p>
           <div className="hero-cta">
             <a className="btn btn-gold hero-cta-primary" href="/get-started">
-              <CalendarIcon />
-              <span data-edit="hero.ctaPrimary">Book a Consultation</span>
+              <PenIcon />
+              <span data-edit="hero.ctaPrimary">Get started</span>
             </a>
             <BookButton className="btn btn-light hero-cta-book">
               <CalendarIcon />
-              Book a Consultation
+              Book here
             </BookButton>
             <a className="btn btn-light" href="/buyers-guide">
               H.O.M.E.® Buyers Guide
@@ -539,7 +545,7 @@ export default function Home() {
               </div>
               <img className="reach-photo" src="/img/reach-chat.webp" alt="Chat live with us" />
               <h4>Chat live</h4>
-              <p>Talk to our AI assistant right now – available 24/7, to answer questions about buying or selling property in Jamaica.</p>
+              <p>Talk to our AI assistant right now – available 24/7 to answer questions about buying or selling property in Jamaica.</p>
               <span className="btn btn-gold reach-btn">Start a chat</span>
             </ChatLink>
             {/* WhatsApp */}
