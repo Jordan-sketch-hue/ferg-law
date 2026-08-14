@@ -49,26 +49,6 @@ export default function HeroCarousel() {
           }}
         />
       ))}
-      {/* dot indicators */}
-      <div style={{ position: "absolute", bottom: "5.5rem", left: "50%", transform: "translateX(-50%)", display: "flex", gap: "0.375rem", zIndex: 10 }}>
-        {SLIDES.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => setActive(i)}
-            aria-label={`Slide ${i + 1}`}
-            style={{
-              width: i === active ? "1.5rem" : "0.5rem",
-              height: "0.375rem",
-              borderRadius: "9999px",
-              background: i === active ? "rgba(200,166,92,0.95)" : "rgba(255,255,255,0.4)",
-              border: "none",
-              padding: 0,
-              cursor: "pointer",
-              transition: "all 400ms ease",
-            }}
-          />
-        ))}
-      </div>
     </>
   );
 }

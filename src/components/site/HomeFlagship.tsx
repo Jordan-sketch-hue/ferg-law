@@ -47,7 +47,7 @@ export default function HomeFlagship({
               aria-label="H.O.M.E.® by Ferguson Law — Home Ownership Made Easy"
             >
               <div className="hlite-roof" aria-hidden="true"></div>
-              <div className="hlite-acr">H.O.M.E.</div>
+              <div className="hlite-acr">H.O.M.E.®</div>
               <div className="hlite-tag">Home Ownership Made Easy</div>
               <div className="hlite-by">by Ferguson Law</div>
             </div>
