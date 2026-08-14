@@ -4431,9 +4431,9 @@ function ZoomSetupTab({ token }: { token: string }) {
         {instantMeeting && (
           <div style={{ background: "#f0f7f0", border: "1px solid #b2dfb5", borderRadius: 10, padding: "16px 20px" }}>
             <p style={{ margin: "0 0 10px", fontWeight: 700, fontSize: 14, color: "#1e5c22" }}>
-              Meeting ready{instantMeeting.provider === "daily" ? " · embedded below" : ""}
+              Meeting ready{instantMeeting.provider === "daily" ? " · embedded below" : ""}{instantMeeting.provider === "jitsi" ? " · via Jitsi Meet" : ""}
             </p>
-            {instantMeeting.provider === "zoom" && (
+            {(instantMeeting.provider === "zoom" || instantMeeting.provider === "jitsi") && (
               <a href={instantMeeting.url} target="_blank" rel="noopener noreferrer"
                 style={{ display: "inline-block", background: GOLD, color: CREAM, borderRadius: 8, padding: "10px 22px", fontWeight: 700, fontSize: 14, textDecoration: "none" }}>
                 Join call ↗

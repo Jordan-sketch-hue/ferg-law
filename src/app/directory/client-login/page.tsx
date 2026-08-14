@@ -3,12 +3,10 @@
 export const dynamic = "force-dynamic";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
 export default function ClientLoginPage() {
-  const router = useRouter();
   const [tab, setTab] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,7 +26,7 @@ export default function ClientLoginPage() {
     try {
       const { error } = await createClient().auth.signInWithPassword({ email: email.trim(), password });
       if (error) { setErr(error.message); setBusy(false); return; }
-      router.push("/directory/client");
+      window.location.href = "/directory/client";
     } catch {
       setErr("Could not reach the server. Please check your connection and try again.");
       setBusy(false);
@@ -70,7 +68,7 @@ export default function ClientLoginPage() {
       setBusy(false);
       return;
     }
-    router.push("/directory/client");
+    window.location.href = "/directory/client";
   }
 
   const EyeIcon = ({ open }: { open: boolean }) => open ? (

@@ -1,22 +1,26 @@
 /**
  * Creates a video meeting room.
- * Tries Daily.co first (embedded iframe), falls back to Zoom.
- * Returns { url, provider } or null if both fail.
+ * Tries Zoom first, then Daily.co, then Jitsi (always works, no config).
+ * Returns { url, provider } — never null.
  */
 
-export type MeetingResult = { url: string; provider: "daily" | "zoom" };
+export type MeetingResult = { url: string; provider: "daily" | "zoom" | "jitsi" };
 
 export async function createMeetingRoom(
   topic: string,
   startsAt: string,
   durationMinutes: number,
-): Promise<MeetingResult | null> {
-  // Zoom is primary (confirmed working). Daily.co is fallback (requires payment method on account).
+): Promise<MeetingResult> {
   const zoom = await tryZoom(topic, startsAt, durationMinutes);
   if (zoom) return zoom;
   const daily = await tryDaily(startsAt, durationMinutes);
   if (daily) return daily;
-  return null;
+  return tryJitsi();
+}
+
+function tryJitsi(): MeetingResult {
+  const roomId = "FergusonLaw-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  return { url: `https://meet.jit.si/${roomId}`, provider: "jitsi" };
 }
 
 async function tryDaily(startsAt: string, durationMinutes: number): Promise<MeetingResult | null> {

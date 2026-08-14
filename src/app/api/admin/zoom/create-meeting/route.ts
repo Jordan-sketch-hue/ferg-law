@@ -27,10 +27,5 @@ export async function POST(req: NextRequest) {
 
   const startsAt = start_time ?? new Date().toISOString();
   const meeting = await createMeetingRoom(topic, startsAt, duration_minutes);
-
-  if (!meeting) {
-    return Response.json({ ok: false, error: "Video calling isn't configured yet. Add credentials in Advanced setup." }, { status: 503 });
-  }
-
   return Response.json({ ok: true, url: meeting.url, provider: meeting.provider });
 }

@@ -340,7 +340,13 @@ export default function Nav() {
           .nav-consult-mobile{ font-size:.65rem; padding:.3rem .7rem; }
         }
 
-        @media(max-width:760px){ .nav-login-wrap{ display:none; } }
+        @media(max-width:760px){
+          .nav-login-wrap{ display:none; }
+          .nav-get-started{ display:none; }
+        }
+        @media(max-width:480px){
+          .nav-search-btn{ display:none; }
+        }
         @media(max-width:1200px){
           .nav-links a, .nav-links .nav-home-inline{ font-size:.78rem; }
           .nav-links{ gap:1rem; }
