@@ -231,6 +231,12 @@ function GetStartedContent() {
   const [roleId, setRoleId] = useState("buyer");
   const { openBooking } = useBooking();
 
+  // Push chat widget above sticky bar
+  useEffect(() => {
+    document.body.classList.add("has-sticky-cta");
+    return () => document.body.classList.remove("has-sticky-cta");
+  }, []);
+
   const role = ROLES.find((r) => r.id === roleId) ?? ROLES[0];
 
   // Read ?role= from URL on mount (avoids useSearchParams + Suspense requirement)
@@ -378,7 +384,7 @@ function GetStartedContent() {
               },
               {
                 t: "You're not chasing updates.",
-                d: "The Ferguson Law CLIENT PORTAL tracks every milestone. Log in 24/7 and see exactly what stage your matter is at. When something moves, you know. When we need something from you, you hear about it.",
+                d: "The Ferguson Law Client Portal tracks every milestone. Log in 24/7 and see exactly what stage your matter is at. When something moves, you know. When we need something from you, you hear about it.",
               },
             ].map((p) => (
               <div key={p.t} style={S.pillar}>

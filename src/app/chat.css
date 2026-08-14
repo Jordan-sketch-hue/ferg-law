@@ -5,6 +5,10 @@
    defined on :root in globals.css.
    ============================================================ */
 
+/* Lift chat widget above sticky CTA bar on pages that add .has-sticky-cta to body */
+body.has-sticky-cta .fl-chat-launch { bottom: 86px; }
+body.has-sticky-cta .fl-chat-panel  { bottom: 86px; }
+
 .fl-chat-launch {
   position: fixed;
   right: 22px;

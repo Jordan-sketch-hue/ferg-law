@@ -53,7 +53,8 @@ export default function Home() {
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
               <span data-edit="hero.ctaPrimary">Book here</span>
             </a>
-            <BookButton className="btn btn-light hero-cta-book">
+            <BookButton className="btn btn-light hero-cta-book" style={{display:"inline-flex",alignItems:"center",gap:6}}>
+              <CalendarIcon />
               Book here
             </BookButton>
             <a className="btn btn-light" href="/buyers-guide">
