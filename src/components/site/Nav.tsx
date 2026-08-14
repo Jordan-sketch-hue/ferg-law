@@ -362,6 +362,7 @@ export default function Nav() {
           .nav-login-wrap{ display:none; }
           .nav-get-started{ display:none; }
           .nav-book-here{ display:none; }
+          .logo-img{ width:140px !important; }
         }
         @media(max-width:480px){
           .nav-search-btn{ display:none; }

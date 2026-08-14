@@ -13,11 +13,7 @@ const ArrowIcon = () => (
 
 const PILLS = ["20-min call", "Real answers", "No obligation", "Online or in-person"];
 
-const TESTIMONIALS = [
-  { quote: "I'm in Toronto and thought buying back home would be a nightmare. Ferguson Law handled everything - I signed online and got my title without one stressful day off work.", name: "Marcus R.", role: "Diaspora buyer" },
-  { quote: "The readiness score told me the truth - I wasn't ready yet. Six months later I was. No other lawyer ever made it that clear or that human.", name: "Keisha L.", role: "First-time buyer" },
-  { quote: "They understood the money and the law. Closing costs, NHT, the contract - explained like a friend would, not a textbook. Keys in hand in weeks.", name: "Andre & Shanice", role: "New homeowners" },
-];
+const TESTIMONIALS: { quote: string; name: string; role: string }[] = [];
 
 function BookingContent() {
   const { open, openBooking } = useBooking();

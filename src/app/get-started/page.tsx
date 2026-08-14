@@ -359,7 +359,7 @@ function GetStartedContent() {
               },
               {
                 t: "You're not chasing updates.",
-                d: "The Ferguson Law CLIENT PORTAL tracks every milestone. Log in 24/7 and see exactly what stage your matter is at. When something moves, you know. When we need something from you, you hear about it.",
+                d: "The Ferguson Law Client Portal tracks every milestone. Log in 24/7 and see exactly what stage your matter is at. When something moves, you know. When we need something from you, you hear about it.",
               },
             ].map((p) => (
               <div key={p.t} style={S.pillar}>

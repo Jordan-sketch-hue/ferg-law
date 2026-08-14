@@ -545,7 +545,7 @@ export default function Home() {
               </div>
               <img className="reach-photo" src="/img/reach-chat.webp" alt="Chat live with us" />
               <h4>Chat live</h4>
-              <p>Talk to our AI assistant right now – available 24/7, answers questions about any matter.</p>
+              <p>Talk to our AI assistant right now – available 24/7 to answer questions about buying or selling property in Jamaica.</p>
               <span className="btn btn-gold reach-btn">Start a chat</span>
             </ChatLink>
             {/* WhatsApp */}
