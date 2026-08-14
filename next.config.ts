@@ -1,5 +1,4 @@
 import type { NextConfig } from "next";
-import path from "node:path";
 
 const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
@@ -31,9 +30,6 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  turbopack: {
-    root: path.join(__dirname),
-  },
   async redirects() {
     return [
       { source: "/guides", destination: "/explainers", permanent: true },
