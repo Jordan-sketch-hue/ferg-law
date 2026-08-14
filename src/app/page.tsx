@@ -54,6 +54,7 @@ export default function Home() {
               <span data-edit="hero.ctaPrimary">Book a Consultation</span>
             </a>
             <BookButton className="btn btn-light hero-cta-book">
+              <CalendarIcon />
               Book a Consultation
             </BookButton>
             <a className="btn btn-light" href="/buyers-guide">
