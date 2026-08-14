@@ -258,12 +258,7 @@ function GetStartedContent() {
             {ROLES.map((r) => (
               <button
                 key={r.id}
-                onClick={() => {
-                  switchRole(r.id);
-                  setTimeout(() => {
-                    document.getElementById("gs-cta")?.scrollIntoView({ behavior: "smooth", block: "center" });
-                  }, 80);
-                }}
+                onClick={() => switchRole(r.id)}
                 style={{ ...S.tab, ...(r.id === roleId ? S.tabActive : {}) }}
               >
                 {r.label}
@@ -303,7 +298,7 @@ function GetStartedContent() {
       </section>
 
       {/* CTA. Client Portal is the main feature; consultation available, not the headline */}
-      <section id="gs-cta" style={S.ctaBand}>
+      <section style={S.ctaBand}>
         <div style={S.ctaInner}>
           <div>
             <h2 style={S.ctaH2}>Ready when you are.</h2>
