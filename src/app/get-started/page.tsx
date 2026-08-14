@@ -245,7 +245,26 @@ function GetStartedContent() {
   }
 
   return (
-    <main>
+    <main style={{ paddingBottom: 80 }}>
+
+      {/* Sticky CTA bar — always visible so user never has to scroll to act */}
+      <div style={S.stickyBar}>
+        <span style={S.stickyLabel}>
+          <strong style={{ color: GOLD }}>{role.label}</strong>
+          <span style={{ color: "rgba(251,248,241,.55)", margin: "0 8px" }}>—</span>
+          Ready when you are
+        </span>
+        <div style={S.stickyBtns}>
+          <button onClick={openBooking} style={S.stickyGold}>Book a Consultation</button>
+          <Link
+            href={role.id === "professional" ? "/directory/login" : "/directory/client-login"}
+            style={S.stickyGhost}
+          >
+            {role.id === "professional" ? "Partner login" : "Client portal"}
+          </Link>
+        </div>
+      </div>
+
       {/* Hero */}
       <section style={S.hero}>
         <div style={S.heroInner}>
@@ -489,6 +508,30 @@ const S: Record<string, React.CSSProperties> = {
     padding: "14px 24px", borderRadius: 12,
     border: "1px solid rgba(251,248,241,.25)", color: "rgba(251,248,241,.82)",
     fontWeight: 600, fontSize: ".88rem", textDecoration: "none",
+    display: "inline-block", whiteSpace: "nowrap",
+  },
+
+  stickyBar: {
+    position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 200,
+    background: GREEN, borderTop: `2px solid ${GOLD}55`,
+    padding: "12px 24px",
+    display: "flex", alignItems: "center", justifyContent: "space-between",
+    gap: 12, flexWrap: "wrap",
+  },
+  stickyLabel: {
+    fontSize: ".88rem", fontWeight: 600, color: "rgba(251,248,241,.82)",
+    whiteSpace: "nowrap",
+  },
+  stickyBtns: { display: "flex", gap: 10, flexWrap: "wrap", flexShrink: 0 },
+  stickyGold: {
+    padding: "9px 20px", borderRadius: 10, background: GOLD,
+    color: GREEN, fontWeight: 700, fontSize: ".85rem",
+    border: "none", cursor: "pointer", whiteSpace: "nowrap",
+  },
+  stickyGhost: {
+    padding: "9px 18px", borderRadius: 10,
+    border: "1px solid rgba(251,248,241,.22)", color: "rgba(251,248,241,.78)",
+    fontWeight: 600, fontSize: ".82rem", textDecoration: "none",
     display: "inline-block", whiteSpace: "nowrap",
   },
 
