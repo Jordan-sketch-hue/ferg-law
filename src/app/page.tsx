@@ -196,7 +196,7 @@ export default function Home() {
         <div className="wrap about-grid">
           <div className="about-photo reveal">
             <img
-              src="/img/owen-founder-portrait.jpg"
+              src="/img/owen-portrait-vertical.jpg"
               data-edit-img="images.founderPhoto"
               alt="Owen K. Ferguson, JP – Founder &amp; Principal Attorney-at-Law"
             />
@@ -375,7 +375,7 @@ export default function Home() {
             </p>
             <div className="bf-founder">
               <img
-                src="/img/owen-founder-portrait.jpg"
+                src="/img/owen-portrait-vertical.jpg"
                 data-edit-img="images.founderPhotoDark"
                 alt="Owen K. Ferguson, JP"
                 style={{width:"132px",height:"132px",objectFit:"cover",borderRadius:"15px",objectPosition:"center top"}}
