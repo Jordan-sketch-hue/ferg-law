@@ -3450,6 +3450,9 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
   const [editingStepId, setEditingStepId] = useState<string | null>(null);
   const [editingStepName, setEditingStepName] = useState("");
   const [savingEditStep, setSavingEditStep] = useState(false);
+  const [addingNoteForId, setAddingNoteForId] = useState<string | null>(null);
+  const [noteText, setNoteText] = useState("");
+  const [savingNote, setSavingNote] = useState(false);
 
   async function addStep() {
     if (!selected || !addingStepPhase || !newStepName.trim() || savingStep) return;
@@ -3507,6 +3510,17 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
     setEditingStepId(null);
     setEditingStepName("");
     setSavingEditStep(false);
+  }
+
+  async function saveNote(id: string) {
+    if (savingNote) return;
+    setSavingNote(true);
+    const notes = noteText.trim() || null;
+    await supabase.from("fl_matter_milestones").update({ notes }).eq("id", id);
+    setMilestones(prev => prev.map(m => m.id === id ? { ...m, notes } : m));
+    setAddingNoteForId(null);
+    setNoteText("");
+    setSavingNote(false);
   }
 
   async function updateMatterStatus(id: string, status: string) {
@@ -3832,61 +3846,100 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                         </div>
                         {phase.items.map(m => {
                           const mc = MS_COLORS[m.status] ?? MS_COLORS.pending;
+                          const isEditingName = editingStepId === m.id;
+                          const isAddingNote = addingNoteForId === m.id;
                           return (
                             <div key={m.id} style={{
-                              display: "flex", alignItems: "center", gap: 10,
-                              padding: "8px 10px", borderRadius: 8, marginBottom: 4,
+                              borderRadius: 8, marginBottom: 4,
                               background: m.status === "in_progress" ? "#fffbf0" : m.status === "not_applicable" ? "#f8f8f8" : "#fff",
                               border: `1px solid ${m.status === "in_progress" ? "#f0e4b0" : "rgba(18,16,12,.08)"}`,
                               opacity: m.status === "not_applicable" ? 0.6 : 1,
                             }}>
-                              {editingStepId === m.id ? (
-                                <span style={{ flex: 1, display: "flex", alignItems: "center", gap: 6 }}>
-                                  <input
+                              {/* Step name + controls row */}
+                              <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px" }}>
+                                {isEditingName ? (
+                                  <span style={{ flex: 1, display: "flex", alignItems: "center", gap: 6 }}>
+                                    <input
+                                      autoFocus
+                                      value={editingStepName}
+                                      onChange={e => setEditingStepName(e.target.value)}
+                                      onKeyDown={e => {
+                                        if (e.key === "Enter") void saveEditStep(m.id);
+                                        if (e.key === "Escape") { setEditingStepId(null); setEditingStepName(""); }
+                                      }}
+                                      style={{ flex: 1, fontSize: 13, padding: "3px 8px", borderRadius: 7, border: `1px solid ${GOLD}`, outline: "none" }}
+                                    />
+                                    <button type="button" onClick={() => void saveEditStep(m.id)} disabled={savingEditStep || !editingStepName.trim()}
+                                      style={{ padding: "3px 10px", borderRadius: 7, border: "none", background: GREEN, color: CREAM, fontSize: 12, fontWeight: 600, cursor: "pointer", opacity: savingEditStep ? 0.5 : 1 }}>
+                                      {savingEditStep ? "…" : "Save"}
+                                    </button>
+                                    <button type="button" onClick={() => { setEditingStepId(null); setEditingStepName(""); }}
+                                      style={{ padding: "3px 8px", borderRadius: 7, border: `1px solid rgba(18,16,12,.15)`, background: "#fff", color: MUTED, fontSize: 12, cursor: "pointer" }}>
+                                      Cancel
+                                    </button>
+                                  </span>
+                                ) : (
+                                  <span style={{ fontSize: 13, flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
+                                    <span style={{
+                                      display: "flex", alignItems: "center", gap: 6,
+                                      color: m.status === "done" ? "#2e7d32" : m.status === "not_applicable" ? MUTED : INK,
+                                      fontWeight: m.status === "done" ? 600 : 400,
+                                      textDecoration: m.status === "not_applicable" ? "line-through" : "none",
+                                    }}>
+                                      {m.status === "done" && <span style={{ fontSize: 12, color: "#2e7d32" }}>✅</span>}
+                                      {m.status === "not_applicable" && <span style={{ fontSize: 12 }}>—</span>}
+                                      <span style={{ cursor: "default" }}>
+                                        {m.name}
+                                      </span>
+                                    </span>
+                                    {m.notes && !isAddingNote && (
+                                      <span style={{ fontSize: 11, color: MUTED, fontStyle: "italic", paddingLeft: 2 }}>{m.notes}</span>
+                                    )}
+                                    {!isAddingNote && (
+                                      <button type="button"
+                                        onClick={() => { setAddingNoteForId(m.id); setNoteText(m.notes || ""); setEditingStepId(null); }}
+                                        style={{ background: "none", border: "none", padding: 0, fontSize: 11, color: MUTED, cursor: "pointer", textAlign: "left", width: "fit-content" }}>
+                                        {m.notes ? "Edit result note" : "+ Add result note"}
+                                      </button>
+                                    )}
+                                  </span>
+                                )}
+                                <select
+                                  value={m.status}
+                                  onChange={e => updateMilestone(m.id, e.target.value)}
+                                  style={{
+                                    fontSize: 11.5, padding: "3px 7px", borderRadius: 7, fontWeight: 700,
+                                    border: `1px solid ${mc.border}`, background: mc.bg, color: mc.color, cursor: "pointer",
+                                  }}
+                                >
+                                  {MILESTONE_STATUS_OPTS.map(o => <option key={o} value={o}>{MS_LABELS[o] ?? o}</option>)}
+                                </select>
+                                <button type="button" onClick={() => deleteStep(m.id)}
+                                  title="Remove step" style={{ background: "none", border: "none", cursor: "pointer", color: "#ccc", fontSize: 14, padding: "0 2px" }}>✕</button>
+                              </div>
+                              {/* Result note editor — step name stays read-only here */}
+                              {isAddingNote && (
+                                <div style={{ padding: "0 10px 10px", display: "flex", flexDirection: "column", gap: 6 }}>
+                                  <textarea
                                     autoFocus
-                                    value={editingStepName}
-                                    onChange={e => setEditingStepName(e.target.value)}
-                                    onKeyDown={e => {
-                                      if (e.key === "Enter") void saveEditStep(m.id);
-                                      if (e.key === "Escape") { setEditingStepId(null); setEditingStepName(""); }
-                                    }}
-                                    style={{ flex: 1, fontSize: 13, padding: "3px 8px", borderRadius: 7, border: `1px solid ${GOLD}`, outline: "none" }}
+                                    value={noteText}
+                                    onChange={e => setNoteText(e.target.value)}
+                                    placeholder="Result / outcome notes (optional)..."
+                                    rows={2}
+                                    style={{ width: "100%", fontSize: 12.5, padding: "8px 10px", borderRadius: 8, border: `1px solid ${GOLD}`, outline: "none", resize: "vertical", fontFamily: "inherit", boxSizing: "border-box" }}
                                   />
-                                  <button type="button" onClick={() => void saveEditStep(m.id)} disabled={savingEditStep || !editingStepName.trim()}
-                                    style={{ padding: "3px 10px", borderRadius: 7, border: "none", background: GREEN, color: CREAM, fontSize: 12, fontWeight: 600, cursor: "pointer", opacity: savingEditStep ? 0.5 : 1 }}>
-                                    {savingEditStep ? "…" : "Save"}
-                                  </button>
-                                  <button type="button" onClick={() => { setEditingStepId(null); setEditingStepName(""); }}
-                                    style={{ padding: "3px 8px", borderRadius: 7, border: `1px solid rgba(18,16,12,.15)`, background: "#fff", color: MUTED, fontSize: 12, cursor: "pointer" }}>
-                                    Cancel
-                                  </button>
-                                </span>
-                              ) : (
-                                <span
-                                  onClick={() => { setEditingStepId(m.id); setEditingStepName(m.name); }}
-                                  title="Click to edit step name"
-                                  style={{ fontSize: 13, flex: 1, display: "flex", alignItems: "center", gap: 6,
-                                    color: m.status === "done" ? "#2e7d32" : m.status === "not_applicable" ? MUTED : INK,
-                                    fontWeight: m.status === "done" ? 600 : 400,
-                                    textDecoration: m.status === "not_applicable" ? "line-through" : "none",
-                                    cursor: "text" }}>
-                                  {m.status === "done" && <span style={{ fontSize: 12, color: "#2e7d32" }}>✅</span>}
-                                  {m.status === "not_applicable" && <span style={{ fontSize: 12 }}>—</span>}
-                                  {m.name}
-                                </span>
+                                  <div style={{ display: "flex", gap: 6 }}>
+                                    <button type="button" onClick={() => void saveNote(m.id)} disabled={savingNote}
+                                      style={{ padding: "5px 14px", borderRadius: 7, border: "none", background: GREEN, color: CREAM, fontSize: 12, fontWeight: 600, cursor: "pointer", opacity: savingNote ? 0.5 : 1 }}>
+                                      {savingNote ? "…" : "Save"}
+                                    </button>
+                                    <button type="button" onClick={() => { setAddingNoteForId(null); setNoteText(""); }}
+                                      style={{ padding: "5px 10px", borderRadius: 7, border: `1px solid rgba(18,16,12,.15)`, background: "#fff", color: MUTED, fontSize: 12, cursor: "pointer" }}>
+                                      Cancel
+                                    </button>
+                                  </div>
+                                </div>
                               )}
-                              <select
-                                value={m.status}
-                                onChange={e => updateMilestone(m.id, e.target.value)}
-                                style={{
-                                  fontSize: 11.5, padding: "3px 7px", borderRadius: 7, fontWeight: 700,
-                                  border: `1px solid ${mc.border}`, background: mc.bg, color: mc.color, cursor: "pointer",
-                                }}
-                              >
-                                {MILESTONE_STATUS_OPTS.map(o => <option key={o} value={o}>{MS_LABELS[o] ?? o}</option>)}
-                              </select>
-                              <button type="button" onClick={() => deleteStep(m.id)}
-                                title="Remove step" style={{ background: "none", border: "none", cursor: "pointer", color: "#ccc", fontSize: 14, padding: "0 2px" }}>✕</button>
                             </div>
                           );
                         })}
@@ -4113,7 +4166,13 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                         <div style={{ fontSize: 11.5, color: MUTED }}>
                           {p.method?.replace("_"," ") || "—"}{p.reference ? ` · ${p.reference}` : ""} · {fmtDate(p.created_at)}
                         </div>
-                        {p.receipt_number && <div style={{ fontSize: 11.5, color: "#2f7a52", fontWeight: 600, marginTop: 2 }}>Receipt {p.receipt_number}</div>}
+                        {p.receipt_number && (
+                          <div style={{ fontSize: 11.5, color: "#2f7a52", fontWeight: 600, marginTop: 2, display: "flex", alignItems: "center", gap: 8 }}>
+                            Receipt {p.receipt_number}
+                            <a href={`/receipt?id=${p.id}&admin=1&token=${encodeURIComponent(token)}`} target="_blank" rel="noopener noreferrer"
+                              style={{ fontSize: 11, color: "#c9a86a", fontWeight: 600, textDecoration: "none" }}>View / Print ↗</a>
+                          </div>
+                        )}
                       </div>
                       <span style={{
                         fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 999,
