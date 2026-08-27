@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 
 const RESEND_KEY = process.env.RESEND_API_KEY;
 const FROM = "Ferguson Law <contact@fergusonlawja.com>";
@@ -68,6 +68,18 @@ export async function POST(req: NextRequest) {
     }
 
     const json = (await res.json().catch(() => ({}))) as { id?: string };
+
+    // Log the sent email using service-role client (bypasses RLS)
+    const admin = createAdminClient();
+    const { error: logErr } = await admin.from("fl_email_log").insert({
+      to_email: to,
+      subject,
+      body_preview: body.slice(0, 300),
+      resend_id: json.id ?? null,
+      context: (req.headers.get("x-email-context") as string | null) ?? "compose",
+    });
+    if (logErr) console.error("[send-email] fl_email_log insert failed:", logErr.message, logErr.code);
+
     return NextResponse.json({ ok: true, id: json.id });
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "Unknown error" }, { status: 500 });

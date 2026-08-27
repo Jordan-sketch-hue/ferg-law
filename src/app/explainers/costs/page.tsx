@@ -18,7 +18,7 @@ const COSTS = [
     name: "Transfer Tax",
     who: "Seller pays",
     pct: "2% of Selling price",
-    desc: "Paid on the transfer of the title. A 2% charge on the agreed Selling price, normally paid by the seller.",
+    desc: "Paid on the transfer of the title. A 2% charge on the agreed Selling price, paid by the Seller.",
   },
   {
     n: "02",
@@ -204,6 +204,23 @@ export default function CostsExplainer() {
             ))}
           </div>
 
+        </div>
+      </section>
+
+      {/* Cost Estimator CTA */}
+      <section style={{ background: "#f4f1ec", padding: "2rem 1.5rem", borderTop: "1px solid #e7e1d6" }}>
+        <div style={{ maxWidth: 980, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1.5rem", flexWrap: "wrap" }}>
+          <div>
+            <div style={{ fontSize: ".72rem", letterSpacing: ".14em", textTransform: "uppercase", color: "var(--gold-deep)", fontWeight: 700, marginBottom: ".4rem" }}>
+              Try the Cost Estimator&#174;
+            </div>
+            <p style={{ margin: 0, fontSize: ".95rem", color: "#3a3a3a", maxWidth: 480 }}>
+              Enter the selling price and see a full cost breakdown — rough estimates or actual quotes — for buyer or seller.
+            </p>
+          </div>
+          <Link href="/cost-estimator" style={{ display: "inline-block", background: "#10211c", color: "#c9a86a", textDecoration: "none", padding: "12px 24px", borderRadius: 10, fontWeight: 700, fontSize: ".9rem", whiteSpace: "nowrap" }}>
+            Open Cost Estimator →
+          </Link>
         </div>
       </section>
 
