@@ -17,11 +17,12 @@ const LOGIN_LINKS = [
   { href: "/directory/client-login", label: "Client Portal" },
 ] as const;
 
-const HOME_LINK = { href: SITE.homeApp, label: "H.O.M.E.® by Ferguson Law", external: true };
+const HOME_LINK = { href: SITE.homeApp, label: "H.O.M.E. by Ferguson Law®", external: true };
 
 const RESOURCE_LINKS = [
   { href: "/buyers-guide", label: "Buyer's Guide" },
   { href: "/explainers", label: "Explainers" },
+  { href: "/cost-estimator", label: "Cost Estimator" },
   { href: "/glossary", label: "Glossary" },
   { href: "/faq", label: "FAQ" },
 ] as const;
@@ -196,74 +197,54 @@ export default function Nav() {
           onClick={closeMenu}
         />
         <nav className={`nav-drawer${menuOpen ? " open" : ""}`}>
-        {NAV_LINKS.map((l) => (
-          <a
-            key={l.href}
-            href={l.href}
-            onClick={(e) => {
-              if (l.href.includes("#")) {
-                e.preventDefault();
-                setMenuOpen(false);
-                const id = l.href.split("#")[1];
-                setTimeout(() => {
-                  document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
-                }, 320);
-              } else {
-                closeMenu();
-              }
-            }}
-          >
-            {l.label}
+          {/* Main nav */}
+          {NAV_LINKS.map((l) => (
+            <a key={l.href} href={l.href}
+              onClick={(e) => {
+                if (l.href.includes("#")) {
+                  e.preventDefault();
+                  setMenuOpen(false);
+                  const id = l.href.split("#")[1];
+                  setTimeout(() => { document.getElementById(id)?.scrollIntoView({ behavior: "smooth" }); }, 320);
+                } else { closeMenu(); }
+              }}
+            >{l.label}</a>
+          ))}
+
+          {/* Portals */}
+          <div className="drawer-section-label">Portals</div>
+          {LOGIN_LINKS.map((l) => (
+            <a key={l.href} href={l.href} onClick={closeMenu} className="drawer-sub-link">{l.label}</a>
+          ))}
+          <a href={HOME_LINK.href} target="_blank" rel="noopener" onClick={closeMenu} className="drawer-sub-link drawer-home-pill">
+            {HOME_LINK.label}
           </a>
-        ))}
-        {LOGIN_LINKS.map((l) => (
-          <a
-            key={l.href}
-            href={l.href}
-            onClick={closeMenu}
-            className="drawer-login-link"
-          >
-            {l.label}
-          </a>
-        ))}
-        <a
-          href={HOME_LINK.href}
-          target="_blank"
-          rel="noopener"
-          onClick={closeMenu}
-          className="drawer-home-link"
-        >
-          {HOME_LINK.label}
-        </a>
-        {RESOURCE_LINKS.map((l) => (
-          <a
-            key={l.href}
-            href={l.href}
-            onClick={closeMenu}
-            className="drawer-home-link drawer-resource-link"
-          >
-            {l.label}
-          </a>
-        ))}
-        <button
-          className="drawer-search-btn"
-          onClick={() => { closeMenu(); window.dispatchEvent(new CustomEvent("fl:open-search")); }}
-          aria-label="Search"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-          </svg>
-          Search
-        </button>
-        <div className="drawer-cta">
-          <a className="btn btn-ghost drawer-consult-btn" href="/booking" onClick={closeMenu}>
-            Book here
-          </a>
-          <a className="btn btn-gold" href="/get-started" onClick={closeMenu}>
-            <PenIcon /> Get started
-          </a>
-        </div>
-      </nav>
+
+          {/* Resources */}
+          <div className="drawer-section-label">Resources</div>
+          {RESOURCE_LINKS.map((l) => (
+            <a key={l.href} href={l.href} onClick={closeMenu}
+              className={`drawer-sub-link${l.href === "/cost-estimator" ? " drawer-featured-link" : ""}`}>
+              {l.label}
+              {l.href === "/cost-estimator" && <span className="drawer-badge">Tool</span>}
+            </a>
+          ))}
+
+          {/* Search */}
+          <button className="drawer-search-btn"
+            onClick={() => { closeMenu(); window.dispatchEvent(new CustomEvent("fl:open-search")); }}
+            aria-label="Search">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            Search
+          </button>
+
+          <div className="drawer-cta">
+            <a className="btn btn-ghost drawer-consult-btn" href="/booking" onClick={closeMenu}>Book here</a>
+            <a className="btn btn-gold" href="/get-started" onClick={closeMenu}><PenIcon /> Get started</a>
+          </div>
+        </nav>
       </div>
 
       <style>{`
@@ -290,8 +271,32 @@ export default function Nav() {
         }
         a.nav-home-inline:hover{ opacity:.72; }
 
-        /* Mobile drawer H.O.M.E. links */
-        .drawer-home-link{ display:block; padding:.45rem 0; font-size:1rem; color:var(--gold-deep); text-decoration:none; font-weight:600; border-bottom:1px solid var(--line); }
+        /* Drawer section label — sits between links, no extra border */
+        .drawer-section-label{
+          font-size:.65rem; font-weight:700; letter-spacing:.13em; text-transform:uppercase;
+          color:var(--gold-deep,#8a6d1f); padding:14px 28px 6px;
+          background:rgba(201,168,106,.06);
+        }
+
+        /* Sub-links inherit .nav-drawer a border — just tweak padding + size */
+        .nav-drawer a.drawer-sub-link{
+          font-size:.9rem; padding:13px 28px; display:flex;
+          align-items:center; justify-content:space-between;
+        }
+
+        /* H.O.M.E. gold tint */
+        .nav-drawer a.drawer-home-pill{ color:var(--gold-deep,#8a6d1f) !important; font-weight:600 !important; }
+
+        /* Cost Estimator — slightly bolder */
+        .nav-drawer a.drawer-featured-link{ font-weight:700 !important; }
+
+        /* "Tool" badge */
+        .drawer-badge{
+          font-size:.6rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+          background:rgba(201,168,106,.15); color:var(--gold-deep,#8a6d1f);
+          border:1px solid rgba(201,168,106,.35); border-radius:999px;
+          padding:2px 7px; flex-shrink:0;
+        }
 
         /* Desktop portal login links */
         a.nav-login-inline{
@@ -302,9 +307,6 @@ export default function Nav() {
           transition:opacity .15s;
         }
         a.nav-login-inline:hover{ opacity:1; }
-
-        /* Mobile drawer portal login links */
-        .drawer-login-link{ display:block; padding:.45rem 0; font-size:1rem; color:var(--fg); text-decoration:none; font-weight:500; border-bottom:1px solid var(--line); opacity:.8; }
 
         /* Resources dropdown */
         .nav-resources-wrap{ position:relative; display:inline-flex; align-items:center; }
@@ -329,8 +331,6 @@ export default function Nav() {
         }
         .nav-resources-dropdown a:hover{ background:var(--surface-alt,#f5f5f5); }
 
-        /* Mobile drawer resource sub-links */
-        .drawer-resource-link{ font-size:.9rem !important; padding-left:1rem !important; opacity:.85; }
         .drawer-consult-btn{ width:100%; justify-content:center; margin-bottom:.5rem; border-color:var(--ink); color:var(--ink); }
 
         .nav-links{ gap:1.4rem; flex:1; justify-content:center; }
