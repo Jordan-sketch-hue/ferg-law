@@ -8,7 +8,7 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { Resend } from "resend";
 
 const RESEND_KEY = process.env.RESEND_API_KEY;
-const FROM = "Owen Ferguson <owen@fergusonlawja.com>";
+const FROM = "Ferguson Law <contact@fergusonlawja.com>";
 
 export async function POST(req: NextRequest) {
   try {
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
       subject,
       html,
       text: body,
-      replyTo: "owen@fergusonlawja.com",
+      replyTo: "contact@fergusonlawja.com",
     });
 
     if (sendErr) {

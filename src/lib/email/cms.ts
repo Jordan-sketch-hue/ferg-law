@@ -60,14 +60,15 @@ export function sendClientPortalInvite(to: string, clientName: string, matterTit
   const matterLine = matterTitle
     ? `<p>Matter: <strong>${escapeHtml(matterTitle)}</strong></p>`
     : "";
+  const signupUrl = `${SIGNUP_URL}?email=${encodeURIComponent(to)}&mode=signup`;
   return send(
     to,
     "Your Ferguson Law client portal is ready",
     shell(
       `Hi ${escapeHtml(firstName)}, your matter is ready to view.`,
-      `${matterLine}Owen Ferguson has opened a matter on your behalf. Create your free account to access your portal — you can track progress, send messages, and upload documents securely.`,
+      `${matterLine}Ferguson Law has opened a matter on your behalf. Create your free account to access your portal — you can track progress, send messages, and upload documents securely.`,
       "Create my account",
-      SIGNUP_URL,
+      signupUrl,
     ),
   );
 }
@@ -81,6 +82,19 @@ export function sendWelcomeToClient(to: string, clientName: string) {
       `Your Ferguson Law client account is set up and ready. Once we open your matter you'll be able to track every step, send messages and upload documents — all from your secure portal. We'll be in touch shortly.`,
       "Go to my portal",
       PORTAL_URL,
+    ),
+  );
+}
+
+export function sendClientSignedUpToStaff(clientName: string, clientEmail: string) {
+  return send(
+    process.env.FERGUSON_STAFF_EMAIL || "contact@fergusonlawja.com",
+    `New client account — ${clientName}`,
+    shell(
+      `${escapeHtml(clientName)} just created their portal account.`,
+      `${escapeHtml(clientName)} (${escapeHtml(clientEmail)}) has signed up and can now access their client portal. Their matter has been linked automatically. Review them in the admin.`,
+      "View in admin",
+      "https://fergusonlawja.com/admin",
     ),
   );
 }
@@ -163,13 +177,14 @@ export function sendPaymentConfirmedInternal(matterTitle: string, amountJmd: num
   );
 }
 
-export function sendReceiptToClient(to: string, matterTitle: string, receiptNumber: string, amountJmd: number) {
+export function sendReceiptToClient(to: string, matterTitle: string, receiptNumber: string, amountJmd: number, clientName?: string | null) {
+  const greeting = clientName ? clientName.split(" ")[0] : null;
   const wa = waLink(`Hi Ferguson Law — following up on receipt ${receiptNumber} for ${matterTitle}.`);
   return send(
     to,
     `Receipt ${receiptNumber} — ${matterTitle}`,
     shell(
-      "Your receipt is ready.",
+      greeting ? `${greeting}, your receipt is ready.` : "Your receipt is ready.",
       `We've confirmed your payment of <strong>JMD ${amountJmd.toLocaleString()}</strong> on <em>${escapeHtml(matterTitle)}</em>. Receipt number <strong>${escapeHtml(receiptNumber)}</strong> is on file. Reach us on WhatsApp if you'd like a PDF copy sent separately.`,
       "Message us on WhatsApp",
       wa,
