@@ -51,7 +51,7 @@ export default function Home() {
           <div className="hero-cta">
             <a className="btn btn-gold hero-cta-primary" href="/get-started" style={{display:"inline-flex",alignItems:"center",gap:6}}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
-              <span data-edit="hero.ctaPrimary">Book here</span>
+              <span data-edit="hero.ctaPrimary">Get started</span>
             </a>
             <BookButton className="btn btn-light hero-cta-book">
               <CalendarIcon />
@@ -510,6 +510,26 @@ export default function Home() {
             Ferguson Law makes it simple to handle your property, business and
             family matters back home – done right, from anywhere.
           </p>
+        </div>
+      </section>
+
+      {/* COST ESTIMATOR CALLOUT */}
+      <section style={{ background: "#f4f1ec", padding: "3rem 1.5rem", borderTop: "1px solid #e7e1d6" }}>
+        <div style={{ maxWidth: 980, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "2rem", flexWrap: "wrap" }}>
+          <div>
+            <div style={{ fontSize: ".72rem", letterSpacing: ".16em", textTransform: "uppercase", color: "#8a6420", fontWeight: 700, marginBottom: ".5rem" }}>
+              H.O.M.E.® by Ferguson Law
+            </div>
+            <h2 style={{ fontFamily: "var(--serif, Georgia, serif)", fontSize: "clamp(1.4rem,2.5vw,2rem)", margin: "0 0 .6rem", color: "#10211c", lineHeight: 1.15 }}>
+              What Will Your Transaction Cost?
+            </h2>
+            <p style={{ margin: 0, fontSize: ".95rem", color: "#69736d", maxWidth: 440, lineHeight: 1.65 }}>
+              Enter the selling price and get a full breakdown — transfer tax, stamp duty, attorney fees, and more — before you sign anything.
+            </p>
+          </div>
+          <a href="/cost-estimator" style={{ display: "inline-block", background: "#10211c", color: "#c9a86a", textDecoration: "none", padding: "14px 28px", borderRadius: 12, fontWeight: 700, fontSize: ".95rem", whiteSpace: "nowrap", flexShrink: 0 }}>
+            Open Cost Estimator →
+          </a>
         </div>
       </section>
 
