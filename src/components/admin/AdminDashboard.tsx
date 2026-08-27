@@ -480,6 +480,9 @@ export default function AdminDashboard() {
   }): Promise<string | null> => {
     if (!token) return "Not authorised.";
     const supabase = createClient();
+    const isNew = fields.email
+      ? !clients.some((c) => c.email?.toLowerCase() === fields.email.toLowerCase())
+      : true;
     const { error } = await supabase.rpc("fl_admin_upsert_client", {
       p_token: token, p_name: fields.name, p_email: fields.email || null,
       p_phone: fields.phone || null, p_type: fields.type || "individual",
@@ -488,8 +491,15 @@ export default function AdminDashboard() {
     if (error) return error.message || "Could not save client.";
     const list = await supabase.rpc("fl_admin_clients", { p_token: token });
     if (list.data) setClients(list.data as Client[]);
+    if (isNew && fields.email) {
+      void fetch("/api/admin/cms/invite-client", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-admin-token": token },
+        body: JSON.stringify({ email: fields.email.trim().toLowerCase(), clientName: fields.name.trim() }),
+      }).catch(() => null);
+    }
     return null;
-  }, [token]);
+  }, [token, clients]);
 
   const saveAvailability = useCallback(async (row: Availability): Promise<string | null> => {
     if (!token) return "Not authorised.";
@@ -793,7 +803,7 @@ export default function AdminDashboard() {
           )}
           {tab === "leads" && <LeadsTable leads={leads} loading={loading} token={token} onStatus={setLeadStatus} onDelete={deleteLead} />}
           {tab === "bookings" && <BookingsTable appts={appts} loading={loading} token={token ?? ""} onStatus={setApptStatus} onCancel={cancelBooking} />}
-          {tab === "clients" && <ClientsTab clients={clients} matters={matters} loading={loading} onUpsert={upsertClient} onDelete={deleteClient} />}
+          {tab === "clients" && <ClientsTab clients={clients} matters={matters} loading={loading} token={token ?? ""} onUpsert={upsertClient} onDelete={deleteClient} />}
           {tab === "matters" && <MattersTab matters={matters} loading={loading} token={token ?? ""} onStage={setMatterStage} onPayment={setMatterPayment} />}
           {tab === "cms" && token && <CmsTab token={token} onUnreadChange={setCmsUnread} />}
           {tab === "calendar" && <CalendarTab appts={appts} />}
@@ -1128,8 +1138,8 @@ const CLIENT_STATUS_COLORS: Record<string, React.CSSProperties> = {
   prospect: { background: "rgba(200,166,92,.22)", color: "#8a6a22" },
 };
 
-function ClientsTab({ clients, matters, loading, onUpsert, onDelete }: {
-  clients: Client[]; matters: Matter[]; loading: boolean;
+function ClientsTab({ clients, matters, loading, onUpsert, onDelete, token }: {
+  clients: Client[]; matters: Matter[]; loading: boolean; token: string;
   onUpsert: (f: { name: string; email: string; phone: string; type: string; country: string; notes: string }) => Promise<string | null>;
   onDelete: (id: string) => void;
 }) {
@@ -1138,6 +1148,16 @@ function ClientsTab({ clients, matters, loading, onUpsert, onDelete }: {
   const [country, setCountry] = useState(""); const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false); const [err, setErr] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [inviteSent, setInviteSent] = useState<Record<string, boolean>>({});
+
+  const sendInvite = async (clientEmail: string, clientName: string, clientId: string) => {
+    setInviteSent((p) => ({ ...p, [clientId]: true }));
+    await fetch("/api/admin/cms/invite-client", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-admin-token": token },
+      body: JSON.stringify({ email: clientEmail, clientName }),
+    }).catch(() => null);
+  };
 
   const submit = async () => {
     if (!name.trim() || busy) return;
@@ -1208,10 +1228,20 @@ function ClientsTab({ clients, matters, loading, onUpsert, onDelete }: {
                           ) : <span style={S.muted}>—</span>}
                         </Td>
                         <Td>
-                          <button type="button" onClick={() => onDelete(c.id)}
-                            style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)" }}>
-                            Archive
-                          </button>
+                          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                            {c.email && (
+                              <button type="button"
+                                onClick={() => void sendInvite(c.email!, c.name, c.id)}
+                                disabled={inviteSent[c.id]}
+                                style={{ ...S.waBtn, background: inviteSent[c.id] ? "rgba(47,122,82,.08)" : "rgba(201,168,106,.12)", color: inviteSent[c.id] ? GREEN : "#8a6a22", border: `1px solid ${inviteSent[c.id] ? GREEN : "rgba(201,168,106,.4)"}` }}>
+                                {inviteSent[c.id] ? "Sent" : "Send Login Email"}
+                              </button>
+                            )}
+                            <button type="button" onClick={() => onDelete(c.id)}
+                              style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)" }}>
+                              Archive
+                            </button>
+                          </div>
                         </Td>
                       </tr>
                       {expanded === c.id && cms.map((m) => (
@@ -2106,9 +2136,24 @@ function OverviewPanel({ leads, appts, convos, matters, homePros, emails, inquir
 // ---------------------------------------------------------------------------
 // Email inbox
 // ---------------------------------------------------------------------------
+interface SentEmail {
+  id: string;
+  created_at: string;
+  to_email: string;
+  to_name: string | null;
+  subject: string;
+  body_preview: string | null;
+  status: string;
+  resend_id: string | null;
+  context: string | null;
+}
+
 function EmailTab({ emails, token, onMarkRead }: {
   emails: InboundEmail[]; token: string; onMarkRead: (id: string) => void;
 }) {
+  const [pane, setPane] = useState<"inbox" | "sent">("inbox");
+  const [sentEmails, setSentEmails] = useState<SentEmail[]>([]);
+  const [sentLoading, setSentLoading] = useState(false);
   const [selected, setSelected] = useState<InboundEmail | null>(null);
   const [composing, setComposing] = useState(false);
   const [replyOpen, setReplyOpen] = useState(false);
@@ -2119,6 +2164,19 @@ function EmailTab({ emails, token, onMarkRead }: {
   const [newSubject, setNewSubject] = useState("");
   const [newBody, setNewBody] = useState("");
   const [suggesting, setSuggesting] = useState(false);
+
+  useEffect(() => {
+    if (pane !== "sent") return;
+    setSentLoading(true);
+    fetch("/api/admin/sent-emails", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token }),
+    })
+      .then((r) => r.json().catch(() => ({})))
+      .then((j: { emails?: SentEmail[] }) => { setSentEmails(j.emails ?? []); })
+      .finally(() => setSentLoading(false));
+  }, [pane, token]);
 
   async function suggestReply() {
     if (!selected || suggesting) return;
@@ -2167,7 +2225,7 @@ function EmailTab({ emails, token, onMarkRead }: {
   async function sendCompose() {
     if (!newTo.trim() || !newSubject.trim() || !newBody.trim() || sending) return;
     setSending(true); setSendResult(null);
-    const res = await fetch("/api/email/send", {
+    const res = await fetch("/api/admin/send-email", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token, to: newTo.trim(), subject: newSubject.trim(), body: newBody.trim() }),
@@ -2182,13 +2240,41 @@ function EmailTab({ emails, token, onMarkRead }: {
     <div style={{ display: "flex", height: "calc(100vh - 300px)", minHeight: 400, overflow: "hidden" }}>
       {/* Inbox list */}
       <div style={{ width: 300, flexShrink: 0, borderRight: "1px solid rgba(18,16,12,.1)", overflowY: "auto" }}>
-        <div style={{ padding: "12px 14px", borderBottom: "1px solid rgba(18,16,12,.08)" }}>
-          <button type="button" onClick={() => { setComposing(true); setSelected(null); }}
-            style={{ ...S.authBtn, width: "100%", padding: "9px 16px", fontSize: ".82rem" }}>
-            + Compose
-          </button>
+        {/* Pane toggle */}
+        <div style={{ display: "flex", borderBottom: "1px solid rgba(18,16,12,.08)" }}>
+          {(["inbox", "sent"] as const).map((p) => (
+            <button key={p} type="button" onClick={() => { setPane(p); setSelected(null); setComposing(false); }}
+              style={{ flex: 1, padding: "10px 0", border: "none", borderBottom: `2px solid ${pane === p ? GOLD : "transparent"}`,
+                background: "none", fontWeight: pane === p ? 700 : 400, fontSize: ".8rem",
+                color: pane === p ? GREEN : MUTED, cursor: "pointer", textTransform: "capitalize" }}>
+              {p === "inbox" ? "Inbox" : "Sent"}
+            </button>
+          ))}
         </div>
-        {emails.length === 0 ? (
+        {pane === "inbox" && (
+          <div style={{ padding: "10px 14px", borderBottom: "1px solid rgba(18,16,12,.08)" }}>
+            <button type="button" onClick={() => { setComposing(true); setSelected(null); }}
+              style={{ ...S.authBtn, width: "100%", padding: "9px 16px", fontSize: ".82rem" }}>
+              + Compose
+            </button>
+          </div>
+        )}
+        {pane === "sent" ? (
+          sentLoading ? (
+            <div style={{ padding: "32px 16px", textAlign: "center", color: MUTED, fontSize: ".86rem" }}>Loading...</div>
+          ) : sentEmails.length === 0 ? (
+            <div style={{ padding: "32px 16px", textAlign: "center", color: MUTED, fontSize: ".86rem" }}>No sent emails yet.</div>
+          ) : sentEmails.map((e) => (
+            <div key={e.id} style={{ padding: "12px 14px", borderBottom: "1px solid rgba(18,16,12,.07)" }}>
+              <div style={{ fontWeight: 600, fontSize: ".85rem", color: GREEN, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                To: {e.to_name || e.to_email}
+              </div>
+              <div style={{ fontSize: ".78rem", color: MUTED, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.subject}</div>
+              {e.body_preview && <div style={{ fontSize: ".72rem", color: MUTED, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.body_preview}</div>}
+              <div style={{ fontSize: ".72rem", color: MUTED, marginTop: 2 }}>{fmtDate(e.created_at)}</div>
+            </div>
+          ))
+        ) : emails.length === 0 ? (
           <div style={{ padding: "32px 16px", textAlign: "center", color: MUTED, fontSize: ".86rem" }}>No inbound emails yet.</div>
         ) : emails.map((e) => (
           <button key={e.id} type="button" onClick={() => selectEmail(e)}
