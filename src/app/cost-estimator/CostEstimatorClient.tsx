@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import Link from "next/link";
 import { BookButton } from "@/components/site/BookingProvider";
 
@@ -195,48 +195,128 @@ export default function CostEstimatorClient() {
 
   const hasPrice = price > 0;
 
-  function downloadCSV() {
+  async function downloadCSV() {
     const partyLabel = party === "buyer" ? "Buyer" : "Seller";
     const modeLabel = mode === "rough" ? "Rough Estimate" : "Actual Numbers";
     const priceLabel = hasPrice ? fmt(price) : "—";
     const cols = mode === "actual" ? 5 : 4;
 
-    const data: (string | number)[][] = [
-      [`FERGUSON LAW — CLOSING COST ESTIMATE`, "", "", "", ""].slice(0, cols),
-      [`Party: ${partyLabel}  |  Mode: ${modeLabel}  |  Selling Price: ${priceLabel}`, "", "", "", ""].slice(0, cols),
-      [],
-      (mode === "actual"
-        ? ["Fee", "Paid By", "Rough Low (JMD)", "Rough High (JMD)", "Actual (JMD)"]
-        : ["Fee", "Paid By", "Rough Low (JMD)", "Rough High (JMD)"]),
-    ];
+    const GREEN  = "FF10211C";
+    const GOLD   = "FFC9A86A";
+    const WHITE  = "FFFFFFFF";
+    const STRIPE = "FFF2F6F4";
+    const MUTED  = "FF6B7280";
 
-    for (const f of applicable) {
-      const rough = roughAmounts[f.key] ?? { lo: 0, hi: 0 };
+    const wb = new ExcelJS.Workbook();
+    wb.creator = "Ferguson Law";
+    wb.created = new Date();
+    const ws = wb.addWorksheet("Cost Estimate", { properties: { tabColor: { argb: GREEN } } });
+
+    const colWidths = [38, 18, 22, 22, 22].slice(0, cols);
+    ws.columns = colWidths.map((width) => ({ width }));
+
+    // ── Row 1: Brand header ──────────────────────────────────────────────────
+    ws.mergeCells(1, 1, 1, cols);
+    const titleCell = ws.getCell(1, 1);
+    titleCell.value = "Ferguson Law — Cost Estimator";
+    titleCell.font   = { bold: true, size: 14, color: { argb: GOLD }, name: "Calibri" };
+    titleCell.fill   = { type: "pattern", pattern: "solid", fgColor: { argb: GREEN } };
+    titleCell.alignment = { vertical: "middle", horizontal: "left", indent: 1 };
+    ws.getRow(1).height = 30;
+
+    // ── Row 2: Summary bar ───────────────────────────────────────────────────
+    ws.mergeCells(2, 1, 2, cols);
+    const summaryCell = ws.getCell(2, 1);
+    summaryCell.value = `Party: ${partyLabel}   |   Mode: ${modeLabel}   |   Selling Price: ${priceLabel}`;
+    summaryCell.font  = { size: 10, color: { argb: "FFD4C49A" }, name: "Calibri" };
+    summaryCell.fill  = { type: "pattern", pattern: "solid", fgColor: { argb: GREEN } };
+    summaryCell.alignment = { vertical: "middle", horizontal: "left", indent: 1 };
+    ws.getRow(2).height = 20;
+
+    // ── Row 3: Gold divider ──────────────────────────────────────────────────
+    ws.mergeCells(3, 1, 3, cols);
+    const divCell = ws.getCell(3, 1);
+    divCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: GOLD } };
+    ws.getRow(3).height = 3;
+
+    // ── Row 4: blank gap ─────────────────────────────────────────────────────
+    ws.getRow(4).height = 6;
+
+    // ── Row 5: Column headers ─────────────────────────────────────────────────
+    const headers = (mode === "actual"
+      ? ["Fee", "Paid By", "Rough Low (JMD)", "Rough High (JMD)", "Actual (JMD)"]
+      : ["Fee", "Paid By", "Rough Low (JMD)", "Rough High (JMD)"]).slice(0, cols);
+    const hRow = ws.getRow(5);
+    hRow.height = 22;
+    headers.forEach((h, i) => {
+      const cell = hRow.getCell(i + 1);
+      cell.value = h;
+      cell.font  = { bold: true, size: 10, color: { argb: WHITE }, name: "Calibri" };
+      cell.fill  = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1C3A30" } };
+      cell.alignment = { vertical: "middle", horizontal: i >= 2 ? "right" : "left", indent: i === 0 ? 1 : 0 };
+      cell.border = { bottom: { style: "thin", color: { argb: GOLD } } };
+    });
+
+    // ── Data rows ─────────────────────────────────────────────────────────────
+    let rowIdx = 6;
+    applicable.forEach((f, fi) => {
+      const rough  = roughAmounts[f.key] ?? { lo: 0, hi: 0 };
       const paidBy = f.who === "both" ? "Buyer & Seller" : f.who.charAt(0).toUpperCase() + f.who.slice(1);
-      const loVal = f.noRoughEstimate ? "—" : rough.lo > 0 ? rough.lo : "—";
-      const hiVal = f.noRoughEstimate ? "—" : rough.hi > 0 ? rough.hi : "—";
-      const row: (string | number)[] = [f.label, paidBy, loVal, hiVal];
-      if (mode === "actual") row.push(actualAmounts[f.key] > 0 ? actualAmounts[f.key] : "—");
-      data.push(row);
-    }
+      const loVal  = f.noRoughEstimate ? "—" : rough.lo > 0 ? rough.lo : "—";
+      const hiVal  = f.noRoughEstimate ? "—" : rough.hi > 0 ? rough.hi : "—";
+      const vals: (string | number)[] = [f.label, paidBy, loVal, hiVal];
+      if (mode === "actual") vals.push(actualAmounts[f.key] > 0 ? actualAmounts[f.key] : "—");
 
-    data.push([]);
-    const totalRow: (string | number)[] = [
-      "ESTIMATED TOTAL",
-      "",
+      const dRow = ws.getRow(rowIdx);
+      dRow.height = 18;
+      const bgColor = fi % 2 === 0 ? WHITE : STRIPE;
+      vals.slice(0, cols).forEach((v, ci) => {
+        const cell = dRow.getCell(ci + 1);
+        cell.value = v;
+        cell.font  = { size: 10, color: { argb: "FF1A1A1A" }, name: "Calibri" };
+        cell.fill  = { type: "pattern", pattern: "solid", fgColor: { argb: bgColor } };
+        cell.alignment = { vertical: "middle", horizontal: ci >= 2 ? "right" : "left", indent: ci === 0 ? 1 : 0 };
+        cell.border = { bottom: { style: "hair", color: { argb: "FFE0DDD5" } } };
+        if (typeof v === "number") cell.numFmt = "#,##0";
+      });
+      rowIdx++;
+    });
+
+    // ── Total row ────────────────────────────────────────────────────────────
+    rowIdx++;
+    const tRow = ws.getRow(rowIdx);
+    tRow.height = 22;
+    const totalVals: (string | number)[] = [
+      "ESTIMATED TOTAL", "",
       hasPrice ? roughTotal.lo : "—",
       hasPrice ? roughTotal.hi : "—",
     ];
-    if (mode === "actual") totalRow.push(hasPrice ? actualTotal : "—");
-    data.push(totalRow);
-    data.push([]);
-    data.push(["These are estimates only. Actual fees depend on your specific transaction. Ferguson Law will provide exact figures. | fergusonlawja.com"]);
+    if (mode === "actual") totalVals.push(hasPrice ? actualTotal : "—");
+    totalVals.slice(0, cols).forEach((v, ci) => {
+      const cell = tRow.getCell(ci + 1);
+      cell.value = v;
+      cell.font  = { bold: true, size: 10, color: { argb: GOLD }, name: "Calibri" };
+      cell.fill  = { type: "pattern", pattern: "solid", fgColor: { argb: GREEN } };
+      cell.alignment = { vertical: "middle", horizontal: ci >= 2 ? "right" : "left", indent: ci === 0 ? 1 : 0 };
+      if (typeof v === "number") cell.numFmt = "#,##0";
+    });
 
-    const ws = XLSX.utils.aoa_to_sheet(data);
-    ws["!cols"] = [{ wch: 36 }, { wch: 16 }, { wch: 20 }, { wch: 20 }, { wch: 20 }].slice(0, cols);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Cost Estimate");
-    XLSX.writeFile(wb, "Ferguson-Law-Cost-Estimate.xlsx");
+    // ── Footer ───────────────────────────────────────────────────────────────
+    rowIdx += 2;
+    ws.mergeCells(rowIdx, 1, rowIdx, cols);
+    const footerCell = ws.getCell(rowIdx, 1);
+    footerCell.value = "These are estimates only. Actual fees depend on your specific transaction. Ferguson Law will provide exact figures.   |   fergusonlawja.com";
+    footerCell.font  = { italic: true, size: 8, color: { argb: MUTED }, name: "Calibri" };
+    footerCell.alignment = { wrapText: true, vertical: "top" };
+
+    const buffer = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href     = url;
+    a.download = "Ferguson-Law-Cost-Estimate.xlsx";
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   return (
@@ -382,7 +462,11 @@ export default function CostEstimatorClient() {
               Estimated Total Additional Cost
             </div>
             <div style={{ fontSize: ".72rem", color: "#9fb3ab", marginTop: 3 }}>
-              {hasPrice ? `On top of the ${fmt(price)} selling price` : "Enter a selling price above"}
+              {hasPrice
+                ? party === "seller"
+                  ? `Deducted from your ${fmt(price)} selling proceeds`
+                  : `On top of the ${fmt(price)} purchase price`
+                : "Enter a selling price above"}
             </div>
           </div>
           <div style={{ textAlign: "right" }}>
