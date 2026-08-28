@@ -17,12 +17,12 @@ const LOGIN_LINKS = [
   { href: "/directory/client-login", label: "Client Portal" },
 ] as const;
 
-const HOME_LINK = { href: SITE.homeApp, label: "H.O.M.E. by Ferguson Law®", external: true };
+const HOME_LINK = { href: SITE.homeApp, label: "H.O.M.E. by Ferguson Law", external: true };
 
 const RESOURCE_LINKS = [
   { href: "/buyers-guide", label: "Buyer's Guide" },
   { href: "/explainers", label: "Explainers" },
-  { href: "/cost-estimator", label: "Cost Estimator" },
+  { href: "/cost-estimator", label: "Cost Estimator®" },
   { href: "/glossary", label: "Glossary" },
   { href: "/faq", label: "FAQ" },
 ] as const;
@@ -111,7 +111,11 @@ export default function Nav() {
               {resourcesOpen && (
                 <div className="nav-resources-dropdown">
                   {RESOURCE_LINKS.map((l) => (
-                    <a key={l.href} href={l.href} onClick={() => setResourcesOpen(false)}>{l.label}</a>
+                    <a key={l.href} href={l.href} onClick={() => setResourcesOpen(false)}>
+                      {l.label.includes("®")
+                        ? <>{l.label.replace("®", "")}<sup style={{fontSize:"0.55em",verticalAlign:"super",lineHeight:0}}>®</sup></>
+                        : l.label}
+                    </a>
                   ))}
                 </div>
               )}
@@ -123,7 +127,7 @@ export default function Nav() {
               rel="noopener"
               className="nav-home-inline"
             >
-              {HOME_LINK.label}
+              H.O.M.E. by Ferguson Law<sup style={{fontSize:"0.55em",verticalAlign:"super",lineHeight:0}}>®</sup>
             </a>
           </nav>
 
@@ -217,7 +221,7 @@ export default function Nav() {
             <a key={l.href} href={l.href} onClick={closeMenu} className="drawer-sub-link">{l.label}</a>
           ))}
           <a href={HOME_LINK.href} target="_blank" rel="noopener" onClick={closeMenu} className="drawer-sub-link drawer-home-pill">
-            {HOME_LINK.label}
+            H.O.M.E. by Ferguson Law<sup style={{fontSize:"0.55em",verticalAlign:"super",lineHeight:0}}>®</sup>
           </a>
 
           {/* Resources */}
@@ -225,7 +229,9 @@ export default function Nav() {
           {RESOURCE_LINKS.map((l) => (
             <a key={l.href} href={l.href} onClick={closeMenu}
               className={`drawer-sub-link${l.href === "/cost-estimator" ? " drawer-featured-link" : ""}`}>
-              {l.label}
+              {l.label.includes("®")
+                ? <>{l.label.replace("®", "")}<sup style={{fontSize:"0.55em",verticalAlign:"super",lineHeight:0}}>®</sup></>
+                : l.label}
               {l.href === "/cost-estimator" && <span className="drawer-badge">Tool</span>}
             </a>
           ))}
