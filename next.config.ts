@@ -35,7 +35,9 @@ const nextConfig: NextConfig = {
       { source: "/guides", destination: "/explainers", permanent: true },
       { source: "/guides/buyer", destination: "/explainers/buyer", permanent: true },
       { source: "/guides/seller", destination: "/explainers/seller", permanent: true },
-      { source: "/options", destination: "/buyers-guide", permanent: true },
+      { source: "/options", destination: "/ebook", permanent: true },
+      { source: "/buyers-guide", destination: "/ebook", permanent: false },
+      { source: "/buyers-guide/:path*", destination: "/ebook", permanent: false },
     ];
   },
   async headers() {
