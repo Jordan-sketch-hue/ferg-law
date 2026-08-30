@@ -4,7 +4,7 @@ import { createAdminClient } from "@/lib/supabase/server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const PDF_URL = "https://guide.fergusonlawja.com/HOME-Guide-Ferguson-Law.pdf";
+const PDF_URL = "https://home.fergusonlawja.com/HOME-Guide-Ferguson-Law.pdf";
 
 export async function POST(req: NextRequest) {
   let body: Record<string, unknown> = {};
@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     return Response.json({ ok: false, error: "Invalid request body." }, { status: 400 });
   }
 
-  const name    = String(body.name    ?? "").trim();
+  const name    = String(body.full_name ?? body.name ?? "").trim();
   const email   = String(body.email   ?? "").trim().toLowerCase();
   const source  = String(body.source  ?? "home-by-ferg-law").trim();
 
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
         email,
         phone:              String(body.phone              ?? ""),
         country:            String(body.country            ?? ""),
-        purchase_timeframe: String(body.purchase_timeframe ?? ""),
+        purchase_timeframe: String(body.purchase_timeframe ?? body.timeframe ?? ""),
         purchase_location:  String(body.purchase_location  ?? ""),
         financing_type:     String(body.financing_type     ?? ""),
         first_time_buyer:   body.first_time_buyer === true || body.first_time_buyer === "true",
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
       { onConflict: "email" },
     );
 
-    return Response.json({ ok: true, pdfUrl: PDF_URL });
+    return Response.json({ ok: true, pdf_url: PDF_URL, pdfUrl: PDF_URL });
   } catch {
     return Response.json({ ok: false, error: "Something went wrong. Please try again." }, { status: 500 });
   }
