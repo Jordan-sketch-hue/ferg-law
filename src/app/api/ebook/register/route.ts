@@ -6,12 +6,22 @@ export const dynamic = "force-dynamic";
 
 const PDF_URL = "https://home.fergusonlawja.com/HOME-Guide-Ferguson-Law.pdf";
 
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: CORS });
+}
+
 export async function POST(req: NextRequest) {
   let body: Record<string, unknown> = {};
   try {
     body = (await req.json()) as Record<string, unknown>;
   } catch {
-    return Response.json({ ok: false, error: "Invalid request body." }, { status: 400 });
+    return Response.json({ ok: false, error: "Invalid request body." }, { status: 400, headers: CORS });
   }
 
   const name    = String(body.full_name ?? body.name ?? "").trim();
@@ -19,7 +29,7 @@ export async function POST(req: NextRequest) {
   const source  = String(body.source  ?? "home-by-ferg-law").trim();
 
   if (!name || !email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return Response.json({ ok: false, error: "Name and valid email are required." }, { status: 400 });
+    return Response.json({ ok: false, error: "Name and valid email are required." }, { status: 400, headers: CORS });
   }
 
   try {
@@ -41,8 +51,8 @@ export async function POST(req: NextRequest) {
       { onConflict: "email" },
     );
 
-    return Response.json({ ok: true, pdf_url: PDF_URL, pdfUrl: PDF_URL });
+    return Response.json({ ok: true, pdf_url: PDF_URL, pdfUrl: PDF_URL }, { headers: CORS });
   } catch {
-    return Response.json({ ok: false, error: "Something went wrong. Please try again." }, { status: 500 });
+    return Response.json({ ok: false, error: "Something went wrong. Please try again." }, { status: 500, headers: CORS });
   }
 }
