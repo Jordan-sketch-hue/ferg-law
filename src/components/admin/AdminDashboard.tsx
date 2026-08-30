@@ -14,6 +14,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { formatInTimeZone } from "date-fns-tz";
 import { createClient } from "@/lib/supabase/client";
 import { waLink } from "@/lib/site";
+import AnalyticsTab from "@/components/admin/AnalyticsTab";
 
 const TOKEN_KEY = "fl_admin_token";
 const TZ = "America/Jamaica";
@@ -185,7 +186,7 @@ interface HomeProperty {
   status: string;
 }
 
-type Tab = "overview" | "leads" | "bookings" | "clients" | "matters" | "cms" | "calendar" | "chats" | "invites" | "directory" | "availability" | "home_pros" | "home_listings" | "email" | "inquiries" | "referrals" | "recycle_bin" | "workflows" | "zoom" | "feedback";
+type Tab = "overview" | "leads" | "bookings" | "clients" | "matters" | "cms" | "calendar" | "chats" | "invites" | "directory" | "availability" | "home_pros" | "home_listings" | "email" | "inquiries" | "referrals" | "recycle_bin" | "workflows" | "zoom" | "feedback" | "analytics";
 
 interface BinItem {
   id: string;
@@ -752,7 +753,7 @@ export default function AdminDashboard() {
         {loadError && <div style={S.errorBar}>{loadError}</div>}
 
         <div style={{ ...S.tabs, background: "#fff", border: "1px solid rgba(18,16,12,.07)", borderRadius: "12px 12px 0 0" }}>
-          {(["overview","leads","bookings","clients","matters","cms","calendar","chats","email","invites","directory","availability","home_pros","home_listings","inquiries","referrals","workflows","recycle_bin","zoom","feedback"] as Tab[]).map((t) => (
+          {(["overview","analytics","leads","bookings","clients","matters","cms","calendar","chats","email","invites","directory","availability","home_pros","home_listings","inquiries","referrals","workflows","recycle_bin","zoom","feedback"] as Tab[]).map((t) => (
             <TabBtn key={t} active={tab === t} onClick={() => setTab(t)}
               label={
                 t === "overview" ? "Overview" :
@@ -761,6 +762,7 @@ export default function AdminDashboard() {
                 t === "home_listings" ? "H.O.M.E. Listings" :
                 t === "email" ? "Email" :
                 t === "inquiries" ? "H.O.M.E. Inquiries" :
+                t === "analytics" ? "Analytics" :
                 t === "referrals" ? "Referrals" :
                 t === "recycle_bin" ? "🗑 Bin" :
                 t === "workflows" ? "Workflows" :
@@ -822,6 +824,7 @@ export default function AdminDashboard() {
           {tab === "workflows" && token && <WorkflowTemplatesTab token={token} />}
           {tab === "zoom" && token && <ZoomSetupTab token={token} />}
           {tab === "feedback" && token && <TesterFeedbackTab token={token} />}
+          {tab === "analytics" && token && <AnalyticsTab token={token} />}
         </div>
       </div>
     </div>

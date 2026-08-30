@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { track } from "@/lib/analytics";
 import Nav from "@/components/site/Nav";
 import Footer from "@/components/site/Footer";
 import { BookingProvider } from "@/components/site/BookingProvider";
@@ -122,6 +123,7 @@ export default function EbookPage() {
                   href={pdfUrl}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => track("pdf_download")}
                   style={{ display: "inline-block", width: "100%", padding: "14px 0", background: "#c9a86a", color: "#10211c", fontWeight: 700, fontSize: ".95rem", borderRadius: 10, textAlign: "center", textDecoration: "none" }}
                 >
                   Download PDF Guide

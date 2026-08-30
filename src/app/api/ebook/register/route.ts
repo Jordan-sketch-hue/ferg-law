@@ -51,6 +51,15 @@ export async function POST(req: NextRequest) {
       { onConflict: "email" },
     );
 
+    // Fire-and-forget analytics event (non-blocking)
+    supabase.from("analytics_events").insert({
+      event_name: "ebook_form_submit",
+      site: "ferguson-law",
+      page_path: "/ebook",
+      country: String(body.country ?? ""),
+      properties: { budget_band: String(body.budget_band ?? ""), financing_type: String(body.financing_type ?? ""), source },
+    }).then(() => {}).catch(() => {});
+
     return Response.json({ ok: true, pdf_url: PDF_URL, pdfUrl: PDF_URL }, { headers: CORS });
   } catch {
     return Response.json({ ok: false, error: "Something went wrong. Please try again." }, { status: 500, headers: CORS });
