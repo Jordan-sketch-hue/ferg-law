@@ -283,6 +283,9 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [cmsUnread, setCmsUnread] = useState(0);
+  const [seenCounts, setSeenCounts] = useState<Partial<Record<Tab, number>>>(() => {
+    try { return JSON.parse(localStorage.getItem("fl_admin_seen") ?? "{}") as Partial<Record<Tab, number>>; } catch { return {}; }
+  });
 
   // Verify stored token on mount
   useEffect(() => {
@@ -457,6 +460,9 @@ export default function AdminDashboard() {
       } else if (tab === "leads") {
         const { data } = await supabase.rpc("fl_admin_leads", { p_token: token });
         if (data) setLeads(data as Lead[]);
+      } else if (tab === "clients") {
+        const { data } = await supabase.rpc("fl_admin_clients", { p_token: token });
+        if (data) setClients(data as Client[]);
       }
     })();
   }, [tab, token]);
@@ -653,6 +659,30 @@ export default function AdminDashboard() {
   // Role — Jordan sees everything; Owen gets a simplified label on his greeting
   const isJordan = accountEmail === "jordanrmorris01@icloud.com";
 
+  // Badge seen — clears tab count when the tab is opened
+  const switchTab = useCallback((t: Tab) => {
+    setTab(t);
+    setSeenCounts(prev => {
+      const rawCount =
+        t === "leads" ? leads.length :
+        t === "bookings" ? appts.length :
+        t === "clients" ? clients.length :
+        t === "matters" ? matters.length :
+        t === "chats" ? convos.length :
+        t === "email" ? emails.filter(e => !e.read).length :
+        t === "invites" ? invites.length :
+        t === "directory" ? listings.length :
+        t === "availability" ? availability.length :
+        t === "home_pros" ? homePros.length :
+        t === "home_listings" ? homeListings.length :
+        t === "inquiries" ? inquiries.filter(i => i.status === "new").length :
+        t === "recycle_bin" ? binItems.length : 0;
+      const next = { ...prev, [t]: rawCount };
+      try { localStorage.setItem("fl_admin_seen", JSON.stringify(next)); } catch {}
+      return next;
+    });
+  }, [leads, appts, clients, matters, convos, emails, invites, listings, availability, homePros, homeListings, inquiries, binItems]);
+
   // Stats
   const newLeads = leads.filter((l) => (l.status ?? "new") === "new").length;
   const pendingBookings = appts.filter((a) => a.status === "pending").length;
@@ -761,21 +791,21 @@ export default function AdminDashboard() {
 
       <div style={S.body}>
         <div style={S.statStrip}>
-          <Stat label="New leads" value={newLeads} urgent onClick={() => setTab("leads")} />
-          <Stat label="Pending bookings" value={pendingBookings} urgent onClick={() => setTab("bookings")} />
-          <Stat label="Open chats" value={openChats} urgent onClick={() => setTab("chats")} />
-          <Stat label="Client messages" value={cmsUnread} urgent onClick={() => setTab("cms")} />
-          <Stat label="Clients" value={clients.length} onClick={() => setTab("clients")} />
-          <Stat label="Matters" value={matters.length} onClick={() => setTab("matters")} />
-          <Stat label="Pending partners" value={pendingListings} onClick={() => setTab("directory")} />
-          <Stat label="H.O.M.E. pending" value={homePros.length} urgent onClick={() => setTab("home_pros")} />
+          <Stat label="New leads" value={newLeads} urgent onClick={() => switchTab("leads")} />
+          <Stat label="Pending bookings" value={pendingBookings} urgent onClick={() => switchTab("bookings")} />
+          <Stat label="Open chats" value={openChats} urgent onClick={() => switchTab("chats")} />
+          <Stat label="Client messages" value={cmsUnread} urgent onClick={() => switchTab("cms")} />
+          <Stat label="Clients" value={clients.length} onClick={() => switchTab("clients")} />
+          <Stat label="Matters" value={matters.length} onClick={() => switchTab("matters")} />
+          <Stat label="Pending partners" value={pendingListings} onClick={() => switchTab("directory")} />
+          <Stat label="H.O.M.E. pending" value={homePros.length} urgent onClick={() => switchTab("home_pros")} />
         </div>
 
         {loadError && <div style={S.errorBar}>{loadError}</div>}
 
         <div style={{ ...S.tabs, background: "#fff", border: "1px solid rgba(18,16,12,.07)", borderRadius: "12px 12px 0 0" }}>
           {(["overview","analytics","leads","bookings","clients","matters","cms","calendar","chats","email","invites","directory","availability","home_pros","home_listings","inquiries","referrals","workflows","recycle_bin","zoom","feedback"] as Tab[]).map((t) => (
-            <TabBtn key={t} active={tab === t} onClick={() => setTab(t)}
+            <TabBtn key={t} active={tab === t} onClick={() => switchTab(t)}
               label={
                 t === "overview" ? "Overview" :
                 t === "cms" ? `CMS${cmsUnread > 0 ? ` (${cmsUnread})` : ""}` :
@@ -791,26 +821,23 @@ export default function AdminDashboard() {
                 t === "feedback" ? "Tester Feedback" :
                 t.charAt(0).toUpperCase() + t.slice(1)
               }
-              count={
-                t === "overview" ? 0 :
-                t === "leads" ? leads.length :
-                t === "bookings" ? appts.length :
-                t === "clients" ? clients.length :
-                t === "matters" ? matters.length :
-                t === "chats" ? convos.length :
-                t === "email" ? emails.filter(e => !e.read).length :
-                t === "invites" ? invites.length :
-                t === "directory" ? listings.length :
-                t === "availability" ? availability.length :
-                t === "home_pros" ? homePros.length :
-                t === "home_listings" ? homeListings.length :
-                t === "inquiries" ? inquiries.filter(i => i.status === "new").length :
-                t === "referrals" ? 0 :
-                t === "recycle_bin" ? binItems.length :
-                t === "workflows" ? 0 :
-                t === "zoom" ? 0 :
-                0
-              }
+              count={(() => {
+                const raw =
+                  t === "leads" ? leads.length :
+                  t === "bookings" ? appts.length :
+                  t === "clients" ? clients.length :
+                  t === "matters" ? matters.length :
+                  t === "chats" ? convos.length :
+                  t === "email" ? emails.filter(e => !e.read).length :
+                  t === "invites" ? invites.length :
+                  t === "directory" ? listings.length :
+                  t === "availability" ? availability.length :
+                  t === "home_pros" ? homePros.length :
+                  t === "home_listings" ? homeListings.length :
+                  t === "inquiries" ? inquiries.filter(i => i.status === "new").length :
+                  t === "recycle_bin" ? binItems.length : 0;
+                return Math.max(0, raw - (seenCounts[t] ?? 0));
+              })()}
             />
           ))}
         </div>
@@ -821,7 +848,7 @@ export default function AdminDashboard() {
               leads={leads} appts={appts} convos={convos} matters={matters}
               homePros={homePros} emails={emails} inquiries={inquiries}
               staleLeads={staleLeads} isJordan={isJordan}
-              onTab={setTab}
+              onTab={switchTab}
             />
           )}
           {tab === "leads" && <LeadsTable leads={leads} loading={loading} token={token} onStatus={setLeadStatus} onDelete={deleteLead} />}
