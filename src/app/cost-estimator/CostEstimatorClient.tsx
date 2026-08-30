@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { track } from "@/lib/analytics";
 import ExcelJS from "exceljs";
 import Link from "next/link";
 import { BookButton } from "@/components/site/BookingProvider";
@@ -138,6 +139,14 @@ export default function CostEstimatorClient() {
   const [overrides, setOverrides] = useState<Record<string, { useFixed: boolean; value: string }>>({});
 
   const price = parseNum(priceStr);
+
+  const trackedRef = useRef(false);
+  useEffect(() => {
+    if (price > 0 && !trackedRef.current) {
+      trackedRef.current = true;
+      track("cost_estimator_use", { party });
+    }
+  }, [price, party]);
 
   // Which fees apply to this party
   const applicable = FEES.filter((f) => f.who === party || f.who === "both");

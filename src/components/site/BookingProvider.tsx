@@ -8,6 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { track } from "@/lib/analytics";
 import BookingModal from "./BookingModal";
 
 type BookingContextValue = {
@@ -69,7 +70,7 @@ export function BookButton({
     <button
       type={type}
       className={className}
-      onClick={() => { onClick?.(); openBooking(); }}
+      onClick={() => { track("booking_click"); onClick?.(); openBooking(); }}
     >
       {children}
     </button>

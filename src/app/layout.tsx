@@ -5,6 +5,7 @@ import ChatWidget from "@/components/chat/ChatWidget";
 import ContentApply from "@/components/editor/ContentApply";
 import SearchModal from "@/components/site/SearchModal";
 import EditorOverlay from "@/components/editor/EditorOverlay";
+import PageTracker from "@/components/site/PageTracker";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -171,6 +172,7 @@ export default function RootLayout({
       </head>
       <body>
         {children}
+        <PageTracker />
         <ChatWidget />
         <ContentApply />
         <SearchModal />
