@@ -379,19 +379,33 @@ export default function Nav() {
         }
         @media(max-width:1040px){ .nav-consult-btn{ display:none; } }
 
-        /* Mobile-only Consultation button (shown between 601px–1040px only) */
+        /* Mobile-only Consultation button (shown when desktop button is hidden) */
         .nav-consult-mobile{ display:none; }
-        @media(min-width:601px) and (max-width:1040px){
+        @media(max-width:1040px){
           .nav-consult-mobile{
             display:inline-flex !important; align-items:center; gap:6px;
             font-size:.85rem; padding:.45rem 1.1rem; white-space:nowrap;
           }
         }
-        /* ≤600px — hide Book here from nav bar entirely; it lives in the drawer */
-        @media(max-width:600px){
-          .nav-consult-mobile{ display:none !important; }
-          .nav-get-started{ font-size:.85rem !important; padding:.45rem 1.1rem !important; }
-          .nav-right{ gap:10px !important; }
+        /* ≤440px (iPhone 15 Plus / 15 Pro Max + Samsung S24 Ultra) — reduce padding only, keep font readable */
+        @media(max-width:440px){
+          .nav-consult-mobile,.nav-get-started{
+            padding:.38rem .6rem !important; gap:5px !important;
+          }
+          .nav-right{ gap:8px !important; }
+        }
+        /* ≤395px (iPhone 14, narrow Androids) — first shrink tier */
+        @media(max-width:395px){
+          .nav-consult-mobile,.nav-get-started{
+            font-size:.78rem !important; padding:.42rem .8rem !important; gap:5px !important;
+          }
+        }
+        /* ≤375px — tightest (360px class phones) */
+        @media(max-width:375px){
+          .nav-consult-mobile,.nav-get-started{
+            font-size:.75rem !important; padding:.4rem .6rem !important; gap:4px !important;
+          }
+          .nav-right{ gap:7px !important; }
         }
 
         @media(max-width:760px){ .nav-login-wrap{ display:none; } }
