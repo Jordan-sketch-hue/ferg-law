@@ -90,16 +90,11 @@ export default function EbookPage() {
             <p style={{ color: "rgba(255,255,255,.75)", fontSize: "1rem", lineHeight: 1.7, marginBottom: "2rem", maxWidth: 420 }}>
               Every step from readiness to registered title — plain English, no jargon. NHT, stamp duty, transfer tax, diaspora playbook and more.
             </p>
-            <div style={{ width: "100%", maxWidth: 340, borderRadius: 16, boxShadow: "0 24px 64px rgba(0,0,0,.5)", background: "linear-gradient(145deg,#1a3828 0%,#10211c 100%)", border: "1px solid rgba(201,168,106,.25)", padding: "2.5rem 2rem", display: "flex", flexDirection: "column", gap: "1.2rem" }}>
-              <div style={{ width: 48, height: 4, background: "#c9a86a", borderRadius: 2 }} />
-              <p style={{ color: "#c9a86a", fontSize: ".65rem", fontWeight: 700, letterSpacing: ".2em", textTransform: "uppercase", margin: 0 }}>H.O.M.E.® Series · Ferguson Law</p>
-              <p style={{ color: "#fff", fontFamily: "var(--serif, Georgia, serif)", fontSize: "1.35rem", fontWeight: 600, lineHeight: 1.3, margin: 0 }}>The Jamaica Buyer&apos;s Guide</p>
-              <p style={{ color: "rgba(255,255,255,.55)", fontSize: ".8rem", lineHeight: 1.65, margin: 0 }}>NHT · Stamp Duty · Transfer Tax · Diaspora Playbook · Title Registration</p>
-              <div style={{ marginTop: "auto", paddingTop: "1.5rem", borderTop: "1px solid rgba(201,168,106,.2)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <span style={{ color: "rgba(255,255,255,.4)", fontSize: ".7rem" }}>Ferguson Law Jamaica</span>
-                <span style={{ background: "#c9a86a", color: "#10211c", fontSize: ".65rem", fontWeight: 700, padding: "3px 10px", borderRadius: 20 }}>FREE</span>
-              </div>
-            </div>
+            <img
+              src="/home-buyers-guide-cover.jpg"
+              alt="H.O.M.E. Buyer's Guide cover"
+              style={{ width: "100%", maxWidth: 400, borderRadius: 16, boxShadow: "0 24px 64px rgba(0,0,0,.45)", display: "block" }}
+            />
           </div>
 
           {/* Right — form */}
