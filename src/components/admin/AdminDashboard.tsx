@@ -440,6 +440,27 @@ export default function AdminDashboard() {
     return () => { void supabase.removeChannel(channel); };
   }, [token, tab]);
 
+  // Per-tab refresh — re-fetch stale data whenever the admin switches to a key tab
+  useEffect(() => {
+    if (!token) return;
+    const supabase = createClient();
+    void (async () => {
+      if (tab === "bookings") {
+        const { data } = await supabase.rpc("fl_admin_appointments", { p_token: token });
+        if (data) setAppts(data as Appointment[]);
+      } else if (tab === "matters") {
+        const { data } = await supabase.rpc("fl_admin_matters", { p_token: token });
+        if (data) setMatters(data as Matter[]);
+      } else if (tab === "chats") {
+        const { data } = await supabase.rpc("fl_admin_conversations", { p_token: token });
+        if (data) setConvos(data as Conversation[]);
+      } else if (tab === "leads") {
+        const { data } = await supabase.rpc("fl_admin_leads", { p_token: token });
+        if (data) setLeads(data as Lead[]);
+      }
+    })();
+  }, [tab, token]);
+
   // Mutations
   const setLeadStatus = useCallback(async (id: string, status: string) => {
     if (!token) return;
@@ -1939,11 +1960,38 @@ function BlockedDatesPanel({ token }: { token: string }) {
 // ---------------------------------------------------------------------------
 const WA_BOT_URL = "https://whatsapp-jarvis-bot-production.up.railway.app/send";
 
+interface ChatMessage {
+  id: string;
+  conversation_id: string;
+  created_at: string;
+  role: "visitor" | "bot" | "agent" | "system";
+  body: string | null;
+  meta: Record<string, unknown>;
+}
+
 function ChatsTable({ convos, loading }: { convos: Conversation[]; loading: boolean }) {
   const [selected, setSelected] = useState<Conversation | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [msgLoading, setMsgLoading] = useState(false);
   const [waText, setWaText] = useState("");
   const [waSending, setWaSending] = useState(false);
   const [waResult, setWaResult] = useState<{ ok: boolean; msg: string } | null>(null);
+  const msgEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!selected) { setMessages([]); return; }
+    setMsgLoading(true);
+    const sb = createClient();
+    void sb.from("chat_messages")
+      .select("*")
+      .eq("conversation_id", selected.id)
+      .order("created_at", { ascending: true })
+      .then(({ data }) => {
+        setMessages((data ?? []) as ChatMessage[]);
+        setMsgLoading(false);
+        setTimeout(() => msgEndRef.current?.scrollIntoView({ behavior: "smooth" }), 80);
+      });
+  }, [selected]);
 
   async function sendWhatsApp() {
     if (!selected?.visitor_phone || !waText.trim() || waSending) return;
@@ -1956,19 +2004,37 @@ function ChatsTable({ convos, loading }: { convos: Conversation[]; loading: bool
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ jid, text: waText.trim() }),
       });
-      if (res.ok) { setWaResult({ ok: true, msg: "Sent via WhatsApp" }); setWaText(""); }
-      else { setWaResult({ ok: false, msg: `Failed (${res.status})` }); }
+      if (res.ok) {
+        setWaResult({ ok: true, msg: "Sent via WhatsApp" });
+        // Add agent message to local thread
+        const agentMsg: ChatMessage = {
+          id: crypto.randomUUID(), conversation_id: selected.id,
+          created_at: new Date().toISOString(), role: "agent", body: waText.trim(), meta: {},
+        };
+        setMessages((prev) => [...prev, agentMsg]);
+        setWaText("");
+        setTimeout(() => msgEndRef.current?.scrollIntoView({ behavior: "smooth" }), 80);
+      } else { setWaResult({ ok: false, msg: `Failed (${res.status})` }); }
     } catch (e) {
       setWaResult({ ok: false, msg: e instanceof Error ? e.message : "Send failed" });
     }
     setWaSending(false);
   }
 
+  const roleBubble = (role: ChatMessage["role"]): React.CSSProperties => {
+    if (role === "visitor") return { alignSelf: "flex-start", background: "#f0ece2", color: INK, borderRadius: "4px 16px 16px 16px" };
+    if (role === "agent")   return { alignSelf: "flex-end",   background: GREEN,    color: "#fff",  borderRadius: "16px 4px 16px 16px" };
+    if (role === "bot")     return { alignSelf: "flex-start", background: "#eaf3ed", color: GREEN,   borderRadius: "4px 16px 16px 16px" };
+    return { alignSelf: "center", background: "#f5f3ef", color: MUTED, fontSize: ".75rem", borderRadius: 8 };
+  };
+  const roleLabel = (r: ChatMessage["role"]) =>
+    r === "visitor" ? "Visitor" : r === "agent" ? "Agent" : r === "bot" ? "Bot" : "System";
+
   if (loading && convos.length === 0) return <Empty>Loading chats…</Empty>;
   if (convos.length === 0) return <Empty>No conversations yet.</Empty>;
   return (
     <div style={{ display: "flex", height: "calc(100vh - 300px)", minHeight: 400, overflow: "hidden" }}>
-      {/* List */}
+      {/* Conversation list */}
       <div style={{ width: 300, flexShrink: 0, borderRight: "1px solid rgba(18,16,12,.1)", overflowY: "auto" }}>
         {convos.map((c) => (
           <button key={c.id} type="button" onClick={() => { setSelected(c); setWaResult(null); setWaText(""); }}
@@ -1985,38 +2051,59 @@ function ChatsTable({ convos, loading }: { convos: Conversation[]; loading: bool
           </button>
         ))}
       </div>
-      {/* Detail */}
-      <div style={{ flex: 1, overflowY: "auto", padding: 20 }}>
+
+      {/* Detail — full history */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
         {!selected ? (
-          <div style={{ color: MUTED, textAlign: "center", paddingTop: 60 }}>Select a conversation</div>
+          <div style={{ color: MUTED, textAlign: "center", paddingTop: 60 }}>Select a conversation to view history</div>
         ) : (
           <>
-            <div style={{ marginBottom: 16 }}>
-              <div style={{ fontFamily: "var(--serif, Georgia, serif)", fontWeight: 700, fontSize: "1.1rem", color: GREEN }}>{selected.visitor_name || "Website visitor"}</div>
-              <div style={{ display: "flex", gap: 12, marginTop: 4, flexWrap: "wrap" }}>
-                {selected.visitor_email && <span style={{ fontSize: ".82rem", color: MUTED }}>{selected.visitor_email}</span>}
-                {selected.visitor_phone && <span style={{ fontSize: ".82rem", color: MUTED }}>{selected.visitor_phone}</span>}
+            {/* Header */}
+            <div style={{ padding: "14px 20px", borderBottom: "1px solid rgba(18,16,12,.08)", background: "#faf9f7", flexShrink: 0 }}>
+              <div style={{ fontFamily: "var(--serif, Georgia, serif)", fontWeight: 700, fontSize: "1rem", color: GREEN }}>{selected.visitor_name || "Website visitor"}</div>
+              <div style={{ display: "flex", gap: 12, marginTop: 3, flexWrap: "wrap", alignItems: "center" }}>
+                {selected.visitor_email && <span style={{ fontSize: ".78rem", color: MUTED }}>{selected.visitor_email}</span>}
+                {selected.visitor_phone && <span style={{ fontSize: ".78rem", color: MUTED }}>{selected.visitor_phone}</span>}
+                <StatusBadge status={selected.status} />
               </div>
-              <div style={{ marginTop: 8 }}><StatusBadge status={selected.status} /></div>
             </div>
-            <div style={{ padding: "14px 16px", background: "#faf8f2", borderRadius: 10, marginBottom: 16, borderLeft: `3px solid ${GOLD}` }}>
-              <div style={{ fontSize: ".72rem", fontWeight: 700, textTransform: "uppercase", color: MUTED, marginBottom: 4 }}>Last message</div>
-              <div style={{ fontSize: ".9rem", color: INK }}>{selected.last_message || "—"}</div>
-              <div style={{ fontSize: ".74rem", color: MUTED, marginTop: 4 }}>{fmtDate(selected.last_message_at)}</div>
-            </div>
-            {selected.visitor_phone && (
-              <div style={{ borderTop: "1px solid rgba(18,16,12,.1)", paddingTop: 16 }}>
-                <div style={{ fontSize: ".78rem", fontWeight: 700, textTransform: "uppercase", color: MUTED, marginBottom: 8 }}>Reply via WhatsApp</div>
-                <textarea value={waText} onChange={(e) => setWaText(e.target.value)} rows={3}
-                  placeholder="Type a WhatsApp message…"
-                  style={{ width: "100%", resize: "vertical", borderRadius: 10, border: "1px solid rgba(18,16,12,.2)", padding: "10px 12px", fontSize: ".9rem", fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 8 }}>
-                  <button type="button" onClick={() => void sendWhatsApp()} disabled={waSending || !waText.trim()}
-                    style={{ ...S.authBtn, width: "auto", padding: "10px 20px", ...(waSending || !waText.trim() ? S.btnOff : null) }}>
-                    {waSending ? "Sending…" : "Send via WhatsApp"}
-                  </button>
-                  {waResult && <span style={{ fontSize: ".82rem", color: waResult.ok ? "#2e7d4f" : "#a23b3b" }}>{waResult.msg}</span>}
+
+            {/* Message thread */}
+            <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px", display: "flex", flexDirection: "column", gap: 10 }}>
+              {msgLoading && <div style={{ color: MUTED, fontSize: ".85rem", textAlign: "center" }}>Loading messages…</div>}
+              {!msgLoading && messages.length === 0 && <div style={{ color: MUTED, fontSize: ".85rem", textAlign: "center" }}>No messages in this conversation.</div>}
+              {messages.map((m) => (
+                <div key={m.id} style={{ display: "flex", flexDirection: "column", maxWidth: "72%", ...(m.role === "agent" ? { alignSelf: "flex-end" } : { alignSelf: "flex-start" }) }}>
+                  <div style={{ fontSize: ".65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 3,
+                    ...(m.role === "agent" ? { textAlign: "right" } : {}) }}>
+                    {roleLabel(m.role)}
+                  </div>
+                  <div style={{ padding: "9px 13px", fontSize: ".88rem", lineHeight: 1.5, ...roleBubble(m.role) }}>
+                    {m.body || <em style={{ opacity: .5 }}>empty</em>}
+                  </div>
+                  <div style={{ fontSize: ".67rem", color: MUTED, marginTop: 3, ...(m.role === "agent" ? { textAlign: "right" } : {}) }}>
+                    {fmtDate(m.created_at)}
+                  </div>
                 </div>
+              ))}
+              <div ref={msgEndRef} />
+            </div>
+
+            {/* WhatsApp reply */}
+            {selected.visitor_phone && (
+              <div style={{ borderTop: "1px solid rgba(18,16,12,.1)", padding: "12px 20px", flexShrink: 0, background: "#faf9f7" }}>
+                <div style={{ fontSize: ".72rem", fontWeight: 700, textTransform: "uppercase", color: MUTED, marginBottom: 6 }}>Reply via WhatsApp</div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <textarea value={waText} onChange={(e) => setWaText(e.target.value)} rows={2}
+                    placeholder="Type a WhatsApp message…"
+                    style={{ flex: 1, resize: "none", borderRadius: 10, border: "1px solid rgba(18,16,12,.2)", padding: "8px 12px", fontSize: ".88rem", fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
+                  <button type="button" onClick={() => void sendWhatsApp()} disabled={waSending || !waText.trim()}
+                    style={{ padding: "8px 16px", borderRadius: 10, border: "none", cursor: waSending || !waText.trim() ? "default" : "pointer",
+                      background: waSending || !waText.trim() ? "#e2d5b0" : GOLD, color: GREEN, fontWeight: 700, fontSize: ".82rem", alignSelf: "flex-end" }}>
+                    {waSending ? "…" : "Send"}
+                  </button>
+                </div>
+                {waResult && <div style={{ fontSize: ".78rem", color: waResult.ok ? "#2e7d4f" : "#a23b3b", marginTop: 4 }}>{waResult.msg}</div>}
               </div>
             )}
           </>
