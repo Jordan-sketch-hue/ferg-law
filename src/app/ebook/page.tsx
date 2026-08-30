@@ -76,11 +76,24 @@ export default function EbookPage() {
   return (
     <BookingProvider>
       <Nav />
+      <style>{`
+        .ebook-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: start; max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; }
+        .ebook-left { color: #fff; }
+        .ebook-cover { display: block; }
+        @media (max-width: 768px) {
+          .ebook-grid { grid-template-columns: 1fr; gap: 2rem; padding: 0 1rem; }
+          .ebook-cover { max-width: 280px !important; margin: 0 auto !important; }
+          .ebook-radio-group { flex-direction: column !important; gap: .6rem !important; }
+          .ebook-radio-label { font-size: 1rem !important; gap: 10px !important; align-items: center !important; }
+          .ebook-radio-label input[type="radio"] { width: 18px; height: 18px; flex-shrink: 0; accent-color: #c9a86a; cursor: pointer; }
+          .ebook-ftb-row { gap: 1.5rem !important; }
+        }
+      `}</style>
       <main style={{ background: "linear-gradient(165deg,#0e2518 0%,#1a3828 100%)", minHeight: "100vh", paddingTop: "5rem", paddingBottom: "4rem" }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 1.5rem", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4rem", alignItems: "start" }}>
+        <div className="ebook-grid">
 
           {/* Left — cover + blurb */}
-          <div style={{ color: "#fff" }}>
+          <div className="ebook-left">
             <p style={{ fontSize: ".72rem", fontWeight: 700, letterSpacing: ".18em", textTransform: "uppercase", color: "#c9a86a", marginBottom: "1rem" }}>
               Free Download · Ferguson Law
             </p>
@@ -93,7 +106,8 @@ export default function EbookPage() {
             <img
               src="/home-buyers-guide-cover.jpg"
               alt="H.O.M.E. Buyer's Guide cover"
-              style={{ width: "100%", maxWidth: 400, borderRadius: 16, boxShadow: "0 24px 64px rgba(0,0,0,.45)", display: "block" }}
+              className="ebook-cover"
+              style={{ width: "100%", maxWidth: 400, borderRadius: 16, boxShadow: "0 24px 64px rgba(0,0,0,.45)" }}
             />
           </div>
 
@@ -179,9 +193,9 @@ export default function EbookPage() {
 
                 <div>
                   <label style={lbl}>Financing type *</label>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", marginTop: 4 }}>
+                  <div className="ebook-radio-group" style={{ display: "flex", flexWrap: "wrap", gap: "1rem", marginTop: 4 }}>
                     {["Cash", "Mortgage", "NHT", "Undecided"].map(opt => (
-                      <label key={opt} style={radio}>
+                      <label key={opt} className="ebook-radio-label" style={radio}>
                         <input type="radio" name="financing_type" value={opt} checked={form.financing_type === opt} onChange={() => set("financing_type", opt)} required />
                         {opt}
                       </label>
@@ -191,9 +205,9 @@ export default function EbookPage() {
 
                 <div>
                   <label style={lbl}>First-time buyer? *</label>
-                  <div style={{ display: "flex", gap: "1.5rem", marginTop: 4 }}>
+                  <div className="ebook-ftb-row" style={{ display: "flex", gap: "1.5rem", marginTop: 4 }}>
                     {["Yes", "No"].map(opt => (
-                      <label key={opt} style={radio}>
+                      <label key={opt} className="ebook-radio-label" style={radio}>
                         <input type="radio" name="first_time_buyer" value={opt} checked={form.first_time_buyer === opt} onChange={() => set("first_time_buyer", opt)} required />
                         {opt}
                       </label>
