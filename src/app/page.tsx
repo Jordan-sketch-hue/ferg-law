@@ -1,5 +1,5 @@
 ﻿/* eslint-disable @next/next/no-img-element */
-import { waLink, SITE, CONSULT_DURATION_MIN, CONSULT_FEE_DISPLAY } from "@/lib/site";
+import { waLink, SITE } from "@/lib/site";
 import { BookingProvider, BookButton } from "@/components/site/BookingProvider";
 import Nav from "@/components/site/Nav";
 import GetStartedLink from "@/components/site/GetStartedLink";
@@ -333,7 +333,7 @@ export default function Home() {
               <div className="s-n" data-edit="process.steps.3.n">Step 04</div>
               <h3 data-edit="process.steps.3.title">Book Your Consultation</h3>
               <p data-edit="process.steps.3.body">
-                When you&apos;re ready, book a {CONSULT_DURATION_MIN}-minute consultation with Ferguson Law – online, anytime.
+                When you&apos;re ready, book a consultation with Ferguson Law – online, anytime.
               </p>
               <BookButton className="tag pstep-link">
                 Book now –
@@ -554,7 +554,7 @@ export default function Home() {
               </div>
               <img className="reach-photo" src="/img/reach-consultation.webp" alt="Book a consultation with Ferguson Law" />
               <h4>Book a consultation</h4>
-              <p>{CONSULT_DURATION_MIN} minutes with our attorney – real answers for your specific situation.</p>
+              <p>Book a consultation with our attorney – real answers for your specific situation.</p>
               <p style={{fontSize:"0.78rem",color:"var(--muted)",marginTop:"0.3rem"}}>In-person meetings by appointment only.</p>
               <BookButton className="btn btn-primary reach-btn">
                 <span data-edit="contact.ctaPrimary">Book now</span>

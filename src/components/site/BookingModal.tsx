@@ -384,9 +384,7 @@ export default function BookingModal({
 
   const sv = SERVICES.find((s) => s.id === service);
 
-  // Consultation fee for the review step (skipped when an invite makes it free).
-  // Default to the flat J$8,000 rate so J$0 never appears as a displayed price.
-  const fee = service ? consultFee(service) : 8000;
+  const fee = service ? consultFee(service) : 0;
 
   // Human labels for the chosen day/slot, resolved from the fetched data.
   const dateLabel = selectedDay?.label ?? null;
@@ -728,24 +726,7 @@ export default function BookingModal({
                 >
                   ✓ Complimentary consultation invite applied - no payment needed.
                 </div>
-              ) : (
-                <>
-                  <p className="sub" style={{ marginTop: 16 }}>
-                    Consultation fee: <b>{formatJmd(fee)}</b> (≈US$50) - paid
-                    securely to confirm your booking.
-                  </p>
-                  <p
-                    className="sub"
-                    style={{
-                      marginTop: 6,
-                      color: "var(--gold-deep, #A8853E)",
-                      fontWeight: 600,
-                    }}
-                  >
-                    Credited toward your legal fees once you engage Ferguson Law.
-                  </p>
-                </>
-              )}
+              ) : null}
               <div
                 style={{
                   marginTop: 16,

@@ -20,14 +20,8 @@ export const SITE = {
   ebookApp: "https://home.fergusonlawja.com/ebook",
 } as const;
 
-/** Consultation fee in whole JMD. */
-export const CONSULT_FEE_JMD = 8000;
-
 /** Consultation duration in minutes. */
 export const CONSULT_DURATION_MIN = 20;
-
-/** "J$8,000" — formatted for display. */
-export const CONSULT_FEE_DISPLAY = `J$${CONSULT_FEE_JMD.toLocaleString("en-JM")}`;
 
 export const waLink = (text?: string) =>
   `https://wa.me/${SITE.whatsappNumber}${

@@ -15,8 +15,6 @@ import { faqAsText } from "@/lib/faq";
 export interface PracticeArea {
   name: string;
   blurb: string;
-  fromFee: string; // "from" price — never a guarantee
-  duration: string; // typical consult length
 }
 
 export const PRACTICE_AREAS: PracticeArea[] = [
@@ -24,49 +22,36 @@ export const PRACTICE_AREAS: PracticeArea[] = [
     name: "Corporate & Commercial",
     blurb:
       "Company formation and registration, shareholder and partnership agreements, contracts, commercial transactions, and corporate compliance — informed by 20+ years of banking and finance experience.",
-    fromFee: "J$8,000",
-    duration: "20 min",
   },
   {
     name: "Real Estate & Conveyancing",
     blurb:
       "Buying and selling property, title transfers, sale agreements, due diligence, and the full conveyancing process for residents and the diaspora.",
-    fromFee: "J$8,000",
-    duration: "20 min",
   },
   {
     name: "Family & Estate",
     blurb:
       "Wills, probate and administration of estates, powers of attorney, and family matters handled with care and discretion.",
-    fromFee: "J$8,000",
-    duration: "20 min",
   },
   {
     name: "Divorce & Matrimonial",
     blurb:
       "Separation, custody, maintenance and settlements handled with discretion and care.",
-    fromFee: "J$8,000",
-    duration: "20 min",
   },
   {
     name: "Intellectual Property",
     blurb:
       "Trademarks, copyright and IP protection for creators, brands and businesses.",
-    fromFee: "J$8,000",
-    duration: "20 min",
   },
   {
     name: "Sports Law",
     blurb:
       "Contracts, image rights and representation for athletes, clubs and sporting bodies.",
-    fromFee: "J$8,000",
-    duration: "20 min",
   },
 ];
 
 const practiceAreasText = PRACTICE_AREAS.map(
-  (a) =>
-    `- ${a.name} (${a.fromFee}, typical consult ${a.duration}): ${a.blurb}`,
+  (a) => `- ${a.name}: ${a.blurb}`,
 ).join("\n");
 
 export const FIRM_KB = `
@@ -89,13 +74,11 @@ export const FIRM_KB = `
 - A Justice of the Peace (JP).
 - Member of the Jamaican Bar and an International Bar association.
 
-## Practice areas (every initial consultation is a flat J$8,000 / US$50 for 20 minutes)
+## Practice areas
 ${practiceAreasText}
 
-Note on fees: an initial consultation is a flat J$8,000 (about US$50) for 20 minutes,
-the same for any matter. Legal fees for the work itself are separate, depend on the
-specifics, and are confirmed by the firm directly. Your consultation fee is credited
-toward your legal fees once you engage Ferguson Law.
+Note on fees: legal fees depend on the matter, the specifics, and are confirmed by the
+firm directly. Book a consultation to get accurate figures for your situation.
 
 ## H.O.M.E.® by Ferguson Law — Home Ownership Made Easy
 - ${SITE.name} powers H.O.M.E.® by Ferguson Law, a platform that guides Jamaicans (at home and abroad)
@@ -155,9 +138,8 @@ A: I can book it right here in the chat — I'll take your name, contact and the
    and the firm will confirm a time. You can also message us on WhatsApp (${SITE.whatsappDisplay}).
 
 Q: What does a consultation cost?
-A: Every consultation is a flat J$8,000 (about US$50) for 20 minutes, the same for any
-   matter. Your consultation fee is credited toward your legal fees once you engage
-   Ferguson Law.
+A: Book a consultation and the firm will confirm the fee details for your specific matter
+   before your appointment.
 
 Q: Do you help Jamaicans living overseas (the diaspora)?
 A: Yes. ${SITE.name} regularly works with the diaspora — including conveyancing, estate
@@ -171,7 +153,7 @@ Q: Can I walk in to your office?
 A: In-person meetings are by appointment only. Book a consultation online or send a WhatsApp message to arrange a time. Video and phone consultations are also available.
 
 Q: Do you handle divorce cases?
-A: Yes. Ferguson Law handles divorce and matrimonial matters, including separation, custody, maintenance, and settlements, with discretion and care. An initial consultation is J$8,000 for 20 minutes.
+A: Yes. Ferguson Law handles divorce and matrimonial matters, including separation, custody, maintenance, and settlements, with discretion and care.
 
 Q: What is a title search?
 A: A title search is a formal search of the land registry to confirm who owns a property, check for mortgages, caveats, or other encumbrances, and verify the title is clear before a purchase. It is a standard step in every conveyancing transaction.

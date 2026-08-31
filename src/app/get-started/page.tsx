@@ -5,7 +5,7 @@ import Link from "next/link";
 import { BookingProvider, useBooking } from "@/components/site/BookingProvider";
 import Nav from "@/components/site/Nav";
 import Footer from "@/components/site/Footer";
-import { SITE, waLink, CONSULT_FEE_DISPLAY, CONSULT_DURATION_MIN } from "@/lib/site";
+import { SITE, waLink } from "@/lib/site";
 
 const GREEN = "#102A1E";
 const GOLD = "#C8A65C";
@@ -25,7 +25,7 @@ const ROLES: Role[] = [
     moments: [
       {
         headline: "You reach out. We talk.",
-        body: "A 20-minute call with our Attorney. By the time it ends you know the full costs of purchase, all the steps in the process and what to watch for before you sign a single page. Consultation fee: $8,000 (credited towards your total legal fees once you engage Ferguson Law).",
+        body: "A 20-minute call with our Attorney. By the time it ends you know the full costs of purchase, all the steps in the process and what to watch for before you sign a single page.",
       },
       {
         headline: "We need to know who you are.",
@@ -61,7 +61,7 @@ const ROLES: Role[] = [
     moments: [
       {
         headline: "Before you accept an offer, we talk.",
-        body: "A 20-minute Consultation call before anything is signed. You'll know exactly what your net proceeds will be, an estimate of the time, and what protects you throughout the process. Consultation fee: $8,000 (credited towards your total legal fees once you engage Ferguson Law).",
+        body: "A 20-minute Consultation call before anything is signed. You'll know exactly what your net proceeds will be, an estimate of the time, and what protects you throughout the process.",
       },
       {
         headline: "We confirm your identity.",
@@ -120,7 +120,7 @@ const ROLES: Role[] = [
     moments: [
       {
         headline: "You talk to our Attorney first.",
-        body: "A 20-minute Consultation call. No judgment, just clarity on the steps in the process, how long it takes and what your rights are. Consultation fee: $8,000 (credited towards your full Legal fee when you engage Ferguson Law).",
+        body: "A 20-minute Consultation call. No judgment, just clarity on the steps in the process, how long it takes and what your rights are.",
       },
       {
         headline: "Your identity and marriage go on record.",
@@ -151,7 +151,7 @@ const ROLES: Role[] = [
     moments: [
       {
         headline: "You tell us what you have and who gets it.",
-        body: "A 20-minute Consultation call. We map your assets, property, accounts, business interests and the people you want to provide for. We help you to fulfill your loved ones wishes and distribute their assets as they intended. Consultation fee: $8,000 (credited to your full Legal fee when you engage Ferguson Law).",
+        body: "A 20-minute Consultation call. We map your assets, property, accounts, business interests and the people you want to provide for. We help you to fulfill your loved ones wishes and distribute their assets as they intended.",
       },
       {
         headline: "Your Will is drafted.",
@@ -178,7 +178,7 @@ const ROLES: Role[] = [
     moments: [
       {
         headline: "Your company is properly formed.",
-        body: "A 20-minute Consultation call with our Attorney to understand your structure - sole trader, limited liability company, or partnership. We draft your foundational documents, register with the Companies Office of Jamaica and keep you operating on solid ground. Consultation fee: $8,000 (credited to your Legal fee when you engage Ferguson Law).",
+        body: "A 20-minute Consultation call with our Attorney to understand your structure - sole trader, limited liability company, or partnership. We draft your foundational documents, register with the Companies Office of Jamaica and keep you operating on solid ground.",
       },
       {
         headline: "Your contracts say what you mean.",
@@ -205,7 +205,7 @@ const ROLES: Role[] = [
     moments: [
       {
         headline: "We understand what you're building.",
-        body: "A 20-minute Consultation call. Whether you're a professional athlete, a recording artiste, a content creator or brand we identify where you're exposed and where you're leaving money on the table. Consultation fee $8,000 (credited towards your full Legal fee when you engage Ferguson Law).",
+        body: "A 20-minute Consultation call. Whether you're a professional athlete, a recording artiste, a content creator or brand we identify where you're exposed and where you're leaving money on the table.",
       },
       {
         headline: "Your contracts are read before you sign.",
@@ -330,7 +330,7 @@ function GetStartedContent() {
             <p style={S.ctaSub}>
               {role.id === "professional"
                 ? "Your partner dashboard is where your listings, referrals and verification live. Log in to get started."
-                : `Your client journey lives in the Ferguson Law Client Portal. Log in 24/7 and see exactly what stage your matter is at. Prefer to talk first? A ${CONSULT_DURATION_MIN}-minute consultation with Owen Ferguson is ${CONSULT_FEE_DISPLAY}, credited toward your legal fees once you engage us.`}
+                : `Your client journey lives in the Ferguson Law Client Portal. Log in 24/7 and see exactly what stage your matter is at. Book a consultation to speak with Owen Ferguson directly.`}
             </p>
           </div>
           <div style={S.ctaBtns}>

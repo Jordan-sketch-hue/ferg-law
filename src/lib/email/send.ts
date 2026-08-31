@@ -189,9 +189,6 @@ export async function sendNurtureEmail(args: SendNurtureEmailArgs): Promise<Send
               <p style="font-size:16px;line-height:1.75;margin:0 0 28px;color:#3a3a3a;">
                 You reached out to Ferguson Law${topic ? ` with a question${topic}` : ""} and we want to make sure you get the help you need. When you are ready, booking a consultation is the fastest way to get clear answers for your specific situation.
               </p>
-              <p style="font-size:16px;line-height:1.75;margin:0 0 28px;color:#3a3a3a;">
-                Every consultation is a flat J$8,000 for 20 minutes. Your fee is credited toward your legal work once you engage us.
-              </p>
             </td>
           </tr>
           <tr>
@@ -221,7 +218,6 @@ export async function sendNurtureEmail(args: SendNurtureEmailArgs): Promise<Send
     `You reached out to Ferguson Law${topic ? ` about${topic}` : ""} and we want to make sure you get the help you need.`,
     ``,
     `Book a consultation: ${bookingUrl}`,
-    `Every consultation is a flat J$8,000 for 20 minutes. Your fee is credited toward your legal work once you engage us.`,
     ``,
     `WhatsApp: ${SITE.whatsappDisplay}`,
     ``,
