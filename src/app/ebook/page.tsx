@@ -159,10 +159,10 @@ export default function EbookPage() {
                     <label style={lbl}>Purchase timeframe *</label>
                     <select required style={inp} value={form.timeframe} onChange={e => set("timeframe", e.target.value)}>
                       <option value="">Select…</option>
+                      <option>Immediate</option>
                       <option>Within 6 months</option>
                       <option>6–12 months</option>
                       <option>1–2 years</option>
-                      <option>2+ years</option>
                       <option>Just exploring</option>
                     </select>
                   </div>
