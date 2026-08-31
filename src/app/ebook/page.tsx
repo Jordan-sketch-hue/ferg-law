@@ -167,7 +167,7 @@ export default function EbookPage() {
                     </select>
                   </div>
                   <div>
-                    <label style={lbl}>Purchase location *</label>
+                    <label style={lbl}>Current location *</label>
                     <select required style={inp} value={form.purchase_location} onChange={e => set("purchase_location", e.target.value)}>
                       <option value="">Select…</option>
                       <option>Jamaica</option>
