@@ -168,7 +168,7 @@ export default function RootLayout({
         <link rel="preload" as="image" href="/img/hero-banner.avif" type="image/avif" />
         <link rel="preload" as="image" href="/img/hero-banner.webp" type="image/webp" />
         <link rel="preload" as="image" href="/img/people-new-home.webp" type="image/webp" />
-        <link rel="manifest" href="/manifest.json" />
+        {/* manifest intentionally omitted — PWA is a paid add-on */}
       </head>
       <body>
         {children}
