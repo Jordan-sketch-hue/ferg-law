@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
 interface Notification {
@@ -75,9 +76,10 @@ export default function NotificationBell() {
 
       {open && (
         <div style={{
-          position: "absolute", top: 44, right: 0, zIndex: 200,
+          position: "fixed", top: 56, left: "50%", transform: "translateX(-50%)", zIndex: 200,
           background: "#fff", borderRadius: 14, boxShadow: "0 8px 32px rgba(0,0,0,0.14)",
-          border: "1px solid var(--line)", width: 320, maxHeight: 400, overflow: "hidden",
+          border: "1px solid var(--line)",
+          width: "min(340px, calc(100vw - 16px))", maxHeight: 400, overflow: "hidden",
           display: "flex", flexDirection: "column",
         }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px 10px", borderBottom: "1px solid var(--line)" }}>
@@ -114,6 +116,12 @@ export default function NotificationBell() {
                 </div>
               </div>
             ))}
+          </div>
+          <div style={{ padding: "10px 16px", borderTop: "1px solid var(--line)", background: "#fafaf8" }}>
+            <Link href="/directory/settings" onClick={() => setOpen(false)}
+              style={{ fontSize: 12, color: "var(--gold-deep)", fontWeight: 600, textDecoration: "none" }}>
+              ⚙ Notification settings
+            </Link>
           </div>
         </div>
       )}

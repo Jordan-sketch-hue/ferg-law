@@ -73,8 +73,10 @@ export default function Footer() {
             © <span id="yr">{year}</span> Ferguson Law. All rights reserved ·
             Kingston, Jamaica.
           </div>
-          <div style={{ marginTop: "0.5rem", fontSize: ".78rem", color: "rgba(246,242,234,.5)" }}>
-            H.O.M.E.® by Ferguson Law – Home Ownership Made Easy® · Informational content is not legal advice.
+          <div style={{ marginTop: "0.5rem", fontSize: ".78rem", color: "rgba(246,242,234,.5)", display: "flex", flexWrap: "wrap", gap: "0 16px", alignItems: "center" }}>
+            <span>H.O.M.E.® by Ferguson Law – Home Ownership Made Easy® · Informational content is not legal advice.</span>
+            <a href="/privacy" style={{ color: "rgba(246,242,234,.6)", textDecoration: "none" }}>Privacy Policy</a>
+            <a href="/terms" style={{ color: "rgba(246,242,234,.6)", textDecoration: "none" }}>Terms of Service</a>
           </div>
         </div>
       </div>
