@@ -15,7 +15,7 @@ interface FormData {
   country: string;
   timeframe: string;
   purchase_location: string;
-  financing_type: string;
+  financing_type: string[];
   first_time_buyer: string;
   budget_band: string;
   consent: boolean;
@@ -28,7 +28,7 @@ const EMPTY: FormData = {
   country: "",
   timeframe: "",
   purchase_location: "",
-  financing_type: "",
+  financing_type: [],
   first_time_buyer: "",
   budget_band: "",
   consent: false,
@@ -42,7 +42,7 @@ export default function EbookPage() {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [error, setError] = useState("");
 
-  function set(key: keyof FormData, value: string | boolean) {
+  function set(key: keyof FormData, value: string | boolean | string[]) {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
@@ -55,7 +55,7 @@ export default function EbookPage() {
       const res = await fetch("/api/ebook/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, source: "fergusonlawja-ebook" }),
+        body: JSON.stringify({ ...form, financing_type: form.financing_type.join(", "), source: "fergusonlawja-ebook" }),
       });
       const data = await res.json();
       if (data.ok && data.pdf_url) {
@@ -134,8 +134,8 @@ export default function EbookPage() {
               <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
                 <div style={{ marginBottom: ".25rem" }}>
                   <span style={{ display: "inline-block", background: "#f0fdf4", color: "#16a34a", fontSize: ".72rem", fontWeight: 700, padding: "4px 12px", borderRadius: 20, marginBottom: ".75rem" }}>Free Download</span>
-                  <h2 style={{ fontFamily: "var(--serif, Georgia, serif)", fontSize: "1.5rem", color: "#10211c", margin: 0 }}>Get the free guide</h2>
-                  <p style={{ color: "#69736d", fontSize: ".85rem", marginTop: 6 }}>The complete Jamaica buyer&apos;s guide — every step from readiness to closing.</p>
+                  <h2 style={{ fontFamily: "var(--serif, Georgia, serif)", fontSize: "1.5rem", color: "#10211c", margin: 0 }}>Get the Buyer&apos;s Guide</h2>
+                  <p style={{ color: "#69736d", fontSize: ".85rem", marginTop: 6 }}>The complete Buyer&apos;s Guide — every step from readiness to closing.</p>
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
@@ -198,7 +198,12 @@ export default function EbookPage() {
                   <div className="ebook-radio-group" style={{ display: "flex", flexWrap: "wrap", gap: "1rem", marginTop: 4 }}>
                     {["Cash", "Mortgage", "NHT", "Undecided"].map(opt => (
                       <label key={opt} className="ebook-radio-label" style={radio}>
-                        <input type="radio" name="financing_type" value={opt} checked={form.financing_type === opt} onChange={() => set("financing_type", opt)} required />
+                        <input
+                          type="checkbox"
+                          value={opt}
+                          checked={form.financing_type.includes(opt)}
+                          onChange={e => set("financing_type", e.target.checked ? [...form.financing_type, opt] : form.financing_type.filter(v => v !== opt))}
+                        />
                         {opt}
                       </label>
                     ))}
@@ -229,7 +234,7 @@ export default function EbookPage() {
                   disabled={submitting}
                   style={{ width: "100%", padding: "14px 0", background: submitting ? "#e2d5b0" : "#c9a86a", color: "#10211c", fontWeight: 700, fontSize: ".95rem", borderRadius: 10, border: "none", cursor: submitting ? "default" : "pointer" }}
                 >
-                  {submitting ? "Submitting…" : "Get the free guide"}
+                  {submitting ? "Submitting…" : "Get the Buyer's Guide"}
                 </button>
               </form>
             )}
