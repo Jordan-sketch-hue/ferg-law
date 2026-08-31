@@ -69,17 +69,29 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 style={{ fontFamily: "var(--serif)", fontSize: 18, color: "var(--ink)", marginBottom: 10 }}>10. Governing Law</h2>
-          <p>These Terms are governed by the laws of Jamaica. Any disputes arising from your use of the Portal shall be subject to the exclusive jurisdiction of the courts of Jamaica.</p>
+          <h2 style={{ fontFamily: "var(--serif)", fontSize: 18, color: "var(--ink)", marginBottom: 10 }}>10. Governing Law &amp; Jurisdiction</h2>
+          <p>These Terms are governed by the laws of Jamaica. Any disputes arising from your use of the Portal shall be subject to the jurisdiction of the courts of Jamaica.</p>
+          <p style={{ marginTop: 10 }}>If you access the Portal from outside Jamaica, nothing in these Terms overrides any statutory rights you are entitled to under the mandatory laws of your country of residence. In particular:</p>
+          <ul style={{ marginTop: 10, paddingLeft: 20, display: "flex", flexDirection: "column", gap: 6 }}>
+            <li><strong>EU / UK consumers:</strong> If you are a consumer located in the European Union or the United Kingdom, you retain all statutory rights granted under applicable EU or UK consumer protection legislation, including the right to seek redress from your local courts.</li>
+            <li><strong>California residents:</strong> Your rights under the CCPA/CPRA are not affected by these Terms. We do not sell your personal information.</li>
+            <li><strong>All international clients:</strong> Where our Portal facilitates legal services governed by Jamaican law (e.g., a Jamaican property transaction), Jamaican law will apply to that underlying matter regardless of your country of residence.</li>
+          </ul>
         </section>
 
         <section>
-          <h2 style={{ fontFamily: "var(--serif)", fontSize: 18, color: "var(--ink)", marginBottom: 10 }}>11. Changes to These Terms</h2>
+          <h2 style={{ fontFamily: "var(--serif)", fontSize: 18, color: "var(--ink)", marginBottom: 10 }}>11. International Use</h2>
+          <p>The Portal is operated from Jamaica. If you access it from outside Jamaica — including from the United States, South Africa, the United Arab Emirates, India, Qatar, Singapore, or the European Union — you do so at your own initiative and are responsible for compliance with applicable local laws to the extent they apply to you.</p>
+          <p style={{ marginTop: 10 }}>We make no representation that the Portal is appropriate or available in all jurisdictions. We do not discriminate against any user based on their country of residence.</p>
+        </section>
+
+        <section>
+          <h2 style={{ fontFamily: "var(--serif)", fontSize: 18, color: "var(--ink)", marginBottom: 10 }}>12. Changes to These Terms</h2>
           <p>Ferguson Law may update these Terms from time to time. We will notify you of material changes via email or through the Portal. Continued use of the Portal after changes are posted constitutes your acceptance of the updated Terms.</p>
         </section>
 
         <section>
-          <h2 style={{ fontFamily: "var(--serif)", fontSize: 18, color: "var(--ink)", marginBottom: 10 }}>12. Contact</h2>
+          <h2 style={{ fontFamily: "var(--serif)", fontSize: 18, color: "var(--ink)", marginBottom: 10 }}>13. Contact</h2>
           <p>For questions about these Terms, contact us at:</p>
           <p style={{ marginTop: 10 }}>
             <strong>Ferguson Law</strong><br />

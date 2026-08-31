@@ -106,7 +106,36 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 style={{ fontFamily: "var(--serif)", fontSize: 18, color: "var(--ink)", marginBottom: 10 }}>11. Contact</h2>
+          <h2 style={{ fontFamily: "var(--serif)", fontSize: 18, color: "var(--ink)", marginBottom: 10 }}>11. International Visitors — Additional Rights by Jurisdiction</h2>
+          <p>Ferguson Law serves clients in multiple countries. Depending on your country of residence, you may have additional rights under local law. In all cases you may exercise these rights by contacting us at {SITE.email}.</p>
+          <ul style={{ marginTop: 12, paddingLeft: 20, display: "flex", flexDirection: "column", gap: 10 }}>
+            <li>
+              <strong>European Union &amp; United Kingdom (EU GDPR / UK GDPR):</strong> You have the right to access, rectify, erase, restrict, and port your data, and to object to processing. You may lodge a complaint with your local supervisory authority (e.g., the ICO in the UK, or the DPC in Ireland).
+            </li>
+            <li>
+              <strong>United States — California (CCPA / CPRA):</strong> California residents have the right to know what personal information we collect, to delete it, to opt out of any sale (we do not sell personal information), and to non-discrimination for exercising these rights. To submit a verified consumer request, email us with the subject "CCPA Request".
+            </li>
+            <li>
+              <strong>South Africa (POPIA — Protection of Personal Information Act):</strong> You have the right to be notified of collection, access your information, correct or delete it, and to object to processing. You may also lodge a complaint with the Information Regulator (South Africa) at inforeg.org.za.
+            </li>
+            <li>
+              <strong>United Arab Emirates (UAE Federal Decree-Law No. 45 of 2021):</strong> UAE residents have rights of access, correction, and deletion of personal data. We process data only for lawful purposes and do not transfer your data outside the UAE without adequate safeguards.
+            </li>
+            <li>
+              <strong>India (Digital Personal Data Protection Act 2023):</strong> Indian residents have the right to access, correct, and erase personal data, to nominate a representative, and to grieve. We process data only with your consent or under a lawful purpose as defined by the Act.
+            </li>
+            <li>
+              <strong>Qatar (PDPL — Law No. 13 of 2016):</strong> Qatar residents have rights of access, rectification, and objection. Personal data is processed lawfully and is not transferred internationally without adequate protections.
+            </li>
+            <li>
+              <strong>Singapore (PDPA — Personal Data Protection Act 2012):</strong> Singapore residents have the right to access and correct personal data we hold. We collect only what is reasonably necessary for our purposes and retain it only for as long as legally required.
+            </li>
+          </ul>
+          <p style={{ marginTop: 12 }}>Regardless of your country of residence, we commit to: (a) collecting only what is necessary, (b) being transparent about how we use your data, (c) responding to all data requests within 30 days, and (d) never selling your personal information.</p>
+        </section>
+
+        <section>
+          <h2 style={{ fontFamily: "var(--serif)", fontSize: 18, color: "var(--ink)", marginBottom: 10 }}>12. Contact</h2>
           <p>For any privacy-related questions or to exercise your rights:</p>
           <p style={{ marginTop: 10 }}>
             <strong>Ferguson Law</strong><br />
