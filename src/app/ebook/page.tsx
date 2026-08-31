@@ -118,7 +118,7 @@ export default function EbookPage() {
               <div style={{ textAlign: "center", padding: "2rem 0" }}>
                 <svg style={{ width: 56, height: 56, color: "#16a34a", margin: "0 auto 1rem" }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>
                 <h2 style={{ fontFamily: "var(--serif, Georgia, serif)", fontSize: "1.6rem", marginBottom: ".5rem", color: "#10211c" }}>You&apos;re all set!</h2>
-                <p style={{ color: "#69736d", fontSize: ".9rem", marginBottom: "1.8rem" }}>Your free H.O.M.E.® Buyer&apos;s Guide is ready.</p>
+                <p style={{ color: "#69736d", fontSize: ".9rem", marginBottom: "1.8rem" }}>Your H.O.M.E.® Buyer&apos;s Guide is ready.</p>
                 <a
                   href={pdfUrl}
                   target="_blank"
