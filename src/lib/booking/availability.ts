@@ -34,8 +34,6 @@ export const SERVICE_DURATION: Record<ServiceId, number> = {
 /** Booking window, in Jamaica wall-clock terms. */
 const OPEN_HOUR = 9; // 09:00
 const CLOSE_HOUR = 16; // 16:00 (last slot must END by this)
-const LUNCH_START_HOUR = 13; // 13:00–14:00 excluded
-const LUNCH_END_HOUR = 14;
 const SLOT_STEP_MIN = 30; // grid granularity
 const MIN_LEAD_MS = 2 * 60 * 60 * 1000; // 2-hour minimum lead time
 
@@ -48,13 +46,9 @@ function withinBusinessHours(startMin: number, durationMin: number): boolean {
   const endMin = startMin + durationMin;
   const openMin = OPEN_HOUR * 60;
   const closeMin = CLOSE_HOUR * 60;
-  const lunchStart = LUNCH_START_HOUR * 60;
-  const lunchEnd = LUNCH_END_HOUR * 60;
 
   if (startMin < openMin) return false;
   if (endMin > closeMin) return false;
-  // Reject any slot that overlaps the lunch break.
-  if (startMin < lunchEnd && endMin > lunchStart) return false;
   return true;
 }
 
