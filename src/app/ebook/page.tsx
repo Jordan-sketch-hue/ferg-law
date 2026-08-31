@@ -99,7 +99,7 @@ export default function EbookPage() {
               Free Download · Ferguson Law
             </p>
             <h1 style={{ fontFamily: "var(--serif, Georgia, serif)", fontSize: "clamp(1.8rem,3.5vw,2.8rem)", fontWeight: 600, lineHeight: 1.15, marginBottom: "1.2rem", color: "#fff" }}>
-              The H.O.M.E.® Jamaica Buyer&apos;s Guide
+              The Ferguson Law H.O.M.E. Buyer&apos;s Guide
             </h1>
             <p style={{ color: "rgba(255,255,255,.75)", fontSize: "1rem", lineHeight: 1.7, marginBottom: "2rem", maxWidth: 420 }}>
               Every step from readiness to registered title — plain English, no jargon. NHT, stamp duty, transfer tax, diaspora playbook and more.
