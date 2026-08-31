@@ -2,6 +2,7 @@
 import { waLink, SITE, CONSULT_DURATION_MIN, CONSULT_FEE_DISPLAY } from "@/lib/site";
 import { BookingProvider, BookButton } from "@/components/site/BookingProvider";
 import Nav from "@/components/site/Nav";
+import GetStartedLink from "@/components/site/GetStartedLink";
 import Reveal from "@/components/site/Reveal";
 import HomeFlagship from "@/components/site/HomeFlagship";
 import Footer from "@/components/site/Footer";
@@ -49,10 +50,10 @@ export default function Home() {
             sale, and transfer.
           </p>
           <div className="hero-cta">
-            <a className="btn btn-gold hero-cta-primary" href="/get-started" style={{display:"inline-flex",alignItems:"center",gap:6}}>
+            <GetStartedLink className="btn btn-gold hero-cta-primary" style={{display:"inline-flex",alignItems:"center",gap:6}}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
               <span data-edit="hero.ctaPrimary">Get started</span>
-            </a>
+            </GetStartedLink>
             <BookButton className="btn btn-light hero-cta-book">
               <CalendarIcon />
               Book here

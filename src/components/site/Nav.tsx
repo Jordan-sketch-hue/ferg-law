@@ -4,6 +4,7 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { SITE } from "@/lib/site";
+import { track } from "@/lib/analytics";
 
 const NAV_LINKS = [
   { href: "/#about", label: "About" },
@@ -176,7 +177,7 @@ export default function Nav() {
               <CalIcon /><span className="btn-label">Book here</span>
             </a>
             {/* Get started */}
-            <a className="btn btn-gold nav-get-started" href="/get-started">
+            <a className="btn btn-gold nav-get-started" href="/get-started" onClick={() => track("get_started_click")}>
               <PenIcon /><span className="btn-label">Get started</span>
             </a>
             {/* Hamburger */}
@@ -248,7 +249,7 @@ export default function Nav() {
 
           <div className="drawer-cta">
             <a className="btn btn-ghost drawer-consult-btn" href="/booking" onClick={closeMenu}>Book here</a>
-            <a className="btn btn-gold" href="/get-started" onClick={closeMenu}><PenIcon /> Get started</a>
+            <a className="btn btn-gold" href="/get-started" onClick={() => { track("get_started_click"); closeMenu(); }}><PenIcon /> Get started</a>
           </div>
         </nav>
       </div>
