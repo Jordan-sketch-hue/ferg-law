@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Fraunces, Inter } from "next/font/google";
 import "./globals.css";
 import ChatWidget from "@/components/chat/ChatWidget";
+import SplashScreen from "@/components/site/SplashScreen";
 import ContentApply from "@/components/editor/ContentApply";
 import SearchModal from "@/components/site/SearchModal";
 import EditorOverlay from "@/components/editor/EditorOverlay";
@@ -168,9 +169,10 @@ export default function RootLayout({
         <link rel="preload" as="image" href="/img/hero-banner.avif" type="image/avif" />
         <link rel="preload" as="image" href="/img/hero-banner.webp" type="image/webp" />
         <link rel="preload" as="image" href="/img/people-new-home.webp" type="image/webp" />
-        {/* manifest intentionally omitted — PWA is a paid add-on */}
+        <link rel="manifest" href="/manifest.json" />
       </head>
       <body>
+        <SplashScreen />
         {children}
         <PageTracker />
         <ChatWidget />
