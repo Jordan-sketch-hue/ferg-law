@@ -10,6 +10,9 @@ export default function SplashScreen() {
   const [leaving, setLeaving] = useState(false);
 
   useEffect(() => {
+    // Only show when running as installed PWA
+    if (!window.matchMedia("(display-mode: standalone)").matches) return;
+
     try {
       if (sessionStorage.getItem("fl_splashed")) return;
       sessionStorage.setItem("fl_splashed", "1");
