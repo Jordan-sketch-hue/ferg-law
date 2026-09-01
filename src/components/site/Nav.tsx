@@ -388,21 +388,20 @@ export default function Nav() {
             font-size:.85rem; padding:.45rem 1.1rem; white-space:nowrap;
           }
         }
-        /* Mobile: icon-only pill buttons — no text, compact like H.O.M.E. search icon */
+        /* Mobile: compact text pills — labels visible, just tighter sizing */
         @media(max-width:760px){
           .nav-consult-mobile, .nav-get-started{
-            width:36px !important; height:36px !important;
-            padding:0 !important; border-radius:50% !important;
-            display:inline-flex !important; align-items:center !important; justify-content:center !important;
-            gap:0 !important; min-width:0 !important; flex-shrink:0 !important;
+            font-size:.76rem !important; padding:.35rem .7rem !important;
+            white-space:nowrap; flex-shrink:0 !important;
+            display:inline-flex !important; align-items:center !important; gap:4px !important;
+            min-width:0 !important; border-radius:999px !important;
           }
-          .nav-consult-mobile .btn-label, .nav-get-started .btn-label{ display:none !important; }
-          .nav-right{ gap:6px !important; }
-          .nav-left{ margin-right:0.75rem !important; }
+          .nav-right{ gap:5px !important; }
+          .nav-left{ margin-right:0.5rem !important; }
         }
-        @media(max-width:400px){
+        @media(max-width:420px){
           .nav-consult-mobile, .nav-get-started{
-            width:32px !important; height:32px !important;
+            font-size:.7rem !important; padding:.3rem .55rem !important; gap:3px !important;
           }
           .nav-right{ gap:4px !important; }
         }
