@@ -994,7 +994,7 @@ function MatterPane({
 
       {/* Tabs */}
       <div style={{ display: "flex", borderBottom: "1px solid var(--line)", background: "#fafaf8", overflowX: "auto" }}>
-        {(["timeline", "messages", "files", "kyc", "payments"] as const).map(t => (
+        {(["timeline", "kyc", "messages", "files", "payments"] as const).map(t => (
           <button key={t} onClick={() => setTab(t)} style={{
             padding: "11px 16px", fontSize: 13, fontWeight: 600, border: "none", background: "none",
             cursor: "pointer", whiteSpace: "nowrap",

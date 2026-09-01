@@ -1126,10 +1126,28 @@ function LeadsTable({ leads, loading, token, onStatus, onDelete }: { leads: Lead
 // ---------------------------------------------------------------------------
 function BookingsTable({ appts, loading, token, onStatus, onCancel }: { appts: Appointment[]; loading: boolean; token: string; onStatus: (id: string, s: string) => void; onCancel: (id: string) => void }) {
   const [composing, setComposing] = useState<Appointment | null>(null);
+  const [zoomBusy, setZoomBusy] = useState<string | null>(null);
+  const [zoomLinks, setZoomLinks] = useState<Record<string, string>>({});
+  const [zoomErr, setZoomErr] = useState<string | null>(null);
+
+  async function createZoomForBooking(appt: Appointment) {
+    setZoomBusy(appt.id); setZoomErr(null);
+    const r = await fetch("/api/admin/zoom/recreate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, id: appt.id }),
+    });
+    const d = await r.json() as { ok: boolean; url?: string; provider?: string; error?: string };
+    if (d.ok && d.url) setZoomLinks(prev => ({ ...prev, [appt.id]: d.url! }));
+    else setZoomErr(d.error ?? "Could not create meeting link.");
+    setZoomBusy(null);
+  }
+
   if (loading && appts.length === 0) return <Empty>Loading bookings…</Empty>;
   if (appts.length === 0) return <Empty>No bookings yet.</Empty>;
   return (
     <>
+      {zoomErr && <div style={{ padding: "8px 16px", background: "rgba(162,59,59,.08)", color: "#a23b3b", fontSize: ".82rem", borderRadius: 8, margin: "8px 0" }}>{zoomErr}</div>}
       <div style={S.tableWrap}>
         <table style={S.table}>
           <thead><tr><Th>When (Jamaica)</Th><Th>Service</Th><Th>Client</Th><Th>Contact</Th><Th>Ref</Th><Th>Status</Th><Th>Actions</Th></tr></thead>
@@ -1151,10 +1169,24 @@ function BookingsTable({ appts, loading, token, onStatus, onCancel }: { appts: A
                       </button>
                     )}
                     {a.status !== "cancelled" && (
-                      <button type="button" onClick={() => onCancel(a.id)}
-                        style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)" }}>
-                        Cancel
-                      </button>
+                      <>
+                        {zoomLinks[a.id] ? (
+                          <a href={zoomLinks[a.id]} target="_blank" rel="noopener noreferrer"
+                            style={{ ...S.waBtn, background: "rgba(47,122,82,.12)", color: GREEN, textDecoration: "none" }}>
+                            Join Zoom
+                          </a>
+                        ) : (
+                          <button type="button" onClick={() => void createZoomForBooking(a)}
+                            disabled={zoomBusy === a.id}
+                            style={{ ...S.waBtn, background: "rgba(16,42,30,.08)", color: GREEN, border: "1px solid rgba(16,42,30,.2)", opacity: zoomBusy === a.id ? .6 : 1 }}>
+                            {zoomBusy === a.id ? "Creating…" : "Zoom link"}
+                          </button>
+                        )}
+                        <button type="button" onClick={() => onCancel(a.id)}
+                          style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)" }}>
+                          Cancel
+                        </button>
+                      </>
                     )}
                     {!a.email && a.status === "cancelled" && <span style={S.muted}>—</span>}
                   </div>
@@ -2249,6 +2281,51 @@ function OverviewPanel({ leads, appts, convos, matters, homePros, emails, inquir
           <div style={{ padding: "18px 16px", color: MUTED, fontSize: ".88rem" }}>No upcoming appointments.</div>
         )}
       </div>
+
+      {/* Client Activity viewport */}
+      <ClientActivityViewport onTab={onTab} />
+    </div>
+  );
+}
+
+function ClientActivityViewport({ onTab }: { onTab: (t: Tab) => void }) {
+  interface ActivityItem { id: string; kind: string; label: string; sub: string; ts: string; tab: Tab }
+  const [items, setItems] = useState<ActivityItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const token = localStorage.getItem("fl_admin_token") ?? "";
+    fetch("/api/admin/client-activity", { headers: { "x-admin-token": token } })
+      .then(r => r.ok ? r.json() as Promise<{ items?: ActivityItem[] }> : { items: [] })
+      .then(j => { setItems(j.items ?? []); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
+
+  return (
+    <div style={{ marginTop: 28 }}>
+      <div style={{ fontWeight: 700, fontSize: ".78rem", textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 12 }}>Recent client activity</div>
+      <div style={{ background: "#fff", border: "1px solid rgba(18,16,12,.08)", borderRadius: 12, overflow: "hidden" }}>
+        {loading ? (
+          <div style={{ padding: "18px 16px", color: MUTED, fontSize: ".88rem" }}>Loading…</div>
+        ) : items.length === 0 ? (
+          <div style={{ padding: "18px 16px", color: MUTED, fontSize: ".88rem" }}>No recent client portal activity.</div>
+        ) : items.map((item, i) => (
+          <button key={item.id} type="button" onClick={() => onTab(item.tab)}
+            style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px",
+              borderTop: i > 0 ? "1px solid rgba(18,16,12,.06)" : "none",
+              background: "none", border: "none", width: "100%", textAlign: "left", cursor: "pointer",
+              ...(i > 0 ? { borderTop: "1px solid rgba(18,16,12,.06)" } : {}) }}>
+            <span style={{ fontSize: "1.2rem", flexShrink: 0 }}>
+              {item.kind === "message" ? "💬" : item.kind === "file" ? "📄" : item.kind === "kyc" ? "🪪" : item.kind === "payment" ? "💳" : "📋"}
+            </span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 600, fontSize: ".88rem", color: GREEN, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.label}</div>
+              <div style={{ fontSize: ".78rem", color: MUTED, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.sub}</div>
+            </div>
+            <div style={{ fontSize: ".72rem", color: MUTED, flexShrink: 0 }}>{fmtDate(item.ts)}</div>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
@@ -2275,6 +2352,7 @@ function EmailTab({ emails, token, onMarkRead }: {
   const [sentEmails, setSentEmails] = useState<SentEmail[]>([]);
   const [sentLoading, setSentLoading] = useState(false);
   const [selected, setSelected] = useState<InboundEmail | null>(null);
+  const [selectedSent, setSelectedSent] = useState<SentEmail | null>(null);
   const [composing, setComposing] = useState(false);
   const [replyOpen, setReplyOpen] = useState(false);
   const [replyBody, setReplyBody] = useState("");
@@ -2385,14 +2463,18 @@ function EmailTab({ emails, token, onMarkRead }: {
           ) : sentEmails.length === 0 ? (
             <div style={{ padding: "32px 16px", textAlign: "center", color: MUTED, fontSize: ".86rem" }}>No sent emails yet.</div>
           ) : sentEmails.map((e) => (
-            <div key={e.id} style={{ padding: "12px 14px", borderBottom: "1px solid rgba(18,16,12,.07)" }}>
+            <button key={e.id} type="button" onClick={() => setSelectedSent(e)}
+              style={{ display: "block", width: "100%", textAlign: "left", border: "none", cursor: "pointer",
+                padding: "12px 14px", background: selectedSent?.id === e.id ? "rgba(16,42,30,.06)" : "#fff",
+                borderBottom: "1px solid rgba(18,16,12,.07)",
+                borderLeft: selectedSent?.id === e.id ? `3px solid ${GOLD}` : "3px solid transparent" }}>
               <div style={{ fontWeight: 600, fontSize: ".85rem", color: GREEN, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 To: {e.to_name || e.to_email}
               </div>
               <div style={{ fontSize: ".78rem", color: MUTED, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.subject}</div>
               {e.body_preview && <div style={{ fontSize: ".72rem", color: MUTED, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.body_preview}</div>}
               <div style={{ fontSize: ".72rem", color: MUTED, marginTop: 2 }}>{fmtDate(e.created_at)}</div>
-            </div>
+            </button>
           ))
         ) : emails.length === 0 ? (
           <div style={{ padding: "32px 16px", textAlign: "center", color: MUTED, fontSize: ".86rem" }}>No inbound emails yet.</div>
@@ -2441,6 +2523,21 @@ function EmailTab({ emails, token, onMarkRead }: {
                 style={{ padding: "10px 18px", border: "1px solid rgba(18,16,12,.2)", borderRadius: 999, background: "#fff", fontSize: ".88rem", cursor: "pointer" }}>
                 Cancel
               </button>
+            </div>
+          </div>
+        ) : pane === "sent" && selectedSent ? (
+          <div>
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontFamily: "var(--serif, Georgia, serif)", fontWeight: 700, fontSize: "1.15rem", color: GREEN }}>{selectedSent.subject || "(no subject)"}</div>
+              <div style={{ fontSize: ".8rem", color: MUTED, marginTop: 4 }}>
+                To: <strong style={{ color: INK }}>{selectedSent.to_name ? `${selectedSent.to_name} <${selectedSent.to_email}>` : selectedSent.to_email}</strong>
+                &nbsp;·&nbsp;{fmtDate(selectedSent.created_at)}
+              </div>
+              {selectedSent.context && <div style={{ fontSize: ".78rem", color: MUTED }}>Context: {selectedSent.context}</div>}
+              {selectedSent.status && <div style={{ fontSize: ".78rem", color: selectedSent.status === "sent" ? GREEN : MUTED }}>Status: {selectedSent.status}</div>}
+            </div>
+            <div style={{ background: "#faf8f2", borderRadius: 10, padding: 20, marginBottom: 20, fontSize: ".9rem", lineHeight: 1.7, color: INK, whiteSpace: "pre-wrap", minHeight: 100 }}>
+              {selectedSent.body_preview || "(no preview available)"}
             </div>
           </div>
         ) : !selected ? (
