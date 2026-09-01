@@ -65,7 +65,7 @@
     position:sticky;top:0;z-index:60;background:rgba(246,242,234,.82);
     backdrop-filter:blur(14px);border-bottom:1px solid transparent;transition:border-color .3s,background .3s;
   }
-  header.nav .wrap{ max-width:1480px; }
+  header.nav .wrap{ max-width:1480px; padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px)); }
   header.nav.scrolled{border-color:var(--line);background:rgba(246,242,234,.94)}
   .nav-inner{display:flex;align-items:center;justify-content:space-between;height:72px}
   .brand{display:flex;align-items:center;gap:12px;font-family:var(--serif);font-weight:600;font-size:1.12rem;color:var(--ink);letter-spacing:.02em}
@@ -825,7 +825,7 @@
      7 links + 2 CTAs it gets cramped well before 920px. */
   @media(max-width:1040px){
     .nav-links{display:none}
-    .menu-btn{display:flex;position:relative;z-index:9700}
+    .menu-btn{display:flex;position:relative;z-index:9700;flex-shrink:0;padding:6px}
     .menu-btn.active span:nth-child(1){transform:translateY(7px) rotate(45deg)}
     .menu-btn.active span:nth-child(2){opacity:0}
     .menu-btn.active span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
@@ -875,8 +875,9 @@
     /* drawer CTAs */
     .drawer-cta{padding:16px 20px}
     .drawer-cta .btn{padding:12px 18px}
-    /* nav height */
-    .nav-inner{height:64px}
+    /* nav height + tighter mobile layout */
+    .nav-inner{height:60px}
+    .nav-left{margin-right:.75rem!important}
     /* booking modal: 2-col service grid is too tight on narrow phones */
     .modal{border-radius:16px}
     .modal-body{padding:20px}

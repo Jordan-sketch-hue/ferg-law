@@ -388,25 +388,23 @@ export default function Nav() {
             font-size:.85rem; padding:.45rem 1.1rem; white-space:nowrap;
           }
         }
-        /* ≤440px (iPhone 15 Plus / 15 Pro Max + Samsung S24 Ultra) — reduce padding only, keep font readable */
-        @media(max-width:440px){
-          .nav-consult-mobile,.nav-get-started{
-            padding:.38rem .6rem !important; gap:5px !important;
+        /* Mobile: icon-only pill buttons — no text, compact like H.O.M.E. search icon */
+        @media(max-width:760px){
+          .nav-consult-mobile, .nav-get-started{
+            width:36px !important; height:36px !important;
+            padding:0 !important; border-radius:50% !important;
+            display:inline-flex !important; align-items:center !important; justify-content:center !important;
+            gap:0 !important; min-width:0 !important; flex-shrink:0 !important;
           }
-          .nav-right{ gap:8px !important; }
+          .nav-consult-mobile .btn-label, .nav-get-started .btn-label{ display:none !important; }
+          .nav-right{ gap:6px !important; }
+          .nav-left{ margin-right:0.75rem !important; }
         }
-        /* ≤395px (iPhone 14, narrow Androids) — first shrink tier */
-        @media(max-width:395px){
-          .nav-consult-mobile,.nav-get-started{
-            font-size:.78rem !important; padding:.42rem .8rem !important; gap:5px !important;
+        @media(max-width:400px){
+          .nav-consult-mobile, .nav-get-started{
+            width:32px !important; height:32px !important;
           }
-        }
-        /* ≤375px — tightest (360px class phones) */
-        @media(max-width:375px){
-          .nav-consult-mobile,.nav-get-started{
-            font-size:.75rem !important; padding:.4rem .6rem !important; gap:4px !important;
-          }
-          .nav-right{ gap:7px !important; }
+          .nav-right{ gap:4px !important; }
         }
 
         @media(max-width:760px){ .nav-login-wrap{ display:none; } }
