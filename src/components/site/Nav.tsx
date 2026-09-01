@@ -14,6 +14,8 @@ const NAV_LINKS = [
 ] as const;
 
 const LOGIN_LINKS = [
+  { href: "/auth?mode=signup", label: "Create account" },
+  { href: "/auth", label: "Sign in" },
   { href: "/directory/login", label: "Partner Login" },
   { href: "/directory/client-login", label: "Client Portal" },
 ] as const;

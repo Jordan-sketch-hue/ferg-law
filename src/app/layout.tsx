@@ -3,6 +3,8 @@ import { Fraunces, Inter } from "next/font/google";
 import "./globals.css";
 import ChatWidget from "@/components/chat/ChatWidget";
 import SplashScreen from "@/components/site/SplashScreen";
+import PwaOnboarding from "@/components/site/PwaOnboarding";
+import BottomNav from "@/components/site/BottomNav";
 import ContentApply from "@/components/editor/ContentApply";
 import SearchModal from "@/components/site/SearchModal";
 import EditorOverlay from "@/components/editor/EditorOverlay";
@@ -173,12 +175,14 @@ export default function RootLayout({
       </head>
       <body>
         <SplashScreen />
+        <PwaOnboarding />
         {children}
         <PageTracker />
         <ChatWidget />
         <ContentApply />
         <SearchModal />
         <EditorOverlay />
+        <BottomNav />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

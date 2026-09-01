@@ -2,12 +2,20 @@
 
 export const dynamic = "force-dynamic";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { useSearchParams } from "next/navigation";
 
-export default function ClientLoginPage() {
-  const [tab, setTab] = useState<"login" | "signup">("login");
+function ClientLoginForm() {
+  const searchParams = useSearchParams();
+  const fromBooking = searchParams.get("from") === "booking";
+  const intentParam = searchParams.get("intent");
+  const [tab, setTab] = useState<"login" | "signup">(intentParam === "signup" ? "signup" : "login");
+
+  useEffect(() => {
+    if (intentParam === "signup") setTab("signup");
+  }, [intentParam]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -26,7 +34,7 @@ export default function ClientLoginPage() {
     try {
       const { error } = await createClient().auth.signInWithPassword({ email: email.trim(), password });
       if (error) { setErr(error.message); setBusy(false); return; }
-      window.location.href = "/directory/client";
+      window.location.href = fromBooking ? "/directory/client?new=true" : "/directory/client";
     } catch {
       setErr("Could not reach the server. Please check your connection and try again.");
       setBusy(false);
@@ -68,7 +76,7 @@ export default function ClientLoginPage() {
       setBusy(false);
       return;
     }
-    window.location.href = "/directory/client";
+    window.location.href = fromBooking ? "/directory/client?new=true" : "/directory/client";
   }
 
   const EyeIcon = ({ open }: { open: boolean }) => open ? (
@@ -93,12 +101,23 @@ export default function ClientLoginPage() {
             </p>
           </div>
         )}
+        {fromBooking && tab === "signup" && (
+          <div style={{ marginBottom: 16, padding: "12px 14px", borderRadius: 10, background: "rgba(200,166,92,.1)", border: "1px solid rgba(200,166,92,.35)", fontSize: ".88rem", color: "#4a3a10", lineHeight: 1.55 }}>
+            Almost there — create your account to track your matter.
+          </div>
+        )}
         <h1 style={{ marginBottom: 4 }}>{tab === "login" ? "Sign in" : "Create your account"}</h1>
         <p className="lede">
           {tab === "login"
             ? "Track your property matter and connect with your professionals."
             : "Register to access your Ferguson Law client portal."}
         </p>
+        {/* Skip link */}
+        <div style={{ textAlign: "right", marginBottom: 8 }}>
+          <Link href="/" style={{ fontSize: "0.8rem", color: "var(--muted,#69736d)", textDecoration: "underline", textUnderlineOffset: 3 }}>
+            Skip — just browse the site
+          </Link>
+        </div>
 
         {err && <div className="dform-err">{err}</div>}
         {ok  && <div className="dform-ok">{ok}</div>}
@@ -196,5 +215,13 @@ export default function ClientLoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ClientLoginPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: "100dvh", display: "grid", placeItems: "center" }}>Loading…</div>}>
+      <ClientLoginForm />
+    </Suspense>
   );
 }

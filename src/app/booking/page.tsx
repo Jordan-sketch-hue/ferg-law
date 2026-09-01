@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BookingProvider, useBooking } from "@/components/site/BookingProvider";
 import Nav from "@/components/site/Nav";
@@ -19,10 +19,25 @@ const TESTIMONIALS = [
   { quote: "They understood the money and the law. Closing costs, NHT, the contract - explained like a friend would, not a textbook. Keys in hand in weeks.", name: "Andre & Shanice", role: "New homeowners" },
 ];
 
+const MATTER_TYPE_LABELS: Record<string, string> = {
+  property_purchase: "Property Purchase",
+  diaspora: "Diaspora Transaction",
+  estate_will: "Estate / Will",
+  general: "General Matter",
+};
+
 function BookingContent() {
   const { open, openBooking } = useBooking();
   const router = useRouter();
   const hasOpened = useRef(false);
+  const [matterLabel, setMatterLabel] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("fl_matter_type");
+      if (raw) setMatterLabel(MATTER_TYPE_LABELS[raw] ?? null);
+    } catch { /* noop */ }
+  }, []);
 
   useEffect(() => { openBooking(); }, [openBooking]);
 
@@ -41,6 +56,12 @@ function BookingContent() {
       <section style={{ padding: "5rem 1.5rem 2.5rem", textAlign: "center", maxWidth: 640, margin: "0 auto" }}>
         <p style={{ fontFamily: "var(--serif)", fontSize: "0.78rem", letterSpacing: "0.13em", textTransform: "uppercase", color: "var(--gold)", margin: "0 0 1rem" }}>Ferguson Law</p>
         <h1 style={{ fontFamily: "var(--serif)", fontSize: "clamp(1.9rem,4vw,2.7rem)", color: "var(--ink)", margin: "0 0 1rem", lineHeight: 1.1 }}>Book a Consultation</h1>
+        {matterLabel && (
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(200,166,92,.12)", border: "1px solid rgba(200,166,92,.4)", borderRadius: 999, padding: "5px 14px", marginBottom: "1rem", fontSize: "0.8rem", color: "var(--gold-deep)", fontWeight: 600 }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--gold)", display: "inline-block" }} />
+            {matterLabel}
+          </div>
+        )}
         <p style={{ color: "var(--ink-light)", lineHeight: 1.65, margin: "0 0 1.75rem" }}>
           20 minutes with our attorney - real answers for your specific situation. Pick a service and a time that works for you.
         </p>
