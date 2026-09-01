@@ -2316,7 +2316,7 @@ function ClientActivityViewport({ onTab }: { onTab: (t: Tab) => void }) {
               background: "none", border: "none", width: "100%", textAlign: "left", cursor: "pointer",
               ...(i > 0 ? { borderTop: "1px solid rgba(18,16,12,.06)" } : {}) }}>
             <span style={{ fontSize: "1.2rem", flexShrink: 0 }}>
-              {item.kind === "message" ? "💬" : item.kind === "file" ? "📄" : item.kind === "kyc" ? "🪪" : item.kind === "payment" ? "💳" : "📋"}
+              {item.kind === "message" ? "💬" : item.kind === "file" ? "📄" : item.kind === "kyc" ? "🪪" : item.kind === "payment" ? "💳" : item.kind === "booking" ? "📅" : "📋"}
             </span>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 600, fontSize: ".88rem", color: GREEN, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.label}</div>
@@ -4085,7 +4085,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
 
             {/* Tabs */}
             <div style={{ display: "flex", borderBottom: `1px solid rgba(18,16,12,.1)`, background: "#fafaf8" }}>
-              {(["timeline","messages","files","kyc","payments"] as const).map(t => {
+              {(["timeline","kyc","messages","files","payments"] as const).map(t => {
                 const unreadClientMsgs = messages.filter(m => m.sender_type === "client" && !m.read_at).length;
                 return (
                 <button key={t} onClick={async () => {
