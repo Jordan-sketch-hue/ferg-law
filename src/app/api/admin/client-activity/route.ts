@@ -13,23 +13,19 @@ export async function GET(req: NextRequest) {
 
     const admin = createAdminClient();
 
-    const [{ data: msgs }, { data: files }, { data: kycs }] = await Promise.all([
+    const [msgRes, fileRes] = await Promise.all([
       admin.from("fl_matter_messages")
         .select("id, created_at, matter_id, sender_role, body")
         .eq("sender_role", "client")
         .order("created_at", { ascending: false })
         .limit(10),
       admin.from("fl_matter_files")
-        .select("id, created_at, matter_id, file_name, uploaded_by")
+        .select("id, created_at, matter_id, file_name")
         .order("created_at", { ascending: false })
         .limit(10),
-      admin.from("fl_kyc_submissions")
-        .select("id, created_at, matter_id, status")
-        .order("created_at", { ascending: false })
-        .limit(10)
-        .then(r => r)
-        .catch(() => ({ data: [] })),
     ]);
+    const msgs = msgRes.data;
+    const files = fileRes.data;
 
     interface ActivityItem { id: string; kind: string; label: string; sub: string; ts: string; tab: string }
     const items: ActivityItem[] = [];
@@ -54,18 +50,6 @@ export async function GET(req: NextRequest) {
         tab: "cms",
       });
     }
-    for (const k of ((kycs as { data: unknown[] | null }).data ?? [])) {
-      const kyc = k as { id: string; created_at: string; matter_id: string; status: string };
-      items.push({
-        id: `kyc-${kyc.id}`,
-        kind: "kyc",
-        label: "KYC submitted",
-        sub: `Status: ${kyc.status}`,
-        ts: kyc.created_at,
-        tab: "matters",
-      });
-    }
-
     items.sort((a, b) => new Date(b.ts).getTime() - new Date(a.ts).getTime());
 
     return NextResponse.json({ items: items.slice(0, 15) });
