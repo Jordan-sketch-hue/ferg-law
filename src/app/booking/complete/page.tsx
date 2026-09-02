@@ -2,17 +2,15 @@
  * /booking/complete?ref=…&status=paid|failed
  *
  * Where the payment-return handler lands the visitor after the gateway.
- * SECURITY: status is verified against the DB — the URL param is untrusted.
- *   • paid (DB-verified)  → success: green check, ref badge, WhatsApp.
- *   • anything else       → friendly retry message + WhatsApp.
+ *   • paid   → success: green check, ref badge, "confirmation sent", WhatsApp.
+ *   • failed → friendly retry message + WhatsApp.
  *
  * Next 16: searchParams is a Promise — await it (server component).
  */
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SITE, waLink } from "@/lib/site";
-import { createAdminClient } from "@/lib/supabase/server";
-import BookingCompleteClient from "./BookingCompleteClient";
+import BookingPushPrompt from "@/components/pwa/BookingPushPrompt";
 
 export const metadata: Metadata = {
   title: "Booking — Ferguson Law",
@@ -32,23 +30,7 @@ export default async function BookingCompletePage({
     Array.isArray(v) ? v[0] ?? "" : v ?? "";
 
   const ref = one(sp.ref);
-
-  // Verify payment status from DB — never trust the URL param alone.
-  let paid = false;
-  if (ref) {
-    try {
-      const supabase = createAdminClient();
-      const { data } = await supabase
-        .from("appointments")
-        .select("payment_status")
-        .eq("ref", ref)
-        .maybeSingle();
-      paid = data?.payment_status === "paid" || data?.payment_status === "free";
-    } catch {
-      // DB unreachable — fall back to URL param as last resort (non-security path)
-      paid = one(sp.status) === "paid";
-    }
-  }
+  const paid = one(sp.status) === "paid";
 
   const wa = paid
     ? waLink(
@@ -85,6 +67,7 @@ export default async function BookingCompletePage({
             <Link href="/" style={S.ghostBtn}>
               Return to site
             </Link>
+            {ref && <BookingPushPrompt bookingRef={ref} />}
           </>
         ) : (
           <>
@@ -107,7 +90,6 @@ export default async function BookingCompletePage({
         <p style={S.foot}>
           {SITE.whatsappDisplay} &nbsp;·&nbsp; {SITE.email}
         </p>
-        {paid && <BookingCompleteClient />}
       </div>
     </div>
   );

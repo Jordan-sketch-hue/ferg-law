@@ -228,7 +228,7 @@ interface HomeInquiry {
 
 const LEAD_STATUSES: LeadStatus[] = ["new", "contacted", "closed"];
 const APPT_STATUSES: ApptStatus[] = ["pending", "confirmed", "cancelled", "completed"];
-const MATTER_STAGES = ["enquiry", "consultation_booked", "consultation_done", "retainer", "active", "closed"];
+const MATTER_STAGES = ["intake", "active", "on_hold", "closed"];
 const PAYMENT_STATUSES = ["unpaid", "deposit_paid", "paid"];
 const CLIENT_TYPES = ["individual", "corporate", "diaspora"];
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -358,7 +358,7 @@ export default function AdminDashboard() {
         supabase.rpc("fl_admin_list_invites", { p_token: tok }),
         supabase.rpc("fl_admin_partners", { p_token: tok }),
         supabase.rpc("fl_admin_clients", { p_token: tok }),
-        supabase.rpc("fl_admin_matters", { p_token: tok }),
+        supabase.rpc("fl_admin_cms_matters", { p_token: tok }),
         supabase.rpc("fl_admin_get_availability", { p_token: tok }),
       ]);
     const [emailsRes, inquiriesRes, binRes] = await Promise.all([
@@ -376,7 +376,16 @@ export default function AdminDashboard() {
       invites: (invitesRes.data as Invite[] | null) ?? [],
       listings: (listingsRes.data as Listing[] | null) ?? [],
       clients: (clientsRes.data as Client[] | null) ?? [],
-      matters: (mattersRes.data as Matter[] | null) ?? [],
+      matters: ((mattersRes.data as CmsMatter[] | null) ?? []).map(cm => ({
+        id: cm.id, created_at: cm.created_at, client_id: cm.client_id,
+        client_name: cm.client_name, ref: cm.title || cm.matter_type || "",
+        matter_type: cm.matter_type, stage: cm.status,
+        description: cm.notes, notes: cm.notes, priority: "normal",
+        payment_status: "unpaid", property_address: null, title_type: null,
+        nht_eligible: null, estate_value_jmd: null, executor_name: null,
+        business_type: null, transaction_value_jmd: null,
+        assigned_ref: null, closed_at: null, meta: {},
+      } as Matter)),
       availability: (availRes.data as Availability[] | null) ?? [],
       emails: (emailsRes.data as InboundEmail[] | null) ?? [],
       inquiries: (inquiriesRes.data as HomeInquiry[] | null) ?? [],
@@ -417,6 +426,46 @@ export default function AdminDashboard() {
     return () => { cancelled = true; };
   }, [token, fetchAll]);
 
+  // Auto-subscribe admin to push notifications silently after login
+  useEffect(() => {
+    if (!token) return;
+    const VAPID_PUBLIC = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+    if (!VAPID_PUBLIC || !('Notification' in window) || !('serviceWorker' in navigator)) return;
+    if (Notification.permission === 'denied') return;
+    void (async () => {
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        const existing = await reg.pushManager.getSubscription();
+        if (existing) {
+          // Already subscribed — re-register so server has latest endpoint
+          await fetch('/api/push/subscribe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ subscription: existing, userRole: 'admin', userRef: token }),
+          }).catch(() => null);
+          return;
+        }
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') return;
+        function urlBase64ToUint8Array(b64: string): Uint8Array {
+          const padding = '='.repeat((4 - (b64.length % 4)) % 4);
+          const base64 = (b64 + padding).replace(/-/g, '+').replace(/_/g, '/');
+          const raw = atob(base64);
+          return new Uint8Array([...raw].map(c => c.charCodeAt(0)));
+        }
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC) as unknown as ArrayBuffer,
+        });
+        await fetch('/api/push/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ subscription: sub, userRole: 'admin', userRef: token }),
+        }).catch(() => null);
+      } catch { /* ignore */ }
+    })();
+  }, [token]);
+
   // Realtime subscription — re-fetch partner/home-pro queues instantly on any change
   useEffect(() => {
     if (!token) return;
@@ -453,8 +502,17 @@ export default function AdminDashboard() {
         const { data } = await supabase.rpc("fl_admin_appointments", { p_token: token });
         if (data) setAppts(data as Appointment[]);
       } else if (tab === "matters") {
-        const { data } = await supabase.rpc("fl_admin_matters", { p_token: token });
-        if (data) setMatters(data as Matter[]);
+        const { data } = await supabase.rpc("fl_admin_cms_matters", { p_token: token });
+        if (data) setMatters(((data as CmsMatter[]) ?? []).map(cm => ({
+          id: cm.id, created_at: cm.created_at, client_id: cm.client_id,
+          client_name: cm.client_name, ref: cm.title || cm.matter_type || "",
+          matter_type: cm.matter_type, stage: cm.status,
+          description: cm.notes, notes: cm.notes, priority: "normal",
+          payment_status: "unpaid", property_address: null, title_type: null,
+          nht_eligible: null, estate_value_jmd: null, executor_name: null,
+          business_type: null, transaction_value_jmd: null,
+          assigned_ref: null, closed_at: null, meta: {},
+        } as Matter)));
       } else if (tab === "chats") {
         const { data } = await supabase.rpc("fl_admin_conversations", { p_token: token });
         if (data) setConvos(data as Conversation[]);
@@ -494,7 +552,7 @@ export default function AdminDashboard() {
     if (!token) return;
     setMatters((prev) => prev.map((m) => m.id === id ? { ...m, stage } : m));
     const supabase = createClient();
-    await supabase.rpc("fl_admin_set_matter_stage", { p_token: token, p_id: id, p_stage: stage });
+    await supabase.rpc("fl_admin_cms_update_matter_status", { p_token: token, p_matter_id: id, p_status: stage });
   }, [token]);
 
   const setMatterPayment = useCallback(async (id: string, payment_status: string) => {
@@ -850,15 +908,16 @@ export default function AdminDashboard() {
               leads={leads} appts={appts} convos={convos} matters={matters}
               homePros={homePros} emails={emails} inquiries={inquiries}
               staleLeads={staleLeads} isJordan={isJordan}
+              token={token ?? ""}
               onTab={switchTab}
             />
           )}
           {tab === "leads" && <LeadsTable leads={leads} loading={loading} token={token} onStatus={setLeadStatus} onDelete={deleteLead} />}
-          {tab === "bookings" && <BookingsTable appts={appts} loading={loading} token={token ?? ""} onStatus={setApptStatus} onCancel={cancelBooking} />}
+          {tab === "bookings" && <BookingsTable appts={appts} loading={loading} token={token ?? ""} onStatus={setApptStatus} onCancel={cancelBooking} onRefresh={() => { if (token) void fetchAll(token); }} />}
           {tab === "clients" && <ClientsTab clients={clients} matters={matters} loading={loading} token={token ?? ""} onUpsert={upsertClient} onDelete={deleteClient} />}
           {tab === "matters" && <MattersTab matters={matters} loading={loading} token={token ?? ""} onStage={setMatterStage} onPayment={setMatterPayment} />}
           {tab === "cms" && token && <CmsTab token={token} onUnreadChange={setCmsUnread} />}
-          {tab === "calendar" && <CalendarTab appts={appts} />}
+          {tab === "calendar" && <CalendarTab appts={appts} token={token ?? ""} />}
           {tab === "chats" && <ChatsTable convos={convos} loading={loading} />}
           {tab === "email" && token && <EmailTab emails={emails} token={token} onMarkRead={(id) => setEmails(prev => prev.map(e => e.id === id ? { ...e, read: true } : e))} />}
           {tab === "invites" && <InvitesPanel invites={invites} loading={loading} onCreate={createInvite} onDeactivate={deactivateInvite} onDelete={deleteInvite} />}
@@ -872,7 +931,12 @@ export default function AdminDashboard() {
             <RecycleBinTab items={binItems} token={token} onRestore={restoreFromBin} onPurge={purgeFromBin} />
           )}
           {tab === "workflows" && token && <WorkflowTemplatesTab token={token} />}
-          {tab === "zoom" && token && <ZoomSetupTab token={token} />}
+          {tab === "zoom" && token && (
+            <div>
+              <BookingsTable appts={appts} loading={loading} token={token} onStatus={setApptStatus} onCancel={cancelBooking} onRefresh={() => { if (token) void fetchAll(token); }} />
+              <ZoomSetupTab token={token} appts={appts} />
+            </div>
+          )}
           {tab === "feedback" && token && <TesterFeedbackTab token={token} />}
           {tab === "analytics" && token && <AnalyticsTab token={token} />}
           {tab === "ebook_leads" && token && <EbookLeadsTab token={token} />}
@@ -903,7 +967,7 @@ function TabBtn({ active, onClick, label, count }: { active: boolean; onClick: (
   return (
     <button type="button" onClick={onClick} style={{ ...S.tab, ...(active ? S.tabActive : null) }}>
       {label}
-      <span style={{ ...S.tabCount, ...(active ? S.tabCountActive : null) }}>{count}</span>
+      {count > 0 && <span style={{ ...S.tabCount, ...(active ? S.tabCountActive : null) }}>{count}</span>}
     </button>
   );
 }
@@ -1124,78 +1188,220 @@ function LeadsTable({ leads, loading, token, onStatus, onDelete }: { leads: Lead
 // ---------------------------------------------------------------------------
 // Bookings
 // ---------------------------------------------------------------------------
-function BookingsTable({ appts, loading, token, onStatus, onCancel }: { appts: Appointment[]; loading: boolean; token: string; onStatus: (id: string, s: string) => void; onCancel: (id: string) => void }) {
-  const [composing, setComposing] = useState<Appointment | null>(null);
-  const [zoomBusy, setZoomBusy] = useState<string | null>(null);
-  const [zoomLinks, setZoomLinks] = useState<Record<string, string>>({});
-  const [zoomErr, setZoomErr] = useState<string | null>(null);
+const BOOKING_SERVICES = [
+  { id: "realestate", label: "Real Estate & Conveyancing" },
+  { id: "corporate", label: "Corporate & Commercial" },
+  { id: "family", label: "Family & Estate" },
+  { id: "divorce", label: "Divorce & Matrimonial" },
+  { id: "ip", label: "Intellectual Property" },
+  { id: "sports", label: "Sports Law" },
+];
 
-  async function createZoomForBooking(appt: Appointment) {
-    setZoomBusy(appt.id); setZoomErr(null);
-    const r = await fetch("/api/admin/zoom/recreate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token, id: appt.id }),
-    });
-    const d = await r.json() as { ok: boolean; url?: string; provider?: string; error?: string };
-    if (d.ok && d.url) setZoomLinks(prev => ({ ...prev, [appt.id]: d.url! }));
-    else setZoomErr(d.error ?? "Could not create meeting link.");
-    setZoomBusy(null);
+function NewBookingModal({ token, onClose, onCreated }: { token: string; onClose: () => void; onCreated: () => void }) {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [service, setService] = useState("realestate");
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("10:00");
+  const [notes, setNotes] = useState("");
+  const [sendEmail, setSendEmail] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [result, setResult] = useState<{ ok: boolean; ref?: string; meetingUrl?: string | null; error?: string } | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!date) { setResult({ ok: false, error: "Pick a date." }); return; }
+    setSaving(true);
+    setResult(null);
+    const startsAt = new Date(`${date}T${time}:00`).toISOString();
+    try {
+      const r = await fetch("/api/admin/booking/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, name, email, phone, service, startsAt, notes, sendEmail }),
+      });
+      const d = await r.json() as { ok: boolean; ref?: string; meetingUrl?: string | null; error?: string };
+      setResult(d);
+      if (d.ok) onCreated();
+    } catch { setResult({ ok: false, error: "Network error." }); }
+    setSaving(false);
   }
 
-  if (loading && appts.length === 0) return <Empty>Loading bookings…</Empty>;
-  if (appts.length === 0) return <Empty>No bookings yet.</Empty>;
+  function copyLink() {
+    if (result?.meetingUrl) {
+      void navigator.clipboard.writeText(result.meetingUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  }
+
+  const overlay: React.CSSProperties = { position: "fixed", inset: 0, background: "rgba(0,0,0,.55)", zIndex: 1200, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 };
+  const box: React.CSSProperties = { background: "#0e2518", border: "1px solid rgba(200,166,92,.25)", borderRadius: 18, padding: 28, width: "100%", maxWidth: 480, color: "#e8dfc8", fontFamily: "var(--font-inter, sans-serif)", maxHeight: "90vh", overflowY: "auto" };
+  const inp: React.CSSProperties = { width: "100%", background: "rgba(255,255,255,.06)", border: "1px solid rgba(200,166,92,.2)", borderRadius: 8, padding: "9px 12px", color: "#e8dfc8", fontSize: ".9rem", outline: "none", boxSizing: "border-box" };
+  const lbl: React.CSSProperties = { display: "block", fontSize: ".78rem", color: "#9fb3ab", marginBottom: 5, textTransform: "uppercase", letterSpacing: ".08em" };
+  const row: React.CSSProperties = { marginBottom: 14 };
+
+  return (
+    <div style={overlay} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div style={box}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+          <span style={{ fontWeight: 700, fontSize: "1.05rem", color: GOLD }}>New Booking</span>
+          <button type="button" onClick={onClose} style={{ background: "none", border: "none", color: "#9fb3ab", fontSize: "1.2rem", cursor: "pointer" }}>✕</button>
+        </div>
+
+        {result?.ok ? (
+          <div>
+            <div style={{ color: "#2f7a52", fontWeight: 600, marginBottom: 12 }}>Booking created — Ref {result.ref}</div>
+            {result.meetingUrl && (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ ...lbl }}>Meeting link</div>
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <input readOnly value={result.meetingUrl} style={{ ...inp, flex: 1, fontSize: ".8rem" }} onFocus={e => e.target.select()} />
+                  <button type="button" onClick={copyLink}
+                    style={{ ...S.waBtn, background: copied ? "#2f7a52" : GOLD, color: "#0e2518", whiteSpace: "nowrap" }}>
+                    {copied ? "Copied!" : "Copy link"}
+                  </button>
+                </div>
+                <div style={{ marginTop: 8, fontSize: ".78rem", color: "#9fb3ab" }}>
+                  {sendEmail ? "Email with this link was sent to the client." : "Email not sent — share this link manually."}
+                </div>
+              </div>
+            )}
+            {!result.meetingUrl && <div style={{ color: "#9fb3ab", fontSize: ".85rem", marginBottom: 12 }}>No meeting link generated — you can send one from the Bookings table.</div>}
+            <button type="button" onClick={onClose} style={{ ...S.waBtn, background: GOLD, color: "#0e2518" }}>Done</button>
+          </div>
+        ) : (
+          <form onSubmit={e => void submit(e)}>
+            <div style={row}>
+              <label style={lbl}>Client name *</label>
+              <input required value={name} onChange={e => setName(e.target.value)} style={inp} placeholder="First Last" />
+            </div>
+            <div style={row}>
+              <label style={lbl}>Email *</label>
+              <input required type="email" value={email} onChange={e => setEmail(e.target.value)} style={inp} placeholder="client@email.com" />
+            </div>
+            <div style={row}>
+              <label style={lbl}>Phone</label>
+              <input value={phone} onChange={e => setPhone(e.target.value)} style={inp} placeholder="+1 876 000 0000" />
+            </div>
+            <div style={row}>
+              <label style={lbl}>Service *</label>
+              <select required value={service} onChange={e => setService(e.target.value)} style={{ ...inp }}>
+                {BOOKING_SERVICES.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
+              </select>
+            </div>
+            <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
+              <div style={{ flex: 1 }}>
+                <label style={lbl}>Date *</label>
+                <input required type="date" value={date} onChange={e => setDate(e.target.value)} style={inp} min={new Date().toISOString().slice(0, 10)} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={lbl}>Time (JA) *</label>
+                <input required type="time" value={time} onChange={e => setTime(e.target.value)} style={inp} />
+              </div>
+            </div>
+            <div style={row}>
+              <label style={lbl}>Notes</label>
+              <textarea value={notes} onChange={e => setNotes(e.target.value)} style={{ ...inp, minHeight: 64, resize: "vertical" }} placeholder="Any context for Owen…" />
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 18 }}>
+              <input type="checkbox" id="sendEmail" checked={sendEmail} onChange={e => setSendEmail(e.target.checked)} style={{ accentColor: GOLD, width: 16, height: 16 }} />
+              <label htmlFor="sendEmail" style={{ fontSize: ".85rem", color: "#9fb3ab", cursor: "pointer" }}>Email meeting link to client</label>
+            </div>
+            {result && !result.ok && <div style={{ color: "#a23b3b", fontSize: ".85rem", marginBottom: 10 }}>{result.error}</div>}
+            <div style={{ display: "flex", gap: 10 }}>
+              <button type="submit" disabled={saving} style={{ ...S.waBtn, background: GOLD, color: "#0e2518", flex: 1, opacity: saving ? 0.7 : 1 }}>
+                {saving ? "Creating…" : "Create booking & generate link"}
+              </button>
+              <button type="button" onClick={onClose} style={{ ...S.waBtn }}>Cancel</button>
+            </div>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function BookingsTable({ appts, loading, token, onStatus, onCancel, onRefresh }: { appts: Appointment[]; loading: boolean; token: string; onStatus: (id: string, s: string) => void; onCancel: (id: string) => void; onRefresh: () => void }) {
+  const [composing, setComposing] = useState<Appointment | null>(null);
+  const [linkSending, setLinkSending] = useState<string | null>(null);
+  const [linkResult, setLinkResult] = useState<Record<string, { ok: boolean; msg: string }>>({});
+  const [newBooking, setNewBooking] = useState(false);
+
+  async function sendMeetingLink(a: Appointment) {
+    if (!a.id || !a.email) return;
+    setLinkSending(a.id);
+    try {
+      const r = await fetch("/api/admin/zoom/recreate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, id: a.id }),
+      });
+      const d = await r.json() as { ok: boolean; error?: string };
+      setLinkResult(p => ({ ...p, [a.id]: { ok: d.ok, msg: d.ok ? `Link sent to ${a.email}` : (d.error ?? "Failed") } }));
+    } catch { setLinkResult(p => ({ ...p, [a.id]: { ok: false, msg: "Network error" } })); }
+    setLinkSending(null);
+  }
+
   return (
     <>
-      {zoomErr && <div style={{ padding: "8px 16px", background: "rgba(162,59,59,.08)", color: "#a23b3b", fontSize: ".82rem", borderRadius: 8, margin: "8px 0" }}>{zoomErr}</div>}
-      <div style={S.tableWrap}>
-        <table style={S.table}>
-          <thead><tr><Th>When (Jamaica)</Th><Th>Service</Th><Th>Client</Th><Th>Contact</Th><Th>Ref</Th><Th>Status</Th><Th>Actions</Th></tr></thead>
-          <tbody>
-            {appts.map((a) => (
-              <tr key={a.id} style={S.tr}>
-                <Td><span style={S.strong}>{fmtWhen(a.starts_at)}</span></Td>
-                <Td>{a.service || "—"}</Td>
-                <Td>{a.name || "—"}</Td>
-                <Td><div style={S.contactCol}>{a.email && <span>{a.email}</span>}{a.phone && <span style={S.muted}>{a.phone}</span>}{!a.email && !a.phone && <span style={S.muted}>—</span>}</div></Td>
-                <Td><span style={S.mono}>{a.ref || "—"}</span></Td>
-                <Td><StatusSelect value={a.status} options={APPT_STATUSES} onChange={(v) => onStatus(a.id, v)} /></Td>
-                <Td>
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                    {a.email && (
-                      <button type="button" onClick={() => setComposing(a)}
-                        style={{ ...S.waBtn, background: "#c9a86a", color: "#10211c" }}>
-                        Email
-                      </button>
-                    )}
-                    {a.status !== "cancelled" && (
-                      <>
-                        {zoomLinks[a.id] ? (
-                          <a href={zoomLinks[a.id]} target="_blank" rel="noopener noreferrer"
-                            style={{ ...S.waBtn, background: "rgba(47,122,82,.12)", color: GREEN, textDecoration: "none" }}>
-                            Join Zoom
-                          </a>
-                        ) : (
-                          <button type="button" onClick={() => void createZoomForBooking(a)}
-                            disabled={zoomBusy === a.id}
-                            style={{ ...S.waBtn, background: "rgba(16,42,30,.08)", color: GREEN, border: "1px solid rgba(16,42,30,.2)", opacity: zoomBusy === a.id ? .6 : 1 }}>
-                            {zoomBusy === a.id ? "Creating…" : "Zoom link"}
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+        <button type="button" onClick={() => setNewBooking(true)}
+          style={{ ...S.waBtn, background: GOLD, color: "#0e2518", fontWeight: 700 }}>
+          + New Booking
+        </button>
+      </div>
+      {loading && appts.length === 0 ? <Empty>Loading bookings…</Empty> : appts.length === 0 ? <Empty>No bookings yet.</Empty> : (
+        <div style={S.tableWrap}>
+          <table style={S.table}>
+            <thead><tr><Th>When (Jamaica)</Th><Th>Service</Th><Th>Client</Th><Th>Contact</Th><Th>Ref</Th><Th>Status</Th><Th>Actions</Th></tr></thead>
+            <tbody>
+              {appts.map((a) => (
+                <tr key={a.id} style={S.tr}>
+                  <Td><span style={S.strong}>{fmtWhen(a.starts_at)}</span></Td>
+                  <Td>{a.service || "—"}</Td>
+                  <Td>{a.name || "—"}</Td>
+                  <Td><div style={S.contactCol}>{a.email && <span>{a.email}</span>}{a.phone && <span style={S.muted}>{a.phone}</span>}{!a.email && !a.phone && <span style={S.muted}>—</span>}</div></Td>
+                  <Td><span style={S.mono}>{a.ref || "—"}</span></Td>
+                  <Td><StatusSelect value={a.status} options={APPT_STATUSES} onChange={(v) => onStatus(a.id, v)} /></Td>
+                  <Td>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", flexDirection: "column" }}>
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                        {a.email && (
+                          <button type="button" onClick={() => setComposing(a)}
+                            style={{ ...S.waBtn, background: "#c9a86a", color: "#10211c" }}>
+                            Email
                           </button>
                         )}
-                        <button type="button" onClick={() => onCancel(a.id)}
-                          style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)" }}>
-                          Cancel
-                        </button>
-                      </>
-                    )}
-                    {!a.email && a.status === "cancelled" && <span style={S.muted}>—</span>}
-                  </div>
-                </Td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                        {a.email && a.status === "confirmed" && (
+                          <button type="button"
+                            onClick={() => void sendMeetingLink(a)}
+                            disabled={linkSending === a.id}
+                            style={{ ...S.waBtn, background: "rgba(16,42,30,.1)", color: GREEN, border: `1px solid ${GREEN}30`, opacity: linkSending === a.id ? 0.6 : 1 }}>
+                            {linkSending === a.id ? "Sending…" : "Send meeting link"}
+                          </button>
+                        )}
+                        {a.status !== "cancelled" && (
+                          <button type="button" onClick={() => onCancel(a.id)}
+                            style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)" }}>
+                            Cancel
+                          </button>
+                        )}
+                        {!a.email && a.status === "cancelled" && <span style={S.muted}>—</span>}
+                      </div>
+                      {linkResult[a.id] && (
+                        <span style={{ fontSize: ".72rem", color: linkResult[a.id].ok ? "#2f7a52" : "#a23b3b" }}>{linkResult[a.id].msg}</span>
+                      )}
+                    </div>
+                  </Td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
       {composing && composing.email && (
         <EmailComposeModal
           to={composing.email}
@@ -1204,6 +1410,13 @@ function BookingsTable({ appts, loading, token, onStatus, onCancel }: { appts: A
           service={composing.service ?? undefined}
           token={token}
           onClose={() => setComposing(null)}
+        />
+      )}
+      {newBooking && (
+        <NewBookingModal
+          token={token}
+          onClose={() => setNewBooking(false)}
+          onCreated={() => { onRefresh(); }}
         />
       )}
     </>
@@ -1650,9 +1863,26 @@ function MilestonePanel({ matterId, token, matter, onClose, inline }: {
 // ---------------------------------------------------------------------------
 // Calendar — current week view
 // ---------------------------------------------------------------------------
-function CalendarTab({ appts }: { appts: Appointment[] }) {
+function CalendarTab({ appts, token }: { appts: Appointment[]; token: string }) {
   const [weekOffset, setWeekOffset] = useState(0);
   const [activeAppt, setActiveAppt] = useState<Appointment | null>(null);
+  const [linkSending, setLinkSending] = useState(false);
+  const [linkMsg, setLinkMsg] = useState<string | null>(null);
+
+  async function sendMeetingLink(a: Appointment) {
+    if (!a.id || !a.email) return;
+    setLinkSending(true); setLinkMsg(null);
+    try {
+      const r = await fetch("/api/admin/zoom/recreate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, id: a.id }),
+      });
+      const d = await r.json() as { ok: boolean; error?: string };
+      setLinkMsg(d.ok ? `Link sent to ${a.email}` : (d.error ?? "Failed"));
+    } catch { setLinkMsg("Network error"); }
+    setLinkSending(false);
+  }
 
   // Compute current week start (Monday) in Jamaica time
   const weekStart = (() => {
@@ -1749,6 +1979,15 @@ function CalendarTab({ appts }: { appts: Appointment[] }) {
               <div><span style={S.muted}>Ref: </span><span style={S.mono}>{activeAppt.ref || "—"}</span></div>
               <div><span style={S.muted}>Status: </span><StatusBadge status={activeAppt.status} /></div>
             </div>
+            {activeAppt.email && activeAppt.status === "confirmed" && (
+              <div style={{ marginTop: 16 }}>
+                {linkMsg && <div style={{ fontSize: ".82rem", color: linkMsg.startsWith("Link sent") ? GREEN : "#a23b3b", marginBottom: 8 }}>{linkMsg}</div>}
+                <button type="button" onClick={() => void sendMeetingLink(activeAppt)} disabled={linkSending}
+                  style={{ ...S.waBtn, background: GOLD, color: "#0e2518", fontWeight: 700, width: "100%", opacity: linkSending ? 0.6 : 1 }}>
+                  {linkSending ? "Sending…" : "Send meeting link"}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -2178,12 +2417,22 @@ function ChatsTable({ convos, loading }: { convos: Conversation[]; loading: bool
 // ---------------------------------------------------------------------------
 // Overview
 // ---------------------------------------------------------------------------
-function OverviewPanel({ leads, appts, convos, matters, homePros, emails, inquiries, staleLeads, isJordan, onTab }: {
+interface ActivityItem { activity_id: string; matter_id: string; matter_title: string; client_name: string; kind: string; body: string; created_at: string; read_at: string | null; }
+
+function OverviewPanel({ leads, appts, convos, matters, homePros, emails, inquiries, staleLeads, isJordan, token, onTab }: {
   leads: Lead[]; appts: Appointment[]; convos: Conversation[]; matters: Matter[];
   homePros: HomePro[]; emails: InboundEmail[]; inquiries: HomeInquiry[];
-  staleLeads: Lead[]; isJordan: boolean;
+  staleLeads: Lead[]; isJordan: boolean; token: string;
   onTab: (t: Tab) => void;
 }) {
+  const [activity, setActivity] = useState<ActivityItem[]>([]);
+  useEffect(() => {
+    if (!token) return;
+    const supabase = createClient();
+    void supabase.rpc("fl_admin_cms_activity", { p_token: token }).then(({ data }) => {
+      setActivity((data as ActivityItem[] | null) ?? []);
+    });
+  }, [token]);
   const now = Date.now();
   const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
   const sevenDaysAhead = now + 7 * 24 * 60 * 60 * 1000;
@@ -2193,7 +2442,7 @@ function OverviewPanel({ leads, appts, convos, matters, homePros, emails, inquir
     const t = new Date(a.starts_at).getTime();
     return t >= now && t <= sevenDaysAhead && a.status !== "cancelled";
   }).length;
-  const activeMatters = matters.filter((m) => !["closed"].includes(m.stage)).length;
+  const activeMatters = matters.filter((m) => m.stage !== "closed").length;
   const openChats = convos.filter((c) => c.status === "waiting_agent" || c.status === "agent").length;
   const pendingProApprovals = homePros.length;
   const unreadEmails = emails.filter((e) => !e.read).length;
@@ -2282,50 +2531,30 @@ function OverviewPanel({ leads, appts, convos, matters, homePros, emails, inquir
         )}
       </div>
 
-      {/* Client Activity viewport */}
-      <ClientActivityViewport onTab={onTab} />
-    </div>
-  );
-}
-
-function ClientActivityViewport({ onTab }: { onTab: (t: Tab) => void }) {
-  interface ActivityItem { id: string; kind: string; label: string; sub: string; ts: string; tab: Tab }
-  const [items, setItems] = useState<ActivityItem[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const token = localStorage.getItem("fl_admin_token") ?? "";
-    fetch("/api/admin/client-activity", { headers: { "x-admin-token": token } })
-      .then(r => r.ok ? r.json() as Promise<{ items?: ActivityItem[] }> : { items: [] })
-      .then(j => { setItems(j.items ?? []); setLoading(false); })
-      .catch(() => setLoading(false));
-  }, []);
-
-  return (
-    <div style={{ marginTop: 28 }}>
-      <div style={{ fontWeight: 700, fontSize: ".78rem", textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 12 }}>Recent client activity</div>
-      <div style={{ background: "#fff", border: "1px solid rgba(18,16,12,.08)", borderRadius: 12, overflow: "hidden" }}>
-        {loading ? (
-          <div style={{ padding: "18px 16px", color: MUTED, fontSize: ".88rem" }}>Loading…</div>
-        ) : items.length === 0 ? (
-          <div style={{ padding: "18px 16px", color: MUTED, fontSize: ".88rem" }}>No recent client portal activity.</div>
-        ) : items.map((item, i) => (
-          <button key={item.id} type="button" onClick={() => onTab(item.tab)}
-            style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px",
-              borderTop: i > 0 ? "1px solid rgba(18,16,12,.06)" : "none",
-              background: "none", border: "none", width: "100%", textAlign: "left", cursor: "pointer",
-              ...(i > 0 ? { borderTop: "1px solid rgba(18,16,12,.06)" } : {}) }}>
-            <span style={{ fontSize: "1.2rem", flexShrink: 0 }}>
-              {item.kind === "message" ? "💬" : item.kind === "file" ? "📄" : item.kind === "kyc" ? "🪪" : item.kind === "payment" ? "💳" : item.kind === "booking" ? "📅" : "📋"}
-            </span>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontWeight: 600, fontSize: ".88rem", color: GREEN, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.label}</div>
-              <div style={{ fontSize: ".78rem", color: MUTED, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.sub}</div>
-            </div>
-            <div style={{ fontSize: ".72rem", color: MUTED, flexShrink: 0 }}>{fmtDate(item.ts)}</div>
-          </button>
-        ))}
-      </div>
+      {activity.length > 0 && (
+        <div style={{ marginTop: 28 }}>
+          <div style={{ fontWeight: 700, fontSize: ".78rem", textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 12 }}>Client activity</div>
+          <div style={{ background: "#fff", border: "1px solid rgba(18,16,12,.08)", borderRadius: 12, overflow: "hidden" }}>
+            {activity.slice(0, 10).map((a, i) => {
+              const unread = !a.read_at;
+              return (
+                <button key={a.activity_id} type="button" onClick={() => onTab("cms")}
+                  style={{ width: "100%", textAlign: "left", display: "flex", alignItems: "flex-start", gap: 10, padding: "12px 16px", borderTop: i > 0 ? "1px solid rgba(18,16,12,.06)" : "none", borderLeft: "none", borderRight: "none", borderBottom: "none", background: unread ? "rgba(18,16,12,.025)" : "#fff", cursor: "pointer" }}>
+                  <span style={{ fontSize: 16, marginTop: 1 }}>{a.kind === "file" ? "📎" : "💬"}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <span style={{ fontWeight: unread ? 700 : 600, fontSize: ".88rem", color: GREEN }}>{a.client_name}</span>
+                      {unread && <span style={{ background: "#c0392b", color: "#fff", fontSize: 9, fontWeight: 700, borderRadius: 999, padding: "1px 5px" }}>NEW</span>}
+                    </div>
+                    <div style={{ fontSize: ".78rem", color: INK, marginTop: 1 }}>{a.kind === "file" ? `Uploaded: ${a.body}` : a.body}</div>
+                    <div style={{ fontSize: ".72rem", color: MUTED, marginTop: 2 }}>{a.matter_title} · {fmtDate(a.created_at)}</div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -2441,7 +2670,7 @@ function EmailTab({ emails, token, onMarkRead }: {
         {/* Pane toggle */}
         <div style={{ display: "flex", borderBottom: "1px solid rgba(18,16,12,.08)" }}>
           {(["inbox", "sent"] as const).map((p) => (
-            <button key={p} type="button" onClick={() => { setPane(p); setSelected(null); setComposing(false); }}
+            <button key={p} type="button" onClick={() => { setPane(p); setSelected(null); setSelectedSent(null); setComposing(false); }}
               style={{ flex: 1, padding: "10px 0", border: "none", borderBottom: `2px solid ${pane === p ? GOLD : "transparent"}`,
                 background: "none", fontWeight: pane === p ? 700 : 400, fontSize: ".8rem",
                 color: pane === p ? GREEN : MUTED, cursor: "pointer", textTransform: "capitalize" }}>
@@ -2499,7 +2728,24 @@ function EmailTab({ emails, token, onMarkRead }: {
 
       {/* Right pane */}
       <div style={{ flex: 1, overflowY: "auto", padding: 24 }}>
-        {composing ? (
+        {pane === "sent" && selectedSent ? (
+          <div>
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontFamily: "var(--serif, Georgia, serif)", fontWeight: 700, fontSize: "1.15rem", color: GREEN }}>{selectedSent.subject || "(no subject)"}</div>
+              <div style={{ fontSize: ".8rem", color: MUTED, marginTop: 4 }}>
+                To: <strong style={{ color: INK }}>{selectedSent.to_name ? `${selectedSent.to_name} <${selectedSent.to_email}>` : selectedSent.to_email}</strong>
+                &nbsp;·&nbsp;{fmtDate(selectedSent.created_at)}
+              </div>
+              {selectedSent.context && <div style={{ fontSize: ".78rem", color: MUTED, marginTop: 4 }}>Context: {selectedSent.context}</div>}
+              <div style={{ display: "inline-block", marginTop: 6, fontSize: ".72rem", background: "rgba(47,122,82,.1)", color: GREEN, borderRadius: 999, padding: "2px 10px" }}>{selectedSent.status}</div>
+            </div>
+            <div style={{ background: "#faf8f2", borderRadius: 10, padding: 20, fontSize: ".9rem", lineHeight: 1.7, color: INK, whiteSpace: "pre-wrap", minHeight: 100 }}>
+              {selectedSent.body_preview || "(no preview available)"}
+            </div>
+          </div>
+        ) : pane === "sent" ? (
+          <div style={{ color: MUTED, textAlign: "center", paddingTop: 60 }}>Select a sent email to view</div>
+        ) : composing ? (
           <div>
             <div style={{ fontFamily: "var(--serif, Georgia, serif)", fontWeight: 700, fontSize: "1.1rem", color: GREEN, marginBottom: 16 }}>New Email</div>
             {[["To", newTo, setNewTo, "email"], ["Subject", newSubject, setNewSubject, "text"]].map(([lbl, val, setter, t]) => (
@@ -2523,21 +2769,6 @@ function EmailTab({ emails, token, onMarkRead }: {
                 style={{ padding: "10px 18px", border: "1px solid rgba(18,16,12,.2)", borderRadius: 999, background: "#fff", fontSize: ".88rem", cursor: "pointer" }}>
                 Cancel
               </button>
-            </div>
-          </div>
-        ) : pane === "sent" && selectedSent ? (
-          <div>
-            <div style={{ marginBottom: 16 }}>
-              <div style={{ fontFamily: "var(--serif, Georgia, serif)", fontWeight: 700, fontSize: "1.15rem", color: GREEN }}>{selectedSent.subject || "(no subject)"}</div>
-              <div style={{ fontSize: ".8rem", color: MUTED, marginTop: 4 }}>
-                To: <strong style={{ color: INK }}>{selectedSent.to_name ? `${selectedSent.to_name} <${selectedSent.to_email}>` : selectedSent.to_email}</strong>
-                &nbsp;·&nbsp;{fmtDate(selectedSent.created_at)}
-              </div>
-              {selectedSent.context && <div style={{ fontSize: ".78rem", color: MUTED }}>Context: {selectedSent.context}</div>}
-              {selectedSent.status && <div style={{ fontSize: ".78rem", color: selectedSent.status === "sent" ? GREEN : MUTED }}>Status: {selectedSent.status}</div>}
-            </div>
-            <div style={{ background: "#faf8f2", borderRadius: 10, padding: 20, marginBottom: 20, fontSize: ".9rem", lineHeight: 1.7, color: INK, whiteSpace: "pre-wrap", minHeight: 100 }}>
-              {selectedSent.body_preview || "(no preview available)"}
             </div>
           </div>
         ) : !selected ? (
@@ -3008,6 +3239,7 @@ function InvitesPanel({ invites, loading, onCreate, onDeactivate, onDelete }: {
     try { void navigator.clipboard.writeText(link); setCopied(c); setTimeout(() => setCopied((cur) => (cur === c ? null : cur)), 1600); } catch { /* ignore */ }
   }, []);
 
+
   return (
     <div style={{ padding: 20 }}>
       <div style={S.inviteForm}>
@@ -3207,7 +3439,7 @@ const STATUS_TONE: Record<string, React.CSSProperties> = {
 function FunnelChart({ leads, appts, matters }: { leads: Lead[]; appts: Appointment[]; matters: Matter[] }) {
   const total = leads.length || 1;
   const booked = appts.filter(a => a.status !== "cancelled").length;
-  const retained = matters.filter(m => ["retainer","active","closed"].includes(m.stage)).length;
+  const retained = matters.filter(m => ["active","closed"].includes(m.stage)).length;
   const stages = [
     { label: "Leads", value: leads.length, pct: 100 },
     { label: "Booked", value: booked, pct: Math.round((booked / total) * 100) },
@@ -3235,12 +3467,10 @@ function FunnelChart({ leads, appts, matters }: { leads: Lead[]; appts: Appointm
 // Kanban View for Matters
 // ---------------------------------------------------------------------------
 const KANBAN_COLS = [
-  { key: "enquiry",              label: "Enquiry" },
-  { key: "consultation_booked", label: "Booked" },
-  { key: "consultation_done",   label: "Consulted" },
-  { key: "retainer",            label: "Retainer" },
-  { key: "active",              label: "Active" },
-  { key: "closed",              label: "Closed" },
+  { key: "intake",   label: "Intake" },
+  { key: "active",   label: "Active" },
+  { key: "on_hold",  label: "On Hold" },
+  { key: "closed",   label: "Closed" },
 ];
 
 function KanbanView({ matters, onStage, onExpand }: {
@@ -3698,9 +3928,17 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
       const { data } = await supabase.rpc("fl_admin_cms_matters", { p_token: token });
       setMatters((data as CmsMatter[]) ?? []);
       setLoading(false);
-      // Load per-matter unread counts in the background
-      const res = await fetch(`/api/admin/cms/unread-count?token=${encodeURIComponent(token)}`).then(r => r.json()).catch(() => null);
-      if (res?.count !== undefined) onUnreadChange?.(res.count as number);
+      // Load per-matter unread counts without marking anything as read
+      const { data: ucData } = await supabase.rpc("fl_admin_cms_unread_counts", { p_token: token });
+      if (ucData) {
+        const map: Record<string, number> = {};
+        for (const row of ucData as { matter_id: string; unread_messages: number; unread_files: number }[]) {
+          map[row.matter_id] = (row.unread_messages ?? 0) + (row.unread_files ?? 0);
+        }
+        setUnreadByMatter(map);
+        const total = Object.values(map).reduce((a, b) => a + b, 0);
+        onUnreadChange?.(total);
+      }
     })();
   }, []);
 
@@ -3723,8 +3961,15 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
     setKycNotes(kycRows?.[0]?.reviewer_notes ?? "");
     setPayments((pRes.data as CmsPayment[]) ?? []);
     setDetailLoading(false);
-    const unread = loadedMessages.filter(m => m.sender_type === "client" && !m.read_at).length;
-    setUnreadByMatter(prev => ({ ...prev, [id]: unread }));
+    // Mark both files and messages read when admin opens a matter
+    void supabase.rpc("fl_admin_cms_mark_files_read", { p_token: token, p_matter_id: id });
+    void fetch("/api/admin/cms/mark-read", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token, matterId: id }) });
+    setUnreadByMatter(prev => {
+      const next = { ...prev, [id]: 0 };
+      const newTotal = Object.values(next).reduce((a, b) => a + b, 0);
+      onUnreadChange?.(newTotal);
+      return next;
+    });
   }
 
   async function notifyClient(matterId: string, kind: "milestone" | "message", milestoneName?: string) {
@@ -4703,7 +4948,7 @@ function MeetingRow({ meeting: m, token, onJoinIframe, onChange }: {
   );
 }
 
-function ZoomSetupTab({ token }: { token: string }) {
+function ZoomSetupTab({ token, appts = [] }: { token: string; appts?: Appointment[] }) {
   const [testing, setTesting] = useState(false);
   const [status, setStatus] = useState<null | { ok: boolean; status?: string; email?: string; scope?: string; missing?: string[]; error?: string }>(null);
   const [creating, setCreating] = useState(false);
@@ -4719,8 +4964,18 @@ function ZoomSetupTab({ token }: { token: string }) {
       try {
         const r = await fetch("/api/admin/zoom/upcoming", { headers: { "x-admin-token": token } });
         const d = await r.json() as { ok: boolean; meetings?: UpcomingMeeting[] };
-        if (d.ok) setUpcoming(d.meetings ?? []);
-      } catch { /* swallow */ }
+        if (d.ok && (d.meetings ?? []).length > 0) {
+          setUpcoming(d.meetings!);
+        } else {
+          const now = new Date();
+          setUpcoming(appts.filter(a => a.status === "confirmed" && new Date(a.starts_at) >= now)
+            .map(a => ({ id: a.id, ref: a.ref ?? a.id, name: a.name, service: a.service, starts_at: a.starts_at, meeting_url: null, meeting_provider: null })));
+        }
+      } catch {
+        const now = new Date();
+        setUpcoming(appts.filter(a => a.status === "confirmed" && new Date(a.starts_at) >= now)
+          .map(a => ({ id: a.id, ref: a.ref ?? a.id, name: a.name, service: a.service, starts_at: a.starts_at, meeting_url: null, meeting_provider: null })));
+      }
       finally { setLoadingUpcoming(false); }
     })();
   }, [token]);

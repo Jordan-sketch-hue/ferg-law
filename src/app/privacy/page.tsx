@@ -1,22 +1,36 @@
 import Link from "next/link";
 import { SITE } from "@/lib/site";
+import React from "react";
 
 export const metadata = { title: "Privacy Policy — Ferguson Law" };
 
 export default function PrivacyPage() {
-  return (
-    <div className="dir-wrap" style={{ paddingTop: 48, paddingBottom: 80, maxWidth: 760 }}>
-      <div style={{ marginBottom: 32 }}>
-        <div style={{ fontSize: 11, letterSpacing: ".18em", textTransform: "uppercase", color: "var(--gold-deep)", fontWeight: 700, marginBottom: 8 }}>
-          Ferguson Law
-        </div>
-        <h1 style={{ fontFamily: "var(--serif)", fontSize: "clamp(24px,4vw,36px)", color: "var(--ink)", marginBottom: 8 }}>
-          Privacy Policy
-        </h1>
-        <p style={{ fontSize: 13, color: "var(--muted)" }}>Last updated: July 2026</p>
-      </div>
+  const S = {
+    page: { maxWidth: 780, margin: "0 auto", padding: "0 24px 80px", paddingTop: 0 } as React.CSSProperties,
+    hero: { background: "var(--ink,#10211c)", padding: "52px 24px 44px", marginBottom: 48, position: "relative" as const },
+    heroInner: { maxWidth: 780, margin: "0 auto" },
+    eyebrow: { fontSize: 11, letterSpacing: ".18em", textTransform: "uppercase" as const, color: "var(--gold-deep,#c9a86a)", fontWeight: 700, marginBottom: 10 },
+    h1: { fontFamily: "var(--serif)", fontSize: "clamp(26px,4vw,38px)", color: "#fff", marginBottom: 8, lineHeight: 1.2 },
+    meta: { fontSize: 13, color: "rgba(255,255,255,.45)" },
+    body: { fontSize: 15.5, lineHeight: 1.85, color: "var(--text)", display: "flex", flexDirection: "column" as const, gap: 36 },
+    section: { borderBottom: "1px solid var(--line,#e8e2d6)", paddingBottom: 32 },
+    h2: { fontFamily: "var(--serif)", fontSize: 20, color: "var(--ink)", marginBottom: 12, fontWeight: 700 },
+    ul: { marginTop: 10, paddingLeft: 22, display: "flex", flexDirection: "column" as const, gap: 8 },
+    footer: { marginTop: 48, paddingTop: 24, borderTop: "2px solid var(--line,#e8e2d6)", display: "flex", gap: 16, flexWrap: "wrap" as const },
+  };
 
-      <div style={{ fontSize: 15, lineHeight: 1.8, color: "var(--text)", display: "flex", flexDirection: "column", gap: 28 }}>
+  return (
+    <>
+      <div style={S.hero}>
+        <div style={S.heroInner}>
+          <Link href="/" style={{ display:"inline-flex", alignItems:"center", gap:6, fontSize:13, color:"rgba(255,255,255,.55)", marginBottom:20, textDecoration:"none" }}>← Back to Ferguson Law</Link>
+          <div style={S.eyebrow}>Ferguson Law</div>
+          <h1 style={S.h1}>Privacy Policy</h1>
+          <p style={S.meta}>Last updated: July 2026</p>
+        </div>
+      </div>
+    <div style={S.page}>
+      <div style={S.body}>
 
         <section>
           <h2 style={{ fontFamily: "var(--serif)", fontSize: 18, color: "var(--ink)", marginBottom: 10 }}>1. Who We Are</h2>
@@ -146,10 +160,11 @@ export default function PrivacyPage() {
 
       </div>
 
-      <div style={{ marginTop: 48, paddingTop: 24, borderTop: "1px solid var(--line)", display: "flex", gap: 16, flexWrap: "wrap" }}>
+      <div style={S.footer}>
         <Link href="/terms" style={{ color: "var(--ink)", fontWeight: 600, fontSize: 14 }}>Terms of Service →</Link>
         <Link href="/" style={{ color: "var(--muted)", fontSize: 14 }}>← Back to Ferguson Law</Link>
       </div>
     </div>
+    </>
   );
 }

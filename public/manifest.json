@@ -1,13 +1,51 @@
 {
-  "name": "Ferguson Law Portal",
+  "name": "Ferguson Law",
   "short_name": "Ferguson Law",
-  "description": "Track your matter, upload documents, and message our team.",
-  "start_url": "/directory/client",
+  "description": "Jamaica's trusted legal partner — consultations, real estate & H.O.M.E.",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#F7F2E8",
-  "theme_color": "#1B4D32",
+  "background_color": "#0D1F16",
+  "theme_color": "#0D1F16",
+  "orientation": "portrait-primary",
+  "lang": "en-JM",
+  "categories": ["legal", "business"],
   "icons": [
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
-  ]
+    { "src": "/favicon-32.png", "sizes": "32x32", "type": "image/png" },
+    { "src": "/favicon-48.png", "sizes": "48x48", "type": "image/png" },
+    { "src": "/favicon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "/favicon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Book a Consultation",
+      "short_name": "Book",
+      "description": "Schedule a legal consultation",
+      "url": "/booking",
+      "icons": [{ "src": "/favicon-32.png", "sizes": "32x32", "type": "image/png" }]
+    },
+    {
+      "name": "Find a Professional",
+      "short_name": "Directory",
+      "description": "Browse our professional network",
+      "url": "/directory",
+      "icons": [{ "src": "/favicon-32.png", "sizes": "32x32", "type": "image/png" }]
+    },
+    {
+      "name": "Buyer Guides",
+      "short_name": "Guides",
+      "description": "Property guides for buyers and the diaspora",
+      "url": "/explainers",
+      "icons": [{ "src": "/favicon-32.png", "sizes": "32x32", "type": "image/png" }]
+    },
+    {
+      "name": "Admin Panel",
+      "short_name": "Admin",
+      "description": "Owen's admin dashboard",
+      "url": "/admin",
+      "icons": [{ "src": "/favicon-32.png", "sizes": "32x32", "type": "image/png" }]
+    }
+  ],
+  "screenshots": []
 }

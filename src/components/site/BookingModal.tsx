@@ -391,7 +391,7 @@ export default function BookingModal({
   const slotLabel =
     selectedDay?.slots.find((s) => s.iso === slot)?.label ?? null;
 
-  const freeBooking = inviteValid && !!inviteCode;
+  const freeBooking = true; // all consultations are free
   const confirmLabel = freeBooking
     ? "Confirm booking"
     : `Pay ${formatJmd(fee)} & confirm`;

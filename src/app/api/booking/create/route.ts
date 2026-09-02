@@ -137,17 +137,8 @@ export async function POST(req: NextRequest) {
     const ref = genRef();
 
     // ---- decide free vs pay -----------------------------------------------
-    // A free booking requires a code that BOTH validates AND is atomically
-    // consumed here (fl_consume_invite). If consume fails (spent/expired/typo)
-    // we silently fall through to the pay path rather than erroring.
-    let free = false;
-    if (inviteCode) {
-      const { data: consumed, error: consumeErr } = await supabase.rpc(
-        "fl_consume_invite",
-        { p_code: inviteCode },
-      );
-      free = !consumeErr && consumed === true;
-    }
+    // All consultations are free — no payment required.
+    const free = true;
 
     // =====================================================================
     // FREE PATH — confirm immediately, no payment.
@@ -233,7 +224,7 @@ export async function POST(req: NextRequest) {
             headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
             body: JSON.stringify({
               from: "Ferguson Law <info@fergusonlawja.com>",
-              to: ["owen@fergusonlawja.com"],
+              to: [process.env.FERGUSON_STAFF_EMAIL || "owen@fergusonlawja.com"],
               subject: `New Booking (Free): ${name} — ${title}`,
               text: `New free booking\n\nRef: ${ref}\nName: ${name}\nEmail: ${email}\nPhone: ${phone}\nService: ${title}\nWhen: ${whenLabel}\nNotes: ${notes || "—"}`,
             }),

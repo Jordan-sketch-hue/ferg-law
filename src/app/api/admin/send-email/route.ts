@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 
 const RESEND_KEY = process.env.RESEND_API_KEY;
-const FROM = "Ferguson Law <contact@fergusonlawja.com>";
+const FROM = process.env.FERGUSON_FROM_EMAIL || "Ferguson Law <contact@fergusonlawja.com>";
 
 export async function POST(req: NextRequest) {
   try {

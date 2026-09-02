@@ -4,6 +4,7 @@
  */
 import { Resend } from "resend";
 import { SITE, waLink } from "@/lib/site";
+import { createAdminClient } from "@/lib/supabase/server";
 
 const FROM = process.env.FERGUSON_FROM_EMAIL || "Ferguson Law <noreply@fergusonlawja.com>";
 
@@ -38,13 +39,17 @@ function shell(lead: string, body: string, ctaLabel: string, ctaHref: string): s
 </table></td></tr></table></body></html>`;
 }
 
-async function send(to: string, subject: string, html: string): Promise<SendResult> {
+async function send(to: string, subject: string, html: string, context?: string): Promise<SendResult> {
   const key = process.env.RESEND_API_KEY;
   if (!key) return { skipped: true };
   try {
     const resend = new Resend(key);
     const { data, error } = await resend.emails.send({ from: FROM, to, subject, html });
     if (error) return { ok: false, error: error.message || String(error) };
+    // Log to fl_email_log so admin Email tab shows all sent emails
+    const bodyPreview = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 300);
+    const admin = createAdminClient();
+    void admin.from("fl_email_log").insert({ to_email: to, subject, body_preview: bodyPreview, resend_id: data?.id ?? null, context: context ?? "cms" }).then(() => null, () => null);
     return { ok: true, id: data?.id };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
@@ -148,6 +153,7 @@ export function sendNewMessageToStaff(matterTitle: string, clientName: string) {
       "Open admin",
       "https://fergusonlawja.com/admin",
     ),
+    `cms-message:${clientName}`,
   );
 }
 
@@ -161,6 +167,7 @@ export function sendFileUploadedToStaff(matterTitle: string, clientName: string,
       "Open admin",
       "https://fergusonlawja.com/admin",
     ),
+    `cms-file:${clientName}`,
   );
 }
 

@@ -119,14 +119,41 @@ export async function notifyNewMessageToClient(matterId: string) {
   }
 }
 
+async function pushToAdmin(title: string, body: string, url = '/admin') {
+  const secret = process.env.PUSH_INTERNAL_SECRET;
+  if (!secret) return;
+  await fetch(
+    `${process.env.NEXT_PUBLIC_SITE_URL || 'https://fergusonlawja.com'}/api/push/send`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-push-secret': secret },
+      body: JSON.stringify({ role: 'admin', title, body, url, requireInteraction: true }),
+    }
+  ).catch(() => null);
+}
+
 export async function notifyNewMessageToStaff(matterId: string) {
   const ctx = await loadMatterContext(matterId);
   if (!ctx) return;
-  await sendNewMessageToStaff(ctx.title, ctx.clientName).catch(() => null);
+  await Promise.all([
+    sendNewMessageToStaff(ctx.title, ctx.clientName).catch(() => null),
+    pushToAdmin(
+      `New message — ${ctx.clientName}`,
+      `${ctx.clientName} sent a message on ${ctx.title}`,
+      '/admin'
+    ),
+  ]);
 }
 
 export async function notifyFileUploadedToStaff(matterId: string, fileName: string) {
   const ctx = await loadMatterContext(matterId);
   if (!ctx) return;
-  await sendFileUploadedToStaff(ctx.title, ctx.clientName, fileName).catch(() => null);
+  await Promise.all([
+    sendFileUploadedToStaff(ctx.title, ctx.clientName, fileName).catch(() => null),
+    pushToAdmin(
+      `Document received — ${ctx.clientName}`,
+      `${ctx.clientName} uploaded "${fileName}" on ${ctx.title}`,
+      '/admin'
+    ),
+  ]);
 }
