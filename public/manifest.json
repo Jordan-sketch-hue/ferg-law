@@ -1,15 +1,13 @@
 {
-  "name": "Ferguson Law — Back Office",
-  "short_name": "FL Admin",
-  "description": "Ferguson Law consultation CRM and back office",
-  "start_url": "/admin",
+  "name": "Ferguson Law Portal",
+  "short_name": "Ferguson Law",
+  "description": "Track your matter, upload documents, and message our team.",
+  "start_url": "/directory/client",
   "display": "standalone",
-  "background_color": "#102A1E",
-  "theme_color": "#102A1E",
-  "orientation": "portrait-primary",
+  "background_color": "#F7F2E8",
+  "theme_color": "#1B4D32",
   "icons": [
-    { "src": "/favicon-180.png", "sizes": "180x180", "type": "image/png" },
-    { "src": "/favicon-32.png",  "sizes": "32x32",  "type": "image/png" },
-    { "src": "/favicon.ico",     "sizes": "any" }
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
   ]
 }

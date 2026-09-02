@@ -2,12 +2,13 @@
 
 export const dynamic = "force-dynamic";
 
-import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState, useCallback, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { waLink } from "@/lib/site";
 import NotificationBell from "@/components/client/NotificationBell";
+import { getXP, addXP, getLevel, awardBadge, XP_EVENTS } from "@/lib/gamification";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -139,12 +140,406 @@ function groupMilestones(milestones: Milestone[]) {
     .map(([order, v]) => ({ order: Number(order), ...v }));
 }
 
+// ── Onboarding checklist config ────────────────────────────────────────────
+
+type ChecklistStep = { id: string; label: string; optional?: boolean };
+
+function getChecklist(matterType: string | null): ChecklistStep[] {
+  if (matterType === "estate_will") return [
+    { id: "email", label: "Verify your email" },
+    { id: "info", label: "Complete your basic information" },
+    { id: "consult", label: "Attend your consultation" },
+    { id: "docs", label: "Submit documents (after consultation)" },
+  ];
+  if (matterType === "diaspora") return [
+    { id: "email", label: "Verify your email" },
+    { id: "info", label: "Complete your basic information" },
+    { id: "id", label: "Upload a valid ID" },
+    { id: "poa", label: "Power of Attorney (if required)", optional: true },
+    { id: "consult", label: "Attend your consultation" },
+  ];
+  // default: property_purchase / general
+  return [
+    { id: "email", label: "Verify your email" },
+    { id: "info", label: "Complete your basic information" },
+    { id: "id", label: "Upload a valid ID" },
+    { id: "property", label: "Your property details (address, parish)" },
+    { id: "consult", label: "Attend your consultation" },
+  ];
+}
+
+function ls(key: string): string | null {
+  try { return localStorage.getItem(key); } catch { return null; }
+}
+function lsSet(key: string, val: string) {
+  try { localStorage.setItem(key, val); } catch { /* noop */ }
+}
+
+// ── Welcome overlay ─────────────────────────────────────────────────────────
+
+function WelcomeOverlay({ onDismiss }: { onDismiss: () => void }) {
+  const matterType = ls("fl_matter_type");
+  const steps = getChecklist(matterType);
+  const [doneIds, setDoneIds] = useState<string[]>(() => {
+    try { return JSON.parse(ls("fl_checklist_done") ?? "[]") as string[]; } catch { return ["email"]; }
+  });
+  const [toast, setToast] = useState<string | null>(null);
+  const sessionDone = useRef(0);
+
+  const doneCount = doneIds.length;
+  const totalCount = steps.length;
+  const pct = Math.round((doneCount / totalCount) * 100);
+
+  function toggleStep(id: string) {
+    setDoneIds(prev => {
+      const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
+      lsSet("fl_checklist_done", JSON.stringify(next));
+      if (!prev.includes(id)) {
+        addXP(XP_EVENTS.PHASE_COMPLETE);
+        sessionDone.current += 1;
+        if (sessionDone.current >= 3) setToast("You're on a roll!");
+      }
+      if (next.length === totalCount) lsSet("fl_onboarding_complete", "true");
+      return next;
+    });
+  }
+
+  useEffect(() => {
+    if (toast) { const t = setTimeout(() => setToast(null), 3000); return () => clearTimeout(t); }
+  }, [toast]);
+
+  const isNew = awardBadge("first-login", "First Login");
+  useEffect(() => { if (isNew) addXP(XP_EVENTS.ACCOUNT_CREATED); }, [isNew]);
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        onClick={onDismiss}
+        style={{ position: "fixed", inset: 0, background: "rgba(13,31,21,.55)", zIndex: 100, backdropFilter: "blur(3px)" }}
+      />
+      {/* Modal */}
+      <div style={{
+        position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)",
+        zIndex: 101, background: "#fbf8f1", borderRadius: 18, padding: "28px 26px",
+        width: "min(480px,94vw)", boxShadow: "0 32px 80px -20px rgba(0,0,0,.45)",
+        maxHeight: "90vh", overflowY: "auto",
+      }}>
+        {/* Header */}
+        <div style={{ textAlign: "center", marginBottom: 20 }}>
+          <div style={{ width: 48, height: 48, borderRadius: 12, background: "linear-gradient(150deg,#1B4D32,#0D3324)", color: "#C8A65C", display: "grid", placeItems: "center", fontFamily: "var(--serif)", fontWeight: 700, fontSize: "1.3rem", margin: "0 auto 14px", border: "1px solid rgba(200,166,92,.35)" }}>F</div>
+          <h2 style={{ fontFamily: "var(--serif)", fontSize: "1.35rem", color: "#0D1F15", margin: "0 0 6px" }}>Welcome to your Ferguson Law portal</h2>
+          <p style={{ color: "#69736d", fontSize: "0.87rem", margin: 0 }}>Everything about your matter is in one place.</p>
+        </div>
+
+        {/* Progress */}
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+            <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "#C8A65C" }}>
+              {doneCount === totalCount ? "All steps complete!" : `${doneCount} of ${totalCount} complete`}
+            </span>
+            {sessionDone.current >= 3 && <span style={{ fontSize: "0.75rem", background: "#fdf3d9", color: "#7a5800", borderRadius: 999, padding: "2px 10px", fontWeight: 600 }}>⚡ You&apos;re on a roll!</span>}
+          </div>
+          <div style={{ height: 6, background: "#e8e0d8", borderRadius: 6, overflow: "hidden" }}>
+            <div style={{ width: `${pct}%`, height: "100%", background: "#C8A65C", borderRadius: 6, transition: "width .4s" }} />
+          </div>
+        </div>
+
+        {/* Checklist */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 20 }}>
+          {steps.map((step, i) => {
+            const done = doneIds.includes(step.id);
+            const current = !done && i === steps.findIndex(s => !doneIds.includes(s.id));
+            return (
+              <button
+                key={step.id}
+                onClick={() => toggleStep(step.id)}
+                style={{
+                  display: "flex", alignItems: "center", gap: 12, padding: "10px 12px",
+                  borderRadius: 10, border: `1px solid ${done ? "#bfe0cc" : current ? "#f0e4b0" : "#e8e0d8"}`,
+                  background: done ? "#f0f9f3" : current ? "#fffbf0" : "#fff",
+                  cursor: "pointer", textAlign: "left",
+                }}
+              >
+                <span style={{
+                  width: 22, height: 22, borderRadius: "50%", flexShrink: 0,
+                  display: "grid", placeItems: "center", fontSize: "0.75rem", fontWeight: 700,
+                  background: done ? "#1a4d28" : current ? "#C8A65C" : "#e8e0d8",
+                  color: done ? "#fff" : current ? "#fff" : "#999",
+                }}>
+                  {done ? "✓" : current ? "→" : "·"}
+                </span>
+                <span style={{ flex: 1, fontSize: "0.87rem", color: done ? "#69736d" : "#0D1F15", textDecoration: done ? "line-through" : "none" }}>
+                  {step.label}{step.optional && <span style={{ marginLeft: 6, fontSize: "0.75rem", color: "#aaa" }}>(optional)</span>}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* CTA + dismiss */}
+        <button
+          onClick={onDismiss}
+          style={{ width: "100%", background: "#1B4D32", color: "#fbf8f1", border: "none", borderRadius: 10, padding: "12px 16px", fontWeight: 700, fontSize: "0.9rem", cursor: "pointer", marginBottom: 10 }}
+        >
+          Go to my portal
+        </button>
+        <button
+          onClick={onDismiss}
+          style={{ display: "block", width: "100%", background: "none", border: "none", cursor: "pointer", color: "#69736d", fontSize: "0.8rem", textDecoration: "underline", textUnderlineOffset: 3 }}
+        >
+          Skip for now — I&apos;ll do this later
+        </button>
+      </div>
+
+      {/* Toast */}
+      {toast && (
+        <div style={{ position: "fixed", bottom: 24, right: 24, zIndex: 200, background: "#1B4D32", color: "#fbf8f1", borderRadius: 10, padding: "10px 16px", fontSize: "0.85rem", fontWeight: 600, boxShadow: "0 8px 24px -8px rgba(0,0,0,.4)" }}>
+          ⚡ {toast}
+        </div>
+      )}
+    </>
+  );
+}
+
+// ── XP Bar ──────────────────────────────────────────────────────────────────
+
+function XPBar() {
+  const [xp, setXp] = useState(0);
+  useEffect(() => { setXp(getXP()); }, []);
+  const { level, title } = getLevel();
+  const levelXp = level === 1 ? 100 : level === 2 ? 150 : 100;
+  const prevThreshold = level === 1 ? 0 : level === 2 ? 100 : 250;
+  const pct = Math.min(100, Math.round(((xp - prevThreshold) / levelXp) * 100));
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 10, background: "#fff", border: "1px solid var(--line)", fontSize: 12 }}>
+      <span style={{ background: "#1B4D32", color: "#C8A65C", borderRadius: 6, padding: "2px 7px", fontWeight: 700, fontSize: 11 }}>Lv {level}</span>
+      <div style={{ flex: 1 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
+          <span style={{ fontWeight: 600, color: "var(--ink)" }}>{title}</span>
+          <span style={{ color: "var(--muted)" }}>{xp} XP</span>
+        </div>
+        <div style={{ height: 4, background: "#e8e0d8", borderRadius: 4, overflow: "hidden" }}>
+          <div style={{ width: `${pct}%`, height: "100%", background: "#C8A65C", borderRadius: 4 }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── PWA Install Banner ──────────────────────────────────────────────────────
+
+function PWAInstallBanner() {
+  const [show, setShow] = useState(false);
+  const deferredPrompt = useRef<Event & { prompt?: () => void; userChoice?: Promise<{ outcome: string }> } | null>(null);
+
+  useEffect(() => {
+    if (ls("fl_install_dismissed") === "true") return;
+    const visits = Number(ls("fl_portal_visits") ?? "0") + 1;
+    lsSet("fl_portal_visits", String(visits));
+    if (visits < 2) return;
+
+    const handler = (e: Event) => {
+      e.preventDefault();
+      deferredPrompt.current = e as typeof deferredPrompt.current;
+      setShow(true);
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  if (!show) return null;
+
+  function onInstall() {
+    if (deferredPrompt.current?.prompt) {
+      deferredPrompt.current.prompt();
+      deferredPrompt.current.userChoice?.then(() => setShow(false));
+    }
+  }
+
+  function dismiss() {
+    lsSet("fl_install_dismissed", "true");
+    setShow(false);
+  }
+
+  return (
+    <div style={{ position: "fixed", bottom: 16, left: 16, right: 16, zIndex: 90, background: "#1B4D32", color: "#fbf8f1", borderRadius: 14, padding: "14px 16px", boxShadow: "0 8px 32px -8px rgba(0,0,0,.5)", display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+      <p style={{ flex: 1, margin: 0, fontSize: "0.85rem", lineHeight: 1.5 }}>
+        Keep Ferguson Law on your phone — track your matter without searching for the website.
+      </p>
+      <div style={{ display: "flex", gap: 8 }}>
+        <button onClick={onInstall} style={{ background: "#C8A65C", color: "#0D1F15", border: "none", borderRadius: 8, padding: "8px 14px", fontWeight: 700, fontSize: "0.8rem", cursor: "pointer" }}>Add to Home Screen</button>
+        <button onClick={dismiss} style={{ background: "transparent", border: "1px solid rgba(255,255,255,.25)", color: "#fbf8f1", borderRadius: 8, padding: "8px 12px", fontSize: "0.8rem", cursor: "pointer" }}>Not now</button>
+      </div>
+    </div>
+  );
+}
+
+// ── App Orientation Modal ───────────────────────────────────────────────────
+
+function AppOrientationModal() {
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
+    if (!isStandalone) return;
+    if (ls("fl_app_oriented") === "true") return;
+    setShow(true);
+  }, []);
+
+  function done() {
+    lsSet("fl_app_oriented", "true");
+    setShow(false);
+  }
+
+  if (!show) return null;
+
+  const tiles = [
+    { icon: "📋", title: "Your Matter", desc: "Track exactly where your matter is." },
+    { icon: "📄", title: "Documents", desc: "Upload and review documents securely." },
+    { icon: "💬", title: "Messages", desc: "Message the Ferguson Law team." },
+    { icon: "🔔", title: "Notifications", desc: "Get notified when something changes." },
+  ];
+
+  return (
+    <>
+      <div onClick={done} style={{ position: "fixed", inset: 0, background: "rgba(13,31,21,.6)", zIndex: 200, backdropFilter: "blur(4px)" }} />
+      <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 201, background: "#fbf8f1", borderRadius: 20, padding: "28px 22px", width: "min(420px,92vw)", boxShadow: "0 32px 80px -20px rgba(0,0,0,.5)", textAlign: "center" }}>
+        <div style={{ width: 52, height: 52, borderRadius: 14, background: "linear-gradient(150deg,#1B4D32,#0D3324)", color: "#C8A65C", display: "grid", placeItems: "center", fontFamily: "var(--serif)", fontWeight: 700, fontSize: "1.4rem", margin: "0 auto 16px", border: "1px solid rgba(200,166,92,.35)" }}>F</div>
+        <h2 style={{ fontFamily: "var(--serif)", fontSize: "1.3rem", color: "#0D1F15", margin: "0 0 6px" }}>Welcome to your Ferguson Law portal</h2>
+        <p style={{ color: "#69736d", fontSize: "0.87rem", margin: "0 0 20px" }}>Everything related to your matter is now in one place.</p>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
+          {tiles.map(t => (
+            <div key={t.title} style={{ background: "#fff", border: "1px solid rgba(18,16,12,.08)", borderRadius: 12, padding: "14px 12px", textAlign: "left" }}>
+              <div style={{ fontSize: "1.4rem", marginBottom: 6 }}>{t.icon}</div>
+              <div style={{ fontWeight: 700, fontSize: "0.85rem", color: "#0D1F15", marginBottom: 3 }}>{t.title}</div>
+              <div style={{ fontSize: "0.78rem", color: "#69736d", lineHeight: 1.45 }}>{t.desc}</div>
+            </div>
+          ))}
+        </div>
+        <button onClick={done} style={{ width: "100%", background: "#1B4D32", color: "#fbf8f1", border: "none", borderRadius: 10, padding: "12px 16px", fontWeight: 700, fontSize: "0.9rem", cursor: "pointer", marginBottom: 10 }}>Get Started</button>
+        <button onClick={done} style={{ background: "none", border: "none", cursor: "pointer", color: "#69736d", fontSize: "0.8rem", textDecoration: "underline", textUnderlineOffset: 3 }}>Skip orientation</button>
+      </div>
+    </>
+  );
+}
+
+// ── Passkey Banner ──────────────────────────────────────────────────────────
+
+function PasskeyBanner() {
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    if (ls("fl_passkey_prompted") === "true") return;
+    if (typeof PublicKeyCredential === "undefined") return;
+    setShow(true);
+  }, []);
+
+  function dismiss() {
+    lsSet("fl_passkey_prompted", "true");
+    setShow(false);
+  }
+
+  async function enablePasskey() {
+    try {
+      await navigator.credentials.create({
+        publicKey: {
+          challenge: crypto.getRandomValues(new Uint8Array(32)),
+          rp: { name: "Ferguson Law", id: window.location.hostname },
+          user: { id: crypto.getRandomValues(new Uint8Array(16)), name: "client", displayName: "Client" },
+          pubKeyCredParams: [{ type: "public-key", alg: -7 }],
+          authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "preferred" },
+          timeout: 60000,
+        },
+      });
+    } catch { /* user cancelled or not supported */ }
+    lsSet("fl_passkey_prompted", "true");
+    setShow(false);
+  }
+
+  if (!show) return null;
+
+  return (
+    <div style={{ marginBottom: 16, padding: "12px 14px", borderRadius: 12, background: "#fff", border: "1px solid rgba(200,166,92,.3)", display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+      <p style={{ flex: 1, margin: 0, fontSize: "0.85rem", color: "#0D1F15", lineHeight: 1.5 }}>
+        <strong>Make signing in faster</strong> — use Face ID next time.
+      </p>
+      <div style={{ display: "flex", gap: 8 }}>
+        <button onClick={enablePasskey} style={{ background: "#C8A65C", color: "#0D1F15", border: "none", borderRadius: 8, padding: "7px 12px", fontWeight: 700, fontSize: "0.8rem", cursor: "pointer" }}>Enable Face ID</button>
+        <button onClick={dismiss} style={{ background: "none", border: "1px solid rgba(18,16,12,.15)", borderRadius: 8, padding: "7px 10px", fontSize: "0.8rem", color: "#69736d", cursor: "pointer" }}>Maybe later</button>
+      </div>
+    </div>
+  );
+}
+
+// ── 5-Phase Stepper ─────────────────────────────────────────────────────────
+
+const PHASES = [
+  { key: 1, label: "Intake",       tooltip: "We open your file, collect initial information, and assign your attorney." },
+  { key: 2, label: "KYC",          tooltip: "Identity verification, source of funds, and AML compliance checks." },
+  { key: 3, label: "Title Search", tooltip: "We search the title register and flag any encumbrances or issues." },
+  { key: 4, label: "Contracts",    tooltip: "Agreement for Sale or transfer documents are drafted and executed." },
+  { key: 5, label: "Completion",   tooltip: "Stamp duty paid, title registered, keys or funds released." },
+] as const;
+
+function PhaseStepper({ currentPhase }: { currentPhase: number }) {
+  const [tooltip, setTooltip] = useState<number | null>(null);
+  return (
+    <div style={{ marginBottom: 20, padding: "14px 16px", background: "#fff", border: "1px solid var(--line)", borderRadius: 12 }}>
+      <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: ".12em", color: "var(--gold-deep)", fontWeight: 700, marginBottom: 12 }}>Matter Progress</div>
+      <div style={{ display: "flex", alignItems: "center", gap: 0 }}>
+        {PHASES.map((phase, i) => {
+          const done = currentPhase > phase.key;
+          const active = currentPhase === phase.key;
+          return (
+            <div key={phase.key} style={{ display: "flex", alignItems: "center", flex: i < PHASES.length - 1 ? "1 1 0" : undefined, position: "relative" }}>
+              {/* Phase circle */}
+              <div style={{ position: "relative", flexShrink: 0 }}>
+                <button
+                  onClick={() => setTooltip(tooltip === phase.key ? null : phase.key)}
+                  style={{
+                    width: 32, height: 32, borderRadius: "50%", border: "none", cursor: "pointer",
+                    background: done ? "#C8A65C" : active ? "#1B4D32" : "#e8e0d8",
+                    color: done ? "#0D1F15" : active ? "#C8A65C" : "#999",
+                    fontWeight: 700, fontSize: 13, display: "grid", placeItems: "center",
+                    transition: "background .2s",
+                  }}
+                >
+                  {done ? "✓" : phase.key}
+                </button>
+                {/* Label */}
+                <div style={{ position: "absolute", top: 36, left: "50%", transform: "translateX(-50%)", whiteSpace: "nowrap", fontSize: 10, fontWeight: active ? 700 : 500, color: active ? "#1B4D32" : done ? "#C8A65C" : "#999", pointerEvents: "none" }}>
+                  {phase.label}
+                </div>
+                {/* Tooltip */}
+                {tooltip === phase.key && (
+                  <div style={{ position: "absolute", bottom: 40, left: "50%", transform: "translateX(-50%)", background: "#0D1F15", color: "#fbf8f1", borderRadius: 8, padding: "8px 12px", fontSize: 11, maxWidth: 180, textAlign: "center", zIndex: 10, lineHeight: 1.5, boxShadow: "0 4px 16px -4px rgba(0,0,0,.4)" }}>
+                    {phase.tooltip}
+                  </div>
+                )}
+              </div>
+              {/* Connector */}
+              {i < PHASES.length - 1 && (
+                <div style={{ flex: 1, height: 3, background: done ? "#C8A65C" : "#e8e0d8", margin: "0 4px", transition: "background .3s", minWidth: 12 }} />
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <div style={{ height: 24 }} /> {/* space for labels */}
+    </div>
+  );
+}
+
 // ── Main component ──────────────────────────────────────────────────────────
 
-export default function ClientDashboardPage() {
+function ClientDashboardInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isNew = searchParams.get("new") === "true";
   const _sbRef = useRef<ReturnType<typeof createClient> | null>(null);
-  const supabase = () => { if (!_sbRef.current) _sbRef.current = createClient(); return _sbRef.current; };
+  const supabase = useCallback(() => { if (!_sbRef.current) _sbRef.current = createClient(); return _sbRef.current; }, []);
 
   const [matters, setMatters] = useState<Matter[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
@@ -152,6 +547,7 @@ export default function ClientDashboardPage() {
   const [clientId, setClientId] = useState("");
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"timeline" | "messages" | "files" | "kyc" | "payments">("timeline");
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   const [kyc, setKyc] = useState<KycRecord | null>(null);
   const [kycLoading, setKycLoading] = useState(false);
@@ -222,7 +618,14 @@ export default function ClientDashboardPage() {
       if (built.length === 1) setSelected(built[0].id);
       setLoading(false);
     })();
-  }, []);
+  }, [supabase]);
+
+  // Show onboarding overlay when new=true or not yet seen
+  useEffect(() => {
+    if (ls("fl_onboarding_seen") === "true" && !isNew) return;
+    if (ls("fl_onboarding_complete") === "true") return;
+    setShowOnboarding(true);
+  }, [isNew]);
 
   useEffect(() => {
     if (tab === "messages") messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -348,8 +751,17 @@ export default function ClientDashboardPage() {
 
   return (
     <div className="dir-wrap" style={{ paddingTop: 32, paddingBottom: 60 }}>
+      {/* Welcome overlay */}
+      {showOnboarding && (
+        <WelcomeOverlay onDismiss={() => { lsSet("fl_onboarding_seen", "true"); setShowOnboarding(false); }} />
+      )}
+      {/* App orientation (standalone mode only) */}
+      <AppOrientationModal />
+      {/* PWA install banner */}
+      <PWAInstallBanner />
+
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28, flexWrap: "wrap", gap: 12 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 12 }}>
         <div>
           <div className="eyebrow" style={{ fontSize: 11, letterSpacing: ".18em", textTransform: "uppercase", color: "var(--gold-deep)", fontWeight: 700 }}>
             Client Portal — Ferguson Law
@@ -363,6 +775,14 @@ export default function ClientDashboardPage() {
           <button onClick={onSignOut} className="link-btn" style={{ fontSize: 13 }}>Sign out</button>
         </div>
       </div>
+
+      {/* XP Bar + Passkey */}
+      {!loading && (
+        <>
+          <div style={{ marginBottom: 12 }}><XPBar /></div>
+          <PasskeyBanner />
+        </>
+      )}
 
       {loading ? (
         <p style={{ color: "var(--muted)" }}>Loading your matters…</p>
@@ -485,6 +905,14 @@ export default function ClientDashboardPage() {
   );
 }
 
+export default function ClientDashboardPage() {
+  return (
+    <Suspense fallback={<div className="dir-wrap" style={{ paddingTop: 32 }}><p style={{ color: "var(--muted)" }}>Loading…</p></div>}>
+      <ClientDashboardInner />
+    </Suspense>
+  );
+}
+
 // ── MatterPane ──────────────────────────────────────────────────────────────
 
 function MatterPane({
@@ -566,7 +994,7 @@ function MatterPane({
 
       {/* Tabs */}
       <div style={{ display: "flex", borderBottom: "1px solid var(--line)", background: "#fafaf8", overflowX: "auto" }}>
-        {(["timeline", "messages", "files", "kyc", "payments"] as const).map(t => (
+        {(["timeline", "kyc", "messages", "files", "payments"] as const).map(t => (
           <button key={t} onClick={() => setTab(t)} style={{
             padding: "11px 16px", fontSize: 13, fontWeight: 600, border: "none", background: "none",
             cursor: "pointer", whiteSpace: "nowrap",
@@ -585,6 +1013,7 @@ function MatterPane({
         {/* TIMELINE */}
         {tab === "timeline" && (
           <div>
+            <PhaseStepper currentPhase={matter.current_phase} />
             {phases.length === 0 ? (
               <p style={{ color: "var(--muted)", fontSize: 14 }}>No milestones set up yet.</p>
             ) : (
