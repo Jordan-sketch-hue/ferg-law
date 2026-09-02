@@ -1011,7 +1011,7 @@ const TEMPLATES: Record<string, (name: string, service?: string) => string> = {
   followup: (name, service) =>
     `Dear ${name.split(" ")[0]},\n\nI hope this message finds you well. I wanted to follow up on your recent enquiry${service ? ` regarding ${service}` : ""} and ensure that we have addressed all of your questions.\n\nPlease do not hesitate to reach out if you need any further assistance. We look forward to working with you.\n\nWarm regards,\nFerguson Law`,
   booking: (name) =>
-    `Dear ${name.split(" ")[0]},\n\nThank you for booking a consultation with Ferguson Law. Your appointment has been confirmed and you will receive a calendar invitation shortly.\n\nPlease note that your J$8,000 consultation fee will be credited toward your legal fees upon retaining our services.\n\nIf you have any questions before your appointment, please do not hesitate to contact us.\n\nWarm regards,\nFerguson Law`,
+    `Dear ${name.split(" ")[0]},\n\nThank you for booking a consultation with Ferguson Law. Your appointment has been confirmed and you will receive a calendar invitation shortly.\n\nIf you have any questions before your appointment, please do not hesitate to contact us.\n\nWarm regards,\nFerguson Law`,
 };
 
 function EmailComposeModal({ to, toName, defaultSubject, context, service, token, onClose }: {

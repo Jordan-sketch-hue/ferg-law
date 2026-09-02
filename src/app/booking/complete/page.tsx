@@ -34,10 +34,10 @@ export default async function BookingCompletePage({
 
   const wa = paid
     ? waLink(
-        `Hi Ferguson Law — my consultation is paid and confirmed.\nRef: ${ref}`,
+        `Hi Ferguson Law — my consultation is confirmed.\nRef: ${ref}`,
       )
     : waLink(
-        `Hi Ferguson Law — I had trouble paying for my consultation${
+        `Hi Ferguson Law — I had trouble completing my consultation booking${
           ref ? ` (Ref: ${ref})` : ""
         }. Can you help me book?`,
       );
@@ -52,7 +52,7 @@ export default async function BookingCompletePage({
             <div style={{ ...S.check, ...S.checkPaid }}>✓</div>
             <h1 style={S.h1}>You&apos;re booked.</h1>
             <p style={S.p}>
-              Your payment went through and your consultation is confirmed. A
+              Your consultation is confirmed. A
               confirmation is on its way to your email — and you can send the
               details to us on WhatsApp below.
             </p>

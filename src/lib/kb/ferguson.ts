@@ -138,8 +138,7 @@ A: I can book it right here in the chat — I'll take your name, contact and the
    and the firm will confirm a time. You can also message us on WhatsApp (${SITE.whatsappDisplay}).
 
 Q: What does a consultation cost?
-A: Book a consultation and the firm will confirm the fee details for your specific matter
-   before your appointment.
+A: Consultations with Ferguson Law are complimentary. Book a time that works for you and the firm will reach out to confirm your appointment.
 
 Q: Do you help Jamaicans living overseas (the diaspora)?
 A: Yes. ${SITE.name} regularly works with the diaspora — including conveyancing, estate
