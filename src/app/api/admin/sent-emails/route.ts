@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     const admin = createAdminClient();
     const { data, error } = await admin
       .from("fl_email_log")
-      .select("id, created_at, to_email, to_name, subject, body_preview, status, resend_id, context")
+      .select("id, created_at, to_email, to_name, subject, body_preview, body_full, status, resend_id, context")
       .order("created_at", { ascending: false })
       .limit(100);
 

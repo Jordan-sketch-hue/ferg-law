@@ -2569,6 +2569,7 @@ interface SentEmail {
   to_name: string | null;
   subject: string;
   body_preview: string | null;
+  body_full: string | null;
   status: string;
   resend_id: string | null;
   context: string | null;
@@ -2590,6 +2591,7 @@ function EmailTab({ emails, token, onMarkRead }: {
   const [newTo, setNewTo] = useState("");
   const [newSubject, setNewSubject] = useState("");
   const [newBody, setNewBody] = useState("");
+  const [newFiles, setNewFiles] = useState<File[]>([]);
   const [suggesting, setSuggesting] = useState(false);
 
   useEffect(() => {
@@ -2652,13 +2654,21 @@ function EmailTab({ emails, token, onMarkRead }: {
   async function sendCompose() {
     if (!newTo.trim() || !newSubject.trim() || !newBody.trim() || sending) return;
     setSending(true); setSendResult(null);
-    const res = await fetch("/api/admin/send-email", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token, to: newTo.trim(), subject: newSubject.trim(), body: newBody.trim() }),
-    });
+    let res: Response;
+    if (newFiles.length > 0) {
+      const fd = new FormData();
+      fd.set("token", token); fd.set("to", newTo.trim()); fd.set("subject", newSubject.trim()); fd.set("body", newBody.trim());
+      for (const f of newFiles) fd.append("files", f);
+      res = await fetch("/api/admin/send-email", { method: "POST", body: fd });
+    } else {
+      res = await fetch("/api/admin/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, to: newTo.trim(), subject: newSubject.trim(), body: newBody.trim() }),
+      });
+    }
     const json = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
-    if (json.ok) { setSendResult({ ok: true, msg: `Sent to ${newTo}` }); setComposing(false); setNewTo(""); setNewSubject(""); setNewBody(""); }
+    if (json.ok) { setSendResult({ ok: true, msg: `Sent to ${newTo}` }); setComposing(false); setNewTo(""); setNewSubject(""); setNewBody(""); setNewFiles([]); }
     else { setSendResult({ ok: false, msg: json.error ?? "Send failed" }); }
     setSending(false);
   }
@@ -2740,8 +2750,13 @@ function EmailTab({ emails, token, onMarkRead }: {
               <div style={{ display: "inline-block", marginTop: 6, fontSize: ".72rem", background: "rgba(47,122,82,.1)", color: GREEN, borderRadius: 999, padding: "2px 10px" }}>{selectedSent.status}</div>
             </div>
             <div style={{ background: "#faf8f2", borderRadius: 10, padding: 20, fontSize: ".9rem", lineHeight: 1.7, color: INK, whiteSpace: "pre-wrap", minHeight: 100 }}>
-              {selectedSent.body_preview || "(no preview available)"}
+              {selectedSent.body_full || selectedSent.body_preview || "(no content available)"}
             </div>
+            {!selectedSent.body_full && selectedSent.body_preview && (
+              <div style={{ fontSize: ".76rem", color: MUTED, marginTop: 8 }}>
+                Sent before full-body logging was added — only the first 300 characters were saved for this one.
+              </div>
+            )}
           </div>
         ) : pane === "sent" ? (
           <div style={{ color: MUTED, textAlign: "center", paddingTop: 60 }}>Select a sent email to view</div>
@@ -2759,13 +2774,33 @@ function EmailTab({ emails, token, onMarkRead }: {
               <textarea style={{ ...S.fieldInput, resize: "vertical", minHeight: 160, fontFamily: "inherit" }}
                 value={newBody} onChange={(e) => setNewBody(e.target.value)} placeholder="Your message…" />
             </div>
+            <div style={{ ...S.field, marginBottom: 16 }}>
+              <label style={S.fieldLabel}>Attachments</label>
+              <input
+                type="file"
+                multiple
+                onChange={(e) => setNewFiles(prev => [...prev, ...Array.from(e.target.files ?? [])])}
+                style={{ fontSize: ".82rem" }}
+              />
+              {newFiles.length > 0 && (
+                <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
+                  {newFiles.map((f, i) => (
+                    <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: ".78rem", color: INK, background: "#f8f6f1", borderRadius: 6, padding: "4px 8px" }}>
+                      <span>{f.name} ({Math.round(f.size / 1024)} KB)</span>
+                      <button type="button" onClick={() => setNewFiles(prev => prev.filter((_, idx) => idx !== i))}
+                        style={{ background: "none", border: "none", cursor: "pointer", color: "#b00", fontSize: ".78rem" }}>Remove</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
             {sendResult && <p style={{ fontSize: ".82rem", color: sendResult.ok ? "#2e7d4f" : "#a23b3b", marginBottom: 10 }}>{sendResult.msg}</p>}
             <div style={{ display: "flex", gap: 10 }}>
               <button type="button" onClick={() => void sendCompose()} disabled={sending || !newTo.trim() || !newBody.trim()}
                 style={{ ...S.authBtn, width: "auto", padding: "10px 22px", ...(sending || !newTo.trim() || !newBody.trim() ? S.btnOff : null) }}>
                 {sending ? "Sending…" : "Send"}
               </button>
-              <button type="button" onClick={() => { setComposing(false); setSendResult(null); }}
+              <button type="button" onClick={() => { setComposing(false); setSendResult(null); setNewFiles([]); }}
                 style={{ padding: "10px 18px", border: "1px solid rgba(18,16,12,.2)", borderRadius: 999, background: "#fff", fontSize: ".88rem", cursor: "pointer" }}>
                 Cancel
               </button>
@@ -3874,7 +3909,7 @@ const MS_LABELS: Record<string, string> = {
   pending: "pending", in_progress: "in progress", done: "done", not_applicable: "N/A",
 };
 
-const MATTER_STATUS_OPTS = ["intake","in_progress","awaiting_client","awaiting_third_party","completed","on_hold"];
+const MATTER_STATUS_OPTS = ["intake","in_progress","awaiting_client","awaiting_third_party","completed","on_hold","cancelled"];
 const MILESTONE_STATUS_OPTS = ["pending","in_progress","done","not_applicable"];
 
 function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n: number) => void }) {

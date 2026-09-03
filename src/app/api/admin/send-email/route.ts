@@ -4,32 +4,8 @@ import { createClient, createAdminClient } from "@/lib/supabase/server";
 const RESEND_KEY = process.env.RESEND_API_KEY;
 const FROM = process.env.FERGUSON_FROM_EMAIL || "Ferguson Law <contact@fergusonlawja.com>";
 
-export async function POST(req: NextRequest) {
-  try {
-    const { token, to, subject, body, replyTo } = (await req.json()) as {
-      token: string;
-      to: string;
-      subject: string;
-      body: string;
-      replyTo?: string;
-    };
-
-    if (!token || !to || !subject || !body) {
-      return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
-    }
-
-    // Verify admin token
-    const supabase = await createClient();
-    const { data: isAdmin, error: authErr } = await supabase.rpc("fl_is_admin", { p_token: token });
-    if (authErr || !isAdmin) {
-      return NextResponse.json({ error: "Not authorised." }, { status: 403 });
-    }
-
-    if (!RESEND_KEY) {
-      return NextResponse.json({ error: "Email service not configured." }, { status: 503 });
-    }
-
-    const html = `<!doctype html><html><body style="margin:0;background:#f4f1ec;font-family:Georgia,'Times New Roman',serif;color:#1c1c1c;">
+function buildHtml(body: string): string {
+  return `<!doctype html><html><body style="margin:0;background:#f4f1ec;font-family:Georgia,'Times New Roman',serif;color:#1c1c1c;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f1ec;padding:40px 16px;">
 <tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#fff;border-radius:14px;overflow:hidden;border:1px solid #e7e1d6;">
@@ -52,9 +28,56 @@ export async function POST(req: NextRequest) {
 </td></tr>
 </table>
 </body></html>`;
+}
 
+export async function POST(req: NextRequest) {
+  try {
+    const contentType = req.headers.get("content-type") ?? "";
+    let token: string, to: string, subject: string, body: string, replyTo: string | undefined;
+    const attachments: { filename: string; path: string }[] = [];
+
+    const admin = createAdminClient();
+
+    if (contentType.includes("multipart/form-data")) {
+      const form = await req.formData();
+      token = (form.get("token") as string) ?? "";
+      to = (form.get("to") as string) ?? "";
+      subject = (form.get("subject") as string) ?? "";
+      body = (form.get("body") as string) ?? "";
+      replyTo = (form.get("replyTo") as string) || undefined;
+
+      const files = form.getAll("files").filter((f): f is File => f instanceof File);
+      for (const file of files) {
+        const safeName = file.name.replace(/[^\w.\- ]/g, "_");
+        const path = `staff-email/${Date.now()}-${safeName}`;
+        const { error: upErr } = await admin.storage.from("fl-matter-files").upload(path, file, { contentType: file.type });
+        if (upErr) return NextResponse.json({ error: `Attachment upload failed: ${upErr.message}` }, { status: 502 });
+        const { data: { publicUrl } } = admin.storage.from("fl-matter-files").getPublicUrl(path);
+        attachments.push({ filename: file.name, path: publicUrl });
+      }
+    } else {
+      const json = (await req.json()) as { token: string; to: string; subject: string; body: string; replyTo?: string };
+      ({ token, to, subject, body, replyTo } = json);
+    }
+
+    if (!token || !to || !subject || !body) {
+      return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
+    }
+
+    const supabase = await createClient();
+    const { data: isAdmin, error: authErr } = await supabase.rpc("fl_is_admin", { p_token: token });
+    if (authErr || !isAdmin) {
+      return NextResponse.json({ error: "Not authorised." }, { status: 403 });
+    }
+
+    if (!RESEND_KEY) {
+      return NextResponse.json({ error: "Email service not configured." }, { status: 503 });
+    }
+
+    const html = buildHtml(body);
     const payload: Record<string, unknown> = { from: FROM, to: [to], subject, html };
     if (replyTo) payload.reply_to = replyTo;
+    if (attachments.length > 0) payload.attachments = attachments;
 
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -67,20 +90,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Send failed: ${txt.slice(0, 200)}` }, { status: 502 });
     }
 
-    const json = (await res.json().catch(() => ({}))) as { id?: string };
+    const resJson = (await res.json().catch(() => ({}))) as { id?: string };
 
-    // Log the sent email using service-role client (bypasses RLS)
-    const admin = createAdminClient();
+    const bodyFull = attachments.length > 0
+      ? `${body}\n\nAttachments: ${attachments.map(a => a.filename).join(", ")}`
+      : body;
+
     const { error: logErr } = await admin.from("fl_email_log").insert({
       to_email: to,
       subject,
-      body_preview: body.slice(0, 300),
-      resend_id: json.id ?? null,
+      body_preview: bodyFull.slice(0, 300),
+      body_full: bodyFull,
+      resend_id: resJson.id ?? null,
       context: (req.headers.get("x-email-context") as string | null) ?? "compose",
     });
     if (logErr) console.error("[send-email] fl_email_log insert failed:", logErr.message, logErr.code);
 
-    return NextResponse.json({ ok: true, id: json.id });
+    return NextResponse.json({ ok: true, id: resJson.id });
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "Unknown error" }, { status: 500 });
   }
