@@ -3890,6 +3890,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
   const [unreadByMatter, setUnreadByMatter] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [purging, setPurging] = useState(false);
   const [msgText, setMsgText] = useState("");
   const [sending, setSending] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -4074,6 +4075,33 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
   async function updateMatterStatus(id: string, status: string) {
     await supabase.rpc("fl_admin_cms_update_matter_status", { p_token: token, p_matter_id: id, p_status: status });
     setMatters(prev => prev.map(m => m.id === id ? { ...m, status } : m));
+  }
+
+  async function deleteClientData(m: CmsMatter) {
+    if (!confirm(
+      `Permanently delete ALL data for ${m.client_name} (${m.client_email})?\n\n` +
+      `This removes their login, client profile, every matter, KYC/ID documents, uploaded files, messages, payments, appointments, and email history — everywhere, not just this matter. This cannot be undone.`
+    )) return;
+    const typed = prompt(`Type the client's email to confirm — ${m.client_email}`);
+    if (typed?.trim().toLowerCase() !== m.client_email.toLowerCase()) {
+      if (typed !== null) alert("Email didn't match — nothing was deleted.");
+      return;
+    }
+    setPurging(true);
+    try {
+      const res = await fetch("/api/admin/cms/purge-client", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, clientId: m.client_id, clientEmail: m.client_email, clientName: m.client_name, confirm: true }),
+      });
+      const json = await res.json();
+      if (!res.ok) { alert(json.error || "Deletion failed."); return; }
+      setMatters(prev => prev.filter(x => x.client_email !== m.client_email));
+      setSelected(null);
+      alert("Client data deleted and confirmation email sent.");
+    } finally {
+      setPurging(false);
+    }
   }
 
   async function reviewKyc(status: "approved" | "flagged") {
@@ -4324,6 +4352,14 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                   >
                     {MATTER_STATUS_OPTS.map(o => <option key={o} value={o}>{o.replace(/_/g, " ")}</option>)}
                   </select>
+                  <button
+                    onClick={() => deleteClientData(activeMatter)}
+                    disabled={purging}
+                    title="Permanently delete this client's login, profile, matters, files, and messages — everywhere"
+                    style={{ fontSize: 12, padding: "5px 10px", borderRadius: 8, border: "1px solid #d33", background: "#fff", color: "#d33", cursor: purging ? "default" : "pointer", fontWeight: 600 }}
+                  >
+                    {purging ? "Deleting…" : "Delete client & all data"}
+                  </button>
                 </div>
               </div>
             </div>

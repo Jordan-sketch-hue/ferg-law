@@ -216,7 +216,86 @@ export default function SettingsPage() {
         <p style={{ fontSize: 12, color: "#9a9a9a", textAlign: "center", marginTop: 20 }}>
           Turning off all emails will not affect your access to the portal. You can always log in to check your matter status directly.
         </p>
+
+        <DangerZone />
       </div>
+    </div>
+  );
+}
+
+function DangerZone() {
+  const router = useRouter();
+  const [exporting, setExporting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState("");
+
+  async function exportData() {
+    setExporting(true); setError("");
+    try {
+      const res = await fetch("/api/client/export-data");
+      if (!res.ok) { const j = await res.json(); throw new Error(j.error || "Export failed."); }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `ferguson-law-my-data-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Export failed.");
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  async function deleteAccount() {
+    if (!confirm(
+      "Permanently delete your Ferguson Law account and all data?\n\n" +
+      "This removes your login, matter records, uploaded documents, KYC/ID information, messages, and appointment history. This cannot be undone. Consider exporting your data first."
+    )) return;
+    const typed = prompt('Type DELETE to confirm.');
+    if (typed !== "DELETE") return;
+
+    setDeleting(true); setError("");
+    try {
+      const res = await fetch("/api/client/delete-account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirm: true }),
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error || "Deletion failed.");
+      await supabase().auth.signOut();
+      router.push("/");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Deletion failed.");
+      setDeleting(false);
+    }
+  }
+
+  return (
+    <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #f0d5d5", padding: "20px 24px", marginTop: 20 }}>
+      <div style={{ fontSize: 15, fontWeight: 700, color: "#b00", marginBottom: 4 }}>Danger zone</div>
+      <div style={{ fontSize: 13, color: "#6a6a6a", lineHeight: 1.55, marginBottom: 16 }}>
+        Download a copy of everything Ferguson Law has on file for you, or permanently delete your account and all associated data. Deletion is irreversible.
+      </div>
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <button
+          onClick={exportData}
+          disabled={exporting}
+          style={{ padding: "10px 16px", borderRadius: 8, border: "1px solid #ddd", background: "#fff", color: "#10211c", fontSize: 14, fontWeight: 600, cursor: exporting ? "default" : "pointer" }}
+        >
+          {exporting ? "Preparing…" : "Export my data"}
+        </button>
+        <button
+          onClick={deleteAccount}
+          disabled={deleting}
+          style={{ padding: "10px 16px", borderRadius: 8, border: "1px solid #d33", background: "#fff", color: "#d33", fontSize: 14, fontWeight: 600, cursor: deleting ? "default" : "pointer" }}
+        >
+          {deleting ? "Deleting…" : "Delete my account & data"}
+        </button>
+      </div>
+      {error && <p style={{ color: "#b00", fontSize: 13, marginTop: 12 }}>{error}</p>}
     </div>
   );
 }

@@ -294,6 +294,24 @@ export function sendMilestoneToCC(to: string, ccName: string, matterTitle: strin
   );
 }
 
+export function sendDataDeletionConfirmed(to: string, clientName: string, requestedBy: "client" | "admin") {
+  const firstName = clientName.split(" ")[0] || "there";
+  const originLine = requestedBy === "client"
+    ? "Following your request, we have"
+    : "Following your request to our team, we have";
+  return send(
+    to,
+    "Confirmation — your Ferguson Law data has been deleted",
+    shell(
+      `Hi ${escapeHtml(firstName)}, your data has been deleted.`,
+      `${originLine} permanently removed your account and all associated information from Ferguson Law's systems — your login, client profile, matter records, uploaded documents, KYC information, messages, appointment history, and correspondence log. This action is irreversible and cannot be undone.<br/><br/>This deletion was carried out in accordance with the Jamaica Data Protection Act. If you did not request this, or believe this was done in error, please contact us immediately at the details below.`,
+      "Visit Ferguson Law",
+      "https://fergusonlawja.com",
+    ),
+    "data-deletion",
+  );
+}
+
 function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
