@@ -21,7 +21,9 @@ export async function POST(req: NextRequest) {
 
   const summary = await purgeClientData({ clientId: user.id, email: user.email });
   await logDataDeletion(summary, "client");
-  void sendDataDeletionConfirmed(user.email, clientName, "client").catch(() => null);
+  // Awaited deliberately — a fire-and-forget send here can get cut off when
+  // the serverless function freezes right after the response is returned.
+  await sendDataDeletionConfirmed(user.email, clientName, "client").catch(() => null);
 
   return NextResponse.json({ ok: true });
 }

@@ -31,9 +31,13 @@ export async function POST(req: NextRequest) {
 
     const summary = await purgeClientData({ clientId: clientId ?? null, email: clientEmail });
     await logDataDeletion(summary, "admin");
-    void sendDataDeletionConfirmed(clientEmail, clientName || clientEmail, "admin").catch(() => null);
+    // Awaited deliberately — a fire-and-forget send here can get cut off when
+    // the serverless function freezes right after the response is returned.
+    const emailResult = await sendDataDeletionConfirmed(clientEmail, clientName || clientEmail, "admin").catch(
+      (e) => ({ ok: false as const, error: e instanceof Error ? e.message : String(e) }),
+    );
 
-    return NextResponse.json({ ok: true, summary });
+    return NextResponse.json({ ok: true, summary, emailResult });
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "Unknown error" }, { status: 500 });
   }
