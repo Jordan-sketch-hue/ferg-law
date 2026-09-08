@@ -47,6 +47,20 @@ const nextConfig: NextConfig = {
         headers: securityHeaders,
       },
       {
+        source: "/sw.js",
+        headers: [
+          { key: "Cache-Control", value: "no-store, no-cache, must-revalidate" },
+          { key: "Service-Worker-Allowed", value: "/" },
+        ],
+      },
+      {
+        source: "/manifest.json",
+        headers: [
+          { key: "Cache-Control", value: "no-cache, must-revalidate" },
+          { key: "Content-Type", value: "application/manifest+json" },
+        ],
+      },
+      {
         source: "/api/ebook/:path*",
         headers: [
           { key: "Access-Control-Allow-Origin", value: "*" },

@@ -981,7 +981,7 @@ function MatterPane({
             </span>
             <div style={{ display: "flex", gap: 8 }}>
               {matter.professional_whatsapp && (
-                <a href={`https://wa.me/${matter.professional_whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noopener"
+                <a href={`whatsapp://send?phone=${matter.professional_whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noopener"
                   className="btn btn-gold" style={{ fontSize: 12, padding: "6px 14px" }}>WhatsApp</a>
               )}
               {matter.professional_phone && (

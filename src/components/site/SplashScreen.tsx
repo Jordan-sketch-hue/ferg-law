@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useLayoutEffect, useState } from "react";
 
 /**
  * Ferguson Law splash screen — shows once per browser session.
@@ -9,15 +9,12 @@ export default function SplashScreen() {
   const [visible, setVisible] = useState(false);
   const [leaving, setLeaving] = useState(false);
 
-  useEffect(() => {
-    // Only show when running as installed PWA
+  useLayoutEffect(() => {
     if (!window.matchMedia("(display-mode: standalone)").matches) return;
-
     try {
       if (sessionStorage.getItem("fl_splashed")) return;
       sessionStorage.setItem("fl_splashed", "1");
     } catch { return; }
-
     setVisible(true);
     const t1 = setTimeout(() => setLeaving(true), 1750);
     const t2 = setTimeout(() => setVisible(false), 2100);

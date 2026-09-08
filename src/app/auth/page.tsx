@@ -493,9 +493,9 @@ function AuthPageInner() {
                         style={{ marginTop: 3, flexShrink: 0, accentColor: "#C8A65C", width: 15, height: 15 }} />
                       <span style={{ fontSize: ".75rem", color: "var(--muted,#69736d)", lineHeight: 1.55 }}>
                         I agree to Ferguson Law&apos;s{" "}
-                        <Link href="/terms" target="_blank" style={{ color: "var(--ink,#24211b)", fontWeight: 600 }}>Terms of Service</Link>{" "}
+                        <Link href="/terms" style={{ color: "var(--ink,#24211b)", fontWeight: 600 }}>Terms of Service</Link>{" "}
                         and{" "}
-                        <Link href="/privacy" target="_blank" style={{ color: "var(--ink,#24211b)", fontWeight: 600 }}>Privacy Policy</Link>,
+                        <Link href="/privacy" style={{ color: "var(--ink,#24211b)", fontWeight: 600 }}>Privacy Policy</Link>,
                         and consent to Ferguson Law processing my information to deliver legal services.
                       </span>
                     </label>

@@ -28,7 +28,7 @@ export default function BottomNav() {
 
   return (
     <>
-      <div style={{ height: "calc(60px + env(safe-area-inset-bottom))" }} aria-hidden="true" />
+      <div style={{ height: "calc(80px + env(safe-area-inset-bottom))" }} aria-hidden="true" />
       <nav
         aria-label="App navigation"
         style={{
@@ -38,7 +38,7 @@ export default function BottomNav() {
           right: 0,
           zIndex: 9000,
           background: "#081410",
-          borderTop: "1px solid rgba(200,166,92,0.18)",
+          borderTop: "1px solid rgba(200,166,92,0.22)",
           display: "flex",
           paddingBottom: "env(safe-area-inset-bottom)",
         }}
@@ -55,17 +55,17 @@ export default function BottomNav() {
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
-                padding: "10px 0 8px",
-                color: active ? "#C8A65C" : "rgba(200,166,92,0.38)",
+                padding: "14px 0 12px",
+                color: active ? "#C8A65C" : "rgba(200,166,92,0.42)",
                 textDecoration: "none",
-                gap: 3,
+                gap: 5,
                 transition: "color 0.15s",
                 WebkitTapHighlightColor: "transparent",
               }}
             >
-              <Icon size={22} strokeWidth={active ? 2.5 : 1.8} />
+              <Icon size={26} strokeWidth={active ? 2.5 : 1.8} />
               <span style={{
-                fontSize: "0.58rem",
+                fontSize: "0.68rem",
                 letterSpacing: "0.03em",
                 fontFamily: "system-ui, sans-serif",
                 fontWeight: active ? 600 : 400,

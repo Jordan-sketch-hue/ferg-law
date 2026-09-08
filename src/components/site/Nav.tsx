@@ -390,25 +390,22 @@ export default function Nav() {
             font-size:.85rem; padding:.45rem 1.1rem; white-space:nowrap;
           }
         }
-        /* ≤440px (iPhone 15 Plus / 15 Pro Max + Samsung S24 Ultra) — reduce padding only, keep font readable */
-        @media(max-width:440px){
-          .nav-consult-mobile,.nav-get-started{
-            padding:.38rem .6rem !important; gap:5px !important;
+        /* Mobile: compact text pills — labels visible, just tighter sizing */
+        @media(max-width:760px){
+          .nav-consult-mobile, .nav-get-started{
+            font-size:.76rem !important; padding:.35rem .7rem !important;
+            white-space:nowrap; flex-shrink:0 !important;
+            display:inline-flex !important; align-items:center !important; gap:4px !important;
+            min-width:0 !important; border-radius:999px !important;
           }
-          .nav-right{ gap:8px !important; }
+          .nav-right{ gap:5px !important; }
+          .nav-left{ margin-right:0.5rem !important; }
         }
-        /* ≤395px (iPhone 14, narrow Androids) — first shrink tier */
-        @media(max-width:395px){
-          .nav-consult-mobile,.nav-get-started{
-            font-size:.78rem !important; padding:.42rem .8rem !important; gap:5px !important;
+        @media(max-width:420px){
+          .nav-consult-mobile, .nav-get-started{
+            font-size:.7rem !important; padding:.3rem .55rem !important; gap:3px !important;
           }
-        }
-        /* ≤375px — tightest (360px class phones) */
-        @media(max-width:375px){
-          .nav-consult-mobile,.nav-get-started{
-            font-size:.75rem !important; padding:.4rem .6rem !important; gap:4px !important;
-          }
-          .nav-right{ gap:7px !important; }
+          .nav-right{ gap:4px !important; }
         }
 
         @media(max-width:760px){ .nav-login-wrap{ display:none; } }

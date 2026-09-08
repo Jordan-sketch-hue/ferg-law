@@ -62,7 +62,7 @@ export default async function PartnerProfilePage({
 
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
         {tel && (
-          <a className="btn btn-gold" href={`https://wa.me/${tel}`} target="_blank" rel="noopener">WhatsApp</a>
+          <a className="btn btn-gold" href={`whatsapp://send?phone=${tel}`} target="_blank" rel="noopener">WhatsApp</a>
         )}
         {p.phone && <a className="btn btn-ghost" href={`tel:${p.phone}`}>Call</a>}
         {p.email && <a className="btn btn-ghost" href={`mailto:${p.email}`}>Email</a>}

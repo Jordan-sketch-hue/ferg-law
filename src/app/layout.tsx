@@ -2,13 +2,14 @@ import type { Metadata, Viewport } from "next";
 import { Fraunces, Inter } from "next/font/google";
 import "./globals.css";
 import ChatWidget from "@/components/chat/ChatWidget";
-import SplashScreen from "@/components/site/SplashScreen";
-import PwaOnboarding from "@/components/site/PwaOnboarding";
-import BottomNav from "@/components/site/BottomNav";
 import ContentApply from "@/components/editor/ContentApply";
 import SearchModal from "@/components/site/SearchModal";
 import EditorOverlay from "@/components/editor/EditorOverlay";
 import PageTracker from "@/components/site/PageTracker";
+import SwRegister from "@/components/pwa/SwRegister";
+import SwUpdateToast from "@/components/pwa/SwUpdateToast";
+import PwaAnalyticsInit from "@/components/pwa/PwaAnalyticsInit";
+import InstallPrompt from "@/components/pwa/InstallPrompt";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -85,9 +86,11 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#102A1E",
+  themeColor: "#0D1F16",
   width: "device-width",
   initialScale: 1,
+  minimumScale: 1,
+  viewportFit: "cover",
 };
 
 const jsonLd = {
@@ -171,18 +174,33 @@ export default function RootLayout({
         <link rel="preload" as="image" href="/img/hero-banner.avif" type="image/avif" />
         <link rel="preload" as="image" href="/img/hero-banner.webp" type="image/webp" />
         <link rel="preload" as="image" href="/img/people-new-home.webp" type="image/webp" />
+        {/* PWA manifest */}
         <link rel="manifest" href="/manifest.json" />
+        {/* iOS PWA meta */}
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="Ferguson Law" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/favicon-180.png" />
+        {/* iOS splash screens — portrait */}
+        <link rel="apple-touch-startup-image" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)" href="/favicon-512.png" />
+        <link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)" href="/favicon-512.png" />
+        {/* Windows tile */}
+        <meta name="msapplication-TileColor" content="#0D1F16" />
+        <meta name="msapplication-TileImage" content="/favicon-512.png" />
+        <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body>
-        <SplashScreen />
-        <PwaOnboarding />
         {children}
         <PageTracker />
         <ChatWidget />
         <ContentApply />
         <SearchModal />
         <EditorOverlay />
-        <BottomNav />
+        <SwRegister />
+        <SwUpdateToast />
+        <PwaAnalyticsInit />
+        <InstallPrompt />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

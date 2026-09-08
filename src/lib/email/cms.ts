@@ -4,6 +4,7 @@
  */
 import { Resend } from "resend";
 import { SITE, waLink } from "@/lib/site";
+import { createAdminClient } from "@/lib/supabase/server";
 
 const FROM = process.env.FERGUSON_FROM_EMAIL || "Ferguson Law <noreply@fergusonlawja.com>";
 
@@ -38,13 +39,22 @@ function shell(lead: string, body: string, ctaLabel: string, ctaHref: string): s
 </table></td></tr></table></body></html>`;
 }
 
-async function send(to: string, subject: string, html: string): Promise<SendResult> {
+async function send(to: string, subject: string, html: string, context?: string): Promise<SendResult> {
   const key = process.env.RESEND_API_KEY;
   if (!key) return { skipped: true };
   try {
     const resend = new Resend(key);
     const { data, error } = await resend.emails.send({ from: FROM, to, subject, html });
     if (error) return { ok: false, error: error.message || String(error) };
+    // Log to fl_email_log so admin Email tab shows all sent emails. Awaited —
+    // fire-and-forget here can get cut off by the platform right after the
+    // caller's response is returned, silently dropping the log row.
+    const bodyFull = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    const admin = createAdminClient();
+    await admin.from("fl_email_log").insert({
+      to_email: to, subject, body_preview: bodyFull.slice(0, 300), body_full: bodyFull,
+      resend_id: data?.id ?? null, context: context ?? "cms",
+    }).then(() => null, () => null);
     return { ok: true, id: data?.id };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
@@ -148,6 +158,7 @@ export function sendNewMessageToStaff(matterTitle: string, clientName: string) {
       "Open admin",
       "https://fergusonlawja.com/admin",
     ),
+    `cms-message:${clientName}`,
   );
 }
 
@@ -161,6 +172,7 @@ export function sendFileUploadedToStaff(matterTitle: string, clientName: string,
       "Open admin",
       "https://fergusonlawja.com/admin",
     ),
+    `cms-file:${clientName}`,
   );
 }
 
@@ -284,6 +296,24 @@ export function sendMilestoneToCC(to: string, ccName: string, matterTitle: strin
       "Visit Ferguson Law",
       "https://fergusonlawja.com",
     ),
+  );
+}
+
+export function sendDataDeletionConfirmed(to: string, clientName: string, requestedBy: "client" | "admin") {
+  const firstName = clientName.split(" ")[0] || "there";
+  const originLine = requestedBy === "client"
+    ? "Following your request, we have"
+    : "Following your request to our team, we have";
+  return send(
+    to,
+    "Confirmation — your Ferguson Law data has been deleted",
+    shell(
+      `Hi ${escapeHtml(firstName)}, your data has been deleted.`,
+      `${originLine} permanently removed your account and all associated information from Ferguson Law's systems — your login, client profile, matter records, uploaded documents, KYC information, messages, appointment history, and correspondence log. This action is irreversible and cannot be undone.<br/><br/>This deletion was carried out in accordance with the Jamaica Data Protection Act. If you did not request this, or believe this was done in error, please contact us immediately at the details below.`,
+      "Visit Ferguson Law",
+      "https://fergusonlawja.com",
+    ),
+    "data-deletion",
   );
 }
 

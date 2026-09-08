@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Offline — Ferguson Law</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  min-height:100dvh;display:grid;place-items:center;
+  background:#0D1F16;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  padding:24px;color:#EDE8DF;
+}
+.card{
+  background:#142A1E;border:1px solid #2D4A38;border-radius:20px;
+  padding:44px 36px;max-width:420px;width:100%;text-align:center;
+}
+.logo{
+  font-size:1.1rem;font-weight:600;letter-spacing:.04em;color:#C9A84C;
+  margin-bottom:32px;font-style:italic;
+}
+.icon{font-size:3rem;margin-bottom:20px}
+h1{font-size:1.5rem;font-weight:600;color:#EDE8DF;margin-bottom:12px}
+p{font-size:.9rem;color:#B8A990;line-height:1.7;margin-bottom:28px}
+.btn{
+  display:block;padding:14px 20px;border-radius:12px;
+  background:#C9A84C;color:#0D1F16;font-weight:700;
+  font-size:.95rem;text-decoration:none;cursor:pointer;border:none;width:100%;
+  margin-bottom:12px;
+}
+.btn-ghost{
+  background:transparent;border:1px solid #2D4A38;color:#B8A990;
+}
+.foot{font-size:.75rem;color:#4A6A52;margin-top:24px}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">Ferguson Law</div>
+  <div class="icon">📡</div>
+  <h1>You're offline</h1>
+  <p>
+    No connection right now — but your work is safe.
+    Any booking details you filled in are saved and will submit automatically when you're back online.
+  </p>
+  <button class="btn" onclick="location.reload()">Try again</button>
+  <a href="/" class="btn btn-ghost">Go to home</a>
+  <p class="foot">
+    While offline: your saved chatbot conversation, FAQ, and H.O.M.E. guide are still available from the home screen.
+  </p>
+</div>
+</body>
+</html>

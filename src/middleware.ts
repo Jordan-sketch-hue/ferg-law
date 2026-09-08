@@ -15,10 +15,8 @@ export async function middleware(request: NextRequest) {
 
   let response = NextResponse.next({ request });
 
-  const supabase = createServerClient(
-    SUPABASE_URL,
-    SUPABASE_ANON_KEY,
-    {
+  try {
+    const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       cookies: {
         getAll() { return request.cookies.getAll(); },
         setAll(cookiesToSet) {
@@ -29,16 +27,22 @@ export async function middleware(request: NextRequest) {
           );
         },
       },
+      global: {
+        fetch: (url, options = {}) =>
+          fetch(url, { ...options, signal: AbortSignal.timeout(4000) }),
+      },
+    });
+
+    const { data: { user } } = await supabase.auth.getUser();
+
+    const path = request.nextUrl.pathname;
+    if (!user && path.startsWith("/directory/client") && !path.startsWith("/directory/client-login")) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/directory/client-login";
+      return NextResponse.redirect(url);
     }
-  );
-
-  const { data: { user } } = await supabase.auth.getUser();
-
-  const path = request.nextUrl.pathname;
-  if (!user && path.startsWith("/directory/client") && !path.startsWith("/directory/client-login")) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/directory/client-login";
-    return NextResponse.redirect(url);
+  } catch {
+    // Fail open — a Supabase timeout or error should never bring the site down.
   }
 
   return response;

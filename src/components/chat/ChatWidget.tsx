@@ -26,7 +26,7 @@ const STORAGE_KEY = "fl_chat_conversation_id";
 const GREETING: Msg = {
   id: "greeting",
   role: "bot",
-  body: `Welcome to ${SITE.name}. I can help with our services, fees, buying a home in Jamaica, or booking a consultation. What would you like to know?`,
+  body: `Welcome to ${SITE.name}. I can help with our services, buying a home in Jamaica, or booking a consultation. What would you like to know?`,
 };
 
 const HIDE_CHAT_PATHS = ["/directory/client", "/directory/client-login"];

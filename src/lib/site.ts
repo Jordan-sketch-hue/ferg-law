@@ -24,6 +24,6 @@ export const SITE = {
 export const CONSULT_DURATION_MIN = 20;
 
 export const waLink = (text?: string) =>
-  `https://wa.me/${SITE.whatsappNumber}${
-    text ? `?text=${encodeURIComponent(text)}` : ""
+  `whatsapp://send?phone=${SITE.whatsappNumber}${
+    text ? `&text=${encodeURIComponent(text)}` : ""
   }`;
