@@ -3,7 +3,7 @@
  * Caching strategies, push notifications, background sync, update detection.
  */
 
-const VERSION = 'fl-v2';
+const VERSION = 'fl-v3';
 const OFFLINE_URL = '/offline.html';
 
 const PRECACHE = [
