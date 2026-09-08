@@ -54,10 +54,17 @@ export async function sendBookingConfirmation(
 }
 
 export type SendBookingReminderArgs = SendBookingConfirmationArgs & {
-  kind: "24h" | "1h";
+  kind: "24h" | "2h" | "1h" | "15m";
 };
 
-/** Automatic appointment reminder (24h + 1h before). Same graceful no-op. */
+const REMINDER_SOON_LABEL: Record<SendBookingReminderArgs["kind"], string> = {
+  "24h": "tomorrow",
+  "2h": "in about 2 hours",
+  "1h": "in about an hour",
+  "15m": "in about 15 minutes",
+};
+
+/** Automatic appointment reminder (24h / 2h / 1h / 15m before). Same graceful no-op. */
 export async function sendBookingReminder(
   args: SendBookingReminderArgs,
 ): Promise<SendResult> {
@@ -66,7 +73,7 @@ export async function sendBookingReminder(
 
   const { to, name, service, whenLabel, ref, kind } = args;
   const firstName = (name || "").trim().split(/\s+/)[0] || "there";
-  const soon = kind === "1h" ? "in about an hour" : "tomorrow";
+  const soon = REMINDER_SOON_LABEL[kind];
   const wa = waLink(
     `Hi Ferguson Law — about my consultation.\nRef: ${ref}\nService: ${service}\nWhen: ${whenLabel}`,
   );
@@ -76,10 +83,7 @@ export async function sendBookingReminder(
     const { data, error } = await resend.emails.send({
       from: FROM,
       to,
-      subject:
-        kind === "1h"
-          ? `Reminder — your consultation is ${soon} (${ref})`
-          : `Reminder — your consultation is ${soon} (${ref})`,
+      subject: `Reminder — your consultation is ${soon} (${ref})`,
       html: buildHtml({
         firstName,
         service,

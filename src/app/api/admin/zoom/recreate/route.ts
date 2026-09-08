@@ -9,6 +9,7 @@ import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { createMeetingRoom } from "@/lib/meetings/create";
 import { sendBookingUpdate } from "@/lib/email/send";
 import { fullWhenLabel } from "@/lib/booking/format";
+import { logReminderEvent } from "@/lib/attention/reminderLog";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -34,12 +35,13 @@ export async function POST(req: NextRequest) {
   if (!meeting) return Response.json({ ok: false, error: "Video calling isn't configured yet." }, { status: 503 });
 
   const prevMeta = appt.meta ?? {};
-  await createAdminClient().from("appointments").update({
+  const admin = createAdminClient();
+  await admin.from("appointments").update({
     meta: { ...prevMeta, meeting_url: meeting.url, meeting_provider: meeting.provider },
   }).eq("ref", appt.ref);
 
   if (appt.email) {
-    await sendBookingUpdate({
+    const send = await sendBookingUpdate({
       to: appt.email,
       name: appt.name ?? "there",
       service: appt.service ?? "Consultation",
@@ -47,6 +49,17 @@ export async function POST(req: NextRequest) {
       ref: appt.ref,
       meetingUrl: meeting.url,
       kind: "link_updated",
+    });
+    await logReminderEvent(admin, {
+      appointmentId: appt.id,
+      appointmentRef: appt.ref,
+      reminderType: "link_updated",
+      channel: "email",
+      destination: appt.email,
+      status: "skipped" in send ? "skipped" : send.ok ? "sent" : "failed",
+      forStartsAt: appt.starts_at,
+      providerMessageId: "ok" in send && send.ok ? send.id ?? null : null,
+      errorMessage: "ok" in send && !send.ok ? send.error : null,
     });
   }
 

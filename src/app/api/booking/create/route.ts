@@ -25,6 +25,7 @@ import { serviceDuration, TZ } from "@/lib/booking/availability";
 import { isServiceId, serviceTitle } from "@/lib/booking/services";
 import { fullWhenLabel, dateChipLabel, slotTimeLabel } from "@/lib/booking/format";
 import { sendBookingConfirmation } from "@/lib/email/send";
+import { logReminderEvent } from "@/lib/attention/reminderLog";
 import { notifyOwenWA } from "@/lib/wa-notify";
 import { consultFee } from "@/lib/payments/fees";
 import { createPayment } from "@/lib/payments/wipay";
@@ -146,7 +147,7 @@ export async function POST(req: NextRequest) {
     if (free) {
       // anon INSERT is allowed by RLS; we don't read the row back (no anon
       // SELECT on appointments), so omit .select().
-      const { error: apptErr } = await supabase.from("appointments").insert({
+      const { data: insertedFree, error: apptErr } = await supabase.from("appointments").insert({
         lead_ref: ref,
         name,
         email,
@@ -158,7 +159,7 @@ export async function POST(req: NextRequest) {
         payment_status: "free",
         ref,
         meta: { service_id: service, recommender, notes: notes || null, invite: inviteCode },
-      });
+      }).select("id").maybeSingle();
 
       if (apptErr) {
         return Response.json(
@@ -210,7 +211,20 @@ export async function POST(req: NextRequest) {
 
       // Confirmation email fires now (free bookings are immediately confirmed).
       try {
-        await sendBookingConfirmation({ to: email, name, service: title, whenLabel, ref, meetingUrl });
+        const send = await sendBookingConfirmation({ to: email, name, service: title, whenLabel, ref, meetingUrl });
+        if (insertedFree?.id) {
+          await logReminderEvent(supabase, {
+            appointmentId: insertedFree.id,
+            appointmentRef: ref,
+            reminderType: "confirmation",
+            channel: "email",
+            destination: email,
+            status: "skipped" in send ? "skipped" : send.ok ? "sent" : "failed",
+            forStartsAt: startsIso,
+            providerMessageId: "ok" in send && send.ok ? send.id ?? null : null,
+            errorMessage: "ok" in send && !send.ok ? send.error : null,
+          });
+        }
       } catch {
         /* swallow — booking already saved */
       }

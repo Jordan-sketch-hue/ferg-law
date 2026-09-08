@@ -4,9 +4,10 @@
  * Body: { token, ref }
  */
 import { NextRequest } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { sendBookingConfirmation } from "@/lib/email/send";
 import { fullWhenLabel } from "@/lib/booking/format";
+import { logReminderEvent } from "@/lib/attention/reminderLog";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -37,6 +38,18 @@ export async function POST(req: NextRequest) {
     whenLabel: fullWhenLabel(appt.starts_at),
     ref: appt.ref,
     meetingUrl,
+  });
+
+  await logReminderEvent(createAdminClient(), {
+    appointmentId: appt.id,
+    appointmentRef: appt.ref,
+    reminderType: "confirmation",
+    channel: "email",
+    destination: appt.email,
+    status: "skipped" in result ? "skipped" : result.ok ? "sent" : "failed",
+    forStartsAt: appt.starts_at,
+    providerMessageId: "ok" in result && result.ok ? result.id ?? null : null,
+    errorMessage: "ok" in result && !result.ok ? result.error : null,
   });
 
   if ("ok" in result && !result.ok) return Response.json({ ok: false, error: result.error }, { status: 502 });

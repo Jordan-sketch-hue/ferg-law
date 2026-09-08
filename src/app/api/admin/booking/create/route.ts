@@ -11,6 +11,7 @@ import { sendBookingConfirmation } from "@/lib/email/send";
 import { serviceDuration, TZ } from "@/lib/booking/availability";
 import { isServiceId, serviceTitle } from "@/lib/booking/services";
 import { fullWhenLabel } from "@/lib/booking/format";
+import { logReminderEvent } from "@/lib/attention/reminderLog";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -69,7 +70,7 @@ export async function POST(req: NextRequest) {
   } catch { /* no meeting, still create the appointment */ }
 
   // Insert confirmed appointment
-  const { error: apptErr } = await admin.from("appointments").insert({
+  const { data: inserted, error: apptErr } = await admin.from("appointments").insert({
     lead_ref: ref,
     name: name.trim(),
     email: email.trim(),
@@ -87,7 +88,7 @@ export async function POST(req: NextRequest) {
       meeting_provider: meetingProvider ?? null,
       created_by: "admin",
     },
-  });
+  }).select("id").single();
 
   if (apptErr) {
     return Response.json({ ok: false, error: "Failed to save booking: " + apptErr.message }, { status: 500 });
@@ -96,7 +97,7 @@ export async function POST(req: NextRequest) {
   // Email client if requested and we have a valid email
   if (sendEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
     try {
-      await sendBookingConfirmation({
+      const send = await sendBookingConfirmation({
         to: email.trim(),
         name: name.trim(),
         service: title,
@@ -104,6 +105,19 @@ export async function POST(req: NextRequest) {
         ref,
         meetingUrl,
       });
+      if (inserted?.id) {
+        await logReminderEvent(admin, {
+          appointmentId: inserted.id,
+          appointmentRef: ref,
+          reminderType: "confirmation",
+          channel: "email",
+          destination: email.trim(),
+          status: "skipped" in send ? "skipped" : send.ok ? "sent" : "failed",
+          forStartsAt: startsIso,
+          providerMessageId: "ok" in send && send.ok ? send.id ?? null : null,
+          errorMessage: "ok" in send && !send.ok ? send.error : null,
+        });
+      }
     } catch { /* swallow — booking already saved */ }
   }
 

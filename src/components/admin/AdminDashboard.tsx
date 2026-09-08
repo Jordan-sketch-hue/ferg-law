@@ -16,6 +16,9 @@ import { createClient } from "@/lib/supabase/client";
 import { waLink } from "@/lib/site";
 import AnalyticsTab from "@/components/admin/AnalyticsTab";
 import EbookLeadsTab from "@/components/admin/EbookLeadsTab";
+import AttentionOverview, { AttentionBadge } from "@/components/admin/AttentionOverview";
+import AppointmentAttentionPanel from "@/components/admin/AppointmentAttentionPanel";
+import { computeAttentionStatus, type AttentionStatus } from "@/lib/attention/status";
 
 const TOKEN_KEY = "fl_admin_token";
 const TZ = "America/Jamaica";
@@ -36,7 +39,7 @@ const HR_BASE = "https://home.fergusonlawja.com";
 // Row shapes
 // ---------------------------------------------------------------------------
 type LeadStatus = "new" | "contacted" | "closed";
-type ApptStatus = "pending" | "confirmed" | "cancelled" | "completed";
+type ApptStatus = "pending" | "confirmed" | "cancelled" | "completed" | "no_show";
 
 interface Lead {
   id: string;
@@ -64,6 +67,12 @@ interface Appointment {
   ends_at: string | null;
   status: string | null;
   ref: string | null;
+  meta?: { meeting_url?: string | null; zoom_url?: string | null } | null;
+  payment_status?: string | null;
+  reminded_24h?: boolean;
+  reminded_2h?: boolean;
+  reminded_1h?: boolean;
+  reminded_15m?: boolean;
 }
 
 interface Conversation {
@@ -227,7 +236,7 @@ interface HomeInquiry {
 }
 
 const LEAD_STATUSES: LeadStatus[] = ["new", "contacted", "closed"];
-const APPT_STATUSES: ApptStatus[] = ["pending", "confirmed", "cancelled", "completed"];
+const APPT_STATUSES: ApptStatus[] = ["pending", "confirmed", "cancelled", "completed", "no_show"];
 const MATTER_STAGES = ["intake", "active", "on_hold", "closed"];
 const PAYMENT_STATUSES = ["unpaid", "deposit_paid", "paid"];
 const CLIENT_TYPES = ["individual", "corporate", "diaspora"];
@@ -909,7 +918,10 @@ export default function AdminDashboard() {
               homePros={homePros} emails={emails} inquiries={inquiries}
               staleLeads={staleLeads} isJordan={isJordan}
               token={token ?? ""}
+              accountEmail={accountEmail}
               onTab={switchTab}
+              onStatus={setApptStatus}
+              onRefresh={() => { if (token) void fetchAll(token); }}
             />
           )}
           {tab === "leads" && <LeadsTable leads={leads} loading={loading} token={token} onStatus={setLeadStatus} onDelete={deleteLead} />}
@@ -917,7 +929,7 @@ export default function AdminDashboard() {
           {tab === "clients" && <ClientsTab clients={clients} matters={matters} loading={loading} token={token ?? ""} onUpsert={upsertClient} onDelete={deleteClient} />}
           {tab === "matters" && <MattersTab matters={matters} loading={loading} token={token ?? ""} onStage={setMatterStage} onPayment={setMatterPayment} />}
           {tab === "cms" && token && <CmsTab token={token} onUnreadChange={setCmsUnread} />}
-          {tab === "calendar" && <CalendarTab appts={appts} token={token ?? ""} />}
+          {tab === "calendar" && <CalendarTab appts={appts} token={token ?? ""} onStatus={setApptStatus} onRefresh={() => { if (token) void fetchAll(token); }} />}
           {tab === "chats" && <ChatsTable convos={convos} loading={loading} />}
           {tab === "email" && token && <EmailTab emails={emails} token={token} onMarkRead={(id) => setEmails(prev => prev.map(e => e.id === id ? { ...e, read: true } : e))} />}
           {tab === "invites" && <InvitesPanel invites={invites} loading={loading} onCreate={createInvite} onDeactivate={deactivateInvite} onDelete={deleteInvite} />}
@@ -1324,11 +1336,32 @@ function NewBookingModal({ token, onClose, onCreated }: { token: string; onClose
   );
 }
 
+type BookingFilter = "all" | "today" | "upcoming" | "due_soon" | "action_required" | "completed" | "missed" | "cancelled";
+const BOOKING_FILTERS: { key: BookingFilter; label: string }[] = [
+  { key: "all", label: "All" },
+  { key: "today", label: "Today" },
+  { key: "upcoming", label: "Upcoming" },
+  { key: "due_soon", label: "Due soon" },
+  { key: "action_required", label: "Action required" },
+  { key: "completed", label: "Completed" },
+  { key: "missed", label: "Missed" },
+  { key: "cancelled", label: "Cancelled" },
+];
+type BookingSort = "soonest" | "latest" | "client" | "status";
+
 function BookingsTable({ appts, loading, token, onStatus, onCancel, onRefresh }: { appts: Appointment[]; loading: boolean; token: string; onStatus: (id: string, s: string) => void; onCancel: (id: string) => void; onRefresh: () => void }) {
   const [composing, setComposing] = useState<Appointment | null>(null);
+  const [attentionAppt, setAttentionAppt] = useState<Appointment | null>(null);
   const [linkSending, setLinkSending] = useState<string | null>(null);
   const [linkResult, setLinkResult] = useState<Record<string, { ok: boolean; msg: string }>>({});
   const [newBooking, setNewBooking] = useState(false);
+  const [filter, setFilter] = useState<BookingFilter>("all");
+  const [sort, setSort] = useState<BookingSort>("soonest");
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 30_000);
+    return () => clearInterval(id);
+  }, []);
 
   async function sendMeetingLink(a: Appointment) {
     if (!a.id || !a.email) return;
@@ -1345,20 +1378,62 @@ function BookingsTable({ appts, loading, token, onStatus, onCancel, onRefresh }:
     setLinkSending(null);
   }
 
+  const todayKey = formatInTimeZone(now, TZ, "yyyy-MM-dd");
+  const filtered = appts.filter((a) => {
+    const st = computeAttentionStatus(a, now);
+    switch (filter) {
+      case "today": return formatInTimeZone(new Date(a.starts_at), TZ, "yyyy-MM-dd") === todayKey;
+      case "upcoming": return st === "upcoming";
+      case "due_soon": return st === "due_soon" || st === "due_now";
+      case "action_required": return st === "due_now" || st === "in_progress" || st === "needs_confirmation";
+      case "completed": return a.status === "completed";
+      case "missed": return a.status === "no_show";
+      case "cancelled": return a.status === "cancelled";
+      default: return true;
+    }
+  });
+  const sorted = [...filtered].sort((a, b) => {
+    switch (sort) {
+      case "latest": return new Date(b.starts_at).getTime() - new Date(a.starts_at).getTime();
+      case "client": return (a.name || "").localeCompare(b.name || "");
+      case "status": return (a.status || "").localeCompare(b.status || "");
+      default: return new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime();
+    }
+  });
+
   return (
     <>
-      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
-        <button type="button" onClick={() => setNewBooking(true)}
-          style={{ ...S.waBtn, background: GOLD, color: "#0e2518", fontWeight: 700 }}>
-          + New Booking
-        </button>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexWrap: "wrap", gap: 10 }}>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          {BOOKING_FILTERS.map((f) => (
+            <button key={f.key} type="button" onClick={() => setFilter(f.key)}
+              style={{ fontSize: ".76rem", fontWeight: 600, padding: "5px 12px", borderRadius: 999, cursor: "pointer",
+                border: `1px solid ${filter === f.key ? GOLD : "rgba(18,16,12,.15)"}`,
+                background: filter === f.key ? "rgba(200,166,92,.18)" : "#fff",
+                color: filter === f.key ? "#8a6a22" : MUTED }}>
+              {f.label}
+            </button>
+          ))}
+        </div>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <select value={sort} onChange={(e) => setSort(e.target.value as BookingSort)} style={S.select} aria-label="Sort">
+            <option value="soonest">Soonest first</option>
+            <option value="latest">Latest first</option>
+            <option value="client">Client</option>
+            <option value="status">Status</option>
+          </select>
+          <button type="button" onClick={() => setNewBooking(true)}
+            style={{ ...S.waBtn, background: GOLD, color: "#0e2518", fontWeight: 700 }}>
+            + New Booking
+          </button>
+        </div>
       </div>
-      {loading && appts.length === 0 ? <Empty>Loading bookings…</Empty> : appts.length === 0 ? <Empty>No bookings yet.</Empty> : (
+      {loading && appts.length === 0 ? <Empty>Loading bookings…</Empty> : sorted.length === 0 ? <Empty>No bookings match this filter.</Empty> : (
         <div style={S.tableWrap}>
           <table style={S.table}>
-            <thead><tr><Th>When (Jamaica)</Th><Th>Service</Th><Th>Client</Th><Th>Contact</Th><Th>Ref</Th><Th>Status</Th><Th>Actions</Th></tr></thead>
+            <thead><tr><Th>When (Jamaica)</Th><Th>Service</Th><Th>Client</Th><Th>Contact</Th><Th>Ref</Th><Th>Status</Th><Th>Attention</Th><Th>Actions</Th></tr></thead>
             <tbody>
-              {appts.map((a) => (
+              {sorted.map((a) => (
                 <tr key={a.id} style={S.tr}>
                   <Td><span style={S.strong}>{fmtWhen(a.starts_at)}</span></Td>
                   <Td>{a.service || "—"}</Td>
@@ -1367,8 +1442,17 @@ function BookingsTable({ appts, loading, token, onStatus, onCancel, onRefresh }:
                   <Td><span style={S.mono}>{a.ref || "—"}</span></Td>
                   <Td><StatusSelect value={a.status} options={APPT_STATUSES} onChange={(v) => onStatus(a.id, v)} /></Td>
                   <Td>
+                    <button type="button" onClick={() => setAttentionAppt(a)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                      <AttentionBadge status={computeAttentionStatus(a, now)} />
+                    </button>
+                  </Td>
+                  <Td>
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap", flexDirection: "column" }}>
                       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                        <button type="button" onClick={() => setAttentionAppt(a)}
+                          style={{ ...S.waBtn, background: "rgba(200,166,92,.18)", color: "#8a6a22" }}>
+                          Attention
+                        </button>
                         {a.email && (
                           <button type="button" onClick={() => setComposing(a)}
                             style={{ ...S.waBtn, background: "#c9a86a", color: "#10211c" }}>
@@ -1417,6 +1501,15 @@ function BookingsTable({ appts, loading, token, onStatus, onCancel, onRefresh }:
           token={token}
           onClose={() => setNewBooking(false)}
           onCreated={() => { onRefresh(); }}
+        />
+      )}
+      {attentionAppt && (
+        <AppointmentAttentionPanel
+          appt={attentionAppt}
+          token={token}
+          onClose={() => setAttentionAppt(null)}
+          onStatus={onStatus}
+          onRefresh={onRefresh}
         />
       )}
     </>
@@ -1863,26 +1956,9 @@ function MilestonePanel({ matterId, token, matter, onClose, inline }: {
 // ---------------------------------------------------------------------------
 // Calendar — current week view
 // ---------------------------------------------------------------------------
-function CalendarTab({ appts, token }: { appts: Appointment[]; token: string }) {
+function CalendarTab({ appts, token, onStatus, onRefresh }: { appts: Appointment[]; token: string; onStatus: (id: string, s: string) => void; onRefresh: () => void }) {
   const [weekOffset, setWeekOffset] = useState(0);
   const [activeAppt, setActiveAppt] = useState<Appointment | null>(null);
-  const [linkSending, setLinkSending] = useState(false);
-  const [linkMsg, setLinkMsg] = useState<string | null>(null);
-
-  async function sendMeetingLink(a: Appointment) {
-    if (!a.id || !a.email) return;
-    setLinkSending(true); setLinkMsg(null);
-    try {
-      const r = await fetch("/api/admin/zoom/recreate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, id: a.id }),
-      });
-      const d = await r.json() as { ok: boolean; error?: string };
-      setLinkMsg(d.ok ? `Link sent to ${a.email}` : (d.error ?? "Failed"));
-    } catch { setLinkMsg("Network error"); }
-    setLinkSending(false);
-  }
 
   // Compute current week start (Monday) in Jamaica time
   const weekStart = (() => {
@@ -1962,34 +2038,13 @@ function CalendarTab({ appts, token }: { appts: Appointment[]; token: string }) 
       </div>
 
       {activeAppt && (
-        <div onClick={() => setActiveAppt(null)}
-          style={{ position: "fixed", inset: 0, background: "rgba(16,33,28,.45)", display: "grid", placeItems: "center", padding: 16, zIndex: 50 }}>
-          <div onClick={(e) => e.stopPropagation()}
-            style={{ background: "#fff", borderRadius: 16, padding: 26, width: "100%", maxWidth: 380 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-              <span style={{ fontFamily: "var(--serif, Georgia, serif)", fontWeight: 700, color: GREEN, fontSize: "1.1rem" }}>Appointment</span>
-              <button type="button" onClick={() => setActiveAppt(null)} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "#888" }}>×</button>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: ".9rem", color: INK }}>
-              <div><span style={S.muted}>When: </span><strong>{fmtWhen(activeAppt.starts_at)}</strong></div>
-              <div><span style={S.muted}>Client: </span>{activeAppt.name || "—"}</div>
-              <div><span style={S.muted}>Phone: </span>{activeAppt.phone || "—"}</div>
-              <div><span style={S.muted}>Email: </span>{activeAppt.email || "—"}</div>
-              <div><span style={S.muted}>Service: </span>{activeAppt.service || "—"}</div>
-              <div><span style={S.muted}>Ref: </span><span style={S.mono}>{activeAppt.ref || "—"}</span></div>
-              <div><span style={S.muted}>Status: </span><StatusBadge status={activeAppt.status} /></div>
-            </div>
-            {activeAppt.email && activeAppt.status === "confirmed" && (
-              <div style={{ marginTop: 16 }}>
-                {linkMsg && <div style={{ fontSize: ".82rem", color: linkMsg.startsWith("Link sent") ? GREEN : "#a23b3b", marginBottom: 8 }}>{linkMsg}</div>}
-                <button type="button" onClick={() => void sendMeetingLink(activeAppt)} disabled={linkSending}
-                  style={{ ...S.waBtn, background: GOLD, color: "#0e2518", fontWeight: 700, width: "100%", opacity: linkSending ? 0.6 : 1 }}>
-                  {linkSending ? "Sending…" : "Send meeting link"}
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
+        <AppointmentAttentionPanel
+          appt={activeAppt}
+          token={token}
+          onClose={() => setActiveAppt(null)}
+          onStatus={onStatus}
+          onRefresh={onRefresh}
+        />
       )}
     </div>
   );
@@ -2419,13 +2474,16 @@ function ChatsTable({ convos, loading }: { convos: Conversation[]; loading: bool
 // ---------------------------------------------------------------------------
 interface ActivityItem { activity_id: string; matter_id: string; matter_title: string; client_name: string; kind: string; body: string; created_at: string; read_at: string | null; }
 
-function OverviewPanel({ leads, appts, convos, matters, homePros, emails, inquiries, staleLeads, isJordan, token, onTab }: {
+function OverviewPanel({ leads, appts, convos, matters, homePros, emails, inquiries, staleLeads, isJordan, token, accountEmail, onTab, onStatus, onRefresh }: {
   leads: Lead[]; appts: Appointment[]; convos: Conversation[]; matters: Matter[];
   homePros: HomePro[]; emails: InboundEmail[]; inquiries: HomeInquiry[];
-  staleLeads: Lead[]; isJordan: boolean; token: string;
+  staleLeads: Lead[]; isJordan: boolean; token: string; accountEmail: string | null;
   onTab: (t: Tab) => void;
+  onStatus: (id: string, s: string) => void;
+  onRefresh: () => void;
 }) {
   const [activity, setActivity] = useState<ActivityItem[]>([]);
+  const [attentionAppt, setAttentionAppt] = useState<Appointment | null>(null);
   useEffect(() => {
     if (!token) return;
     const supabase = createClient();
@@ -2470,6 +2528,14 @@ function OverviewPanel({ leads, appts, convos, matters, homePros, emails, inquir
           </button>
         ))}
       </div>
+
+      <AttentionOverview
+        appts={appts}
+        token={token}
+        accountEmail={accountEmail}
+        onOpenAttention={(a) => setAttentionAppt(appts.find((x) => x.id === a.id) ?? null)}
+        onTab={(t) => onTab(t as Tab)}
+      />
 
       {/* Follow-up queue */}
       {staleLeads.length > 0 && (
@@ -2554,6 +2620,16 @@ function OverviewPanel({ leads, appts, convos, matters, homePros, emails, inquir
             })}
           </div>
         </div>
+      )}
+
+      {attentionAppt && (
+        <AppointmentAttentionPanel
+          appt={attentionAppt}
+          token={token}
+          onClose={() => setAttentionAppt(null)}
+          onStatus={onStatus}
+          onRefresh={onRefresh}
+        />
       )}
     </div>
   );
@@ -3462,6 +3538,7 @@ const STATUS_TONE: Record<string, React.CSSProperties> = {
   confirmed: { background: "rgba(47,122,82,.16)", color: "#2f7a52" },
   cancelled: { background: "rgba(190,60,60,.14)", color: "#a23b3b" },
   completed: { background: "rgba(16,42,30,.12)", color: GREEN },
+  no_show: { background: "rgba(190,60,60,.14)", color: "#a23b3b" },
   waiting_agent: { background: "rgba(200,166,92,.25)", color: "#8a6a22" },
   agent: { background: "rgba(47,122,82,.16)", color: "#2f7a52" },
   bot: { background: "rgba(18,16,12,.08)", color: MUTED },

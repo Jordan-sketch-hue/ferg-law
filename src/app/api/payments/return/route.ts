@@ -17,6 +17,7 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { parseReturn } from "@/lib/payments/wipay";
 import { fullWhenLabel } from "@/lib/booking/format";
 import { sendBookingConfirmation } from "@/lib/email/send";
+import { logReminderEvent } from "@/lib/attention/reminderLog";
 
 import { createMeetingRoom } from "@/lib/meetings/create";
 
@@ -104,7 +105,7 @@ export async function GET(req: NextRequest) {
     } catch { /* swallow */ }
 
     try {
-      await sendBookingConfirmation({
+      const send = await sendBookingConfirmation({
         to: row.r_email,
         name: row.r_name || "",
         service: row.r_service || "Consultation",
@@ -112,6 +113,20 @@ export async function GET(req: NextRequest) {
         ref,
         meetingUrl,
       });
+      const { data: apptRow } = await supabase.from("appointments").select("id").eq("ref", ref).maybeSingle();
+      if (apptRow?.id) {
+        await logReminderEvent(supabase, {
+          appointmentId: apptRow.id,
+          appointmentRef: ref,
+          reminderType: "confirmation",
+          channel: "email",
+          destination: row.r_email,
+          status: "skipped" in send ? "skipped" : send.ok ? "sent" : "failed",
+          forStartsAt: row.r_starts ?? new Date().toISOString(),
+          providerMessageId: "ok" in send && send.ok ? send.id ?? null : null,
+          errorMessage: "ok" in send && !send.ok ? send.error : null,
+        });
+      }
     } catch {
       /* swallow — payment already settled */
     }

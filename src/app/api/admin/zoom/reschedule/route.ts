@@ -7,10 +7,11 @@
  */
 import { NextRequest } from "next/server";
 import { fromZonedTime } from "date-fns-tz";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { sendBookingUpdate } from "@/lib/email/send";
 import { fullWhenLabel } from "@/lib/booking/format";
 import { TZ } from "@/lib/booking/availability";
+import { logReminderEvent } from "@/lib/attention/reminderLog";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -43,7 +44,7 @@ export async function POST(req: NextRequest) {
 
   if (appt.email) {
     const meetingUrl = appt.meta?.meeting_url ?? appt.meta?.zoom_url ?? undefined;
-    await sendBookingUpdate({
+    const send = await sendBookingUpdate({
       to: appt.email,
       name: appt.name ?? "there",
       service: appt.service ?? "Consultation",
@@ -51,6 +52,17 @@ export async function POST(req: NextRequest) {
       ref: appt.ref,
       meetingUrl,
       kind: "rescheduled",
+    });
+    await logReminderEvent(createAdminClient(), {
+      appointmentId: appt.id,
+      appointmentRef: appt.ref,
+      reminderType: "rescheduled",
+      channel: "email",
+      destination: appt.email,
+      status: "skipped" in send ? "skipped" : send.ok ? "sent" : "failed",
+      forStartsAt: starts_at,
+      providerMessageId: "ok" in send && send.ok ? send.id ?? null : null,
+      errorMessage: "ok" in send && !send.ok ? send.error : null,
     });
   }
 

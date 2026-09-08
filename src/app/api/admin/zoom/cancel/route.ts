@@ -3,9 +3,10 @@
  * Cancels a booking and emails the client. Body: { token, ref }
  */
 import { NextRequest } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { sendBookingUpdate } from "@/lib/email/send";
 import { fullWhenLabel } from "@/lib/booking/format";
+import { logReminderEvent } from "@/lib/attention/reminderLog";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,13 +31,24 @@ export async function POST(req: NextRequest) {
   if (error) return Response.json({ ok: false, error: error.message }, { status: 500 });
 
   if (appt.email) {
-    await sendBookingUpdate({
+    const send = await sendBookingUpdate({
       to: appt.email,
       name: appt.name ?? "there",
       service: appt.service ?? "Consultation",
       whenLabel: fullWhenLabel(appt.starts_at),
       ref: appt.ref,
       kind: "cancelled",
+    });
+    await logReminderEvent(createAdminClient(), {
+      appointmentId: appt.id,
+      appointmentRef: appt.ref,
+      reminderType: "cancelled",
+      channel: "email",
+      destination: appt.email,
+      status: "skipped" in send ? "skipped" : send.ok ? "sent" : "failed",
+      forStartsAt: appt.starts_at,
+      providerMessageId: "ok" in send && send.ok ? send.id ?? null : null,
+      errorMessage: "ok" in send && !send.ok ? send.error : null,
     });
   }
 
