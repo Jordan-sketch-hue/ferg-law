@@ -807,7 +807,7 @@ function ClientDashboardInner() {
             </div>
           )}
           <p style={{ marginTop: 14, fontSize: 13 }}>Prefer to talk first?{" "}
-            <a href={waLink()} target="_blank" rel="noopener" style={{ color: "var(--ink)", fontWeight: 600 }}>Message us on WhatsApp</a>.
+            <a href={waLink()} style={{ color: "var(--ink)", fontWeight: 600 }}>Message us on WhatsApp</a>.
           </p>
         </div>
       ) : (
@@ -899,7 +899,7 @@ function ClientDashboardInner() {
 
       <div style={{ marginTop: 36, paddingTop: 22, borderTop: "1px solid var(--line)", display: "flex", gap: 16, flexWrap: "wrap" }}>
         <Link href="/" className="btn btn-ghost" style={{ fontSize: 13 }}>← Back to Ferguson Law</Link>
-        <a href={waLink()} target="_blank" rel="noopener" className="btn btn-gold" style={{ fontSize: 13 }}>Contact Ferguson Law</a>
+        <a href={waLink()} className="btn btn-gold" style={{ fontSize: 13 }}>Contact Ferguson Law</a>
       </div>
     </div>
   );

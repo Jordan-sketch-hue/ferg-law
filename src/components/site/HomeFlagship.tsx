@@ -94,7 +94,7 @@ export default function HomeFlagship({
             </div>
           </div>
           <div className="steps-card reveal">
-            <a className="hstep hstep-link" href={`${SITE.homeApp}readiness`} target="_blank" rel="noopener">
+            <a className="hstep hstep-link" href={`${SITE.homeApp}readiness`}>
               <div className="n" data-edit="home.steps.0.n">Step 01</div>
               <h4 data-edit="home.steps.0.title">Assess</h4>
               <p data-edit="home.steps.0.body">
@@ -110,7 +110,7 @@ export default function HomeFlagship({
               </p>
               <span className="hstep-cta">Find a professional →</span>
             </a>
-            <a className="hstep hstep-link" href={`${SITE.homeApp}mortgage-calculator`} target="_blank" rel="noopener">
+            <a className="hstep hstep-link" href={`${SITE.homeApp}mortgage-calculator`}>
               <div className="n" data-edit="home.steps.2.n">Step 03</div>
               <h4 data-edit="home.steps.2.title">Finance</h4>
               <p data-edit="home.steps.2.body">

@@ -61,7 +61,7 @@ export default async function BookingCompletePage({
                 Reference&nbsp; <span style={S.mono}>{ref}</span>
               </div>
             )}
-            <a href={wa} target="_blank" rel="noopener" style={S.goldBtn}>
+            <a href={wa} style={S.goldBtn}>
               Send details on WhatsApp
             </a>
             <Link href="/" style={S.ghostBtn}>
@@ -81,7 +81,7 @@ export default async function BookingCompletePage({
             <Link href="/" style={S.goldBtn}>
               Try booking again
             </Link>
-            <a href={wa} target="_blank" rel="noopener" style={S.ghostBtn}>
+            <a href={wa} style={S.ghostBtn}>
               Book on WhatsApp instead
             </a>
           </>

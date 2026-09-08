@@ -572,7 +572,7 @@ export default function BookingModal({
             ) : slotsError ? (
               <p className="sub" aria-live="polite">
                 We couldn&apos;t load live availability.{" "}
-                <a href={waLink()} target="_blank" rel="noopener">
+                <a href={waLink()} >
                   Reach us on WhatsApp
                 </a>{" "}
                 and we&apos;ll book you in.
@@ -580,7 +580,7 @@ export default function BookingModal({
             ) : days.length === 0 ? (
               <p className="sub" aria-live="polite">
                 No open times in the next two weeks.{" "}
-                <a href={waLink()} target="_blank" rel="noopener">
+                <a href={waLink()} >
                   Message us on WhatsApp
                 </a>{" "}
                 for the soonest slot.
@@ -745,7 +745,7 @@ export default function BookingModal({
               {submitError && (
                 <p className="sub" role="alert" style={{ color: "#b3261e" }}>
                   {submitError}{" "}
-                  <a href={waConfirmHref} target="_blank" rel="noopener">
+                  <a href={waConfirmHref} >
                     Book on WhatsApp instead
                   </a>
                 </p>

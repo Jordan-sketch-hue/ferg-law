@@ -126,8 +126,6 @@ export default function Nav() {
             <span className="nav-divider" aria-hidden="true" />
             <a
               href={HOME_LINK.href}
-              target="_blank"
-              rel="noopener"
               className="nav-home-inline"
             >
               H.O.M.E. by Ferguson Law<sup style={{fontSize:"0.55em",verticalAlign:"super",lineHeight:0}}>®</sup>
@@ -223,7 +221,7 @@ export default function Nav() {
           {LOGIN_LINKS.map((l) => (
             <a key={l.href} href={l.href} onClick={closeMenu} className="drawer-sub-link">{l.label}</a>
           ))}
-          <a href={HOME_LINK.href} target="_blank" rel="noopener" onClick={closeMenu} className="drawer-sub-link drawer-home-pill">
+          <a href={HOME_LINK.href} onClick={closeMenu} className="drawer-sub-link drawer-home-pill">
             <span>H.O.M.E. by Ferguson Law<sup style={{fontSize:"0.55em",verticalAlign:"super",lineHeight:0}}>®</sup></span>
           </a>
 

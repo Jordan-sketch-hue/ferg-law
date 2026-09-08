@@ -229,7 +229,7 @@ export default function GuidePage() {
           <p>The right legal advice today helps ensure your sale is completed smoothly, your proceeds are protected and your future remains secure.</p>
 
           <div className="g-cta">
-            <a className="btn btn-gold" href={waLink()} target="_blank" rel="noopener">Speak with Ferguson Law</a>
+            <a className="btn btn-gold" href={waLink()}>Speak with Ferguson Law</a>
             <Link className="btn btn-ghost" href="/explainers">More Explainers</Link>
           </div>
         </div>

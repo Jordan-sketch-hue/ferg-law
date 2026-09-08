@@ -282,7 +282,7 @@ export default function Home() {
               <p data-edit="process.steps.0.body">
                 Take the free H.O.M.E.® readiness assessment – know exactly where you stand before spending a dollar.
               </p>
-              <a className="tag pstep-link" href={`${SITE.homeApp}readiness`} target="_blank" rel="noopener">
+              <a className="tag pstep-link" href={`${SITE.homeApp}readiness`}>
                 Take the assessment –
               </a>
             </div>
@@ -318,7 +318,7 @@ export default function Home() {
                 <a className="tag pstep-link" href="/explainers">
                   Explainers –
                 </a>
-                <a className="tag pstep-link" href={`${SITE.homeApp}ebook`} target="_blank" rel="noopener">
+                <a className="tag pstep-link" href={`${SITE.homeApp}ebook`}>
                   H.O.M.E.® Buyers Guide –
                 </a>
               </div>
@@ -571,7 +571,7 @@ export default function Home() {
               <span className="btn btn-gold reach-btn">Start a chat</span>
             </ChatLink>
             {/* WhatsApp */}
-            <a className="reach-card reveal" href={waLink()} target="_blank" rel="noopener">
+            <a className="reach-card reveal" href={waLink()}>
               <div className="reach-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.35 2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6.13 6.13l.96-.96a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
               </div>

@@ -109,9 +109,7 @@ export default function FaqPage() {
                 href={waLink(
                   "Hi Ferguson Law — I have a question after reading your FAQ.",
                 )}
-                target="_blank"
-                rel="noopener"
-              >
+                              >
                 WhatsApp us
               </a>
             </div>

@@ -310,7 +310,7 @@ function GetStartedContent() {
                   <h3 style={S.momentHeadline}>{m.headline}</h3>
                   <p style={S.momentBody}>{m.body}</p>
                   {m.cta && (
-                    <a href={m.cta.href} target="_blank" rel="noopener" style={S.momentCta}>
+                    <a href={m.cta.href} style={S.momentCta}>
                       {m.cta.label} &rarr;
                     </a>
                   )}
@@ -346,8 +346,6 @@ function GetStartedContent() {
             <button onClick={openBooking} style={S.ghostBtn}>Book a Consultation</button>
             <a
               href={waLink("Hi Ferguson Law, I'd like to learn more about working with you.")}
-              target="_blank"
-              rel="noopener"
               style={S.ghostBtn}
             >
               WhatsApp us
