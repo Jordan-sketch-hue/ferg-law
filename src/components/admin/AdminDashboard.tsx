@@ -913,11 +913,7 @@ export default function AdminDashboard() {
             />
           )}
           {tab === "leads" && <LeadsTable leads={leads} loading={loading} token={token} onStatus={setLeadStatus} onDelete={deleteLead} />}
-<<<<<<< HEAD
-          {tab === "bookings" && <BookingsTable appts={appts} loading={loading} token={token ?? ""} onStatus={setApptStatus} onCancel={cancelBooking} onNew={(a) => setAppts(prev => [a, ...prev])} />}
-=======
           {tab === "bookings" && <BookingsTable appts={appts} loading={loading} token={token ?? ""} onStatus={setApptStatus} onCancel={cancelBooking} onRefresh={() => { if (token) void fetchAll(token); }} />}
->>>>>>> dbc12a5613da8aa977b9b4fc53e6f418d5b7d1ff
           {tab === "clients" && <ClientsTab clients={clients} matters={matters} loading={loading} token={token ?? ""} onUpsert={upsertClient} onDelete={deleteClient} />}
           {tab === "matters" && <MattersTab matters={matters} loading={loading} token={token ?? ""} onStage={setMatterStage} onPayment={setMatterPayment} />}
           {tab === "cms" && token && <CmsTab token={token} onUnreadChange={setCmsUnread} />}
@@ -1192,16 +1188,17 @@ function LeadsTable({ leads, loading, token, onStatus, onDelete }: { leads: Lead
 // ---------------------------------------------------------------------------
 // Bookings
 // ---------------------------------------------------------------------------
-<<<<<<< HEAD
-function NewBookingModal({ token, onClose, onCreated }: { token: string; onClose: () => void; onCreated: (a: Appointment) => void }) {
-  const SERVICES = [
-    { id: "realestate", label: "Real Estate & Conveyancing" },
-    { id: "corporate", label: "Corporate & Commercial" },
-    { id: "family", label: "Family & Estate" },
-    { id: "divorce", label: "Divorce & Matrimonial" },
-    { id: "ip", label: "Intellectual Property" },
-    { id: "sports", label: "Sports Law" },
-  ];
+const BOOKING_SERVICES = [
+  { id: "realestate", label: "Real Estate & Conveyancing" },
+  { id: "corporate", label: "Corporate & Commercial" },
+  { id: "family", label: "Family & Estate" },
+  { id: "divorce", label: "Divorce & Matrimonial" },
+  { id: "ip", label: "Intellectual Property" },
+  { id: "sports", label: "Sports Law" },
+];
+
+function NewBookingModal({ token, onClose, onCreated }: { token: string; onClose: () => void; onCreated: () => void }) {
+  const SERVICES = BOOKING_SERVICES;
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -1319,23 +1316,6 @@ function NewBookingModal({ token, onClose, onCreated }: { token: string; onClose
     </div>
   );
 }
-
-function BookingsTable({ appts, loading, token, onStatus, onCancel, onNew }: { appts: Appointment[]; loading: boolean; token: string; onStatus: (id: string, s: string) => void; onCancel: (id: string) => void; onNew: (a: Appointment) => void }) {
-  const [composing, setComposing] = useState<Appointment | null>(null);
-  const [zoomBusy, setZoomBusy] = useState<string | null>(null);
-  const [zoomLinks, setZoomLinks] = useState<Record<string, string>>({});
-  const [zoomErr, setZoomErr] = useState<string | null>(null);
-  const [showNew, setShowNew] = useState(false);
-=======
-const BOOKING_SERVICES = [
-  { id: "realestate", label: "Real Estate & Conveyancing" },
-  { id: "corporate", label: "Corporate & Commercial" },
-  { id: "family", label: "Family & Estate" },
-  { id: "divorce", label: "Divorce & Matrimonial" },
-  { id: "ip", label: "Intellectual Property" },
-  { id: "sports", label: "Sports Law" },
-];
->>>>>>> dbc12a5613da8aa977b9b4fc53e6f418d5b7d1ff
 
 function NewBookingModal({ token, onClose, onCreated }: { token: string; onClose: () => void; onCreated: () => void }) {
   const [name, setName] = useState("");
@@ -1485,54 +1465,6 @@ function BookingsTable({ appts, loading, token, onStatus, onCancel, onRefresh }:
     setLinkSending(null);
   }
 
-<<<<<<< HEAD
-  const newBtn = (
-    <button type="button" onClick={() => setShowNew(true)}
-      style={{ ...S.waBtn, background: GREEN, color: "#fff", marginBottom: 12 }}>
-      + New Booking
-    </button>
-  );
-
-  if (loading && appts.length === 0) return <>{newBtn}{showNew && <NewBookingModal token={token} onClose={() => setShowNew(false)} onCreated={(a) => { onNew(a); setShowNew(false); }} />}<Empty>Loading bookings…</Empty></>;
-  if (appts.length === 0) return <>{newBtn}{showNew && <NewBookingModal token={token} onClose={() => setShowNew(false)} onCreated={(a) => { onNew(a); setShowNew(false); }} />}<Empty>No bookings yet.</Empty></>;
-  return (
-    <>
-      {newBtn}
-      {showNew && <NewBookingModal token={token} onClose={() => setShowNew(false)} onCreated={(a) => { onNew(a); setShowNew(false); }} />}
-      {zoomErr && <div style={{ padding: "8px 16px", background: "rgba(162,59,59,.08)", color: "#a23b3b", fontSize: ".82rem", borderRadius: 8, margin: "8px 0" }}>{zoomErr}</div>}
-      <div style={S.tableWrap}>
-        <table style={S.table}>
-          <thead><tr><Th>When (Jamaica)</Th><Th>Service</Th><Th>Client</Th><Th>Contact</Th><Th>Ref</Th><Th>Status</Th><Th>Actions</Th></tr></thead>
-          <tbody>
-            {appts.map((a) => (
-              <tr key={a.id} style={S.tr}>
-                <Td><span style={S.strong}>{fmtWhen(a.starts_at)}</span></Td>
-                <Td>{a.service || "—"}</Td>
-                <Td>{a.name || "—"}</Td>
-                <Td><div style={S.contactCol}>{a.email && <span>{a.email}</span>}{a.phone && <span style={S.muted}>{a.phone}</span>}{!a.email && !a.phone && <span style={S.muted}>—</span>}</div></Td>
-                <Td><span style={S.mono}>{a.ref || "—"}</span></Td>
-                <Td><StatusSelect value={a.status} options={APPT_STATUSES} onChange={(v) => onStatus(a.id, v)} /></Td>
-                <Td>
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                    {a.email && (
-                      <button type="button" onClick={() => setComposing(a)}
-                        style={{ ...S.waBtn, background: "#c9a86a", color: "#10211c" }}>
-                        Email
-                      </button>
-                    )}
-                    {a.status !== "cancelled" && (
-                      <>
-                        {zoomLinks[a.id] ? (
-                          <a href={zoomLinks[a.id]} target="_blank" rel="noopener noreferrer"
-                            style={{ ...S.waBtn, background: "rgba(47,122,82,.12)", color: GREEN, textDecoration: "none" }}>
-                            Join Zoom
-                          </a>
-                        ) : (
-                          <button type="button" onClick={() => void createZoomForBooking(a)}
-                            disabled={zoomBusy === a.id}
-                            style={{ ...S.waBtn, background: "rgba(16,42,30,.08)", color: GREEN, border: "1px solid rgba(16,42,30,.2)", opacity: zoomBusy === a.id ? .6 : 1 }}>
-                            {zoomBusy === a.id ? "Creating…" : "Send meeting link"}
-=======
   return (
     <>
       <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
@@ -1561,7 +1493,6 @@ function BookingsTable({ appts, loading, token, onStatus, onCancel, onRefresh }:
                           <button type="button" onClick={() => setComposing(a)}
                             style={{ ...S.waBtn, background: "#c9a86a", color: "#10211c" }}>
                             Email
->>>>>>> dbc12a5613da8aa977b9b4fc53e6f418d5b7d1ff
                           </button>
                         )}
                         {a.email && a.status === "confirmed" && (
