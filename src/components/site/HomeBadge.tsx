@@ -25,8 +25,6 @@ export function HomeBadge({
       href={href}
       className={`home-badge-cta${dark ? " home-badge-dark" : ""} ${className}`.trim()}
       style={style}
-      target={external ? "_blank" : undefined}
-      rel={external ? "noopener" : undefined}
     >
       <span>{children}</span>
       <svg className="home-badge-arrow" viewBox="0 0 14 10" fill="none" stroke="currentColor" strokeWidth="1.8">

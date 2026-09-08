@@ -55,8 +55,6 @@ export default function Footer() {
               <h5>Contact</h5>
               <a
                 href={waLink()}
-                target="_blank"
-                rel="noopener"
                 data-edit="footer.whatsapp"
               >
                 WhatsApp · {SITE.whatsappDisplay}

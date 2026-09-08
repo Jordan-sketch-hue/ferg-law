@@ -770,8 +770,6 @@ export default function BookingModal({
                   className="btn btn-gold"
                   id="waConfirm"
                   href={waConfirmHref}
-                  target="_blank"
-                  rel="noopener"
                 >
                   Send details on WhatsApp
                 </a>
