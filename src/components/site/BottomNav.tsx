@@ -16,6 +16,13 @@ export default function BottomNav() {
   const [isPwa, setIsPwa] = useState(false);
   const pathname = usePathname();
 
+  // Find the longest-matching tab so /directory/client doesn't also activate /directory
+  const activeHref = TABS.reduce<string | null>((best, tab) => {
+    const matches = tab.href === "/" ? pathname === "/" : pathname === tab.href || pathname.startsWith(tab.href + "/");
+    if (matches && tab.href.length > (best?.length ?? 0)) return tab.href;
+    return best;
+  }, null);
+
   useEffect(() => {
     const mq = window.matchMedia("(display-mode: standalone)");
     setIsPwa(mq.matches);
@@ -44,7 +51,7 @@ export default function BottomNav() {
         }}
       >
         {TABS.map(({ href, icon: Icon, label }) => {
-          const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
+          const active = href === activeHref;
           return (
             <Link
               key={href}

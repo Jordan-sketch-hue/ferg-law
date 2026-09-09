@@ -39,14 +39,11 @@ export default function SwUpdateToast() {
   }, []);
 
   const reload = () => {
-    if (waiting) {
-      waiting.postMessage({ type: 'SKIP_WAITING' });
-      waiting.addEventListener('statechange', () => {
-        if (waiting.state === 'activated') window.location.reload();
-      });
-    } else {
-      window.location.reload();
-    }
+    setShow(false);
+    if (waiting) waiting.postMessage({ type: 'SKIP_WAITING' });
+    navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload(), { once: true });
+    // Fallback: reload regardless after 2s if controllerchange doesn't fire
+    setTimeout(() => window.location.reload(), 2000);
   };
 
   if (!show) return null;
@@ -71,6 +68,16 @@ export default function SwUpdateToast() {
         }}
       >
         Reload
+      </button>
+      <button
+        onClick={() => setShow(false)}
+        style={{
+          background: 'transparent', color: 'rgba(255,255,255,0.5)', border: 'none',
+          padding: '4px 6px', cursor: 'pointer', fontSize: '1.1rem', lineHeight: 1,
+        }}
+        aria-label="Dismiss"
+      >
+        ×
       </button>
     </div>
   );

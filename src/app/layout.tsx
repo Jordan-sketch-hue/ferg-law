@@ -12,6 +12,7 @@ import PwaAnalyticsInit from "@/components/pwa/PwaAnalyticsInit";
 import InstallPrompt from "@/components/pwa/InstallPrompt";
 import SplashScreen from "@/components/site/SplashScreen";
 import BottomNav from "@/components/site/BottomNav";
+import PushPromptGlobal from "@/components/pwa/PushPromptGlobal";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -205,6 +206,7 @@ export default function RootLayout({
         <InstallPrompt />
         <SplashScreen />
         <BottomNav />
+        <PushPromptGlobal />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
