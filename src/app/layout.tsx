@@ -10,6 +10,8 @@ import SwRegister from "@/components/pwa/SwRegister";
 import SwUpdateToast from "@/components/pwa/SwUpdateToast";
 import PwaAnalyticsInit from "@/components/pwa/PwaAnalyticsInit";
 import InstallPrompt from "@/components/pwa/InstallPrompt";
+import SplashScreen from "@/components/site/SplashScreen";
+import BottomNav from "@/components/site/BottomNav";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -201,6 +203,8 @@ export default function RootLayout({
         <SwUpdateToast />
         <PwaAnalyticsInit />
         <InstallPrompt />
+        <SplashScreen />
+        <BottomNav />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
