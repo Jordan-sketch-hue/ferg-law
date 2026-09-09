@@ -1,23 +1,20 @@
 "use client";
 import { useLayoutEffect, useState } from "react";
 
-/**
- * Ferguson Law splash screen — shows once per browser session.
- * Dark forest, F-mark spring animation, 2.1s auto-dismiss.
- */
 export default function SplashScreen() {
   const [visible, setVisible] = useState(false);
   const [leaving, setLeaving] = useState(false);
 
   useLayoutEffect(() => {
-    if (!window.matchMedia("(display-mode: standalone)").matches) return;
-    try {
-      if (sessionStorage.getItem("fl_splashed")) return;
-      sessionStorage.setItem("fl_splashed", "1");
-    } catch { return; }
+    // Inline script already set data-splashing synchronously before first paint.
+    // If it's present, the CSS already hid other body children — just show the splash.
+    if (!document.documentElement.hasAttribute("data-splashing")) return;
     setVisible(true);
     const t1 = setTimeout(() => setLeaving(true), 1750);
-    const t2 = setTimeout(() => setVisible(false), 2100);
+    const t2 = setTimeout(() => {
+      document.documentElement.removeAttribute("data-splashing");
+      setVisible(false);
+    }, 2100);
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, []);
 
@@ -25,6 +22,7 @@ export default function SplashScreen() {
 
   return (
     <div
+      data-splash-overlay
       aria-hidden="true"
       style={{
         position: "fixed",

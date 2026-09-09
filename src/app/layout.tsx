@@ -192,6 +192,10 @@ export default function RootLayout({
         <meta name="msapplication-TileColor" content="#0D1F16" />
         <meta name="msapplication-TileImage" content="/favicon-512.png" />
         <meta name="mobile-web-app-capable" content="yes" />
+        {/* Splash-guard: hide all body children except the splash overlay before React hydrates */}
+        <style dangerouslySetInnerHTML={{ __html: `html[data-splashing] body>*:not([data-splash-overlay]){opacity:0!important}` }} />
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+        <script dangerouslySetInnerHTML={{ __html: `try{if(window.matchMedia('(display-mode:standalone)').matches&&!sessionStorage.getItem('fl_splashed')){sessionStorage.setItem('fl_splashed','1');document.documentElement.setAttribute('data-splashing','1');}}catch(e){}` }} />
       </head>
       <body>
         {children}

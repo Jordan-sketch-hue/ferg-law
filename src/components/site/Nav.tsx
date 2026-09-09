@@ -407,6 +407,14 @@ export default function Nav() {
         }
 
         @media(max-width:760px){ .nav-login-wrap{ display:none; } }
+
+        /* PWA standalone: BottomNav handles navigation — hide duplicate CTAs & hamburger */
+        @media(display-mode:standalone){
+          .menu-btn{ display:none !important; }
+          .nav-drawer-clip{ display:none !important; }
+          .nav-consult-btn, .nav-consult-mobile, .nav-get-started{ display:none !important; }
+          .nav-login-wrap{ display:none !important; }
+        }
         @media(max-width:1200px){
           .nav-links a, .nav-links .nav-home-inline{ font-size:.78rem; }
           .nav-links{ gap:1rem; }
