@@ -331,7 +331,7 @@ function AuthPageInner() {
               Ferguson Law
             </div>
             <div style={{ fontSize: ".6rem", letterSpacing: ".22em", textTransform: "uppercase", color: "#C8A65C", fontWeight: 600, marginTop: ".15rem" }}>
-              Jamaica Property Law
+              Trusted Law Firm · Jamaica
             </div>
           </Link>
         </div>
