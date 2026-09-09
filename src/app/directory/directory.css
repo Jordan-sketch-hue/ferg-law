@@ -134,3 +134,10 @@
   .dir-hero { padding: 36px 0 22px; }
   .dir-hero p { font-size: 15.5px; }
 }
+
+/* PWA standalone — hide partner-facing CTAs; clients just want to browse */
+@media (display-mode: standalone) {
+  .dir-hero .cta-row { display: none !important; }
+  .dir-header .dir-nav a[href="/directory/join"],
+  .dir-header .dir-nav a[href="/directory/login"] { display: none !important; }
+}

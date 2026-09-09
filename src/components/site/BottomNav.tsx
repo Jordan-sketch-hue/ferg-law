@@ -16,9 +16,13 @@ export default function BottomNav() {
   const [isPwa, setIsPwa] = useState(false);
   const pathname = usePathname();
 
-  // Find the longest-matching tab so /directory/client doesn't also activate /directory
+  // Find the longest-matching tab.
+  // Tab + "/" handles sub-routes; tab + "-" handles sibling pages like /directory/client-login
+  // which belongs to My Matter, not Professionals.
   const activeHref = TABS.reduce<string | null>((best, tab) => {
-    const matches = tab.href === "/" ? pathname === "/" : pathname === tab.href || pathname.startsWith(tab.href + "/");
+    const matches = tab.href === "/"
+      ? pathname === "/"
+      : pathname === tab.href || pathname.startsWith(tab.href + "/") || pathname.startsWith(tab.href + "-");
     if (matches && tab.href.length > (best?.length ?? 0)) return tab.href;
     return best;
   }, null);
