@@ -4,6 +4,7 @@
  */
 
 const VERSION = 'fl-v3';
+const ASSETS_CACHE = 'fl-assets-v3';
 const OFFLINE_URL = '/offline.html';
 
 const PRECACHE = [
@@ -32,7 +33,7 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter(k => k !== VERSION && k !== 'fl-assets-v2').map(k => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter(k => k !== VERSION && k !== ASSETS_CACHE).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
       .then(() => self.clients.matchAll({ type: 'window' }))
       .then((clients) => clients.forEach((c) => c.postMessage({ type: 'SW_UPDATED' })))
@@ -68,12 +69,12 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache-first: static assets
+  // Stale-while-revalidate: static assets (keeps serving cached images while refreshing in bg)
   if (
     url.pathname.match(/\.(png|jpg|jpeg|webp|avif|svg|ico|woff2|woff)$/) ||
     url.pathname.startsWith('/_next/static/')
   ) {
-    event.respondWith(cacheFirst(request, 'fl-assets-v2', 60));
+    event.respondWith(staleWhileRevalidateAsset(request, ASSETS_CACHE));
     return;
   }
 
@@ -113,21 +114,15 @@ async function networkFirst(request) {
   }
 }
 
-async function cacheFirst(request, cacheName, maxEntries) {
+async function staleWhileRevalidateAsset(request, cacheName) {
   const cache = await caches.open(cacheName);
   const cached = await cache.match(request);
-  if (cached) return cached;
-  try {
-    const res = await fetch(request);
-    const keys = await cache.keys();
-    while (keys.length >= maxEntries) {
-      await cache.delete(keys.shift());
-    }
-    cache.put(request, res.clone());
+  const fetchPromise = fetch(request).then((res) => {
+    if (res.ok) cache.put(request, res.clone());
     return res;
-  } catch {
-    return new Response('', { status: 404 });
-  }
+  }).catch(() => null);
+  // Serve cached immediately; refresh in background if stale
+  return cached || await fetchPromise || new Response('', { status: 404 });
 }
 
 async function staleWhileRevalidate(request) {

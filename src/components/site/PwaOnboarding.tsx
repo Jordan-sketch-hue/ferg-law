@@ -80,7 +80,7 @@ function FMark() {
         fontFamily: "system-ui, sans-serif",
         marginTop: 3,
       }}>
-        Jamaica&apos;s property law firm
+        Jamaica&apos;s trusted law firm
       </div>
     </div>
   );

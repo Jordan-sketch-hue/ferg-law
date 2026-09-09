@@ -106,7 +106,7 @@ function Splash({ onDone }: { onDone: () => void }) {
           Ferguson Law
         </p>
         <p style={{ fontSize: "0.82rem", color: "rgba(255,255,255,.45)", margin: 0 }}>
-          Jamaica&apos;s trusted property law firm
+          Jamaica&apos;s trusted law firm
         </p>
       </div>
       {/* Pulse ring */}

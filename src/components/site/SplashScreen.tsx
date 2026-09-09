@@ -85,7 +85,7 @@ export default function SplashScreen() {
           color: "rgba(200,166,92,0.45)",
           fontFamily: "system-ui, sans-serif",
         }}>
-          Jamaica&apos;s property law firm
+          Jamaica&apos;s trusted law firm
         </div>
       </div>
 

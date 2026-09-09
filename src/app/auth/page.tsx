@@ -576,8 +576,8 @@ function AuthPageInner() {
 
         {/* Help text */}
         <p style={{ textAlign: "center", marginTop: "1.25rem", fontSize: ".75rem", color: "rgba(16,42,30,.35)", lineHeight: 1.7 }}>
-          Ferguson Law · Jamaica Property Law &amp; Conveyancing<br/>
-          <a href="tel:6583188070" style={{ color: "rgba(16,42,30,.4)", textDecoration: "none" }}>(658) 318-8070</a>
+          Ferguson Law · Kingston, Jamaica<br/>
+          <a href="tel:+18763200235" style={{ color: "rgba(16,42,30,.4)", textDecoration: "none" }}>(876) 320-0235</a>
         </p>
       </div>
     </div>
