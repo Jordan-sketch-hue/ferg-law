@@ -571,6 +571,13 @@ export default function AdminDashboard() {
     await supabase.rpc("fl_admin_set_matter_payment", { p_token: token, p_id: id, p_status: payment_status });
   }, [token]);
 
+  const deleteMatter = useCallback(async (id: string) => {
+    if (!token || !confirm('Delete this matter? This cannot be undone.')) return;
+    setMatters((prev) => prev.filter((m) => m.id !== id));
+    const supabase = createClient();
+    await supabase.rpc('fl_admin_delete_matter', { p_token: token, p_id: id });
+  }, [token]);
+
   const upsertClient = useCallback(async (fields: {
     name: string; email: string; phone: string; type: string; country: string; notes: string;
   }): Promise<string | null> => {
@@ -1710,7 +1717,7 @@ function MattersTab({ matters, loading, token, onStage, onPayment, onDelete }: {
       ) : (
         <div style={S.tableWrap}>
           <table style={S.table}>
-            <thead><tr><Th>​</Th><Th>Ref</Th><Th>Client</Th><Th>Type</Th><Th>Stage</Th><Th>Priority</Th><Th>Payment</Th><Th>Description</Th><Th>Date</Th><Th></Th></tr></thead>
+            <thead><tr><Th>​</Th><Th>Ref</Th><Th>Client</Th><Th>Type</Th><Th>Stage</Th><Th>Priority</Th><Th>Payment</Th><Th>Description</Th><Th>Date</Th><Th>&#160;</Th></tr></thead>
             <tbody>
               {matters.map((m) => (
                 <>
