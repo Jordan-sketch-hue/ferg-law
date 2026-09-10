@@ -2725,7 +2725,7 @@ function EmailTab({ emails, token, onMarkRead }: {
     setSending(true); setSendResult(null);
     const to = selected.reply_to || selected.from_email;
     const subject = selected.subject ? (selected.subject.startsWith("Re:") ? selected.subject : `Re: ${selected.subject}`) : "Re: (no subject)";
-    const res = await fetch("/api/email/send", {
+    const res = await fetch("/api/admin/send-email", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token, to, subject, body: replyBody.trim(), replyToId: selected.id }),
