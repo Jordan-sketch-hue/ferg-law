@@ -927,7 +927,7 @@ export default function AdminDashboard() {
           {tab === "leads" && <LeadsTable leads={leads} loading={loading} token={token} onStatus={setLeadStatus} onDelete={deleteLead} />}
           {tab === "bookings" && <BookingsTable appts={appts} loading={loading} token={token ?? ""} onStatus={setApptStatus} onCancel={cancelBooking} onRefresh={() => { if (token) void fetchAll(token); }} />}
           {tab === "clients" && <ClientsTab clients={clients} matters={matters} loading={loading} token={token ?? ""} onUpsert={upsertClient} onDelete={deleteClient} />}
-          {tab === "matters" && <MattersTab matters={matters} loading={loading} token={token ?? ""} onStage={setMatterStage} onPayment={setMatterPayment} />}
+          {tab === "matters" && <MattersTab matters={matters} loading={loading} token={token ?? ""} onStage={setMatterStage} onPayment={setMatterPayment} onDelete={deleteMatter} />}
           {tab === "cms" && token && <CmsTab token={token} onUnreadChange={setCmsUnread} />}
           {tab === "calendar" && <CalendarTab appts={appts} token={token ?? ""} onStatus={setApptStatus} onRefresh={() => { if (token) void fetchAll(token); }} />}
           {tab === "chats" && <ChatsTable convos={convos} loading={loading} />}
@@ -1638,7 +1638,7 @@ function ClientsTab({ clients, matters, loading, onUpsert, onDelete, token }: {
                       </tr>
                       {expanded === c.id && cms.map((m) => (
                         <tr key={m.id} style={{ ...S.tr, background: "#faf8f2" }}>
-                          <td colSpan={9} style={{ ...S.td, paddingLeft: 32 }}>
+                          <td colSpan={10} style={{ ...S.td, paddingLeft: 32 }}>
                             <span style={S.mono}>{m.ref}</span>
                             {" · "}<strong>{m.matter_type || "matter"}</strong>
                             {" · stage: "}{m.stage}
@@ -1674,9 +1674,10 @@ const PRIORITY_COLORS: Record<string, React.CSSProperties> = {
   urgent: { background: "rgba(190,60,60,.14)", color: "#a23b3b" },
 };
 
-function MattersTab({ matters, loading, token, onStage, onPayment }: {
+function MattersTab({ matters, loading, token, onStage, onPayment, onDelete }: {
   matters: Matter[]; loading: boolean; token: string;
   onStage: (id: string, s: string) => void; onPayment: (id: string, s: string) => void;
+  onDelete: (id: string) => void;
 }) {
   const [view, setView] = useState<"table" | "kanban">("kanban");
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -1709,7 +1710,7 @@ function MattersTab({ matters, loading, token, onStage, onPayment }: {
       ) : (
         <div style={S.tableWrap}>
           <table style={S.table}>
-            <thead><tr><Th>​</Th><Th>Ref</Th><Th>Client</Th><Th>Type</Th><Th>Stage</Th><Th>Priority</Th><Th>Payment</Th><Th>Description</Th><Th>Date</Th></tr></thead>
+            <thead><tr><Th>​</Th><Th>Ref</Th><Th>Client</Th><Th>Type</Th><Th>Stage</Th><Th>Priority</Th><Th>Payment</Th><Th>Description</Th><Th>Date</Th><Th></Th></tr></thead>
             <tbody>
               {matters.map((m) => (
                 <>
@@ -1723,10 +1724,11 @@ function MattersTab({ matters, loading, token, onStage, onPayment }: {
                     <Td onClick={e => e.stopPropagation()}><StatusSelect value={m.payment_status} options={PAYMENT_STATUSES} onChange={(v) => onPayment(m.id, v)} /></Td>
                     <Td><div style={S.msgCell} title={m.description ?? ""}>{m.description || "—"}</div></Td>
                     <Td>{fmtDate(m.created_at)}</Td>
+                    <Td onClick={e => e.stopPropagation()}><button type="button" title="Delete matter" onClick={() => onDelete(m.id)} style={{ background: "none", border: "none", cursor: "pointer", color: "#c94b4b", fontSize: "1rem", padding: "2px 6px" }}>🗑</button></Td>
                   </tr>
                   {expandedId === m.id && (
                     <tr key={`${m.id}-milestones`}>
-                      <td colSpan={9} style={{ padding: 0, background: "rgba(16,42,30,.03)" }}>
+                      <td colSpan={10} style={{ padding: 0, background: "rgba(16,42,30,.03)" }}>
                         <MilestonePanel matterId={m.id} token={token} matter={m} onClose={() => setExpandedId(null)} inline />
                       </td>
                     </tr>

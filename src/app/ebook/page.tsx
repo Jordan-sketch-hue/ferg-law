@@ -196,7 +196,7 @@ export default function EbookPage() {
                 <div>
                   <label style={lbl}>Financing type *</label>
                   <div className="ebook-radio-group" style={{ display: "flex", flexWrap: "wrap", gap: "1rem", marginTop: 4 }}>
-                    {["Cash", "Mortgage", "NHT", "Undecided"].map(opt => (
+                    {["Cash", "Mortgage", "NHT", "Undecided", "Multiple sources"].map(opt => (
                       <label key={opt} className="ebook-radio-label" style={radio}>
                         <input
                           type="checkbox"

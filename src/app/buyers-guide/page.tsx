@@ -1,4 +1,4 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { CONSULT_DURATION_MIN } from "@/lib/site";
 import { BookingProvider, BookButton } from "@/components/site/BookingProvider";
@@ -74,7 +74,13 @@ export default function BuyersGuidePage() {
               title. Plain English. Backed by a Ferguson Law attorney.
             </p>
             <div style={{ display: "flex", gap: ".9rem", flexWrap: "wrap" }}>
-              <a className="btn btn-gold" href="#get-guide">
+              <Link className="btn btn-gold" href="/get-started">
+                Start now <ArrowIcon />
+              </Link>
+              <Link className="btn btn-light" href="/booking">
+                Book here <ArrowIcon />
+              </Link>
+              <a className="btn btn-outline" href="#get-guide">
                 Get Access Now <ArrowIcon />
               </a>
             </div>
