@@ -80,7 +80,7 @@ export default function BuyersGuidePage() {
               <Link className="btn btn-light" href="/booking">
                 Book here <ArrowIcon />
               </Link>
-              <a className="btn btn-outline" href="#get-guide">
+              <a className="btn btn-ghost-light" href="#get-guide">
                 Get Access Now <ArrowIcon />
               </a>
             </div>
