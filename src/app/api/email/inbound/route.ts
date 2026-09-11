@@ -1,16 +1,36 @@
-/**
+﻿/**
  * POST /api/email/inbound
- * Resend inbound webhook — stores incoming emails in fl_inbound_emails.
- * Add this URL in Resend → Inbound → Webhook: https://fergusonlawja.com/api/email/inbound
+ * Handles both Resend inbound webhook AND forwardemail.net webhook.
+ *
+ * Resend payload: { data: { from: "Name <email>", to: [...], subject, text, html } }
+ * forwardemail.net payload: { from: { address, name }, to: [{address}], subject, text, html }
+ *
+ * To activate without changing MX records:
+ *   In forwardemail.net dashboard > Domain > Webhooks, add:
+ *   https://fergusonlawja.com/api/email/inbound
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 
 const WEBHOOK_SECRET = process.env.RESEND_WEBHOOK_SECRET;
 
+type EmailAddress = { address?: string; name?: string } | string;
+
+function resolveAddress(val: EmailAddress): { email: string; name: string | null } {
+  if (!val) return { email: "", name: null };
+  if (typeof val === "string") {
+    const m = val.match(/^(.+?)\s*<(.+?)>$/);
+    return m ? { email: m[2].trim(), name: m[1].trim() } : { email: val.trim(), name: null };
+  }
+  return { email: val.address?.trim() ?? "", name: val.name?.trim() || null };
+}
+
+function firstOf<T>(v: T | T[]): T {
+  return Array.isArray(v) ? v[0] : v;
+}
+
 export async function POST(req: NextRequest) {
   try {
-    // Minimal secret check — if env is set, require it as x-webhook-secret header
     if (WEBHOOK_SECRET) {
       const sig = req.headers.get("x-webhook-secret") || req.headers.get("x-resend-signature");
       if (sig !== WEBHOOK_SECRET) {
@@ -18,42 +38,29 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const body = (await req.json()) as {
-      from?: string;
-      to?: string | string[];
-      subject?: string;
-      text?: string;
-      html?: string;
-      replyTo?: string | string[];
-      headers?: Record<string, string>;
-      // Resend inbound envelope shape
-      data?: {
-        from?: string;
-        to?: string | string[];
-        subject?: string;
-        text?: string;
-        html?: string;
-        replyTo?: string | string[];
-        headers?: Record<string, string>;
-      };
-    };
+    const body = await req.json() as Record<string, unknown>;
 
-    // Resend wraps inbound in a `data` key
-    const payload = body.data ?? body;
+    // Resend wraps in data key; forwardemail.net sends flat
+    const isResend = !!body.data && typeof (body.data as Record<string, unknown>).from === "string";
+    const payload = isResend
+      ? (body.data as Record<string, unknown>)
+      : body;
 
-    const fromRaw = payload.from ?? "";
-    // Parse "Name <email>" format
-    const nameMatch = fromRaw.match(/^(.+?)\s*<(.+?)>$/);
-    const fromName = nameMatch ? nameMatch[1].trim() : null;
-    const fromEmail = nameMatch ? nameMatch[2].trim() : fromRaw.trim();
+    const fromRaw = payload.from as EmailAddress;
+    const { email: fromEmail, name: fromName } = resolveAddress(fromRaw);
 
     const toRaw = payload.to;
-    const toEmail = Array.isArray(toRaw) ? toRaw[0] : (toRaw ?? null);
+    const toFirst = firstOf(toRaw as EmailAddress | EmailAddress[]);
+    const { email: toEmail } = resolveAddress(toFirst);
 
-    const replyToRaw = payload.replyTo;
-    const replyTo = Array.isArray(replyToRaw) ? replyToRaw[0] : (replyToRaw ?? null);
+    const replyToRaw = payload.replyTo ?? payload.reply_to;
+    const replyToFirst = replyToRaw
+      ? firstOf(replyToRaw as EmailAddress | EmailAddress[])
+      : null;
+    const replyTo = replyToFirst ? resolveAddress(replyToFirst).email : null;
 
-    const threadId = payload.headers?.["x-thread-id"] ?? null;
+    const headers = payload.headers as Record<string, string> | undefined;
+    const threadId = headers?.["x-thread-id"] ?? null;
 
     if (!fromEmail) {
       return NextResponse.json({ error: "Missing from" }, { status: 400 });
@@ -63,10 +70,10 @@ export async function POST(req: NextRequest) {
     const { error } = await supabase.from("fl_inbound_emails").insert({
       from_email: fromEmail,
       from_name: fromName,
-      to_email: toEmail,
-      subject: payload.subject ?? null,
-      body_text: payload.text ?? null,
-      body_html: payload.html ?? null,
+      to_email: toEmail || null,
+      subject: String(payload.subject ?? ""),
+      body_text: String(payload.text ?? ""),
+      body_html: String(payload.html ?? ""),
       reply_to: replyTo,
       thread_id: threadId,
     });
