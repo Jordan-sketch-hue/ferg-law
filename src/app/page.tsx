@@ -522,7 +522,7 @@ export default function Home() {
               H.O.M.E.® by Ferguson Law
             </div>
             <h2 style={{ fontFamily: "var(--serif, Georgia, serif)", fontSize: "clamp(1.4rem,2.5vw,2rem)", margin: "0 0 .6rem", color: "#10211c", lineHeight: 1.15 }}>
-              What Will Your Transaction Cost?
+              What Will My Transaction Cost?
             </h2>
             <p style={{ margin: 0, fontSize: ".95rem", color: "#69736d", maxWidth: 440, lineHeight: 1.65 }}>
               Enter the selling price and get a full breakdown — transfer tax, stamp duty, attorney fees, and more — before you sign anything.
