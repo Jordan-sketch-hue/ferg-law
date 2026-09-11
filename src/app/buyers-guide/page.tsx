@@ -7,6 +7,7 @@ import Reveal from "@/components/site/Reveal";
 import Footer from "@/components/site/Footer";
 import { SITE } from "@/lib/site";
 import { HomeBadge, HomeBadgeCSS } from "@/components/site/HomeBadge";
+import EbookFormSection from "@/components/site/EbookFormSection";
 
 export const metadata: Metadata = {
   title: "H.O.M.E.® Buyer's Guide — Home Ownership Made Easy | Ferguson Law",
@@ -79,9 +80,9 @@ export default function BuyersGuidePage() {
               <Link className="btn btn-light" href="/booking">
                 Book here <ArrowIcon />
               </Link>
-              <Link className="btn btn-ghost-light" href="/ebook">
+              <a className="btn btn-ghost-light" href="#get-guide">
                 Get Access Now <ArrowIcon />
-              </Link>
+              </a>
             </div>
           </div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -109,9 +110,9 @@ export default function BuyersGuidePage() {
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(280px,1fr))", gap: "1.2rem", marginTop: "2rem" }}>
             {[
-              { n: "01", t: "Know If You&apos;re Ready", d: "Assess your financial position, credit, and savings - before you start shopping." },
+              { n: "01", t: "Know If You're Ready", d: "Assess your financial position, credit, and savings - before you start shopping." },
               { n: "02", t: "Understanding the Costs", d: "Transfer tax, stamp duty, attorney fees, valuation, survey - every figure explained." },
-              { n: "03", t: "NHT &amp; Financing", d: "How to access your NHT benefits, qualify for a mortgage, and calculate your down payment." },
+              { n: "03", t: "NHT & Financing", d: "How to access your NHT benefits, qualify for a mortgage, and calculate your down payment." },
               { n: "04", t: "Finding Your Team", d: "Vetted real estate agents, valuators, surveyors, and lenders - the professionals you need." },
               { n: "05", t: "The Agreement for Sale", d: "What the contract means, what to watch for, and why your attorney must review it." },
               { n: "06", t: "From Contract to Title", d: "The legal steps from signed agreement to your name on a registered title." },
@@ -120,8 +121,8 @@ export default function BuyersGuidePage() {
             ].map((item) => (
               <div key={item.n} className="serv reveal" style={{ padding: "1.6rem 1.4rem", background: "rgba(255,255,255,.07)", borderColor: "rgba(255,255,255,.12)" }}>
                 <div className="num">{item.n}</div>
-                <h3 style={{ fontSize: "1.05rem", color: "#fff" }} dangerouslySetInnerHTML={{ __html: item.t }} />
-                <p style={{ fontSize: ".95rem", color: "rgba(246,242,234,.7)" }} dangerouslySetInnerHTML={{ __html: item.d }} />
+                <h3 style={{ fontSize: "1.05rem", color: "#fff" }}>{item.t}</h3>
+                <p style={{ fontSize: ".95rem", color: "rgba(246,242,234,.7)" }}>{item.d}</p>
               </div>
             ))}
           </div>
@@ -152,6 +153,9 @@ export default function BuyersGuidePage() {
           </div>
         </div>
       </section>
+
+      {/* Inline lead capture form */}
+      <EbookFormSection />
 
       <style>{HomeBadgeCSS}</style>
       <Footer />
