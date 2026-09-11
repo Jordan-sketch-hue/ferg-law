@@ -2783,7 +2783,7 @@ function EmailTab({ emails, token, onMarkRead }: {
             </button>
             <button type="button" onClick={() => setShowSpam(v => !v)}
               style={{ marginTop: 8, width: "100%", padding: "7px 16px", fontSize: ".78rem", border: "1px solid rgba(18,16,12,.15)", borderRadius: 6, background: showSpam ? "rgba(180,50,50,.08)" : "transparent", color: showSpam ? "#b43232" : MUTED, cursor: "pointer" }}>
-              {showSpam ? "Hide spam" : `Show spam (\)`}
+              {showSpam ? "Hide spam" : `Show spam (${emails.filter(e => e.is_spam).length})`}
             </button>
           </div>
         )}
