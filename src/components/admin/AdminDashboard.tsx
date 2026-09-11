@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 /**
  * Consultation CRM — the Ferguson Law back office.
@@ -221,6 +221,7 @@ interface InboundEmail {
   thread_id: string | null;
   read: boolean;
   replied: boolean;
+  is_spam: boolean;
 }
 
 interface HomeInquiry {
@@ -2678,6 +2679,7 @@ function EmailTab({ emails, token, onMarkRead }: {
   const [newBody, setNewBody] = useState("");
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [suggesting, setSuggesting] = useState(false);
+  const [showSpam, setShowSpam] = useState(false);
 
   useEffect(() => {
     if (pane !== "sent") return;
@@ -2779,6 +2781,10 @@ function EmailTab({ emails, token, onMarkRead }: {
               style={{ ...S.authBtn, width: "100%", padding: "9px 16px", fontSize: ".82rem" }}>
               + Compose
             </button>
+            <button type="button" onClick={() => setShowSpam(v => !v)}
+              style={{ marginTop: 8, width: "100%", padding: "7px 16px", fontSize: ".78rem", border: "1px solid rgba(18,16,12,.15)", borderRadius: 6, background: showSpam ? "rgba(180,50,50,.08)" : "transparent", color: showSpam ? "#b43232" : MUTED, cursor: "pointer" }}>
+              {showSpam ? "Hide spam" : `Show spam (\)`}
+            </button>
           </div>
         )}
         {pane === "sent" ? (
@@ -2800,9 +2806,9 @@ function EmailTab({ emails, token, onMarkRead }: {
               <div style={{ fontSize: ".72rem", color: MUTED, marginTop: 2 }}>{fmtDate(e.created_at)}</div>
             </button>
           ))
-        ) : emails.length === 0 ? (
-          <div style={{ padding: "32px 16px", textAlign: "center", color: MUTED, fontSize: ".86rem" }}>No inbound emails yet.</div>
-        ) : emails.map((e) => (
+        ) : (emails.filter(e => showSpam ? e.is_spam : !e.is_spam)).length === 0 ? (
+          <div style={{ padding: "32px 16px", textAlign: "center", color: MUTED, fontSize: ".86rem" }}>{showSpam ? "No spam emails." : "No inbound emails yet."}</div>
+        ) : (emails.filter(e => showSpam ? e.is_spam : !e.is_spam)).map((e) => (
           <button key={e.id} type="button" onClick={() => selectEmail(e)}
             style={{ display: "block", width: "100%", textAlign: "left", border: "none", cursor: "pointer",
               padding: "12px 14px", background: selected?.id === e.id ? "rgba(16,42,30,.06)" : "#fff",
@@ -2814,6 +2820,8 @@ function EmailTab({ emails, token, onMarkRead }: {
                 {e.from_name || e.from_email}
               </span>
               {e.replied && <span style={{ fontSize: ".66rem", fontWeight: 700, color: "#2f7a52", background: "rgba(47,122,82,.12)", borderRadius: 999, padding: "1px 6px", flexShrink: 0 }}>Replied</span>}
+              {e.is_spam && showSpam && <span style={{ fontSize: ".66rem", fontWeight: 700, color: "#b43232", background: "rgba(180,50,50,.1)", borderRadius: 999, padding: "1px 6px", flexShrink: 0 }}>Spam</span>}
+              {e.is_spam && showSpam && <span style={{ fontSize: ".66rem", fontWeight: 700, color: "#b43232", background: "rgba(180,50,50,.1)", borderRadius: 999, padding: "1px 6px", flexShrink: 0 }}>Spam</span>}
             </div>
             <div style={{ fontSize: ".78rem", color: MUTED, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.subject || "(no subject)"}</div>
             <div style={{ fontSize: ".72rem", color: MUTED, marginTop: 2 }}>{fmtDate(e.created_at)}</div>
