@@ -18,6 +18,7 @@ const LOGIN_LINKS = [
   { href: "/auth", label: "Sign in" },
   { href: "/directory/login", label: "Partner Login" },
   { href: "/directory/client-login", label: "Client Portal" },
+  { href: "/admin", label: "Back office" },
 ] as const;
 
 const HOME_LINK = { href: SITE.homeApp, label: "H.O.M.E. by Ferguson Law", external: true };
