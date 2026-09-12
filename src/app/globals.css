@@ -1220,7 +1220,7 @@
 /* ===== Admin portal — mobile / PWA responsive overrides ===== */
 /* Stat strip: wrap cards on small screens so they don't crush to 65px each */
 @media (max-width: 639px) {
-  .fl-admin-stat-strip { flex-wrap: wrap !important; }
+  .fl-admin-stat-strip { flex-wrap: wrap !important; overflow: visible !important; }
   .fl-admin-stat-card  { min-width: 140px !important; }
   .fl-admin-body       { padding-left: 14px !important; padding-right: 14px !important; }
   .fl-admin-topbar     { padding-left: 16px !important; padding-right: 16px !important; }
