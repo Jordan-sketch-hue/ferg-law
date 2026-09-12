@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 
 export default function SwUpdateToast() {
   const [show, setShow] = useState(false);
-  const [waiting, setWaiting] = useState<ServiceWorker | null>(null);
 
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
@@ -12,38 +11,16 @@ export default function SwUpdateToast() {
       || (navigator as { standalone?: boolean }).standalone === true;
     if (!standalone) return;
 
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data?.type === 'SW_UPDATED') setShow(true);
-    };
-    navigator.serviceWorker.addEventListener('message', handleMessage);
+    // SwRegister dispatches this when controllerchange fires while user is in a form.
+    const onCustom = () => setShow(true);
+    window.addEventListener('fl:sw-updated', onCustom);
 
-    // Check if there's already a waiting SW (page refreshed after update)
-    navigator.serviceWorker.ready.then((reg) => {
-      if (reg.waiting) {
-        setWaiting(reg.waiting);
-        setTimeout(() => setShow(true), 0);
-      }
-      reg.addEventListener('updatefound', () => {
-        const newWorker = reg.installing;
-        if (!newWorker) return;
-        newWorker.addEventListener('statechange', () => {
-          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            setWaiting(newWorker);
-            setShow(true);
-          }
-        });
-      });
-    });
-
-    return () => navigator.serviceWorker.removeEventListener('message', handleMessage);
+    return () => window.removeEventListener('fl:sw-updated', onCustom);
   }, []);
 
   const reload = () => {
     setShow(false);
-    if (waiting) waiting.postMessage({ type: 'SKIP_WAITING' });
-    navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload(), { once: true });
-    // Fallback: reload regardless after 2s if controllerchange doesn't fire
-    setTimeout(() => window.location.reload(), 2000);
+    setTimeout(() => window.location.reload(), 100);
   };
 
   if (!show) return null;
@@ -58,7 +35,7 @@ export default function SwUpdateToast() {
       fontFamily: 'var(--font-inter, system-ui, sans-serif)',
       fontSize: '0.9rem', maxWidth: 360, width: 'calc(100vw - 40px)',
     }}>
-      <span style={{ flex: 1 }}>New version available — reload for the latest.</span>
+      <span style={{ flex: 1 }}>New version available — reload to apply.</span>
       <button
         onClick={reload}
         style={{
@@ -77,7 +54,7 @@ export default function SwUpdateToast() {
         }}
         aria-label="Dismiss"
       >
-        ×
+        x
       </button>
     </div>
   );
