@@ -1,4 +1,4 @@
-/* eslint-disable @next/next/no-img-element */
+﻿/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -408,10 +408,8 @@ export default function Nav() {
 
         @media(max-width:760px){ .nav-login-wrap{ display:none; } }
 
-        /* PWA standalone: BottomNav handles navigation — hide duplicate CTAs & hamburger */
+        /* PWA standalone: BottomNav handles primary tabs — keep hamburger for Resources/portals */
         @media(display-mode:standalone){
-          .menu-btn{ display:none !important; }
-          .nav-drawer-clip{ display:none !important; }
           .nav-consult-btn, .nav-consult-mobile, .nav-get-started{ display:none !important; }
           .nav-login-wrap{ display:none !important; }
         }
