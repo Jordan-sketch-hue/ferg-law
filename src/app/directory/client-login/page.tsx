@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 export const dynamic = "force-dynamic";
 
@@ -114,8 +114,8 @@ function ClientLoginForm() {
         </p>
         {/* Skip link */}
         <div style={{ textAlign: "right", marginBottom: 8 }}>
-          <Link href="/" style={{ fontSize: "0.8rem", color: "var(--muted,#69736d)", textDecoration: "underline", textUnderlineOffset: 3 }}>
-            Skip — just browse the site
+          <Link href="/admin" style={{ fontSize: "0.8rem", color: "var(--muted,#69736d)", textDecoration: "underline", textUnderlineOffset: 3 }}>
+            Back office
           </Link>
         </div>
 

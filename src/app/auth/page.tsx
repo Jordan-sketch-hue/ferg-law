@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 export const dynamic = "force-dynamic";
 
@@ -535,8 +535,8 @@ function AuthPageInner() {
                   <>Already have an account? <button className="atoggle" onClick={() => switchMode("signin")}>Sign in</button></>
                 )}
                 <br />
-                <Link href="/" style={{ color: "var(--muted,#69736d)", textDecoration: "underline", textUnderlineOffset: 3 }}>
-                  Skip — browse the site
+                <Link href="/admin" style={{ color: "var(--muted,#69736d)", textDecoration: "underline", textUnderlineOffset: 3 }}>
+                  Back office
                 </Link>
               </div>
             </div>
