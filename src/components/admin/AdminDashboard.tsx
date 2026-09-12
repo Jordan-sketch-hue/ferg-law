@@ -197,6 +197,21 @@ interface HomeProperty {
 }
 
 type Tab = "overview" | "leads" | "bookings" | "clients" | "matters" | "cms" | "calendar" | "chats" | "invites" | "directory" | "availability" | "home_pros" | "home_listings" | "email" | "inquiries" | "referrals" | "recycle_bin" | "workflows" | "zoom" | "feedback" | "analytics" | "ebook_leads";
+// ── Admin tab groups ──────────────────────────────────────────────────────────
+type TabGroup = "dashboard" | "crm" | "email" | "directory" | "home";
+const TAB_GROUPS: Record<TabGroup, { label: string; tabs: Tab[] }> = {
+  dashboard: { label: "Dashboard", tabs: ["overview","analytics","calendar","zoom"] },
+  crm:       { label: "CRM",       tabs: ["leads","bookings","clients","matters","chats","cms","ebook_leads"] },
+  email:     { label: "Email",     tabs: ["email","feedback"] },
+  directory: { label: "Directory", tabs: ["invites","directory","availability","referrals","workflows"] },
+  home:      { label: "H.O.M.E.", tabs: ["home_pros","home_listings","inquiries","recycle_bin"] },
+};
+function tabToGroup(t: Tab): TabGroup {
+  for (const [g, { tabs }] of Object.entries(TAB_GROUPS) as [TabGroup, { label: string; tabs: Tab[] }][]) {
+    if ((tabs as string[]).includes(t)) return g;
+  }
+  return "dashboard";
+}
 
 interface BinItem {
   id: string;
@@ -277,6 +292,7 @@ export default function AdminDashboard() {
   const [showAccount, setShowAccount] = useState(false);
 
   const [tab, setTab] = useState<Tab>("overview");
+  const [group, setGroup] = useState<TabGroup>("dashboard");
   const [leads, setLeads] = useState<Lead[]>([]);
   const [appts, setAppts] = useState<Appointment[]>([]);
   const [convos, setConvos] = useState<Conversation[]>([]);
@@ -879,44 +895,42 @@ export default function AdminDashboard() {
 
         {loadError && <div style={S.errorBar}>{loadError}</div>}
 
-        <div style={{ ...S.tabs, background: "#fff", border: "1px solid rgba(18,16,12,.07)", borderRadius: "12px 12px 0 0" }}>
-          {(["overview","analytics","leads","ebook_leads","bookings","clients","matters","cms","calendar","chats","email","invites","directory","availability","home_pros","home_listings","inquiries","referrals","workflows","recycle_bin","zoom","feedback"] as Tab[]).map((t) => (
-            <TabBtn key={t} active={tab === t} onClick={() => switchTab(t)}
-              label={
-                t === "overview" ? "Overview" :
-                t === "cms" ? `CMS${cmsUnread > 0 ? ` (${cmsUnread})` : ""}` :
-                t === "home_pros" ? "H.O.M.E. Pros" :
-                t === "home_listings" ? "H.O.M.E. Listings" :
-                t === "email" ? "Email" :
-                t === "inquiries" ? "H.O.M.E. Inquiries" :
-                t === "analytics" ? "Analytics" :
-                t === "ebook_leads" ? "Ebook Leads" :
-                t === "referrals" ? "Referrals" :
-                t === "recycle_bin" ? "🗑 Bin" :
-                t === "workflows" ? "Workflows" :
-                t === "zoom" ? "Meetings" :
-                t === "feedback" ? "Tester Feedback" :
-                t.charAt(0).toUpperCase() + t.slice(1)
-              }
-              count={(() => {
-                const raw =
-                  t === "leads" ? leads.length :
-                  t === "bookings" ? appts.length :
-                  t === "clients" ? clients.length :
-                  t === "matters" ? matters.length :
-                  t === "chats" ? convos.length :
-                  t === "email" ? emails.filter(e => !e.read).length :
-                  t === "invites" ? invites.length :
-                  t === "directory" ? listings.length :
-                  t === "availability" ? availability.length :
-                  t === "home_pros" ? homePros.length :
-                  t === "home_listings" ? homeListings.length :
-                  t === "inquiries" ? inquiries.filter(i => i.status === "new").length :
-                  t === "recycle_bin" ? binItems.length : 0;
-                return Math.max(0, raw - (seenCounts[t] ?? 0));
-              })()}
-            />
-          ))}
+        {/* Two-tier grouped nav */}
+        <div style={{ background:"#fff", border:"1px solid rgba(18,16,12,.07)", borderRadius:"12px 12px 0 0", overflow:"hidden" }}>
+          {/* Group row */}
+          <div style={{ display:"flex", gap:0, borderBottom:"1px solid rgba(18,16,12,.08)", overflowX:"auto", scrollbarWidth:"none" as React.CSSProperties["scrollbarWidth"] }}>
+            {(Object.entries(TAB_GROUPS) as [TabGroup, { label: string; tabs: Tab[] }][]).map(([g, { label, tabs }]) => {
+              const isActive = group === g;
+              const groupCount = tabs.reduce((sum, t) => {
+                const raw = t==="leads"?leads.length:t==="bookings"?appts.length:t==="clients"?clients.length:t==="matters"?matters.length:t==="chats"?convos.length:t==="email"?emails.filter(e=>!e.read).length:t==="invites"?invites.length:t==="directory"?listings.length:t==="home_pros"?homePros.length:t==="home_listings"?homeListings.length:t==="inquiries"?inquiries.filter(i=>i.status==="new").length:t==="recycle_bin"?binItems.length:0;
+                return sum + Math.max(0, raw - (seenCounts[t] ?? 0));
+              }, 0);
+              return (
+                <button key={g} onClick={() => { setGroup(g); if (!tabs.includes(tab)) switchTab(tabs[0]); }}
+                  style={{ flex:"1 0 auto", padding:"10px 16px 9px", border:"none", borderBottom:isActive?`2px solid ${GOLD}`:"2px solid transparent", background:"transparent", color:isActive?GREEN:MUTED, fontWeight:isActive?700:500, fontSize:".8rem", cursor:"pointer", whiteSpace:"nowrap", marginBottom:-1, letterSpacing:".01em", display:"flex", alignItems:"center", gap:6 }}
+                >
+                  {label}
+                  {groupCount>0&&<span style={{ fontSize:".62rem", fontWeight:700, padding:"1px 6px", borderRadius:999, background:isActive?"rgba(200,166,92,.2)":"rgba(18,16,12,.07)", color:isActive?"#7a5a1a":MUTED }}>{groupCount}</span>}
+                </button>
+              );
+            })}
+          </div>
+          {/* Sub-tab row */}
+          <div style={{ display:"flex", gap:6, padding:"7px 10px", background:"rgba(18,16,12,.02)", overflowX:"auto", scrollbarWidth:"none" as React.CSSProperties["scrollbarWidth"] }}>
+            {TAB_GROUPS[group].tabs.map((t) => {
+              const isActive = tab === t;
+              const label = t==="overview"?"Overview":t==="cms"?(cmsUnread>0?"CMS ("+cmsUnread+")":"CMS"):t==="home_pros"?"Pros":t==="home_listings"?"Listings":t==="inquiries"?"Inquiries":t==="analytics"?"Analytics":t==="ebook_leads"?"Ebook Leads":t==="referrals"?"Referrals":t==="recycle_bin"?"🗑 Bin":t==="workflows"?"Workflows":t==="zoom"?"Meetings":t==="feedback"?"Feedback":t.charAt(0).toUpperCase()+t.slice(1);
+              const raw = t==="leads"?leads.length:t==="bookings"?appts.length:t==="clients"?clients.length:t==="matters"?matters.length:t==="chats"?convos.length:t==="email"?emails.filter(e=>!e.read).length:t==="invites"?invites.length:t==="directory"?listings.length:t==="availability"?availability.length:t==="home_pros"?homePros.length:t==="home_listings"?homeListings.length:t==="inquiries"?inquiries.filter(i=>i.status==="new").length:t==="recycle_bin"?binItems.length:0;
+              const count = Math.max(0, raw - (seenCounts[t] ?? 0));
+              return (
+                <button key={t} onClick={() => switchTab(t)}
+                  style={{ flexShrink:0, padding:"4px 12px", border:`1px solid ${isActive?GREEN:"rgba(18,16,12,.12)"}`, borderRadius:999, background:isActive?GREEN:"transparent", color:isActive?GOLD:MUTED, fontWeight:isActive?700:500, fontSize:".75rem", cursor:"pointer", whiteSpace:"nowrap", display:"inline-flex", alignItems:"center", gap:5 }}
+                >
+                  {label}{count>0&&<span style={{ fontSize:".6rem", fontWeight:700, padding:"0 5px", borderRadius:999, background:isActive?GOLD:"rgba(18,16,12,.07)", color:isActive?GREEN:MUTED }}>{count}</span>}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <div style={S.panel}>
