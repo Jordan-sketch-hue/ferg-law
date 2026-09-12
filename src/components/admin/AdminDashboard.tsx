@@ -2215,10 +2215,15 @@ function AvailabilityTab({ availability, onSave, token }: {
                     Active
                   </label>
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 8, alignItems: "center" }}>
-                  <input type="time" value={row.start_time.slice(0, 5)} style={S.fieldInput} onChange={(e) => update(row.day_of_week, "start_time", e.target.value + ":00")} />
-                  <input type="time" value={row.end_time.slice(0, 5)} style={S.fieldInput} onChange={(e) => update(row.day_of_week, "end_time", e.target.value + ":00")} />
-                  <input type="number" min={5} max={120} value={row.slot_duration_minutes} style={{ ...S.fieldInput, width: 60 }} onChange={(e) => update(row.day_of_week, "slot_duration_minutes", parseInt(e.target.value, 10) || 20)} />
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                    <input type="time" value={row.start_time.slice(0, 5)} style={S.fieldInput} onChange={(e) => update(row.day_of_week, "start_time", e.target.value + ":00")} />
+                    <input type="time" value={row.end_time.slice(0, 5)} style={S.fieldInput} onChange={(e) => update(row.day_of_week, "end_time", e.target.value + ":00")} />
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: ".78rem", color: MUTED, whiteSpace: "nowrap" }}>Slot (min)</span>
+                    <input type="number" min={5} max={120} value={row.slot_duration_minutes} style={{ ...S.fieldInput, width: 70 }} onChange={(e) => update(row.day_of_week, "slot_duration_minutes", parseInt(e.target.value, 10) || 20)} />
+                  </div>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10 }}>
                   <button type="button" onClick={() => void save(row)} disabled={saving === row.day_of_week} style={{ ...S.waBtn, ...(saving === row.day_of_week ? S.btnOff : null) }}>{saving === row.day_of_week ? "Saving…" : "Save"}</button>
