@@ -408,9 +408,8 @@ export default function Nav() {
 
         @media(max-width:760px){ .nav-login-wrap{ display:none; } }
 
-        /* PWA standalone: BottomNav handles primary tabs — keep hamburger for Resources/portals */
+        /* PWA standalone: show CTAs + hamburger; hide only the Log in dropdown (in drawer) */
         @media(display-mode:standalone){
-          .nav-consult-btn, .nav-consult-mobile, .nav-get-started{ display:none !important; }
           .nav-login-wrap{ display:none !important; }
         }
         @media(max-width:1200px){
