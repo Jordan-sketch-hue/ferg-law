@@ -1,4 +1,4 @@
-@import "tailwindcss";
+﻿@import "tailwindcss";
 
 /* ============================================================
    Ferguson Law — design system (ported from approved pitch)
@@ -1214,4 +1214,21 @@
   .bf-video-slot video{width:100%;height:100%;object-fit:contain;display:block}
   /* suppress the duplicate in the original brand-film section on mobile */
   .brand-film:not(.brand-film--mobile-slot) .bf-video{display:none}
+}
+
+
+/* ===== Admin portal — mobile / PWA responsive overrides ===== */
+/* Stat strip: wrap cards on small screens so they don't crush to 65px each */
+@media (max-width: 639px) {
+  .fl-admin-stat-strip { flex-wrap: wrap !important; }
+  .fl-admin-stat-card  { min-width: 140px !important; }
+  .fl-admin-body       { padding-left: 14px !important; padding-right: 14px !important; }
+  .fl-admin-topbar     { padding-left: 16px !important; padding-right: 16px !important; }
+}
+/* PWA safe-area: lift content above bottom nav + notch */
+.fl-admin-body {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 96px) !important;
+}
+.fl-admin-topbar {
+  padding-top: calc(env(safe-area-inset-top, 0px) + 14px) !important;
 }

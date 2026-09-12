@@ -269,7 +269,7 @@ export default function AdminDashboard() {
   const [authError, setAuthError] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
 
-  const [loginMode, setLoginMode] = useState<"account" | "code">("account");
+  const [loginMode, setLoginMode] = useState<"account" | "code">("code");
   const [emailInput, setEmailInput] = useState("");
   const [pwInput, setPwInput] = useState("");
   const [showPw, setShowPw] = useState(false);
@@ -844,7 +844,7 @@ export default function AdminDashboard() {
 
   return (
     <div style={S.shell}>
-      <header style={S.topbar}>
+      <header className="fl-admin-topbar" style={S.topbar}>
         <div>
           <div style={S.brandMarkSm}>Ferguson Law</div>
           <div style={S.topSub}>Consultation CRM · Back office</div>
@@ -865,8 +865,8 @@ export default function AdminDashboard() {
         <AccountPanel token={token} email={accountEmail} onClose={() => setShowAccount(false)} onEmailChange={setAccountEmail} />
       )}
 
-      <div style={S.body}>
-        <div style={S.statStrip}>
+      <div className="fl-admin-body" style={S.body}>
+        <div className="fl-admin-stat-strip" style={S.statStrip}>
           <Stat label="New leads" value={newLeads} urgent onClick={() => switchTab("leads")} />
           <Stat label="Pending bookings" value={pendingBookings} urgent onClick={() => switchTab("bookings")} />
           <Stat label="Open chats" value={openChats} urgent onClick={() => switchTab("chats")} />
@@ -973,6 +973,7 @@ export default function AdminDashboard() {
 function Stat({ label, value, urgent, onClick }: { label: string; value: number; urgent?: boolean; onClick?: () => void }) {
   return (
     <div
+      className="fl-admin-stat-card"
       style={{ ...S.statCard, ...(urgent && value > 0 ? { background: "rgba(200,166,92,.12)" } : null), ...(onClick ? { cursor: "pointer" } : null) }}
       onClick={onClick}
       role={onClick ? "button" : undefined}
