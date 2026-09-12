@@ -1153,6 +1153,13 @@ function EmailComposeModal({ to, toName, defaultSubject, context, service, token
 // ---------------------------------------------------------------------------
 function LeadsTable({ leads, loading, token, onStatus, onDelete }: { leads: Lead[]; loading: boolean; token: string; onStatus: (id: string, s: string) => void; onDelete: (id: string) => void }) {
   const [composing, setComposing] = useState<Lead | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
   async function deleteLead(id: string, name: string | null) {
     if (!confirm(`Delete lead "${name || "this lead"}"? This cannot be undone.`)) return;
     await createClient().rpc("fl_admin_delete_lead", { p_token: token, p_id: id });
@@ -1162,6 +1169,31 @@ function LeadsTable({ leads, loading, token, onStatus, onDelete }: { leads: Lead
   if (leads.length === 0) return <Empty>No leads yet.</Empty>;
   return (
     <>
+      {isMobile ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "12px 16px" }}>
+          {leads.map((l) => {
+            const wa = l.phone ? waLink("Hello " + (l.name ?? "") + ", this is Ferguson Law following up on your enquiry.") : null;
+            return (
+              <div key={l.id} style={{ background: "#fff", border: "1px solid rgba(18,16,12,.1)", borderRadius: 12, padding: "14px 16px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginBottom: 6 }}>
+                  <span style={{ fontWeight: 700, fontSize: ".92rem", color: GREEN }}>{l.name || "—"}</span>
+                  <StatusSelect value={l.status} options={LEAD_STATUSES} onChange={(v) => onStatus(l.id, v)} />
+                </div>
+                {(l.email || l.phone) && (<div style={{ fontSize: ".8rem", color: MUTED, marginBottom: 4 }}>{l.email && <div>{l.email}</div>}{l.phone && <div>{l.phone}</div>}</div>)}
+                {l.service && <div style={{ fontSize: ".78rem", color: INK, marginBottom: 4 }}>{l.service} <SourceBadge source={l.source} /></div>}
+                {l.message && <div style={{ fontSize: ".76rem", color: MUTED, marginBottom: 8, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as React.CSSProperties["WebkitBoxOrient"] }}>{l.message}</div>}
+                <div style={{ fontSize: ".7rem", color: MUTED, marginBottom: 10 }}>{fmtDate(l.created_at)}</div>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {l.email && <button type="button" onClick={() => setComposing(l)} style={{ ...S.waBtn, background: "#c9a86a", color: "#10211c" }}>Email</button>}
+                  {wa && <a href={wa} target="_blank" rel="noopener noreferrer" style={S.waBtn}>WhatsApp</a>}
+                  {l.status === "new" && <button type="button" onClick={() => onStatus(l.id, "contacted")} style={{ ...S.waBtn, background: "rgba(47,122,82,.12)", color: "#2f7a52", border: "1px solid rgba(47,122,82,.25)" }}>Contacted</button>}
+                  <button type="button" onClick={() => onDelete(l.id)} style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)" }}>Archive</button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
       <div style={S.tableWrap}>
         <table style={S.table}>
           <thead><tr><Th>Date</Th><Th>Name</Th><Th>Contact</Th><Th>Service</Th><Th>Source</Th><Th>Message</Th><Th>Status</Th><Th>Actions</Th></tr></thead>
@@ -1205,6 +1237,7 @@ function LeadsTable({ leads, loading, token, onStatus, onDelete }: { leads: Lead
           </tbody>
         </table>
       </div>
+      )}
       {composing && composing.email && (
         <EmailComposeModal
           to={composing.email}
@@ -1374,6 +1407,13 @@ type BookingSort = "soonest" | "latest" | "client" | "status";
 
 function BookingsTable({ appts, loading, token, onStatus, onCancel, onRefresh }: { appts: Appointment[]; loading: boolean; token: string; onStatus: (id: string, s: string) => void; onCancel: (id: string) => void; onRefresh: () => void }) {
   const [composing, setComposing] = useState<Appointment | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
   const [attentionAppt, setAttentionAppt] = useState<Appointment | null>(null);
   const [linkSending, setLinkSending] = useState<string | null>(null);
   const [linkResult, setLinkResult] = useState<Record<string, { ok: boolean; msg: string }>>({});
@@ -1452,6 +1492,35 @@ function BookingsTable({ appts, loading, token, onStatus, onCancel, onRefresh }:
         </div>
       </div>
       {loading && appts.length === 0 ? <Empty>Loading bookings…</Empty> : sorted.length === 0 ? <Empty>No bookings match this filter.</Empty> : (
+        isMobile ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "12px 16px" }}>
+            {sorted.map((a) => {
+              const attn = computeAttentionStatus(a, now);
+              return (
+                <div key={a.id} style={{ background: "#fff", border: "1px solid rgba(18,16,12,.1)", borderRadius: 12, padding: "14px 16px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginBottom: 6 }}>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: ".88rem", color: GREEN }}>{a.name || "—"}</div>
+                      <div style={{ fontSize: ".78rem", color: MUTED }}>{fmtWhen(a.starts_at)}</div>
+                    </div>
+                    <StatusSelect value={a.status} options={APPT_STATUSES} onChange={(v) => onStatus(a.id, v)} />
+                  </div>
+                  {a.service && <div style={{ fontSize: ".8rem", color: INK, marginBottom: 4 }}>{a.service}</div>}
+                  {(a.email || a.phone) && (<div style={{ fontSize: ".78rem", color: MUTED, marginBottom: 6 }}>{a.email && <div>{a.email}</div>}{a.phone && <div>{a.phone}</div>}</div>)}
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", marginBottom: 4 }}>
+                    <button type="button" onClick={() => setAttentionAppt(a)} style={{ padding: 0, border: "none", background: "none", cursor: "pointer" }}><AttentionBadge status={attn} /></button>
+                  </div>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    {a.email && <button type="button" onClick={() => setComposing(a)} style={{ ...S.waBtn, background: "#c9a86a", color: "#10211c" }}>Email</button>}
+                    {a.email && a.status === "confirmed" && <button type="button" onClick={() => void sendMeetingLink(a)} disabled={linkSending === a.id} style={{ ...S.waBtn, background: "rgba(16,42,30,.1)", color: GREEN, opacity: linkSending === a.id ? 0.6 : 1 }}>{linkSending === a.id ? "Sending…" : "Meeting link"}</button>}
+                    {a.status !== "cancelled" && <button type="button" onClick={() => onCancel(a.id)} style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)" }}>Cancel</button>}
+                    {linkResult[a.id] && <span style={{ fontSize: ".72rem", color: linkResult[a.id].ok ? "#2f7a52" : "#a23b3b" }}>{linkResult[a.id].msg}</span>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
         <div style={S.tableWrap}>
           <table style={S.table}>
             <thead><tr><Th>When (Jamaica)</Th><Th>Service</Th><Th>Client</Th><Th>Contact</Th><Th>Ref</Th><Th>Status</Th><Th>Attention</Th><Th>Actions</Th></tr></thead>
@@ -1508,6 +1577,7 @@ function BookingsTable({ appts, loading, token, onStatus, onCancel, onRefresh }:
             </tbody>
           </table>
         </div>
+        )
       )}
       {composing && composing.email && (
         <EmailComposeModal
@@ -1703,6 +1773,13 @@ function MattersTab({ matters, loading, token, onStage, onPayment, onDelete }: {
   onDelete: (id: string) => void;
 }) {
   const [view, setView] = useState<"table" | "kanban">("kanban");
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   if (loading && matters.length === 0) return <Empty>Loading matters…</Empty>;
@@ -1715,7 +1792,7 @@ function MattersTab({ matters, loading, token, onStage, onPayment, onDelete }: {
   return (
     <>
       <div style={{ display: "flex", gap: 8, padding: "14px 20px 0", borderBottom: "1px solid rgba(18,16,12,.07)" }}>
-        {(["kanban","table"] as const).map(v => (
+        {(isMobile ? (["kanban"] as const) : (["kanban", "table"] as const)).map(v => (
           <button key={v} type="button" onClick={() => setView(v)}
             style={{ padding: "6px 14px", borderRadius: 6, border: "1px solid rgba(18,16,12,.15)", background: view === v ? GREEN : "transparent", color: view === v ? CREAM : MUTED, fontSize: ".75rem", fontWeight: 600, cursor: "pointer", textTransform: "capitalize" }}>
             {v === "kanban" ? "⬛ Kanban" : "≡ Table"}
@@ -2086,6 +2163,13 @@ function AvailabilityTab({ availability, onSave, token }: {
   // Local editable state per row
   const [rows, setRows] = useState<Availability[]>([]);
   const [saving, setSaving] = useState<number | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
   const [msgs, setMsgs] = useState<Record<number, { kind: "ok" | "err"; text: string }>>({});
   const initRef = useRef(false);
 
@@ -2118,6 +2202,33 @@ function AvailabilityTab({ availability, onSave, token }: {
       <p style={{ color: MUTED, fontSize: ".84rem", marginBottom: 18 }}>
         Set the firm's weekly consultation schedule (Jamaica time). Changes apply to all future slot calculations immediately.
       </p>
+      {isMobile ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {rows.map((row) => {
+            const msg = msgs[row.day_of_week];
+            return (
+              <div key={row.day_of_week} style={{ background: "#fff", border: "1px solid rgba(18,16,12,.1)", borderRadius: 12, padding: "14px 16px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                  <span style={{ fontWeight: 700, fontSize: ".92rem", color: GREEN }}>{DAY_NAMES[row.day_of_week] ?? ("Day " + row.day_of_week)}</span>
+                  <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: ".8rem", color: MUTED }}>
+                    <input type="checkbox" checked={row.active} onChange={(e) => update(row.day_of_week, "active", e.target.checked)} style={{ width: 16, height: 16 }} />
+                    Active
+                  </label>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 8, alignItems: "center" }}>
+                  <input type="time" value={row.start_time.slice(0, 5)} style={S.fieldInput} onChange={(e) => update(row.day_of_week, "start_time", e.target.value + ":00")} />
+                  <input type="time" value={row.end_time.slice(0, 5)} style={S.fieldInput} onChange={(e) => update(row.day_of_week, "end_time", e.target.value + ":00")} />
+                  <input type="number" min={5} max={120} value={row.slot_duration_minutes} style={{ ...S.fieldInput, width: 60 }} onChange={(e) => update(row.day_of_week, "slot_duration_minutes", parseInt(e.target.value, 10) || 20)} />
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10 }}>
+                  <button type="button" onClick={() => void save(row)} disabled={saving === row.day_of_week} style={{ ...S.waBtn, ...(saving === row.day_of_week ? S.btnOff : null) }}>{saving === row.day_of_week ? "Saving…" : "Save"}</button>
+                  {msg && <span style={{ fontSize: ".78rem", color: msg.kind === "ok" ? "#2e7d4f" : "#a23b3b" }}>{msg.text}</span>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
       <div style={S.tableWrap}>
         <table style={S.table}>
           <thead>
@@ -2168,6 +2279,7 @@ function AvailabilityTab({ availability, onSave, token }: {
           </tbody>
         </table>
       </div>
+      )}
       <BlockedDatesPanel token={token} />
     </div>
   );
