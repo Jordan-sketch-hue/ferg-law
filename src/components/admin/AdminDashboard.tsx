@@ -2358,6 +2358,13 @@ function ChatsTable({ convos, loading }: { convos: Conversation[]; loading: bool
   const [waSending, setWaSending] = useState(false);
   const [waResult, setWaResult] = useState<{ ok: boolean; msg: string } | null>(null);
   const msgEndRef = useRef<HTMLDivElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   useEffect(() => {
     if (!selected) { setMessages([]); return; }
@@ -2414,9 +2421,9 @@ function ChatsTable({ convos, loading }: { convos: Conversation[]; loading: bool
   if (loading && convos.length === 0) return <Empty>Loading chats…</Empty>;
   if (convos.length === 0) return <Empty>No conversations yet.</Empty>;
   return (
-    <div style={{ display: "flex", height: "calc(100vh - 300px)", minHeight: 400, overflow: "hidden" }}>
+    <div style={{ display: "flex", height: isMobile ? "auto" : "calc(100vh - 300px)", minHeight: isMobile ? 0 : 400, overflow: "hidden", flexDirection: isMobile ? "column" : "row" }}>
       {/* Conversation list */}
-      <div style={{ width: 300, flexShrink: 0, borderRight: "1px solid rgba(18,16,12,.1)", overflowY: "auto" }}>
+      <div style={{ width: isMobile ? "100%" : 300, flexShrink: 0, borderRight: isMobile ? "none" : "1px solid rgba(18,16,12,.1)", overflowY: "auto", display: isMobile && !!selected ? "none" : "block" }}>
         {convos.map((c) => (
           <button key={c.id} type="button" onClick={() => { setSelected(c); setWaResult(null); setWaText(""); }}
             style={{ display: "block", width: "100%", textAlign: "left", border: "none", cursor: "pointer",
@@ -2434,7 +2441,13 @@ function ChatsTable({ convos, loading }: { convos: Conversation[]; loading: bool
       </div>
 
       {/* Detail — full history */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      <div style={{ flex: 1, display: isMobile && !selected ? "none" : "flex", flexDirection: "column", overflow: "hidden" }}>
+        {isMobile && !!selected && (
+          <button type="button" onClick={() => { setSelected(null); setWaResult(null); }}
+            style={{ margin: "12px 16px 0", padding: "8px 16px", border: "1px solid rgba(18,16,12,.2)", borderRadius: 999, background: "#fff", fontSize: ".82rem", cursor: "pointer", color: MUTED, display: "inline-flex", alignItems: "center", gap: 6, alignSelf: "flex-start" }}>
+            ← Chats
+          </button>
+        )}
         {!selected ? (
           <div style={{ color: MUTED, textAlign: "center", paddingTop: 60 }}>Select a conversation to view history</div>
         ) : (
@@ -2695,6 +2708,13 @@ function EmailTab({ emails, token, onMarkRead }: {
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [suggesting, setSuggesting] = useState(false);
   const [showSpam, setShowSpam] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   useEffect(() => {
     if (pane !== "sent") return;
@@ -2776,9 +2796,9 @@ function EmailTab({ emails, token, onMarkRead }: {
   }
 
   return (
-    <div style={{ display: "flex", height: "calc(100vh - 300px)", minHeight: 400, overflow: "hidden" }}>
+    <div style={{ display: "flex", height: isMobile ? "auto" : "calc(100vh - 300px)", minHeight: isMobile ? 0 : 400, overflow: "hidden", flexDirection: isMobile ? "column" : "row" }}>
       {/* Inbox list */}
-      <div style={{ width: 300, flexShrink: 0, borderRight: "1px solid rgba(18,16,12,.1)", overflowY: "auto" }}>
+      <div style={{ width: isMobile ? "100%" : 300, flexShrink: 0, borderRight: isMobile ? "none" : "1px solid rgba(18,16,12,.1)", overflowY: "auto", display: isMobile && !!selected ? "none" : "block" }}>
         {/* Pane toggle */}
         <div style={{ display: "flex", borderBottom: "1px solid rgba(18,16,12,.08)" }}>
           {(["inbox", "sent"] as const).map((p) => (
@@ -2845,7 +2865,13 @@ function EmailTab({ emails, token, onMarkRead }: {
       </div>
 
       {/* Right pane */}
-      <div style={{ flex: 1, overflowY: "auto", padding: 24 }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: isMobile ? 16 : 24, display: isMobile && !selected && !composing && !selectedSent ? "none" : "block" }}>
+        {isMobile && (!!selected || composing || !!selectedSent) && (
+          <button type="button" onClick={() => { setSelected(null); setSelectedSent(null); setComposing(false); setSendResult(null); }}
+            style={{ marginBottom: 16, padding: "8px 16px", border: "1px solid rgba(18,16,12,.2)", borderRadius: 999, background: "#fff", fontSize: ".82rem", cursor: "pointer", color: MUTED, display: "inline-flex", alignItems: "center", gap: 6 }}>
+            ← Inbox
+          </button>
+        )}
         {pane === "sent" && selectedSent ? (
           <div>
             <div style={{ marginBottom: 16 }}>
