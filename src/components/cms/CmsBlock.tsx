@@ -1,5 +1,5 @@
-﻿import React from "react";
 "use client";
+import React from "react";
 
 /**
  * Drop-in replacement for any hardcoded text or image in a page.

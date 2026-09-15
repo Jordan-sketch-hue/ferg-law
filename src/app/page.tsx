@@ -1,4 +1,4 @@
-﻿/* eslint-disable @next/next/no-img-element */
+/* eslint-disable @next/next/no-img-element */
 import { waLink, SITE } from "@/lib/site";
 import { BookingProvider, BookButton } from "@/components/site/BookingProvider";
 import Nav from "@/components/site/Nav";
@@ -9,6 +9,7 @@ import Footer from "@/components/site/Footer";
 import HeroCarousel from "@/components/site/HeroCarousel";
 import ChatLink from "@/components/site/ChatLink";
 import PromoVideo from "@/components/site/PromoVideo";
+import { CmsText } from "@/components/cms/CmsBlock";
 
 const ArrowIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
@@ -31,7 +32,7 @@ export default function Home() {
 
       <span id="top"></span>
 
-      {/* HERO – full-bleed editorial */}
+      {/* HERO */}
       <section className="hero-full" style={{ position: "relative" }}>
         <HeroCarousel />
         <div className="hero-scrim" aria-hidden="true"></div>
@@ -41,13 +42,11 @@ export default function Home() {
             Kingston, Jamaica
           </span>
           <h1>
-            Buying or Selling Property in Jamaica?{" "}
-            <em>We Handle It All.</em>
+            <CmsText page="home" block="hero_h1_line1" fallback="Buying or Selling Property in Jamaica?" />{" "}
+            <em><CmsText page="home" block="hero_h1_em" fallback="We Handle It All." /></em>
           </h1>
           <p className="lead">
-            From first question to registered title – Ferguson Law guides
-            Jamaican families and the diaspora through every property purchase,
-            sale, and transfer.
+            <CmsText page="home" block="hero_lede" fallback="From first question to registered title – Ferguson Law guides Jamaican families and the diaspora through every property purchase, sale, and transfer." />
           </p>
           <div className="hero-cta">
             <GetStartedLink className="btn btn-gold hero-cta-primary" style={{display:"inline-flex",alignItems:"center",gap:6}}>
@@ -67,11 +66,7 @@ export default function Home() {
               <img src="/img/couple-keys.webp" data-edit-img="images.heroAvatar1" alt="Client" loading="lazy" />
               <img src="/img/people-new-home.webp" data-edit-img="images.heroAvatar2" alt="Client" loading="lazy" />
               <img src="/img/finance-consult.webp" data-edit-img="images.heroAvatar3" alt="Client" loading="lazy" />
-              <img
-                src="/img/realtor-banner.jpg"
-                data-edit-img="images.heroAvatar4"
-                alt="Client"
-              />
+              <img src="/img/realtor-banner.jpg" data-edit-img="images.heroAvatar4" alt="Client" />
             </div>
             <div>
               <span className="stars">★★★★★</span>{" "}
@@ -85,58 +80,41 @@ export default function Home() {
       <section className="trust">
         <div className="wrap trust-grid">
           <div className="div">
-            <div className="n" data-edit="trust.0.n">10+</div>
-            <div className="l" data-edit="trust.0.l">
-              Years practising as Attorney-at-Law
-            </div>
+            <div className="n" data-edit="trust.0.n"><CmsText page="home" block="trust_0_n" fallback="10+" /></div>
+            <div className="l" data-edit="trust.0.l"><CmsText page="home" block="trust_0_l" fallback="Years practising as Attorney-at-Law" /></div>
           </div>
           <div className="div">
-            <div className="n" data-edit="trust.1.n">20+</div>
-            <div className="l" data-edit="trust.1.l">
-              Years in banking &amp; finance
-            </div>
+            <div className="n" data-edit="trust.1.n"><CmsText page="home" block="trust_1_n" fallback="20+" /></div>
+            <div className="l" data-edit="trust.1.l"><CmsText page="home" block="trust_1_l" fallback="Years in banking &amp; finance" /></div>
           </div>
           <div className="div">
-            <div className="n" data-edit="trust.2.n">24/7</div>
-            <div className="l" data-edit="trust.2.l">
-              Book a consultation, day or night
-            </div>
+            <div className="n" data-edit="trust.2.n"><CmsText page="home" block="trust_2_n" fallback="24/7" /></div>
+            <div className="l" data-edit="trust.2.l"><CmsText page="home" block="trust_2_l" fallback="Book a consultation, day or night" /></div>
           </div>
           <div>
-            <div className="n" data-edit="trust.3.n">Diaspora-friendly</div>
-            <div className="l" data-edit="trust.3.l">
-              Sign &amp; settle from anywhere in the world
-            </div>
+            <div className="n" data-edit="trust.3.n"><CmsText page="home" block="trust_3_n" fallback="Diaspora-friendly" /></div>
+            <div className="l" data-edit="trust.3.l"><CmsText page="home" block="trust_3_l" fallback="Sign &amp; settle from anywhere in the world" /></div>
           </div>
         </div>
       </section>
 
-      {/* MOBILE-ONLY: promo video slot – appears after trust strip so the animation
-          is visible high on the page without scrolling (Owen feedback Jul 30) */}
+      {/* MOBILE-ONLY: promo video slot */}
       <section className="brand-film brand-film--mobile-slot" aria-hidden="true">
         <div className="bf-video-slot">
           <PromoVideo src="/img/ferguson-promo.mp4" poster="/img/ferguson-promo-poster.jpg" />
         </div>
       </section>
 
-      {/* SERVICES / PRACTICE AREAS – the full firm, up front */}
-      <section
-        className="section"
-        id="services"
-        style={{
-          background: "linear-gradient(180deg,var(--paper),var(--paper-2))",
-        }}
-      >
+      {/* SERVICES / PRACTICE AREAS */}
+      <section className="section" id="services" style={{ background: "linear-gradient(180deg,var(--paper),var(--paper-2))" }}>
         <div className="wrap">
           <div className="sec-head reveal">
             <span className="eyebrow" data-edit="services.eyebrow">
-              Ferguson Law – practice areas
+              <CmsText page="home" block="services_eyebrow" fallback="Ferguson Law – practice areas" />
             </span>
-            <h2>
-              Your new home and other major goals accomplished.
-            </h2>
+            <h2><CmsText page="home" block="services_h2" fallback="Your new home and other major goals accomplished." /></h2>
             <p className="lead">
-              Real estate is our focus, and we also support businesses, families, creators and athletes with straightforward legal guidance and trusted execution.
+              <CmsText page="home" block="services_lead" fallback="Real estate is our focus, and we also support businesses, families, creators and athletes with straightforward legal guidance and trusted execution." />
             </p>
             <div className="hero-also" style={{justifyContent:"flex-start",marginTop:"1rem"}}>
               <span className="hero-also-label">Also</span>
@@ -150,43 +128,43 @@ export default function Home() {
             <div className="serv reveal">
               <img className="serv-media" src="/img/re-consult.jpg" data-edit-img="images.serviceImg1" alt="A couple outside their new Kingston property" loading="lazy" />
               <div className="num">01</div>
-              <h3 data-edit="services.items.1.title">Real Estate &amp; Conveyancing</h3>
-              <p data-edit="services.items.1.body">Sales, purchases, titles and transfers – plus the H.O.M.E.® home-ownership pathway for first-time and diaspora buyers.</p>
+              <h3 data-edit="services.items.1.title"><CmsText page="home" block="serv_1_title" fallback="Real Estate &amp; Conveyancing" /></h3>
+              <p data-edit="services.items.1.body"><CmsText page="home" block="serv_1_body" fallback="Sales, purchases, titles and transfers – plus the H.O.M.E.® home-ownership pathway for first-time and diaspora buyers." /></p>
             </div>
             {/* 2 — Divorce */}
             <div className="serv reveal">
               <img className="serv-media" src="/img/couple-signing.jpg" data-edit-img="images.serviceImg3" alt="A couple navigating separation" loading="lazy" />
               <div className="num">02</div>
-              <h3 data-edit="services.items.3.title">Divorce &amp; Matrimonial</h3>
-              <p data-edit="services.items.3.body">Separation, custody, maintenance and settlements handled with discretion and care.</p>
+              <h3 data-edit="services.items.3.title"><CmsText page="home" block="serv_2_title" fallback="Divorce &amp; Matrimonial" /></h3>
+              <p data-edit="services.items.3.body"><CmsText page="home" block="serv_2_body" fallback="Separation, custody, maintenance and settlements handled with discretion and care." /></p>
             </div>
             {/* 3 — Family & Estate */}
             <div className="serv reveal">
               <img className="serv-media" src="/img/family-estate.jpg" data-edit-img="images.serviceImg2" alt="A family meeting their attorney about wills and estate planning" loading="lazy" />
               <div className="num">03</div>
-              <h3 data-edit="services.items.2.title">Family &amp; Estate</h3>
-              <p data-edit="services.items.2.body">Wills, probate, estate planning and family matters handled with discretion and care.</p>
+              <h3 data-edit="services.items.2.title"><CmsText page="home" block="serv_3_title" fallback="Family &amp; Estate" /></h3>
+              <p data-edit="services.items.2.body"><CmsText page="home" block="serv_3_body" fallback="Wills, probate, estate planning and family matters handled with discretion and care." /></p>
             </div>
             {/* 4 — Sports Law */}
             <div className="serv reveal">
               <img className="serv-media" src="/img/sports-law.jpg" data-edit-img="images.serviceImg5" alt="Sports law – contracts and representation for athletes" loading="lazy" />
               <div className="num">04</div>
-              <h3 data-edit="services.items.5.title">Sports Law</h3>
-              <p data-edit="services.items.5.body">Contracts, image rights and representation for athletes, clubs and sporting bodies.</p>
+              <h3 data-edit="services.items.5.title"><CmsText page="home" block="serv_4_title" fallback="Sports Law" /></h3>
+              <p data-edit="services.items.5.body"><CmsText page="home" block="serv_4_body" fallback="Contracts, image rights and representation for athletes, clubs and sporting bodies." /></p>
             </div>
             {/* 5 — Intellectual Property */}
             <div className="serv reveal">
               <img className="serv-media" src="/img/serv-5.jpg" data-edit-img="images.serviceImg4" alt="Intellectual property protection" loading="lazy" />
               <div className="num">05</div>
-              <h3 data-edit="services.items.4.title">Intellectual Property</h3>
-              <p data-edit="services.items.4.body">Trademarks, copyright and IP protection for creators, brands and businesses.</p>
+              <h3 data-edit="services.items.4.title"><CmsText page="home" block="serv_5_title" fallback="Intellectual Property" /></h3>
+              <p data-edit="services.items.4.body"><CmsText page="home" block="serv_5_body" fallback="Trademarks, copyright and IP protection for creators, brands and businesses." /></p>
             </div>
             {/* 6 — Corporate & Commercial */}
             <div className="serv reveal">
               <img className="serv-media" src="/img/owen-corporate-2026.jpg" alt="Owen K. Ferguson in a modern corporate office" loading="lazy" />
               <div className="num">06</div>
-              <h3 data-edit="services.items.0.title">Corporate &amp; Commercial</h3>
-              <p data-edit="services.items.0.body">Company formation, contracts, compliance and advisory for businesses at home and abroad.</p>
+              <h3 data-edit="services.items.0.title"><CmsText page="home" block="serv_6_title" fallback="Corporate &amp; Commercial" /></h3>
+              <p data-edit="services.items.0.body"><CmsText page="home" block="serv_6_body" fallback="Company formation, contracts, compliance and advisory for businesses at home and abroad." /></p>
             </div>
           </div>
         </div>
@@ -203,40 +181,28 @@ export default function Home() {
             />
             <div className="about-badge">
               <span className="ab-k" data-edit="about.badgeRole">
-                Founder &amp; Principal
+                <CmsText page="home" block="about_badge_role" fallback="Founder &amp; Principal" />
               </span>
               <span className="ab-n" data-edit="about.badgeName">
-                Owen K. Ferguson, JP
+                <CmsText page="home" block="about_badge_name" fallback="Owen K. Ferguson, JP" />
               </span>
             </div>
           </div>
           <div className="about-text reveal">
             <span className="eyebrow" data-edit="about.eyebrow">
-              About the firm
+              <CmsText page="home" block="about_eyebrow" fallback="About the firm" />
             </span>
             <h2 data-edit="about.h2">
-              A lawyer who understands the <em>money</em>, too.
+              <CmsText page="home" block="about_h2" fallback="A lawyer who understands the money, too." />
             </h2>
             <p className="lead" data-edit="about.lead">
-              Ferguson Law is built on a rare combination. Deep legal
-              expertise paired with two decades in banking and finance. The
-              firm&apos;s founder, Owen K. Ferguson, JP, has practised as an
-              Attorney-at-Law for over 10 years, on top of 20+ years in
-              Jamaica&apos;s banking and financial services sector.
+              <CmsText page="home" block="about_lead" fallback="Ferguson Law is built on a rare combination. Deep legal expertise paired with two decades in banking and finance. The firm's founder, Owen K. Ferguson, JP, has practised as an Attorney-at-Law for over 10 years, on top of 20+ years in Jamaica's banking and financial services sector." />
             </p>
             <p className="about-p" data-edit="about.body2">
-              A 2013 graduate of the Norman Manley Law School with post-graduate
-              studies in both Law and Business Administration from the University
-              of London, Owen pairs these disciplines to make complex transactions
-              genuinely clear, for first-time buyers, businesses, investors
-              and overseas Jamaicans alike.
+              <CmsText page="home" block="about_body2" fallback="A 2013 graduate of the Norman Manley Law School with post-graduate studies in both Law and Business Administration from the University of London, Owen pairs these disciplines to make complex transactions genuinely clear, for first-time buyers, businesses, investors and overseas Jamaicans alike." />
             </p>
             <p className="about-p" data-edit="about.body3">
-              As a Justice of the Peace and member of both the Jamaican Bar Association and
-              the International Bar Association, Owen brings institutional standing alongside
-              personal, attentive service. Whether the matter is a first property purchase,
-              a complex commercial deal, a will, or a family estate, clients leave
-              with clarity, not confusion.
+              <CmsText page="home" block="about_body3" fallback="As a Justice of the Peace and member of both the Jamaican Bar Association and the International Bar Association, Owen brings institutional standing alongside personal, attentive service. Whether the matter is a first property purchase, a complex commercial deal, a will, or a family estate, clients leave with clarity, not confusion." />
             </p>
             <ul className="creds">
               <li>Attorney-at-Law · 10+ years</li>
@@ -255,95 +221,57 @@ export default function Home() {
         </div>
       </section>
 
-      {/* PROCESS – how the firm onboards every client */}
+      {/* PROCESS */}
       <section className="section proc" id="process">
         <div className="wrap">
           <div className="sec-head reveal">
             <span className="eyebrow" data-edit="process.eyebrow">
-              Client onboarding journey
+              <CmsText page="home" block="process_eyebrow" fallback="Client onboarding journey" />
             </span>
             <h2 data-edit="process.h2">
-              Four simple steps from first contact to trusted client.
+              <CmsText page="home" block="process_h2" fallback="Four simple steps from first contact to trusted client." />
             </h2>
             <p className="lead" data-edit="process.lead">
-              We&apos;ve made it as easy as possible to get started – no paperwork maze, no mystery.
+              <CmsText page="home" block="process_lead" fallback="We've made it as easy as possible to get started – no paperwork maze, no mystery." />
             </p>
           </div>
           <div className="proc-steps">
             <div className="pstep reveal">
-              <img
-                className="pstep-thumb"
-                src="/img/p-discover.jpg"
-                data-edit-img="images.process1"
-                alt="Client booking a consultation"
-              />
+              <img className="pstep-thumb" src="/img/p-discover.jpg" data-edit-img="images.process1" alt="Client booking a consultation" />
               <div className="s-n" data-edit="process.steps.0.n">Step 01</div>
-              <h3 data-edit="process.steps.0.title">Check Your Readiness</h3>
-              <p data-edit="process.steps.0.body">
-                Take the free H.O.M.E.® readiness assessment – know exactly where you stand before spending a dollar.
-              </p>
-              <a className="tag pstep-link" href={`${SITE.homeApp}readiness`}>
-                Take the assessment –
-              </a>
+              <h3 data-edit="process.steps.0.title"><CmsText page="home" block="proc_1_title" fallback="Check Your Readiness" /></h3>
+              <p data-edit="process.steps.0.body"><CmsText page="home" block="proc_1_body" fallback="Take the free H.O.M.E.® readiness assessment – know exactly where you stand before spending a dollar." /></p>
+              <a className="tag pstep-link" href={`${SITE.homeApp}readiness`}>Take the assessment –</a>
             </div>
             <div className="pstep reveal">
-              <img
-                className="pstep-thumb"
-                src="/img/p-verify.jpg"
-                data-edit-img="images.process2"
-                alt="Find a trusted professional"
-              />
+              <img className="pstep-thumb" src="/img/p-verify.jpg" data-edit-img="images.process2" alt="Find a trusted professional" />
               <div className="s-n" data-edit="process.steps.1.n">Step 02</div>
-              <h3 data-edit="process.steps.1.title">Find Your Team</h3>
-              <p data-edit="process.steps.1.body">
-                Browse real estate agents, surveyors, valuators and lenders in the H.O.M.E.® directory.
-              </p>
-              <a className="tag pstep-link" href="/directory">
-                Find a professional –
-              </a>
+              <h3 data-edit="process.steps.1.title"><CmsText page="home" block="proc_2_title" fallback="Find Your Team" /></h3>
+              <p data-edit="process.steps.1.body"><CmsText page="home" block="proc_2_body" fallback="Browse real estate agents, surveyors, valuators and lenders in the H.O.M.E.® directory." /></p>
+              <a className="tag pstep-link" href="/directory">Find a professional –</a>
             </div>
             <div className="pstep reveal">
-              <img
-                className="pstep-thumb"
-                src="/img/p-engage.jpg"
-                data-edit-img="images.process3"
-                alt="Read the explainers"
-              />
+              <img className="pstep-thumb" src="/img/p-engage.jpg" data-edit-img="images.process3" alt="Read the explainers" />
               <div className="s-n" data-edit="process.steps.2.n">Step 03</div>
-              <h3 data-edit="process.steps.2.title">Understand the Process</h3>
-              <p data-edit="process.steps.2.body">
-                Read the free property explainers or download the full H.O.M.E.® Buyers Guide – plain English, no jargon.
-              </p>
+              <h3 data-edit="process.steps.2.title"><CmsText page="home" block="proc_3_title" fallback="Understand the Process" /></h3>
+              <p data-edit="process.steps.2.body"><CmsText page="home" block="proc_3_body" fallback="Read the free property explainers or download the full H.O.M.E.® Buyers Guide – plain English, no jargon." /></p>
               <div style={{display:"flex",gap:"8px",flexWrap:"wrap"}}>
-                <a className="tag pstep-link" href="/explainers">
-                  Explainers –
-                </a>
-                <a className="tag pstep-link" href={`${SITE.homeApp}ebook`}>
-                  H.O.M.E.® Buyers Guide –
-                </a>
+                <a className="tag pstep-link" href="/explainers">Explainers –</a>
+                <a className="tag pstep-link" href={`${SITE.homeApp}ebook`}>H.O.M.E.® Buyers Guide –</a>
               </div>
             </div>
             <div className="pstep reveal">
-              <img
-                className="pstep-thumb"
-                src="/img/p-track.jpg"
-                data-edit-img="images.process4"
-                alt="Book a consultation with Ferguson Law"
-              />
+              <img className="pstep-thumb" src="/img/p-track.jpg" data-edit-img="images.process4" alt="Book a consultation with Ferguson Law" />
               <div className="s-n" data-edit="process.steps.3.n">Step 04</div>
-              <h3 data-edit="process.steps.3.title">Book Your Consultation</h3>
-              <p data-edit="process.steps.3.body">
-                When you&apos;re ready, book a consultation with Ferguson Law – online, anytime.
-              </p>
-              <BookButton className="tag pstep-link">
-                Book now –
-              </BookButton>
+              <h3 data-edit="process.steps.3.title"><CmsText page="home" block="proc_4_title" fallback="Book Your Consultation" /></h3>
+              <p data-edit="process.steps.3.body"><CmsText page="home" block="proc_4_body" fallback="When you're ready, book a consultation with Ferguson Law – online, anytime." /></p>
+              <BookButton className="tag pstep-link">Book now –</BookButton>
             </div>
           </div>
         </div>
       </section>
 
-      {/* BRAND FILM (animated logo + principal) */}
+      {/* BRAND FILM */}
       <section className="section brand-film">
         <div className="wrap bf-grid">
           <div className="bf-video reveal">
@@ -359,12 +287,7 @@ export default function Home() {
             ></video>
           </div>
           <div className="bf-copy reveal">
-            <img
-              className="bf-logo"
-              src="/img/logo-ferguson.png"
-              data-edit-img="images.logo"
-              alt="Ferguson Law"
-            />
+            <img className="bf-logo" src="/img/logo-ferguson.png" data-edit-img="images.logo" alt="Ferguson Law" />
             <span className="eyebrow">One firm, the full practice</span>
             <h2>
               Deep legal expertise – and the <em>banking mind</em> behind it.
@@ -390,29 +313,16 @@ export default function Home() {
         </div>
       </section>
 
-
       {/* H.O.M.E. FLAGSHIP */}
       <HomeFlagship />
 
-      {/* TESTIMONIALS / STORIES – real-estate outcomes */}
-      <section
-        className="section"
-        id="stories"
-        style={{
-          background: "linear-gradient(180deg,var(--paper-2),var(--paper))",
-        }}
-      >
+      {/* TESTIMONIALS */}
+      <section className="section" id="stories" style={{ background: "linear-gradient(180deg,var(--paper-2),var(--paper))" }}>
         <div className="wrap">
           <div className="sec-head center reveal">
-            <span className="eyebrow" data-edit="stories.eyebrow">
-              In their words
-            </span>
+            <span className="eyebrow" data-edit="stories.eyebrow">In their words</span>
             <h2 data-edit="stories.h2">Real Jamaicans. Real ownership.</h2>
-            <p
-              className="lead"
-              style={{ margin: "0 auto" }}
-              data-edit="stories.lead"
-            >
+            <p className="lead" style={{ margin: "0 auto" }} data-edit="stories.lead">
               The whole point of the work – people who finally feel at home.
             </p>
           </div>
@@ -425,18 +335,10 @@ export default function Home() {
                 got my title without one stressful day off work.
               </p>
               <div className="tperson">
-                <img
-                  src="/img/couple-signing.jpg"
-                  data-edit-img="images.avatar1"
-                  alt="Marcus R."
-                />
+                <img src="/img/couple-signing.jpg" data-edit-img="images.avatar1" alt="Marcus R." />
                 <div>
-                  <div className="nm" data-edit="stories.items.0.name">
-                    Marcus R.
-                  </div>
-                  <div className="rl" data-edit="stories.items.0.role">
-                    Diaspora buyer · Toronto – St. James
-                  </div>
+                  <div className="nm" data-edit="stories.items.0.name">Marcus R.</div>
+                  <div className="rl" data-edit="stories.items.0.role">Diaspora buyer · Toronto – St. James</div>
                 </div>
               </div>
             </div>
@@ -448,18 +350,10 @@ export default function Home() {
                 that human.
               </p>
               <div className="tperson">
-                <img
-                  src="/img/step-assess.webp"
-                  data-edit-img="images.avatar2"
-                  alt="Keisha L."
-                />
+                <img src="/img/step-assess.webp" data-edit-img="images.avatar2" alt="Keisha L." />
                 <div>
-                  <div className="nm" data-edit="stories.items.1.name">
-                    Keisha L.
-                  </div>
-                  <div className="rl" data-edit="stories.items.1.role">
-                    First-time buyer · St. Andrew
-                  </div>
+                  <div className="nm" data-edit="stories.items.1.name">Keisha L.</div>
+                  <div className="rl" data-edit="stories.items.1.role">First-time buyer · St. Andrew</div>
                 </div>
               </div>
             </div>
@@ -471,18 +365,10 @@ export default function Home() {
                 Keys in hand in weeks.
               </p>
               <div className="tperson">
-                <img
-                  src="/img/family-moving-in.jpg"
-                  data-edit-img="images.avatar3"
-                  alt="Andre & Shanice"
-                />
+                <img src="/img/family-moving-in.jpg" data-edit-img="images.avatar3" alt="Andre & Shanice" />
                 <div>
-                  <div className="nm" data-edit="stories.items.2.name">
-                    Andre &amp; Shanice
-                  </div>
-                  <div className="rl" data-edit="stories.items.2.role">
-                    New homeowners · St. Catherine
-                  </div>
+                  <div className="nm" data-edit="stories.items.2.name">Andre &amp; Shanice</div>
+                  <div className="rl" data-edit="stories.items.2.role">New homeowners · St. Catherine</div>
                 </div>
               </div>
             </div>
@@ -490,19 +376,12 @@ export default function Home() {
         </div>
       </section>
 
-      {/* COAST BAND (Jamaica & the diaspora) */}
+      {/* COAST BAND */}
       <section className="coast-band">
-        <img
-          className="bg"
-          src="/img/jamaica-coast.webp"
-          data-edit-img="images.coastBandBg"
-          alt="Jamaica's north coast meeting turquoise water"
-        />
+        <img className="bg" src="/img/jamaica-coast.webp" data-edit-img="images.coastBandBg" alt="Jamaica's north coast meeting turquoise water" />
         <div className="scrim" aria-hidden="true"></div>
         <div className="wrap">
-          <span className="eyebrow reveal in" data-edit="coast.eyebrow">
-            Jamaica &amp; the world
-          </span>
+          <span className="eyebrow reveal in" data-edit="coast.eyebrow">Jamaica &amp; the world</span>
           <h2 className="reveal in" data-edit="coast.h2">
             Rooted in Jamaica. Working for clients <em>everywhere.</em>
           </h2>
@@ -539,15 +418,10 @@ export default function Home() {
         <div className="wrap">
           <div className="sec-head reveal">
             <span className="eyebrow" data-edit="contact.eyebrow">How to reach us</span>
-            <h2>
-              We&apos;re here – <em>choose how you connect.</em>
-            </h2>
-            <p className="lead">
-              Every path leads to a real person. Pick whatever feels right.
-            </p>
+            <h2>We&apos;re here – <em>choose how you connect.</em></h2>
+            <p className="lead">Every path leads to a real person. Pick whatever feels right.</p>
           </div>
           <div className="reach-grid">
-            {/* Book a consultation – FIRST */}
             <div className="reach-card reveal" style={{cursor:"pointer"}}>
               <div className="reach-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
@@ -560,7 +434,6 @@ export default function Home() {
                 <span data-edit="contact.ctaPrimary">Book now</span>
               </BookButton>
             </div>
-            {/* Chat live */}
             <ChatLink>
               <div className="reach-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -570,7 +443,6 @@ export default function Home() {
               <p>Talk to our AI assistant right now – available 24/7 for general property and legal queries.</p>
               <span className="btn btn-gold reach-btn">Start a chat</span>
             </ChatLink>
-            {/* WhatsApp */}
             <a className="reach-card reveal" href={waLink()}>
               <div className="reach-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.35 2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6.13 6.13l.96-.96a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
@@ -583,7 +455,6 @@ export default function Home() {
                 {SITE.whatsappDisplay}
               </span>
             </a>
-            {/* Email */}
             <a className="reach-card reveal" href={`mailto:${SITE.email}`}>
               <div className="reach-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>
@@ -602,4 +473,3 @@ export default function Home() {
     </BookingProvider>
   );
 }
-
