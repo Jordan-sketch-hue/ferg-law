@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 import { CONSULT_DURATION_MIN } from "@/lib/site";
 import { BookingProvider, BookButton } from "@/components/site/BookingProvider";
@@ -7,6 +7,7 @@ import Reveal from "@/components/site/Reveal";
 import Footer from "@/components/site/Footer";
 import { SITE } from "@/lib/site";
 import { HomeBadge, HomeBadgeCSS } from "@/components/site/HomeBadge";
+import EbookFormSection from "@/components/site/EbookFormSection";
 
 export const metadata: Metadata = {
   title: "H.O.M.E.® Buyer's Guide — Home Ownership Made Easy | Ferguson Law",
@@ -193,6 +194,7 @@ export default function BuyersGuidePage() {
           </div>
         </div>
       </section>
+      <EbookFormSection />
 
       <style>{HomeBadgeCSS}</style>
       <Footer />
