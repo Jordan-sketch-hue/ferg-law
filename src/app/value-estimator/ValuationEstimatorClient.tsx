@@ -9,19 +9,19 @@ const MUTED  = "#5c6a60";
 const BORDER = "#dde5dd";
 
 const BENCHMARKS: Record<string, { land: [number,number]; built: [number,number]; label: string }> = {
-  "Kingston & St. Andrew": { land: [8000,25000],  built: [15000,30000], label: "Kingston & St. Andrew (KSA)" },
-  "St. James":             { land: [5000,18000],  built: [12000,22000], label: "St. James (Montego Bay area)" },
+  "Kingston & St. Andrew": { land: [8000,25000],  built: [15000,30000], label: "Kingston & St. Andrew" },
+  "St. James":             { land: [5000,18000],  built: [12000,22000], label: "St. James" },
   "St. Catherine":         { land: [3000,12000],  built: [10000,18000], label: "St. Catherine" },
   "Clarendon":             { land: [2500,8000],   built: [9000, 15000], label: "Clarendon" },
-  "Manchester":            { land: [2500,8000],   built: [9000, 16000], label: "Manchester (Mandeville area)" },
+  "Manchester":            { land: [2500,8000],   built: [9000, 16000], label: "Manchester" },
   "St. Elizabeth":         { land: [2000,6000],   built: [8000, 14000], label: "St. Elizabeth" },
   "Trelawny":              { land: [3000,10000],  built: [9000, 16000], label: "Trelawny" },
-  "St. Ann":               { land: [4000,14000],  built: [10000,19000], label: "St. Ann (Ocho Rios area)" },
+  "St. Ann":               { land: [4000,14000],  built: [10000,19000], label: "St. Ann" },
   "St. Mary":              { land: [2500,8000],   built: [8000, 14000], label: "St. Mary" },
   "Portland":              { land: [2000,7000],   built: [8000, 14000], label: "Portland" },
   "St. Thomas":            { land: [2000,6000],   built: [7000, 13000], label: "St. Thomas" },
-  "Westmoreland":          { land: [2500,8000],   built: [8000, 14000], label: "Westmoreland (Negril area)" },
-  "Hanover":               { land: [3000,10000],  built: [9000, 16000], label: "Hanover (Lucea area)" },
+  "Westmoreland":          { land: [2500,8000],   built: [8000, 14000], label: "Westmoreland" },
+  "Hanover":               { land: [3000,10000],  built: [9000, 16000], label: "Hanover" },
 };
 
 const PROPERTY_TYPES = [

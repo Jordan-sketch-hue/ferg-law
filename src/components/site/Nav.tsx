@@ -1,4 +1,4 @@
-﻿/* eslint-disable @next/next/no-img-element */
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -27,7 +27,7 @@ const RESOURCE_LINKS = [
   { href: "/buyers-guide", label: "Buyer's Guide" },
   { href: "/explainers", label: "Explainers" },
   { href: "/cost-estimator",   label: "Cost Estimator®" },
-  { href: "/value-estimator",   label: "Property Estimator" },
+  { href: "/value-estimator",   label: "Valuation Estimator" },
   { href: "/glossary", label: "Glossary" },
   { href: "/faq", label: "FAQ" },
 ] as const;
