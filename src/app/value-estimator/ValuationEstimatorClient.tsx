@@ -1,9 +1,8 @@
-﻿"use client";
+"use client";
 
 /**
  * Property Value Estimator — Ferguson Law Jamaica
  * Indicative valuation using parish + type + size benchmarks.
- * JAMPROP/NLA integration: TODO — pending API access from National Land Agency.
  */
 
 import { useMemo, useState } from "react";
@@ -121,9 +120,7 @@ export default function ValuationEstimatorClient() {
               placeholder="e.g. 1/89/7245"
               style={inputStyle}
             />
-            <p style={{ margin: "5px 0 0", fontSize: 12, color: MUTED }}>
-              JAMPROP integration pending. Reference saved for when NLA data access is confirmed.
-            </p>
+
           </div>
 
           {/* Parish */}
@@ -241,9 +238,7 @@ export default function ValuationEstimatorClient() {
       <p style={{ marginTop: 20, fontSize: 12, color: MUTED, lineHeight: 1.7 }}>
         Benchmarks updated based on Jamaica real estate market data (mid-2026). Actual values vary by location,
         title status, NHT approval, and local demand. Ferguson Law is not a valuation firm.
-        <br />
-        <strong>JAMPROP integration:</strong> We are awaiting API access from the National Land Agency to show
-        verified recent comparable sales for your specific property reference.
+
       </p>
     </div>
   );
