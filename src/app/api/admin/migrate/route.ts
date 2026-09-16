@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 
 const VALID_TOKENS = [
@@ -62,6 +62,15 @@ INSERT INTO public.fl_site_blocks (page_slug, block_key, content_type, label, va
 ON CONFLICT (page_slug, block_key) DO NOTHING;
 `;
 
+const STYLES_MIGRATION_SQL = `
+ALTER TABLE public.fl_site_blocks
+  ADD COLUMN IF NOT EXISTS styles jsonb DEFAULT '{}'::jsonb,
+  ADD COLUMN IF NOT EXISTS hidden boolean NOT NULL DEFAULT false;
+
+ALTER TABLE public.home_site_blocks
+  ADD COLUMN IF NOT EXISTS styles jsonb DEFAULT '{}'::jsonb,
+  ADD COLUMN IF NOT EXISTS hidden boolean NOT NULL DEFAULT false;
+`;
 const RLS_SQL = `
 ALTER TABLE public.fl_site_pages  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.fl_site_blocks ENABLE ROW LEVEL SECURITY;
@@ -84,7 +93,7 @@ export async function POST(req: NextRequest) {
   const supabase = createAdminClient();
   const results: string[] = [];
 
-  for (const [label, sql] of [["schema", MIGRATION_SQL], ["seed", SEED_SQL], ["rls", RLS_SQL]] as [string, string][]) {
+  for (const [label, sql] of [["schema", MIGRATION_SQL], ["seed", SEED_SQL], ["rls", RLS_SQL], ["styles_cols", STYLES_MIGRATION_SQL]] as [string, string][]) {
     let error: { message: string } | null = null;
     try { const r = await supabase.rpc("pg_execute", { sql }); error = r.error; } catch { error = null; }
     if (error) {
