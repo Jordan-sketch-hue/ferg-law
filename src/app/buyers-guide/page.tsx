@@ -7,7 +7,7 @@ import Reveal from "@/components/site/Reveal";
 import Footer from "@/components/site/Footer";
 import { SITE } from "@/lib/site";
 import { HomeBadge, HomeBadgeCSS } from "@/components/site/HomeBadge";
-import EbookPaymentGate from "@/components/site/EbookPaymentGate";
+import EbookFormSection from "@/components/site/EbookFormSection";
 
 export const metadata: Metadata = {
   title: "H.O.M.E.® Buyer's Guide — Home Ownership Made Easy | Ferguson Law",
@@ -59,7 +59,7 @@ export default function BuyersGuidePage() {
                 color: "#fff",
               }}
             >
-              The H.O.M.E.® Buyer's Guide
+              The H.O.M.E.® Buyer&apos;s Guide
             </h1>
             <p
               style={{
@@ -74,7 +74,13 @@ export default function BuyersGuidePage() {
               title. Plain English. Backed by a Ferguson Law attorney.
             </p>
             <div style={{ display: "flex", gap: ".9rem", flexWrap: "wrap" }}>
-              <a className="btn btn-gold" href="#get-guide">
+              <Link className="btn btn-gold" href="/get-started">
+                Start now <ArrowIcon />
+              </Link>
+              <Link className="btn btn-light" href="/booking">
+                Book here <ArrowIcon />
+              </Link>
+              <a className="btn btn-ghost-light" href="#get-guide">
                 Get Access Now <ArrowIcon />
               </a>
             </div>
@@ -104,9 +110,9 @@ export default function BuyersGuidePage() {
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(280px,1fr))", gap: "1.2rem", marginTop: "2rem" }}>
             {[
-              { n: "01", t: "Know If You&apos;re Ready", d: "Assess your financial position, credit, and savings - before you start shopping." },
+              { n: "01", t: "Know If You're Ready", d: "Assess your financial position, credit, and savings - before you start shopping." },
               { n: "02", t: "Understanding the Costs", d: "Transfer tax, stamp duty, attorney fees, valuation, survey - every figure explained." },
-              { n: "03", t: "NHT &amp; Financing", d: "How to access your NHT benefits, qualify for a mortgage, and calculate your down payment." },
+              { n: "03", t: "NHT & Financing", d: "How to access your NHT benefits, qualify for a mortgage, and calculate your down payment." },
               { n: "04", t: "Finding Your Team", d: "Vetted real estate agents, valuators, surveyors, and lenders - the professionals you need." },
               { n: "05", t: "The Agreement for Sale", d: "What the contract means, what to watch for, and why your attorney must review it." },
               { n: "06", t: "From Contract to Title", d: "The legal steps from signed agreement to your name on a registered title." },
@@ -115,30 +121,11 @@ export default function BuyersGuidePage() {
             ].map((item) => (
               <div key={item.n} className="serv reveal" style={{ padding: "1.6rem 1.4rem", background: "rgba(255,255,255,.07)", borderColor: "rgba(255,255,255,.12)" }}>
                 <div className="num">{item.n}</div>
-                <h3 style={{ fontSize: "1.05rem", color: "#fff" }} dangerouslySetInnerHTML={{ __html: item.t }} />
-                <p style={{ fontSize: ".95rem", color: "rgba(246,242,234,.7)" }} dangerouslySetInnerHTML={{ __html: item.d }} />
+                <h3 style={{ fontSize: "1.05rem", color: "#fff" }}>{item.t}</h3>
+                <p style={{ fontSize: ".95rem", color: "rgba(246,242,234,.7)" }}>{item.d}</p>
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      <section
-        id="get-guide"
-        className="section"
-        style={{ background: "linear-gradient(165deg,#0e2518 0%,#1a3828 100%)", color: "var(--paper)", padding: "3rem 1.5rem" }}
-      >
-        <div className="wrap">
-          <div className="sec-head reveal" style={{ marginBottom: "2rem" }}>
-            <span style={{ display: "inline-block", fontSize: ".72rem", letterSpacing: ".18em", textTransform: "uppercase", color: "var(--gold)", marginBottom: ".8rem" }}>
-              H.O.M.E.® Buyer's Guide
-            </span>
-            <h2 style={{ color: "#fff", margin: "0 0 .6rem" }}>Get Your Copy Today</h2>
-            <p style={{ color: "rgba(246,242,234,.72)", margin: 0, maxWidth: 460, fontSize: "1rem", lineHeight: 1.6 }}>
-              Instant access to the complete home-buying guide - plain English, attorney-backed.
-            </p>
-          </div>
-          <EbookPaymentGate />
         </div>
       </section>
 
@@ -167,13 +154,16 @@ export default function BuyersGuidePage() {
         </div>
       </section>
 
+      {/* Inline lead capture form */}
+      <EbookFormSection />
+
       <style>{HomeBadgeCSS}</style>
       <Footer />
 
       <section style={{ padding: "1rem 0", background: "#f6f2e9", textAlign: "center", borderTop: "1px solid var(--line)" }}>
         <div style={{ maxWidth: 980, margin: "0 auto", color: "#3d463f", fontSize: ".85rem" }}>
           <small>
-            H.O.M.E.® by Ferguson Law – Home Ownership Made Easy® · Informational only, not legal advice.<br />
+            H.O.M.E.® by Ferguson Law - Home Ownership Made Easy® · Informational only, not legal advice.<br />
             © Ferguson Law. All rights reserved.
           </small>
         </div>

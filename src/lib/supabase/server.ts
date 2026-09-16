@@ -46,9 +46,8 @@ export async function createClient() {
  * inserts/selects those flows perform.
  */
 export function createAdminClient() {
-  const key =
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    SUPABASE_ANON_KEY;
+  const rawKey = process.env.SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_KEY;
+  const key = rawKey.replace(/^﻿/, "");
   return createRawClient(SUPABASE_URL, key, {
     auth: { persistSession: false },
   });

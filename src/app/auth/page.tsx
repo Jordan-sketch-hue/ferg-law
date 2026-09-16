@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 export const dynamic = "force-dynamic";
 
@@ -331,7 +331,7 @@ function AuthPageInner() {
               Ferguson Law
             </div>
             <div style={{ fontSize: ".6rem", letterSpacing: ".22em", textTransform: "uppercase", color: "#C8A65C", fontWeight: 600, marginTop: ".15rem" }}>
-              Jamaica Property Law
+              Trusted Law Firm · Jamaica
             </div>
           </Link>
         </div>
@@ -535,8 +535,8 @@ function AuthPageInner() {
                   <>Already have an account? <button className="atoggle" onClick={() => switchMode("signin")}>Sign in</button></>
                 )}
                 <br />
-                <Link href="/" style={{ color: "var(--muted,#69736d)", textDecoration: "underline", textUnderlineOffset: 3 }}>
-                  Skip — browse the site
+                <Link href="/admin" style={{ color: "var(--muted,#69736d)", textDecoration: "underline", textUnderlineOffset: 3 }}>
+                  Back office
                 </Link>
               </div>
             </div>
@@ -576,8 +576,8 @@ function AuthPageInner() {
 
         {/* Help text */}
         <p style={{ textAlign: "center", marginTop: "1.25rem", fontSize: ".75rem", color: "rgba(16,42,30,.35)", lineHeight: 1.7 }}>
-          Ferguson Law · Jamaica Property Law &amp; Conveyancing<br/>
-          <a href="tel:6583188070" style={{ color: "rgba(16,42,30,.4)", textDecoration: "none" }}>(658) 318-8070</a>
+          Ferguson Law · Kingston, Jamaica<br/>
+          <a href="tel:+18763200235" style={{ color: "rgba(16,42,30,.4)", textDecoration: "none" }}>(876) 320-0235</a>
         </p>
       </div>
     </div>

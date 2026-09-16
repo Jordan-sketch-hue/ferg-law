@@ -13,6 +13,7 @@ import InstallPrompt from "@/components/pwa/InstallPrompt";
 import SplashScreen from "@/components/site/SplashScreen";
 import BottomNav from "@/components/site/BottomNav";
 import PushPromptGlobal from "@/components/pwa/PushPromptGlobal";
+import { CmsEditBar } from "@/components/cms/CmsEditBar";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -211,6 +212,7 @@ export default function RootLayout({
         <SplashScreen />
         <BottomNav />
         <PushPromptGlobal />
+        <CmsEditBar />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

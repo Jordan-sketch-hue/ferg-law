@@ -1,4 +1,4 @@
-﻿import { FIRM_KB } from "@/lib/kb/ferguson";
+import { FIRM_KB } from "@/lib/kb/ferguson";
 import { SITE } from "@/lib/site";
 
 /**

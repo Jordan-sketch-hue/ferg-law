@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 /**
  * Consultation CRM — the Ferguson Law back office.
@@ -15,6 +15,7 @@ import { formatInTimeZone } from "date-fns-tz";
 import { createClient } from "@/lib/supabase/client";
 import { waLink } from "@/lib/site";
 import AnalyticsTab from "@/components/admin/AnalyticsTab";
+import SiteContentTab from "@/components/admin/SiteContentTab";
 import EbookLeadsTab from "@/components/admin/EbookLeadsTab";
 import AttentionOverview, { AttentionBadge } from "@/components/admin/AttentionOverview";
 import AppointmentAttentionPanel from "@/components/admin/AppointmentAttentionPanel";
@@ -196,7 +197,22 @@ interface HomeProperty {
   status: string;
 }
 
-type Tab = "overview" | "leads" | "bookings" | "clients" | "matters" | "cms" | "calendar" | "chats" | "invites" | "directory" | "availability" | "home_pros" | "home_listings" | "email" | "inquiries" | "referrals" | "recycle_bin" | "workflows" | "zoom" | "feedback" | "analytics" | "ebook_leads";
+type Tab = "overview" | "leads" | "bookings" | "clients" | "matters" | "cms" | "calendar" | "chats" | "invites" | "directory" | "availability" | "home_pros" | "home_listings" | "email" | "inquiries" | "referrals" | "recycle_bin" | "workflows" | "zoom" | "feedback" | "analytics" | "ebook_leads" | "site_content";
+// ── Admin tab groups ──────────────────────────────────────────────────────────
+type TabGroup = "dashboard" | "crm" | "email" | "directory" | "home";
+const TAB_GROUPS: Record<TabGroup, { label: string; tabs: Tab[] }> = {
+  dashboard: { label: "Dashboard", tabs: ["overview","analytics","calendar","zoom","site_content"] },
+  crm:       { label: "CRM",       tabs: ["leads","bookings","clients","matters","chats","cms","ebook_leads"] },
+  email:     { label: "Email",     tabs: ["email","feedback"] },
+  directory: { label: "Directory", tabs: ["invites","directory","availability","referrals","workflows"] },
+  home:      { label: "H.O.M.E.", tabs: ["home_pros","home_listings","inquiries","recycle_bin"] },
+};
+function tabToGroup(t: Tab): TabGroup {
+  for (const [g, { tabs }] of Object.entries(TAB_GROUPS) as [TabGroup, { label: string; tabs: Tab[] }][]) {
+    if ((tabs as string[]).includes(t)) return g;
+  }
+  return "dashboard";
+}
 
 interface BinItem {
   id: string;
@@ -221,6 +237,7 @@ interface InboundEmail {
   thread_id: string | null;
   read: boolean;
   replied: boolean;
+  is_spam: boolean;
 }
 
 interface HomeInquiry {
@@ -268,7 +285,7 @@ export default function AdminDashboard() {
   const [authError, setAuthError] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
 
-  const [loginMode, setLoginMode] = useState<"account" | "code">("account");
+  const [loginMode, setLoginMode] = useState<"account" | "code">("code");
   const [emailInput, setEmailInput] = useState("");
   const [pwInput, setPwInput] = useState("");
   const [showPw, setShowPw] = useState(false);
@@ -276,6 +293,7 @@ export default function AdminDashboard() {
   const [showAccount, setShowAccount] = useState(false);
 
   const [tab, setTab] = useState<Tab>("overview");
+  const [group, setGroup] = useState<TabGroup>("dashboard");
   const [leads, setLeads] = useState<Lead[]>([]);
   const [appts, setAppts] = useState<Appointment[]>([]);
   const [convos, setConvos] = useState<Conversation[]>([]);
@@ -571,6 +589,13 @@ export default function AdminDashboard() {
     await supabase.rpc("fl_admin_set_matter_payment", { p_token: token, p_id: id, p_status: payment_status });
   }, [token]);
 
+  const deleteMatter = useCallback(async (id: string) => {
+    if (!token || !confirm('Delete this matter? This cannot be undone.')) return;
+    setMatters((prev) => prev.filter((m) => m.id !== id));
+    const supabase = createClient();
+    await supabase.rpc('fl_admin_delete_matter', { p_token: token, p_id: id });
+  }, [token]);
+
   const upsertClient = useCallback(async (fields: {
     name: string; email: string; phone: string; type: string; country: string; notes: string;
   }): Promise<string | null> => {
@@ -836,7 +861,7 @@ export default function AdminDashboard() {
 
   return (
     <div style={S.shell}>
-      <header style={S.topbar}>
+      <header className="fl-admin-topbar" style={S.topbar}>
         <div>
           <div style={S.brandMarkSm}>Ferguson Law</div>
           <div style={S.topSub}>Consultation CRM · Back office</div>
@@ -857,8 +882,8 @@ export default function AdminDashboard() {
         <AccountPanel token={token} email={accountEmail} onClose={() => setShowAccount(false)} onEmailChange={setAccountEmail} />
       )}
 
-      <div style={S.body}>
-        <div style={S.statStrip}>
+      <div className="fl-admin-body" style={S.body}>
+        <div className="fl-admin-stat-strip" style={S.statStrip}>
           <Stat label="New leads" value={newLeads} urgent onClick={() => switchTab("leads")} />
           <Stat label="Pending bookings" value={pendingBookings} urgent onClick={() => switchTab("bookings")} />
           <Stat label="Open chats" value={openChats} urgent onClick={() => switchTab("chats")} />
@@ -871,44 +896,42 @@ export default function AdminDashboard() {
 
         {loadError && <div style={S.errorBar}>{loadError}</div>}
 
-        <div style={{ ...S.tabs, background: "#fff", border: "1px solid rgba(18,16,12,.07)", borderRadius: "12px 12px 0 0" }}>
-          {(["overview","analytics","leads","ebook_leads","bookings","clients","matters","cms","calendar","chats","email","invites","directory","availability","home_pros","home_listings","inquiries","referrals","workflows","recycle_bin","zoom","feedback"] as Tab[]).map((t) => (
-            <TabBtn key={t} active={tab === t} onClick={() => switchTab(t)}
-              label={
-                t === "overview" ? "Overview" :
-                t === "cms" ? `CMS${cmsUnread > 0 ? ` (${cmsUnread})` : ""}` :
-                t === "home_pros" ? "H.O.M.E. Pros" :
-                t === "home_listings" ? "H.O.M.E. Listings" :
-                t === "email" ? "Email" :
-                t === "inquiries" ? "H.O.M.E. Inquiries" :
-                t === "analytics" ? "Analytics" :
-                t === "ebook_leads" ? "Ebook Leads" :
-                t === "referrals" ? "Referrals" :
-                t === "recycle_bin" ? "🗑 Bin" :
-                t === "workflows" ? "Workflows" :
-                t === "zoom" ? "Meetings" :
-                t === "feedback" ? "Tester Feedback" :
-                t.charAt(0).toUpperCase() + t.slice(1)
-              }
-              count={(() => {
-                const raw =
-                  t === "leads" ? leads.length :
-                  t === "bookings" ? appts.length :
-                  t === "clients" ? clients.length :
-                  t === "matters" ? matters.length :
-                  t === "chats" ? convos.length :
-                  t === "email" ? emails.filter(e => !e.read).length :
-                  t === "invites" ? invites.length :
-                  t === "directory" ? listings.length :
-                  t === "availability" ? availability.length :
-                  t === "home_pros" ? homePros.length :
-                  t === "home_listings" ? homeListings.length :
-                  t === "inquiries" ? inquiries.filter(i => i.status === "new").length :
-                  t === "recycle_bin" ? binItems.length : 0;
-                return Math.max(0, raw - (seenCounts[t] ?? 0));
-              })()}
-            />
-          ))}
+        {/* Two-tier grouped nav */}
+        <div style={{ background:"#fff", border:"1px solid rgba(18,16,12,.07)", borderRadius:"12px 12px 0 0", overflow:"hidden" }}>
+          {/* Group row */}
+          <div style={{ display:"flex", gap:0, borderBottom:"1px solid rgba(18,16,12,.08)", overflowX:"auto", scrollbarWidth:"none" as React.CSSProperties["scrollbarWidth"] }}>
+            {(Object.entries(TAB_GROUPS) as [TabGroup, { label: string; tabs: Tab[] }][]).map(([g, { label, tabs }]) => {
+              const isActive = group === g;
+              const groupCount = tabs.reduce((sum, t) => {
+                const raw = t==="leads"?leads.length:t==="bookings"?appts.length:t==="clients"?clients.length:t==="matters"?matters.length:t==="chats"?convos.length:t==="email"?emails.filter(e=>!e.read).length:t==="invites"?invites.length:t==="directory"?listings.length:t==="home_pros"?homePros.length:t==="home_listings"?homeListings.length:t==="inquiries"?inquiries.filter(i=>i.status==="new").length:t==="recycle_bin"?binItems.length:0;
+                return sum + Math.max(0, raw - (seenCounts[t] ?? 0));
+              }, 0);
+              return (
+                <button key={g} onClick={() => { setGroup(g); if (!tabs.includes(tab)) switchTab(tabs[0]); }}
+                  style={{ flex:"1 0 auto", padding:"10px 16px 9px", border:"none", borderBottom:isActive?`2px solid ${GOLD}`:"2px solid transparent", background:"transparent", color:isActive?GREEN:MUTED, fontWeight:isActive?700:500, fontSize:".8rem", cursor:"pointer", whiteSpace:"nowrap", marginBottom:-1, letterSpacing:".01em", display:"flex", alignItems:"center", gap:6 }}
+                >
+                  {label}
+                  {groupCount>0&&<span style={{ fontSize:".62rem", fontWeight:700, padding:"1px 6px", borderRadius:999, background:isActive?"rgba(200,166,92,.2)":"rgba(18,16,12,.07)", color:isActive?"#7a5a1a":MUTED }}>{groupCount}</span>}
+                </button>
+              );
+            })}
+          </div>
+          {/* Sub-tab row */}
+          <div style={{ display:"flex", gap:6, padding:"7px 10px", background:"rgba(18,16,12,.02)", overflowX:"auto", scrollbarWidth:"none" as React.CSSProperties["scrollbarWidth"] }}>
+            {TAB_GROUPS[group].tabs.map((t) => {
+              const isActive = tab === t;
+              const label = t==="overview"?"Overview":t==="cms"?(cmsUnread>0?"CMS ("+cmsUnread+")":"CMS"):t==="home_pros"?"Pros":t==="home_listings"?"Listings":t==="inquiries"?"Inquiries":t==="analytics"?"Analytics":t==="ebook_leads"?"Ebook Leads":t==="site_content"?"Site Content":t==="referrals"?"Referrals":t==="recycle_bin"?"🗑 Bin":t==="workflows"?"Workflows":t==="zoom"?"Meetings":t==="feedback"?"Feedback":t.charAt(0).toUpperCase()+t.slice(1);
+              const raw = t==="leads"?leads.length:t==="bookings"?appts.length:t==="clients"?clients.length:t==="matters"?matters.length:t==="chats"?convos.length:t==="email"?emails.filter(e=>!e.read).length:t==="invites"?invites.length:t==="directory"?listings.length:t==="availability"?availability.length:t==="home_pros"?homePros.length:t==="home_listings"?homeListings.length:t==="inquiries"?inquiries.filter(i=>i.status==="new").length:t==="recycle_bin"?binItems.length:0;
+              const count = Math.max(0, raw - (seenCounts[t] ?? 0));
+              return (
+                <button key={t} onClick={() => switchTab(t)}
+                  style={{ flexShrink:0, padding:"4px 12px", border:`1px solid ${isActive?GREEN:"rgba(18,16,12,.12)"}`, borderRadius:999, background:isActive?GREEN:"transparent", color:isActive?GOLD:MUTED, fontWeight:isActive?700:500, fontSize:".75rem", cursor:"pointer", whiteSpace:"nowrap", display:"inline-flex", alignItems:"center", gap:5 }}
+                >
+                  {label}{count>0&&<span style={{ fontSize:".6rem", fontWeight:700, padding:"0 5px", borderRadius:999, background:isActive?GOLD:"rgba(18,16,12,.07)", color:isActive?GREEN:MUTED }}>{count}</span>}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <div style={S.panel}>
@@ -927,7 +950,7 @@ export default function AdminDashboard() {
           {tab === "leads" && <LeadsTable leads={leads} loading={loading} token={token} onStatus={setLeadStatus} onDelete={deleteLead} />}
           {tab === "bookings" && <BookingsTable appts={appts} loading={loading} token={token ?? ""} onStatus={setApptStatus} onCancel={cancelBooking} onRefresh={() => { if (token) void fetchAll(token); }} />}
           {tab === "clients" && <ClientsTab clients={clients} matters={matters} loading={loading} token={token ?? ""} onUpsert={upsertClient} onDelete={deleteClient} />}
-          {tab === "matters" && <MattersTab matters={matters} loading={loading} token={token ?? ""} onStage={setMatterStage} onPayment={setMatterPayment} />}
+          {tab === "matters" && <MattersTab matters={matters} loading={loading} token={token ?? ""} onStage={setMatterStage} onPayment={setMatterPayment} onDelete={deleteMatter} />}
           {tab === "cms" && token && <CmsTab token={token} onUnreadChange={setCmsUnread} />}
           {tab === "calendar" && <CalendarTab appts={appts} token={token ?? ""} onStatus={setApptStatus} onRefresh={() => { if (token) void fetchAll(token); }} />}
           {tab === "chats" && <ChatsTable convos={convos} loading={loading} />}
@@ -952,6 +975,7 @@ export default function AdminDashboard() {
           {tab === "feedback" && token && <TesterFeedbackTab token={token} />}
           {tab === "analytics" && token && <AnalyticsTab token={token} />}
           {tab === "ebook_leads" && token && <EbookLeadsTab token={token} />}
+          {tab === "site_content" && token && <SiteContentTab token={token} />}
         </div>
       </div>
     </div>
@@ -965,6 +989,7 @@ export default function AdminDashboard() {
 function Stat({ label, value, urgent, onClick }: { label: string; value: number; urgent?: boolean; onClick?: () => void }) {
   return (
     <div
+      className="fl-admin-stat-card"
       style={{ ...S.statCard, ...(urgent && value > 0 ? { background: "rgba(200,166,92,.12)" } : null), ...(onClick ? { cursor: "pointer" } : null) }}
       onClick={onClick}
       role={onClick ? "button" : undefined}
@@ -1130,6 +1155,13 @@ function EmailComposeModal({ to, toName, defaultSubject, context, service, token
 // ---------------------------------------------------------------------------
 function LeadsTable({ leads, loading, token, onStatus, onDelete }: { leads: Lead[]; loading: boolean; token: string; onStatus: (id: string, s: string) => void; onDelete: (id: string) => void }) {
   const [composing, setComposing] = useState<Lead | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
   async function deleteLead(id: string, name: string | null) {
     if (!confirm(`Delete lead "${name || "this lead"}"? This cannot be undone.`)) return;
     await createClient().rpc("fl_admin_delete_lead", { p_token: token, p_id: id });
@@ -1139,6 +1171,31 @@ function LeadsTable({ leads, loading, token, onStatus, onDelete }: { leads: Lead
   if (leads.length === 0) return <Empty>No leads yet.</Empty>;
   return (
     <>
+      {isMobile ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "12px 16px" }}>
+          {leads.map((l) => {
+            const wa = l.phone ? waLink("Hello " + (l.name ?? "") + ", this is Ferguson Law following up on your enquiry.") : null;
+            return (
+              <div key={l.id} style={{ background: "#fff", border: "1px solid rgba(18,16,12,.1)", borderRadius: 12, padding: "14px 16px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginBottom: 6 }}>
+                  <span style={{ fontWeight: 700, fontSize: ".92rem", color: GREEN }}>{l.name || "—"}</span>
+                  <StatusSelect value={l.status} options={LEAD_STATUSES} onChange={(v) => onStatus(l.id, v)} />
+                </div>
+                {(l.email || l.phone) && (<div style={{ fontSize: ".8rem", color: MUTED, marginBottom: 4 }}>{l.email && <div>{l.email}</div>}{l.phone && <div>{l.phone}</div>}</div>)}
+                {l.service && <div style={{ fontSize: ".78rem", color: INK, marginBottom: 4 }}>{l.service} <SourceBadge source={l.source} /></div>}
+                {l.message && <div style={{ fontSize: ".76rem", color: MUTED, marginBottom: 8, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as React.CSSProperties["WebkitBoxOrient"] }}>{l.message}</div>}
+                <div style={{ fontSize: ".7rem", color: MUTED, marginBottom: 10 }}>{fmtDate(l.created_at)}</div>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {l.email && <button type="button" onClick={() => setComposing(l)} style={{ ...S.waBtn, background: "#c9a86a", color: "#10211c" }}>Email</button>}
+                  {wa && <a href={wa} target="_blank" rel="noopener noreferrer" style={S.waBtn}>WhatsApp</a>}
+                  {l.status === "new" && <button type="button" onClick={() => onStatus(l.id, "contacted")} style={{ ...S.waBtn, background: "rgba(47,122,82,.12)", color: "#2f7a52", border: "1px solid rgba(47,122,82,.25)" }}>Contacted</button>}
+                  <button type="button" onClick={() => onDelete(l.id)} style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)" }}>Archive</button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
       <div style={S.tableWrap}>
         <table style={S.table}>
           <thead><tr><Th>Date</Th><Th>Name</Th><Th>Contact</Th><Th>Service</Th><Th>Source</Th><Th>Message</Th><Th>Status</Th><Th>Actions</Th></tr></thead>
@@ -1182,6 +1239,7 @@ function LeadsTable({ leads, loading, token, onStatus, onDelete }: { leads: Lead
           </tbody>
         </table>
       </div>
+      )}
       {composing && composing.email && (
         <EmailComposeModal
           to={composing.email}
@@ -1351,6 +1409,13 @@ type BookingSort = "soonest" | "latest" | "client" | "status";
 
 function BookingsTable({ appts, loading, token, onStatus, onCancel, onRefresh }: { appts: Appointment[]; loading: boolean; token: string; onStatus: (id: string, s: string) => void; onCancel: (id: string) => void; onRefresh: () => void }) {
   const [composing, setComposing] = useState<Appointment | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
   const [attentionAppt, setAttentionAppt] = useState<Appointment | null>(null);
   const [linkSending, setLinkSending] = useState<string | null>(null);
   const [linkResult, setLinkResult] = useState<Record<string, { ok: boolean; msg: string }>>({});
@@ -1429,6 +1494,35 @@ function BookingsTable({ appts, loading, token, onStatus, onCancel, onRefresh }:
         </div>
       </div>
       {loading && appts.length === 0 ? <Empty>Loading bookings…</Empty> : sorted.length === 0 ? <Empty>No bookings match this filter.</Empty> : (
+        isMobile ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "12px 16px" }}>
+            {sorted.map((a) => {
+              const attn = computeAttentionStatus(a, now);
+              return (
+                <div key={a.id} style={{ background: "#fff", border: "1px solid rgba(18,16,12,.1)", borderRadius: 12, padding: "14px 16px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginBottom: 6 }}>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: ".88rem", color: GREEN }}>{a.name || "—"}</div>
+                      <div style={{ fontSize: ".78rem", color: MUTED }}>{fmtWhen(a.starts_at)}</div>
+                    </div>
+                    <StatusSelect value={a.status} options={APPT_STATUSES} onChange={(v) => onStatus(a.id, v)} />
+                  </div>
+                  {a.service && <div style={{ fontSize: ".8rem", color: INK, marginBottom: 4 }}>{a.service}</div>}
+                  {(a.email || a.phone) && (<div style={{ fontSize: ".78rem", color: MUTED, marginBottom: 6 }}>{a.email && <div>{a.email}</div>}{a.phone && <div>{a.phone}</div>}</div>)}
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", marginBottom: 4 }}>
+                    <button type="button" onClick={() => setAttentionAppt(a)} style={{ padding: 0, border: "none", background: "none", cursor: "pointer" }}><AttentionBadge status={attn} /></button>
+                  </div>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    {a.email && <button type="button" onClick={() => setComposing(a)} style={{ ...S.waBtn, background: "#c9a86a", color: "#10211c" }}>Email</button>}
+                    {a.email && a.status === "confirmed" && <button type="button" onClick={() => void sendMeetingLink(a)} disabled={linkSending === a.id} style={{ ...S.waBtn, background: "rgba(16,42,30,.1)", color: GREEN, opacity: linkSending === a.id ? 0.6 : 1 }}>{linkSending === a.id ? "Sending…" : "Meeting link"}</button>}
+                    {a.status !== "cancelled" && <button type="button" onClick={() => onCancel(a.id)} style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)" }}>Cancel</button>}
+                    {linkResult[a.id] && <span style={{ fontSize: ".72rem", color: linkResult[a.id].ok ? "#2f7a52" : "#a23b3b" }}>{linkResult[a.id].msg}</span>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
         <div style={S.tableWrap}>
           <table style={S.table}>
             <thead><tr><Th>When (Jamaica)</Th><Th>Service</Th><Th>Client</Th><Th>Contact</Th><Th>Ref</Th><Th>Status</Th><Th>Attention</Th><Th>Actions</Th></tr></thead>
@@ -1485,6 +1579,7 @@ function BookingsTable({ appts, loading, token, onStatus, onCancel, onRefresh }:
             </tbody>
           </table>
         </div>
+        )
       )}
       {composing && composing.email && (
         <EmailComposeModal
@@ -1638,7 +1733,7 @@ function ClientsTab({ clients, matters, loading, onUpsert, onDelete, token }: {
                       </tr>
                       {expanded === c.id && cms.map((m) => (
                         <tr key={m.id} style={{ ...S.tr, background: "#faf8f2" }}>
-                          <td colSpan={9} style={{ ...S.td, paddingLeft: 32 }}>
+                          <td colSpan={10} style={{ ...S.td, paddingLeft: 32 }}>
                             <span style={S.mono}>{m.ref}</span>
                             {" · "}<strong>{m.matter_type || "matter"}</strong>
                             {" · stage: "}{m.stage}
@@ -1674,11 +1769,19 @@ const PRIORITY_COLORS: Record<string, React.CSSProperties> = {
   urgent: { background: "rgba(190,60,60,.14)", color: "#a23b3b" },
 };
 
-function MattersTab({ matters, loading, token, onStage, onPayment }: {
+function MattersTab({ matters, loading, token, onStage, onPayment, onDelete }: {
   matters: Matter[]; loading: boolean; token: string;
   onStage: (id: string, s: string) => void; onPayment: (id: string, s: string) => void;
+  onDelete: (id: string) => void;
 }) {
   const [view, setView] = useState<"table" | "kanban">("kanban");
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   if (loading && matters.length === 0) return <Empty>Loading matters…</Empty>;
@@ -1691,7 +1794,7 @@ function MattersTab({ matters, loading, token, onStage, onPayment }: {
   return (
     <>
       <div style={{ display: "flex", gap: 8, padding: "14px 20px 0", borderBottom: "1px solid rgba(18,16,12,.07)" }}>
-        {(["kanban","table"] as const).map(v => (
+        {(isMobile ? (["kanban"] as const) : (["kanban", "table"] as const)).map(v => (
           <button key={v} type="button" onClick={() => setView(v)}
             style={{ padding: "6px 14px", borderRadius: 6, border: "1px solid rgba(18,16,12,.15)", background: view === v ? GREEN : "transparent", color: view === v ? CREAM : MUTED, fontSize: ".75rem", fontWeight: 600, cursor: "pointer", textTransform: "capitalize" }}>
             {v === "kanban" ? "⬛ Kanban" : "≡ Table"}
@@ -1709,7 +1812,7 @@ function MattersTab({ matters, loading, token, onStage, onPayment }: {
       ) : (
         <div style={S.tableWrap}>
           <table style={S.table}>
-            <thead><tr><Th>​</Th><Th>Ref</Th><Th>Client</Th><Th>Type</Th><Th>Stage</Th><Th>Priority</Th><Th>Payment</Th><Th>Description</Th><Th>Date</Th></tr></thead>
+            <thead><tr><Th>​</Th><Th>Ref</Th><Th>Client</Th><Th>Type</Th><Th>Stage</Th><Th>Priority</Th><Th>Payment</Th><Th>Description</Th><Th>Date</Th><Th>&#160;</Th></tr></thead>
             <tbody>
               {matters.map((m) => (
                 <>
@@ -1723,10 +1826,11 @@ function MattersTab({ matters, loading, token, onStage, onPayment }: {
                     <Td onClick={e => e.stopPropagation()}><StatusSelect value={m.payment_status} options={PAYMENT_STATUSES} onChange={(v) => onPayment(m.id, v)} /></Td>
                     <Td><div style={S.msgCell} title={m.description ?? ""}>{m.description || "—"}</div></Td>
                     <Td>{fmtDate(m.created_at)}</Td>
+                    <Td onClick={e => e.stopPropagation()}><button type="button" title="Delete matter" onClick={() => onDelete(m.id)} style={{ background: "none", border: "none", cursor: "pointer", color: "#c94b4b", fontSize: "1rem", padding: "2px 6px" }}>🗑</button></Td>
                   </tr>
                   {expandedId === m.id && (
                     <tr key={`${m.id}-milestones`}>
-                      <td colSpan={9} style={{ padding: 0, background: "rgba(16,42,30,.03)" }}>
+                      <td colSpan={10} style={{ padding: 0, background: "rgba(16,42,30,.03)" }}>
                         <MilestonePanel matterId={m.id} token={token} matter={m} onClose={() => setExpandedId(null)} inline />
                       </td>
                     </tr>
@@ -2061,6 +2165,13 @@ function AvailabilityTab({ availability, onSave, token }: {
   // Local editable state per row
   const [rows, setRows] = useState<Availability[]>([]);
   const [saving, setSaving] = useState<number | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
   const [msgs, setMsgs] = useState<Record<number, { kind: "ok" | "err"; text: string }>>({});
   const initRef = useRef(false);
 
@@ -2093,6 +2204,38 @@ function AvailabilityTab({ availability, onSave, token }: {
       <p style={{ color: MUTED, fontSize: ".84rem", marginBottom: 18 }}>
         Set the firm's weekly consultation schedule (Jamaica time). Changes apply to all future slot calculations immediately.
       </p>
+      {isMobile ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {rows.map((row) => {
+            const msg = msgs[row.day_of_week];
+            return (
+              <div key={row.day_of_week} style={{ background: "#fff", border: "1px solid rgba(18,16,12,.1)", borderRadius: 12, padding: "14px 16px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                  <span style={{ fontWeight: 700, fontSize: ".92rem", color: GREEN }}>{DAY_NAMES[row.day_of_week] ?? ("Day " + row.day_of_week)}</span>
+                  <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: ".8rem", color: MUTED }}>
+                    <input type="checkbox" checked={row.active} onChange={(e) => update(row.day_of_week, "active", e.target.checked)} style={{ width: 16, height: 16 }} />
+                    Active
+                  </label>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                    <input type="time" value={row.start_time.slice(0, 5)} style={S.fieldInput} onChange={(e) => update(row.day_of_week, "start_time", e.target.value + ":00")} />
+                    <input type="time" value={row.end_time.slice(0, 5)} style={S.fieldInput} onChange={(e) => update(row.day_of_week, "end_time", e.target.value + ":00")} />
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: ".78rem", color: MUTED, whiteSpace: "nowrap" }}>Slot (min)</span>
+                    <input type="number" min={5} max={120} value={row.slot_duration_minutes} style={{ ...S.fieldInput, width: 70 }} onChange={(e) => update(row.day_of_week, "slot_duration_minutes", parseInt(e.target.value, 10) || 20)} />
+                  </div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10 }}>
+                  <button type="button" onClick={() => void save(row)} disabled={saving === row.day_of_week} style={{ ...S.waBtn, ...(saving === row.day_of_week ? S.btnOff : null) }}>{saving === row.day_of_week ? "Saving…" : "Save"}</button>
+                  {msg && <span style={{ fontSize: ".78rem", color: msg.kind === "ok" ? "#2e7d4f" : "#a23b3b" }}>{msg.text}</span>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
       <div style={S.tableWrap}>
         <table style={S.table}>
           <thead>
@@ -2143,6 +2286,7 @@ function AvailabilityTab({ availability, onSave, token }: {
           </tbody>
         </table>
       </div>
+      )}
       <BlockedDatesPanel token={token} />
     </div>
   );
@@ -2333,6 +2477,13 @@ function ChatsTable({ convos, loading }: { convos: Conversation[]; loading: bool
   const [waSending, setWaSending] = useState(false);
   const [waResult, setWaResult] = useState<{ ok: boolean; msg: string } | null>(null);
   const msgEndRef = useRef<HTMLDivElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   useEffect(() => {
     if (!selected) { setMessages([]); return; }
@@ -2389,9 +2540,9 @@ function ChatsTable({ convos, loading }: { convos: Conversation[]; loading: bool
   if (loading && convos.length === 0) return <Empty>Loading chats…</Empty>;
   if (convos.length === 0) return <Empty>No conversations yet.</Empty>;
   return (
-    <div style={{ display: "flex", height: "calc(100vh - 300px)", minHeight: 400, overflow: "hidden" }}>
+    <div style={{ display: "flex", height: isMobile ? "auto" : "calc(100vh - 300px)", minHeight: isMobile ? 0 : 400, overflow: "hidden", flexDirection: isMobile ? "column" : "row" }}>
       {/* Conversation list */}
-      <div style={{ width: 300, flexShrink: 0, borderRight: "1px solid rgba(18,16,12,.1)", overflowY: "auto" }}>
+      <div style={{ width: isMobile ? "100%" : 300, flexShrink: 0, borderRight: isMobile ? "none" : "1px solid rgba(18,16,12,.1)", overflowY: "auto", display: isMobile && !!selected ? "none" : "block" }}>
         {convos.map((c) => (
           <button key={c.id} type="button" onClick={() => { setSelected(c); setWaResult(null); setWaText(""); }}
             style={{ display: "block", width: "100%", textAlign: "left", border: "none", cursor: "pointer",
@@ -2409,7 +2560,13 @@ function ChatsTable({ convos, loading }: { convos: Conversation[]; loading: bool
       </div>
 
       {/* Detail — full history */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      <div style={{ flex: 1, display: isMobile && !selected ? "none" : "flex", flexDirection: "column", overflow: "hidden" }}>
+        {isMobile && !!selected && (
+          <button type="button" onClick={() => { setSelected(null); setWaResult(null); }}
+            style={{ margin: "12px 16px 0", padding: "8px 16px", border: "1px solid rgba(18,16,12,.2)", borderRadius: 999, background: "#fff", fontSize: ".82rem", cursor: "pointer", color: MUTED, display: "inline-flex", alignItems: "center", gap: 6, alignSelf: "flex-start" }}>
+            ← Chats
+          </button>
+        )}
         {!selected ? (
           <div style={{ color: MUTED, textAlign: "center", paddingTop: 60 }}>Select a conversation to view history</div>
         ) : (
@@ -2669,6 +2826,14 @@ function EmailTab({ emails, token, onMarkRead }: {
   const [newBody, setNewBody] = useState("");
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [suggesting, setSuggesting] = useState(false);
+  const [showSpam, setShowSpam] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   useEffect(() => {
     if (pane !== "sent") return;
@@ -2716,7 +2881,7 @@ function EmailTab({ emails, token, onMarkRead }: {
     setSending(true); setSendResult(null);
     const to = selected.reply_to || selected.from_email;
     const subject = selected.subject ? (selected.subject.startsWith("Re:") ? selected.subject : `Re: ${selected.subject}`) : "Re: (no subject)";
-    const res = await fetch("/api/email/send", {
+    const res = await fetch("/api/admin/send-email", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token, to, subject, body: replyBody.trim(), replyToId: selected.id }),
@@ -2750,9 +2915,9 @@ function EmailTab({ emails, token, onMarkRead }: {
   }
 
   return (
-    <div style={{ display: "flex", height: "calc(100vh - 300px)", minHeight: 400, overflow: "hidden" }}>
+    <div style={{ display: "flex", height: isMobile ? "auto" : "calc(100vh - 300px)", minHeight: isMobile ? 0 : 400, overflow: "hidden", flexDirection: isMobile ? "column" : "row" }}>
       {/* Inbox list */}
-      <div style={{ width: 300, flexShrink: 0, borderRight: "1px solid rgba(18,16,12,.1)", overflowY: "auto" }}>
+      <div style={{ width: isMobile ? "100%" : 300, flexShrink: 0, borderRight: isMobile ? "none" : "1px solid rgba(18,16,12,.1)", overflowY: "auto", display: isMobile && !!selected ? "none" : "block" }}>
         {/* Pane toggle */}
         <div style={{ display: "flex", borderBottom: "1px solid rgba(18,16,12,.08)" }}>
           {(["inbox", "sent"] as const).map((p) => (
@@ -2769,6 +2934,10 @@ function EmailTab({ emails, token, onMarkRead }: {
             <button type="button" onClick={() => { setComposing(true); setSelected(null); }}
               style={{ ...S.authBtn, width: "100%", padding: "9px 16px", fontSize: ".82rem" }}>
               + Compose
+            </button>
+            <button type="button" onClick={() => setShowSpam(v => !v)}
+              style={{ marginTop: 8, width: "100%", padding: "7px 16px", fontSize: ".78rem", border: "1px solid rgba(18,16,12,.15)", borderRadius: 6, background: showSpam ? "rgba(180,50,50,.08)" : "transparent", color: showSpam ? "#b43232" : MUTED, cursor: "pointer" }}>
+              {showSpam ? "Hide spam" : `Show spam (${emails.filter(e => e.is_spam).length})`}
             </button>
           </div>
         )}
@@ -2791,9 +2960,9 @@ function EmailTab({ emails, token, onMarkRead }: {
               <div style={{ fontSize: ".72rem", color: MUTED, marginTop: 2 }}>{fmtDate(e.created_at)}</div>
             </button>
           ))
-        ) : emails.length === 0 ? (
-          <div style={{ padding: "32px 16px", textAlign: "center", color: MUTED, fontSize: ".86rem" }}>No inbound emails yet.</div>
-        ) : emails.map((e) => (
+        ) : (emails.filter(e => showSpam ? e.is_spam : !e.is_spam)).length === 0 ? (
+          <div style={{ padding: "32px 16px", textAlign: "center", color: MUTED, fontSize: ".86rem" }}>{showSpam ? "No spam emails." : "No inbound emails yet."}</div>
+        ) : (emails.filter(e => showSpam ? e.is_spam : !e.is_spam)).map((e) => (
           <button key={e.id} type="button" onClick={() => selectEmail(e)}
             style={{ display: "block", width: "100%", textAlign: "left", border: "none", cursor: "pointer",
               padding: "12px 14px", background: selected?.id === e.id ? "rgba(16,42,30,.06)" : "#fff",
@@ -2805,6 +2974,8 @@ function EmailTab({ emails, token, onMarkRead }: {
                 {e.from_name || e.from_email}
               </span>
               {e.replied && <span style={{ fontSize: ".66rem", fontWeight: 700, color: "#2f7a52", background: "rgba(47,122,82,.12)", borderRadius: 999, padding: "1px 6px", flexShrink: 0 }}>Replied</span>}
+              {e.is_spam && showSpam && <span style={{ fontSize: ".66rem", fontWeight: 700, color: "#b43232", background: "rgba(180,50,50,.1)", borderRadius: 999, padding: "1px 6px", flexShrink: 0 }}>Spam</span>}
+              {e.is_spam && showSpam && <span style={{ fontSize: ".66rem", fontWeight: 700, color: "#b43232", background: "rgba(180,50,50,.1)", borderRadius: 999, padding: "1px 6px", flexShrink: 0 }}>Spam</span>}
             </div>
             <div style={{ fontSize: ".78rem", color: MUTED, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.subject || "(no subject)"}</div>
             <div style={{ fontSize: ".72rem", color: MUTED, marginTop: 2 }}>{fmtDate(e.created_at)}</div>
@@ -2813,7 +2984,13 @@ function EmailTab({ emails, token, onMarkRead }: {
       </div>
 
       {/* Right pane */}
-      <div style={{ flex: 1, overflowY: "auto", padding: 24 }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: isMobile ? 16 : 24, display: isMobile && !selected && !composing && !selectedSent ? "none" : "block" }}>
+        {isMobile && (!!selected || composing || !!selectedSent) && (
+          <button type="button" onClick={() => { setSelected(null); setSelectedSent(null); setComposing(false); setSendResult(null); }}
+            style={{ marginBottom: 16, padding: "8px 16px", border: "1px solid rgba(18,16,12,.2)", borderRadius: 999, background: "#fff", fontSize: ".82rem", cursor: "pointer", color: MUTED, display: "inline-flex", alignItems: "center", gap: 6 }}>
+            ← Inbox
+          </button>
+        )}
         {pane === "sent" && selectedSent ? (
           <div>
             <div style={{ marginBottom: 16 }}>
@@ -5341,3 +5518,4 @@ function TesterFeedbackTab({ token }: { token: string }) {
     </div>
   );
 }
+

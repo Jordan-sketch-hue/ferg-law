@@ -18,6 +18,7 @@ const LOGIN_LINKS = [
   { href: "/auth", label: "Sign in" },
   { href: "/directory/login", label: "Partner Login" },
   { href: "/directory/client-login", label: "Client Portal" },
+  { href: "/admin", label: "Back office" },
 ] as const;
 
 const HOME_LINK = { href: SITE.homeApp, label: "H.O.M.E. by Ferguson Law", external: true };
@@ -25,8 +26,8 @@ const HOME_LINK = { href: SITE.homeApp, label: "H.O.M.E. by Ferguson Law", exter
 const RESOURCE_LINKS = [
   { href: "/buyers-guide", label: "Buyer's Guide" },
   { href: "/explainers", label: "Explainers" },
-  
-  { href: "/value-estimator", label: "Valuation Estimator" },
+  { href: "/cost-estimator",   label: "Cost Estimator®" },
+  { href: "/value-estimator",   label: "Valuation Estimator" },
   { href: "/glossary", label: "Glossary" },
   { href: "/faq", label: "FAQ" },
 ] as const;
@@ -409,15 +410,9 @@ export default function Nav() {
 
         @media(max-width:760px){ .nav-login-wrap{ display:none; } }
 
-        /* PWA standalone: BottomNav handles primary tabs — hide duplicate header CTAs only.
-           Hamburger + drawer stay so Resources / About / Portals remain reachable. */
+        /* PWA standalone: show CTAs + hamburger; hide only the Log in dropdown (in drawer) */
         @media(display-mode:standalone){
-          .nav-consult-btn, .nav-consult-mobile, .nav-get-started{ display:none !important; }
           .nav-login-wrap{ display:none !important; }
-          /* Hide drawer's own CTA row and external H.O.M.E. cross-app link */
-          .drawer-cta{ display:none !important; }
-          .drawer-home-pill{ display:none !important; }
-          .nav-home-inline{ display:none !important; }
         }
         @media(max-width:1200px){
           .nav-links a, .nav-links .nav-home-inline{ font-size:.78rem; }
@@ -431,3 +426,4 @@ export default function Nav() {
     </>
   );
 }
+

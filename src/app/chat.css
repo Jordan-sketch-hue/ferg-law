@@ -1,4 +1,4 @@
-/* ============================================================
+﻿/* ============================================================
    Ferguson Law — chat widget styles (scoped to .fl-chat*)
    Imported from ChatWidget.tsx. Does not touch globals.css.
    Reuses the brand tokens (--ink, --gold, --paper…) already
@@ -349,5 +349,15 @@ body.has-sticky-cta .fl-chat-panel  { bottom: 86px; }
     width: 44px;
     height: 44px;
     font-size: 1.1rem;
+  }
+}
+
+/* PWA standalone: lift chat above the 80px BottomNav */
+@media (display-mode: standalone) {
+  .fl-chat-launch {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 96px);
+  }
+  .fl-chat-panel {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 96px);
   }
 }
