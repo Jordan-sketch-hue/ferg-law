@@ -1,4 +1,4 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import { BookingProvider } from "@/components/site/BookingProvider";
 import Nav from "@/components/site/Nav";
 import Reveal from "@/components/site/Reveal";
@@ -47,7 +47,7 @@ export default function GuidePage() {
       <Nav />
       <article className="section guide-article">
         <div className="wrap g-wrap">
-          <Link href="/explainers" className="g-back">™ All guides</Link>
+          <Link href="/explainers" className="g-back">← All guides</Link>
           <span className="eyebrow">H.O.M.E.® by Ferguson Law – Buyer Explainer</span>
           <h1 className="g-h1">Why Every Jamaican Property Buyer Needs an Attorney</h1>
           <p className="g-sub">Your Biggest Investment Deserves Your Strongest Protection</p>

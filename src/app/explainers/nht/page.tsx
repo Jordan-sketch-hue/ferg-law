@@ -1,4 +1,4 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { BookingProvider, BookButton } from "@/components/site/BookingProvider";
 import Nav from "@/components/site/Nav";
@@ -51,7 +51,7 @@ export default function NhtExplainerPage() {
       }}>
         <div style={{ maxWidth: 780, margin: "0 auto" }}>
           <Link href="/explainers" style={{ display: "inline-block", fontSize: ".78rem", letterSpacing: ".14em", textTransform: "uppercase", color: "var(--gold)", textDecoration: "none", marginBottom: "1.6rem" }}>
-            ™ Back to Explainers
+            ← Back to Explainers
           </Link>
           <div style={{ marginBottom: "1rem" }}>
             <Pill>Open Market Loans</Pill>

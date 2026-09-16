@@ -17,7 +17,7 @@
 import { NextRequest } from "next/server";
 import { formatInTimeZone } from "date-fns-tz";
 import { createAdminClient } from "@/lib/supabase/server";
-import { sendBookingReminder } from "@/lib/email/send";
+import { sendBookingReminder, sendAdminDigest, sendAdminAttendanceAlert } from "@/lib/email/send";
 import { fullWhenLabel } from "@/lib/booking/format";
 import { TZ } from "@/lib/booking/availability";
 
@@ -167,10 +167,21 @@ export async function GET(req: NextRequest) {
       p_for_starts_at: a.starts_at,
     });
     attendanceAlerts += 1;
+    const timeLabel = formatInTimeZone(new Date(a.starts_at), TZ, "h:mm a");
     await pushToAdmins(
       "Attendance confirmation required",
-      `${a.name || "A client"} · ${a.service || "Consultation"} at ${formatInTimeZone(new Date(a.starts_at), TZ, "h:mm a")} — mark completed or no-show.`,
+      `${a.name || "A client"} · ${a.service || "Consultation"} at ${timeLabel} — mark completed or no-show.`,
     );
+    const adminEmail = process.env.FERGUSON_ADMIN_EMAIL;
+    if (adminEmail) {
+      await sendAdminAttendanceAlert({
+        to: adminEmail,
+        clientName: a.name || "A client",
+        service: a.service || "Consultation",
+        timeLabel,
+        ref: a.ref,
+      });
+    }
   }
 
   // 3. Once-daily morning digest. Window is a full hour (7:00-7:59 Jamaica) so
@@ -200,6 +211,10 @@ export async function GET(req: NextRequest) {
         "Good morning",
         n === 0 ? "No appointments scheduled today." : `You have ${n} appointment${n === 1 ? "" : "s"} scheduled today.`,
       );
+      const adminEmail = process.env.FERGUSON_ADMIN_EMAIL;
+      if (adminEmail) {
+        await sendAdminDigest({ to: adminEmail, count: n, dateLabel: todayKey });
+      }
     }
   }
 

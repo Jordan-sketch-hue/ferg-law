@@ -1,4 +1,4 @@
-﻿/* eslint-disable @next/next/no-img-element */
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -25,7 +25,8 @@ const HOME_LINK = { href: SITE.homeApp, label: "H.O.M.E. by Ferguson Law", exter
 const RESOURCE_LINKS = [
   { href: "/buyers-guide", label: "Buyer's Guide" },
   { href: "/explainers", label: "Explainers" },
-  { href: "/cost-estimator", label: "Cost Estimator®" },
+  
+  { href: "/value-estimator", label: "Valuation Estimator" },
   { href: "/glossary", label: "Glossary" },
   { href: "/faq", label: "FAQ" },
 ] as const;
@@ -408,12 +409,15 @@ export default function Nav() {
 
         @media(max-width:760px){ .nav-login-wrap{ display:none; } }
 
-        /* PWA standalone: BottomNav handles navigation — hide duplicate CTAs & hamburger */
+        /* PWA standalone: BottomNav handles primary tabs — hide duplicate header CTAs only.
+           Hamburger + drawer stay so Resources / About / Portals remain reachable. */
         @media(display-mode:standalone){
-          .menu-btn{ display:none !important; }
-          .nav-drawer-clip{ display:none !important; }
           .nav-consult-btn, .nav-consult-mobile, .nav-get-started{ display:none !important; }
           .nav-login-wrap{ display:none !important; }
+          /* Hide drawer's own CTA row and external H.O.M.E. cross-app link */
+          .drawer-cta{ display:none !important; }
+          .drawer-home-pill{ display:none !important; }
+          .nav-home-inline{ display:none !important; }
         }
         @media(max-width:1200px){
           .nav-links a, .nav-links .nav-home-inline{ font-size:.78rem; }

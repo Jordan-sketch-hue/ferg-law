@@ -437,6 +437,132 @@ function buildText(d: {
   ].join("\n");
 }
 
+const ADMIN_FROM = process.env.FERGUSON_FROM_EMAIL || "Ferguson Law <contact@fergusonlawja.com>";
+
+export async function sendAdminDigest(args: {
+  to: string;
+  count: number;
+  dateLabel: string;
+}): Promise<SendResult> {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) return { skipped: true };
+
+  const { to, count, dateLabel } = args;
+  const summary = count === 0
+    ? "No appointments are scheduled for today."
+    : `You have <strong>${count} appointment${count === 1 ? "" : "s"}</strong> scheduled today.`;
+  const textSummary = count === 0
+    ? "No appointments scheduled for today."
+    : `You have ${count} appointment${count === 1 ? "" : "s"} scheduled today.`;
+
+  const html = `<!doctype html>
+<html lang="en">
+  <head><meta name="color-scheme" content="light" /></head>
+  <body style="margin:0;padding:0;background:#f4f1ec;font-family:Georgia,'Times New Roman',serif;color:#1c1c1c;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f1ec;padding:40px 16px;">
+      <tr><td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#fff;border-radius:14px;overflow:hidden;border:1px solid #e7e1d6;">
+          <tr><td style="background:#10211c;padding:34px 40px;">
+            <div style="font-size:13px;letter-spacing:3px;text-transform:uppercase;color:#c9a86a;">Ferguson Law</div>
+            <div style="font-size:13px;color:#9fb3ab;margin-top:6px;">Morning Digest</div>
+          </td></tr>
+          <tr><td style="padding:44px 40px 40px;">
+            <p style="font-size:22px;line-height:1.3;margin:0 0 18px;color:#10211c;">Good morning, Owen.</p>
+            <p style="font-size:16px;line-height:1.75;margin:0 0 10px;color:#3a3a3a;">${summary}</p>
+            <p style="font-size:14px;color:#9a9a9a;margin:24px 0 0;">Date: ${escapeHtml(dateLabel)}</p>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </body>
+</html>`;
+
+  const text = [`Good morning, Owen.`, ``, textSummary, ``, `Date: ${dateLabel}`].join("\n");
+
+  try {
+    const resend = new Resend(key);
+    const { data, error } = await resend.emails.send({
+      from: ADMIN_FROM,
+      to,
+      subject: `Morning digest — ${dateLabel}`,
+      html,
+      text,
+    });
+    if (error) return { ok: false, error: error.message || String(error) };
+    return { ok: true, id: data?.id };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+export async function sendAdminAttendanceAlert(args: {
+  to: string;
+  clientName: string;
+  service: string;
+  timeLabel: string;
+  ref: string;
+}): Promise<SendResult> {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) return { skipped: true };
+
+  const { to, clientName, service, timeLabel, ref } = args;
+
+  const html = `<!doctype html>
+<html lang="en">
+  <head><meta name="color-scheme" content="light" /></head>
+  <body style="margin:0;padding:0;background:#f4f1ec;font-family:Georgia,'Times New Roman',serif;color:#1c1c1c;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f1ec;padding:40px 16px;">
+      <tr><td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#fff;border-radius:14px;overflow:hidden;border:1px solid #e7e1d6;">
+          <tr><td style="background:#10211c;padding:34px 40px;">
+            <div style="font-size:13px;letter-spacing:3px;text-transform:uppercase;color:#c9a86a;">Ferguson Law</div>
+            <div style="font-size:13px;color:#9fb3ab;margin-top:6px;">Attendance Confirmation Required</div>
+          </td></tr>
+          <tr><td style="padding:44px 40px 40px;">
+            <p style="font-size:22px;line-height:1.3;margin:0 0 18px;color:#10211c;">Action required</p>
+            <p style="font-size:16px;line-height:1.75;margin:0 0 24px;color:#3a3a3a;">
+              An appointment has passed without a recorded outcome. Please mark it as <strong>completed</strong> or <strong>no-show</strong> in the admin panel.
+            </p>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8f6f1;border:1px solid #ece6da;border-radius:10px;"><tr><td style="padding:24px 26px;">
+              ${row("Client", escapeHtml(clientName))}
+              ${row("Service", escapeHtml(service))}
+              ${row("Time", escapeHtml(timeLabel))}
+              ${row("Reference", `<span style="font-family:'Courier New',monospace;letter-spacing:1px;">${escapeHtml(ref)}</span>`)}
+            </td></tr></table>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </body>
+</html>`;
+
+  const text = [
+    `Attendance confirmation required.`,
+    ``,
+    `Client:    ${clientName}`,
+    `Service:   ${service}`,
+    `Time:      ${timeLabel}`,
+    `Reference: ${ref}`,
+    ``,
+    `Please mark this appointment as completed or no-show in the admin panel.`,
+  ].join("\n");
+
+  try {
+    const resend = new Resend(key);
+    const { data, error } = await resend.emails.send({
+      from: ADMIN_FROM,
+      to,
+      subject: `Attendance confirmation required — ${ref}`,
+      html,
+      text,
+    });
+    if (error) return { ok: false, error: error.message || String(error) };
+    return { ok: true, id: data?.id };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, "&amp;")
