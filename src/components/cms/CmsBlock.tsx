@@ -1,14 +1,7 @@
 "use client";
-import React from "react";
-
-/**
- * Drop-in replacement for any hardcoded text or image in a page.
- * Reads the live value from fl_site_blocks; falls back to `children` / `fallback`.
- * Subscribe to realtime so edits appear within ~1s with no page reload.
- */
-
-import { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { flEditBus } from "@/components/cms/CmsEditBar";
 
 interface BlockTextProps {
   page: string;
@@ -20,7 +13,18 @@ interface BlockTextProps {
 }
 
 export function CmsText({ page, block, fallback = "", as: Tag = "span", className, style }: BlockTextProps) {
-  const [value, setValue] = useState<string | null>(null);
+  const [value,    setValue]    = useState<string | null>(null);
+  const [editMode, setEditMode] = useState(false);
+  const wrapRef = useRef<HTMLElement>(null);
+
+  // Poll for edit mode state (set by CmsEditBar on window)
+  useEffect(() => {
+    const check = () =>
+      setEditMode(!!(window as Window & { __flEditMode?: boolean }).__flEditMode);
+    check();
+    const t = setInterval(check, 300);
+    return () => clearInterval(t);
+  }, []);
 
   useEffect(() => {
     const sb = createClient();
@@ -41,8 +45,39 @@ export function CmsText({ page, block, fallback = "", as: Tag = "span", classNam
     return () => { void sb.removeChannel(ch); };
   }, [page, block, fallback]);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return <Tag className={className} style={style}>{value ?? fallback}</Tag>;
+  const handleClick = (e: React.MouseEvent) => {
+    if (!editMode) return;
+    e.stopPropagation(); e.preventDefault();
+    const rect = wrapRef.current?.getBoundingClientRect() ?? new DOMRect();
+    flEditBus.open({ page, block, currentValue: value ?? fallback, rect });
+  };
+
+  const displayed = value ?? fallback;
+
+  if (!editMode) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return <Tag className={className} style={style}>{displayed}</Tag>;
+  }
+
+  return (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    <Tag
+      ref={wrapRef as any}
+      className={className}
+      style={{
+        ...style,
+        cursor: "pointer",
+        outline: "1.5px dashed #c8a65c",
+        outlineOffset: 2,
+        borderRadius: 3,
+        display: "inline",
+      }}
+      onClick={handleClick}
+      title={`Click to edit: ${page}.${block}`}
+    >
+      {displayed}
+    </Tag>
+  );
 }
 
 interface BlockImageProps {
@@ -81,4 +116,3 @@ export function CmsImage({ page, block, fallback = "", alt = "", className, styl
   // eslint-disable-next-line @next/next/no-img-element
   return <img src={url} alt={alt} className={className} style={style} />;
 }
-

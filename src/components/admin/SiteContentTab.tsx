@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -194,12 +194,12 @@ export default function SiteContentTab({ token }: { token: string }) {
             </h2>
             {viewPath && (
               <a
-                href={`https://ferguson-law.vercel.app${viewPath}`}
+                href={`https://fergusonlawja.com${viewPath}?edit_mode=1`}
                 target="_blank" rel="noreferrer"
                 style={{ fontSize: 11, color: MUT, textDecoration: "none",
                   background: "#f0ede6", borderRadius: 6, padding: "3px 9px" }}
               >
-                View on site ↗
+                Edit on site ↗
               </a>
             )}
           </div>
