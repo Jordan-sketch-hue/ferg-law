@@ -1,4 +1,4 @@
-ï»¿"use client";
+"use client";
 
 import { useState } from "react";
 import { track } from "@/lib/analytics";
@@ -75,7 +75,7 @@ export default function EbookFormSection() {
             <div style={{ textAlign: "center", padding: "2rem 0" }}>
               <svg style={{ width: 56, height: 56, color: "#16a34a", margin: "0 auto 1rem" }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>
               <h2 style={{ fontFamily: "var(--serif, Georgia, serif)", fontSize: "1.6rem", marginBottom: ".5rem", color: "#10211c" }}>You&apos;re all set!</h2>
-              <p style={{ color: "#69736d", fontSize: ".9rem", marginBottom: "1.8rem" }}>Your H.O.M.E.Â® Buyer&apos;s Guide is ready.</p>
+              <p style={{ color: "#69736d", fontSize: ".9rem", marginBottom: "1.8rem" }}>Your H.O.M.E.® Buyer&apos;s Guide is ready.</p>
               <a
                 href={pdfUrl}
                 target="_blank"
@@ -90,9 +90,9 @@ export default function EbookFormSection() {
           ) : (
             <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
               <div style={{ marginBottom: ".25rem" }}>
-                <span style={{ display: "inline-block", background: "#f0fdf4", color: "#16a34a", fontSize: ".72rem", fontWeight: 700, padding: "4px 12px", borderRadius: 20, marginBottom: ".75rem" }}>Free Download</span>
+                <span style={{ display: "inline-block", background: "#f0fdf4", color: "#16a34a", fontSize: ".72rem", fontWeight: 700, padding: "4px 12px", borderRadius: 20, marginBottom: ".75rem" }}>Download</span>
                 <h2 style={{ fontFamily: "var(--serif, Georgia, serif)", fontSize: "1.5rem", color: "#10211c", margin: 0 }}>Get the Buyer&apos;s Guide</h2>
-                <p style={{ color: "#69736d", fontSize: ".85rem", marginTop: 6 }}>The complete Buyer&apos;s Guide â€” every step from readiness to closing.</p>
+                <p style={{ color: "#69736d", fontSize: ".85rem", marginTop: 6 }}>The complete Buyer&apos;s Guide — every step from readiness to closing.</p>
               </div>
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
