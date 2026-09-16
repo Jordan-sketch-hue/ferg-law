@@ -1,15 +1,12 @@
 "use client";
+import { useEffect, useState } from "react";
 
-import { useState, useMemo } from "react";
+const GOLD = "#c9a86a";
+const DARK = "#10211c";
 
-const PRIMARY = "#102A1E";
-const GOLD = "#C8A65C";
-const DARK = "#1a1a1a";
-const MUTED = "#5c6a60";
-const BORDER = "#dde5dd";
-const LIGHT_BG = "#f9faf7";
-
-const PARISHES: Record<string, { land: [number, number]; built: [number, number]; label: string }> = {
+// ── Hardcoded fallback rates (used only when Supabase table is empty) ─────────
+// These are estimates — replaced by live market data once the scraper runs.
+const FALLBACK_PARISHES: Record<string, { land: [number, number]; built: [number, number]; label: string }> = {
   "Kingston & St. Andrew": { land: [8000, 25000], built: [15000, 30000], label: "Kingston & St. Andrew" },
   "St. James":             { land: [5000, 18000], built: [12000, 22000], label: "St. James" },
   "St. Catherine":         { land: [3000, 12000], built: [10000, 18000], label: "St. Catherine" },
@@ -25,273 +22,200 @@ const PARISHES: Record<string, { land: [number, number]; built: [number, number]
   "Hanover":               { land: [3000, 10000], built: [ 9000, 16000], label: "Hanover" },
 };
 
-const PROPERTY_TYPES = [
-  { value: "house",      label: "House / Villa" },
-  { value: "apartment",  label: "Apartment / Condo" },
-  { value: "land",       label: "Vacant Land" },
-  { value: "commercial", label: "Commercial Property" },
-];
+const CONDITIONS: Record<string, number> = { excellent: 1.18, good: 1, fair: 0.82, poor: 0.65 };
+const JMD_PER_USD = 157;
 
-const CONDITIONS: Record<string, number> = {
-  excellent: 1.15,
-  good:      1.0,
-  fair:      0.85,
-  poor:      0.7,
-};
+function fmt(n: number) { return new Intl.NumberFormat("en-JM").format(Math.round(n)); }
 
-const CONDITION_LABELS = [
-  { value: "excellent", label: "Excellent / New" },
-  { value: "good",      label: "Good" },
-  { value: "fair",      label: "Fair" },
-  { value: "poor",      label: "Poor / Needs work" },
-];
-
-function fmtJmd(n: number): string {
-  return new Intl.NumberFormat("en-JM", {
-    style: "currency", currency: "JMD", maximumFractionDigits: 0,
-  }).format(n);
-}
-function fmtUsd(n: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency", currency: "USD", maximumFractionDigits: 0,
-  }).format(n);
+interface BenchmarkRow {
+  parish: string;
+  prop_type: "land" | "built";
+  rate_low: number;
+  rate_high: number;
+  scraped_at: string;
 }
 
-const INPUT_STYLE = {
-  display: "block", width: "100%", boxSizing: "border-box" as const,
-  border: `1.5px solid ${BORDER}`, borderRadius: 12, padding: "12px 16px",
-  fontSize: 14, color: DARK, background: "#fff", appearance: "none" as const,
-  outline: "none",
-};
-const LABEL_STYLE = {
-  display: "block", fontSize: 11, fontWeight: 700, letterSpacing: ".1em",
-  color: MUTED, marginBottom: 7, textTransform: "uppercase" as const,
-};
+type ParishRates = Record<string, { land: [number, number]; built: [number, number]; label: string }>;
+
+// ── Fetch live benchmarks from Supabase ──────────────────────────────────────
+async function fetchLiveRates(): Promise<{ rates: ParishRates; lastUpdated: string | null }> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return { rates: FALLBACK_PARISHES, lastUpdated: null };
+
+  try {
+    const res = await fetch(
+      `${url}/rest/v1/valuation_benchmarks?select=parish,prop_type,rate_low,rate_high,scraped_at&order=scraped_at.desc`,
+      { headers: { apikey: key, Authorization: `Bearer ${key}` }, cache: "no-store" },
+    );
+    if (!res.ok) return { rates: FALLBACK_PARISHES, lastUpdated: null };
+
+    const rows: BenchmarkRow[] = await res.json();
+    if (!rows.length) return { rates: FALLBACK_PARISHES, lastUpdated: null };
+
+    // Merge rows into ParishRates structure
+    const merged: Record<string, Partial<{ land: [number, number]; built: [number, number]; scraped_at: string }>> = {};
+    for (const row of rows) {
+      if (!merged[row.parish]) merged[row.parish] = { scraped_at: row.scraped_at };
+      merged[row.parish][row.prop_type] = [row.rate_low, row.rate_high];
+    }
+
+    const rates: ParishRates = {};
+    for (const [parish, data] of Object.entries(merged)) {
+      const land = data.land ?? FALLBACK_PARISHES[parish]?.land ?? [2000, 8000];
+      const built = data.built ?? FALLBACK_PARISHES[parish]?.built ?? [8000, 16000];
+      rates[parish] = { land, built, label: parish };
+    }
+
+    // Fill any parishes missing from scrape with fallbacks
+    for (const [parish, fb] of Object.entries(FALLBACK_PARISHES)) {
+      if (!rates[parish]) rates[parish] = fb;
+    }
+
+    const latestScrapedAt = rows[0]?.scraped_at ?? null;
+    return { rates, lastUpdated: latestScrapedAt };
+  } catch {
+    return { rates: FALLBACK_PARISHES, lastUpdated: null };
+  }
+}
 
 export default function ValuationEstimatorClient() {
-  const [parish,    setParish]    = useState("");
-  const [propType,  setPropType]  = useState("house");
-  const [landArea,  setLandArea]  = useState("");
-  const [builtArea, setBuiltArea] = useState("");
+  const [parish, setParish] = useState("Kingston & St. Andrew");
+  const [propType, setPropType] = useState<"house" | "land" | "apartment" | "commercial">("house");
+  const [land, setLand] = useState("");
+  const [built, setBuilt] = useState("");
   const [condition, setCondition] = useState("good");
-  const [nlaRef,    setNlaRef]    = useState("");
-  const [submitted, setSubmitted] = useState(false);
+  const [result, setResult] = useState<{ low: number; high: number; midUsd: number } | null>(null);
+  const [parishes, setParishes] = useState<ParishRates>(FALLBACK_PARISHES);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const [dataSource, setDataSource] = useState<"live" | "fallback">("fallback");
 
-  const result = useMemo(() => {
-    if (!parish || !landArea) return null;
-    const pData = PARISHES[parish];
-    if (!pData) return null;
-    const land = parseFloat(landArea);
-    if (!land || land <= 0) return null;
-    const built = (propType !== "land" && parseFloat(builtArea)) || 0;
+  useEffect(() => {
+    fetchLiveRates().then(({ rates, lastUpdated: lu }) => {
+      setParishes(rates);
+      setLastUpdated(lu);
+      setDataSource(lu ? "live" : "fallback");
+    });
+  }, []);
+
+  function calculate() {
+    const pData = parishes[parish];
+    if (!pData) return;
+    const l = parseFloat(land);
+    const b = parseFloat(built) || 0;
+    if (!l || isNaN(l)) return;
     const condMult = CONDITIONS[condition] ?? 1;
     const typeMult = propType === "apartment" ? 0.82 : propType === "commercial" ? 1.25 : 1;
-    const totalLow  = (pData.land[0] * land * condMult + (built > 0 ? pData.built[0] * built * condMult : 0)) * typeMult;
-    const totalHigh = (pData.land[1] * land * condMult + (built > 0 ? pData.built[1] * built * condMult : 0)) * typeMult;
+    const totalLow  = (pData.land[0] * l * condMult + (b > 0 ? pData.built[0] * b * condMult : 0)) * typeMult;
+    const totalHigh = (pData.land[1] * l * condMult + (b > 0 ? pData.built[1] * b * condMult : 0)) * typeMult;
     const midJmd = (totalLow + totalHigh) / 2;
-    return { totalLow, totalHigh, midJmd, midUsd: midJmd / 157, parishLabel: pData.label };
-  }, [parish, propType, landArea, builtArea, condition]);
+    setResult({ low: totalLow, high: totalHigh, midUsd: midJmd / JMD_PER_USD });
+  }
 
-  const canSubmit = Boolean(parish && landArea);
+  const parishList = Object.keys(parishes).sort();
+  const formattedDate = lastUpdated
+    ? new Date(lastUpdated).toLocaleDateString("en-JM", { year: "numeric", month: "short", day: "numeric" })
+    : null;
 
   return (
-    <div style={{ maxWidth: 720, margin: "0 auto", transform: "translateY(-28px)" }}>
-      <div style={{ background: "#fff", borderRadius: 20, boxShadow: "0 8px 48px rgba(16,42,30,0.13)", border: `1px solid ${BORDER}`, overflow: "hidden" }}>
-        {/* Card header */}
-        <div style={{ padding: "20px 28px", borderBottom: `1px solid ${BORDER}`, background: LIGHT_BG, display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ width: 32, height: 32, borderRadius: 8, background: PRIMARY, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={GOLD} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
-              <polyline points="9 22 9 12 15 12 15 22"/>
-            </svg>
-          </div>
-          <div>
-            <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: PRIMARY }}>Valuation Estimator</p>
-            <p style={{ margin: 0, fontSize: 11, color: MUTED }}>Free indicative estimate — not a formal valuation</p>
-          </div>
-        </div>
-
-        {/* Form */}
-        <div style={{ padding: "28px 28px 24px" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px 24px" }}>
-
-            {/* NLA Reference */}
-            <div style={{ gridColumn: "span 2" }}>
-              <label style={LABEL_STYLE}>
-                NLA / Property Reference
-                <span style={{ fontWeight: 400, textTransform: "none", marginLeft: 4, color: "#aab5aa" }}>(optional)</span>
-              </label>
-              <input
-                value={nlaRef}
-                onChange={e => setNlaRef(e.target.value)}
-                placeholder="e.g. 1/89/7245"
-                style={INPUT_STYLE}
-              />
-            </div>
-
-            {/* Parish */}
-            <div>
-              <label style={LABEL_STYLE}>
-                Parish <span style={{ color: GOLD }}>*</span>
-              </label>
-              <select value={parish} onChange={e => { setParish(e.target.value); setSubmitted(false); }} style={INPUT_STYLE}>
-                <option value="">Select parish…</option>
-                {Object.keys(PARISHES).map(p => (
-                  <option key={p} value={p}>{PARISHES[p].label}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Property Type */}
-            <div>
-              <label style={LABEL_STYLE}>
-                Property Type <span style={{ color: GOLD }}>*</span>
-              </label>
-              <select value={propType} onChange={e => { setPropType(e.target.value); setSubmitted(false); }} style={INPUT_STYLE}>
-                {PROPERTY_TYPES.map(t => (
-                  <option key={t.value} value={t.value}>{t.label}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Land Area */}
-            <div>
-              <label style={LABEL_STYLE}>
-                Land Area (sq ft) <span style={{ color: GOLD }}>*</span>
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={landArea}
-                onChange={e => { setLandArea(e.target.value); setSubmitted(false); }}
-                placeholder="e.g. 6000"
-                style={INPUT_STYLE}
-              />
-            </div>
-
-            {/* Built Area — hidden for vacant land */}
-            {propType !== "land" && (
-              <div>
-                <label style={LABEL_STYLE}>Built / Floor Area (sq ft)</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={builtArea}
-                  onChange={e => { setBuiltArea(e.target.value); setSubmitted(false); }}
-                  placeholder="e.g. 1800"
-                  style={INPUT_STYLE}
-                />
-              </div>
-            )}
-
-            {/* Condition */}
-            <div style={{ gridColumn: "span 2" }}>
-              <label style={LABEL_STYLE}>Condition</label>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                {CONDITION_LABELS.map(c => (
-                  <button
-                    key={c.value}
-                    type="button"
-                    onClick={() => { setCondition(c.value); setSubmitted(false); }}
-                    style={{
-                      padding: "8px 16px", borderRadius: 100, fontSize: 13, fontWeight: 600,
-                      cursor: "pointer", transition: "all .15s", border: "1.5px solid",
-                      borderColor: condition === c.value ? PRIMARY : BORDER,
-                      background:  condition === c.value ? PRIMARY : "#fff",
-                      color:       condition === c.value ? "#fff"  : DARK,
-                    }}
-                  >
-                    {c.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setSubmitted(true)}
-            disabled={!canSubmit}
-            style={{
-              marginTop: 24, width: "100%",
-              background: canSubmit ? PRIMARY : "#d0d8d0",
-              color:      canSubmit ? "#fff"  : "#9aada0",
-              border: "none", borderRadius: 12, padding: "15px 0",
-              fontSize: 15, fontWeight: 700,
-              cursor: canSubmit ? "pointer" : "not-allowed",
-              letterSpacing: ".03em",
-            }}
-          >
-            Get Estimate
-          </button>
-        </div>
+    <div style={{ maxWidth: 700, margin: "0 auto", padding: "0 1rem 4rem" }}>
+      {/* Data source indicator */}
+      <div style={{ marginBottom: "1.5rem", padding: "0.6rem 1rem", borderRadius: 8, background: dataSource === "live" ? "#e8f4e8" : "#fff8e8", border: `1px solid ${dataSource === "live" ? "#b2d9b2" : "#e8d5a0"}`, fontSize: ".8rem", color: dataSource === "live" ? "#2d6a2d" : "#7a5c1a", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+        <span style={{ fontSize: "1rem" }}>{dataSource === "live" ? "✓" : "⏳"}</span>
+        {dataSource === "live"
+          ? `Rate data sourced from active Jamaican property listings · Updated ${formattedDate}`
+          : "Rate data: market estimates · Live listing data updates weekly"}
       </div>
 
-      {/* Result panel */}
-      {submitted && result && (
-        <div style={{ marginTop: 20, borderRadius: 20, overflow: "hidden", boxShadow: "0 8px 48px rgba(16,42,30,0.18)" }}>
-          <div style={{ background: PRIMARY, padding: "28px 32px" }}>
-            <p style={{ margin: "0 0 4px", fontSize: 11, fontWeight: 700, color: GOLD, letterSpacing: ".15em", textTransform: "uppercase" }}>
-              Indicative Valuation
-            </p>
-            <p style={{ margin: "0 0 16px", fontSize: 13, color: "rgba(255,255,255,0.55)" }}>
-              {result.parishLabel}
-            </p>
-            <div style={{ fontSize: "clamp(1.4rem,4vw,2rem)", fontWeight: 700, fontFamily: "Georgia, serif", color: "#fff", lineHeight: 1.3 }}>
-              {fmtJmd(result.totalLow)}<br />— {fmtJmd(result.totalHigh)}
-            </div>
-            <div style={{ marginTop: 8, fontSize: 14, color: "rgba(255,255,255,0.55)" }}>
-              {`\u2248 ${fmtUsd(result.totalLow / 157)} \u2013 ${fmtUsd(result.totalHigh / 157)} USD`}
-            </div>
-          </div>
-
-          <div style={{ background: LIGHT_BG, padding: "20px 32px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, borderBottom: `1px solid ${BORDER}` }}>
-            {[
-              { label: "Mid-point (JMD)", value: fmtJmd(result.midJmd) },
-              { label: "Mid-point (USD)", value: fmtUsd(result.midUsd) },
-            ].map(item => (
-              <div key={item.label} style={{ background: "#fff", border: `1px solid ${BORDER}`, borderRadius: 12, padding: "14px 18px" }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 4 }}>
-                  {item.label}
-                </div>
-                <div style={{ fontWeight: 700, fontSize: 18, color: PRIMARY }}>{item.value}</div>
-              </div>
-            ))}
-          </div>
-
-          <div style={{ background: "#fff", padding: "20px 32px", display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center", borderRadius: "0 0 20px 20px" }}>
-            <p style={{ margin: 0, fontSize: 13, color: MUTED, flex: 1, minWidth: 180, lineHeight: 1.55 }}>
-              Need a certified valuation for a bank or NHT application?
-            </p>
-            <div style={{ display: "flex", gap: 10, flexShrink: 0 }}>
-              <a
-                href="/booking"
-                style={{ display: "inline-block", padding: "10px 20px", background: PRIMARY, color: "#fff", borderRadius: 10, fontSize: 13, fontWeight: 700, textDecoration: "none" }}
-              >
-                Book a consultation
-              </a>
-              <a
-                href="https://www.nla.gov.jm"
-                target="_blank"
-                rel="noreferrer"
-                style={{ display: "inline-block", padding: "10px 20px", border: `1.5px solid ${BORDER}`, color: DARK, borderRadius: 10, fontSize: 13, fontWeight: 600, textDecoration: "none" }}
-              >
-                Find a valuator
-              </a>
-            </div>
-          </div>
+      {/* Card */}
+      <div style={{ background: "#fff", border: "1px solid #e8e0d0", borderRadius: 12, padding: "1.75rem", boxShadow: "0 2px 16px rgba(0,0,0,.06)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "1.5rem" }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={GOLD} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+          <span style={{ fontWeight: 600, fontSize: ".9rem", color: DARK }}>Property Details</span>
         </div>
-      )}
 
-      {submitted && !result && (
-        <div style={{ marginTop: 16, background: "#fff5f5", borderRadius: 12, padding: "16px 20px", color: "#c0392b", fontSize: 14, border: "1px solid #fde8e8" }}>
-          Please select a parish and enter the land area to generate an estimate.
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+          {/* Parish */}
+          <div style={{ gridColumn: "1/-1" }}>
+            <label style={labelStyle}>Parish</label>
+            <select value={parish} onChange={e => { setParish(e.target.value); setResult(null); }} style={selectStyle}>
+              {parishList.map(p => <option key={p} value={p}>{parishes[p].label}</option>)}
+            </select>
+          </div>
+
+          {/* Property Type */}
+          <div>
+            <label style={labelStyle}>Property Type</label>
+            <select value={propType} onChange={e => { setPropType(e.target.value as typeof propType); setResult(null); }} style={selectStyle}>
+              <option value="house">House / Villa</option>
+              <option value="land">Land / Lot</option>
+              <option value="apartment">Apartment</option>
+              <option value="commercial">Commercial</option>
+            </select>
+          </div>
+
+          {/* Condition */}
+          <div>
+            <label style={labelStyle}>Condition</label>
+            <select value={condition} onChange={e => { setCondition(e.target.value); setResult(null); }} style={selectStyle}>
+              <option value="excellent">Excellent</option>
+              <option value="good">Good</option>
+              <option value="fair">Fair</option>
+              <option value="poor">Poor</option>
+            </select>
+          </div>
+
+          {/* Land area */}
+          <div>
+            <label style={labelStyle}>Land Area (sq ft)</label>
+            <input type="number" min="0" placeholder="e.g. 6000" value={land} onChange={e => { setLand(e.target.value); setResult(null); }} style={inputStyle} />
+          </div>
+
+          {/* Built area */}
+          {propType !== "land" && (
+            <div>
+              <label style={labelStyle}>Built Area (sq ft)</label>
+              <input type="number" min="0" placeholder="e.g. 1800" value={built} onChange={e => { setBuilt(e.target.value); setResult(null); }} style={inputStyle} />
+            </div>
+          )}
         </div>
-      )}
 
-      <p style={{ marginTop: 20, fontSize: 11, color: "#9aada0", lineHeight: 1.7, textAlign: "center", padding: "0 1rem" }}>
-        Benchmarks based on Jamaica real estate market data (mid-2026). Actual values vary by location, title status, NHT approval, and local demand. Ferguson Law is not a valuation firm.
-      </p>
+        <button onClick={calculate} style={{ marginTop: "1.5rem", width: "100%", padding: "0.85rem", background: GOLD, color: "#fff", border: "none", borderRadius: 8, fontWeight: 700, fontSize: "1rem", cursor: "pointer", letterSpacing: ".03em" }}>
+          Estimate Value
+        </button>
+
+        {/* Result */}
+        {result && (
+          <div style={{ marginTop: "1.5rem", padding: "1.25rem", background: "#f5f0e8", borderRadius: 10, borderLeft: `4px solid ${GOLD}` }}>
+            <p style={{ margin: "0 0 0.25rem", fontSize: ".75rem", fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: GOLD }}>Estimated Market Value</p>
+            <p style={{ margin: "0 0 0.5rem", fontSize: "1.5rem", fontWeight: 700, color: DARK }}>
+              J${fmt(result.low)} &ndash; J${fmt(result.high)}
+            </p>
+            <p style={{ margin: 0, fontSize: ".85rem", color: "#6b7a6e" }}>
+              Midpoint: approx. US${fmt(result.midUsd)}
+            </p>
+            <p style={{ margin: "0.75rem 0 0", fontSize: ".75rem", color: "#9aaa9e", lineHeight: 1.5 }}>
+              Indicative estimate based on {dataSource === "live" ? "current market listings" : "market benchmarks"} — not a formal valuation. Ferguson Law is not a valuation firm. For a certified appraisal, engage a chartered valuator.
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
+
+const labelStyle: React.CSSProperties = {
+  display: "block", fontSize: ".78rem", fontWeight: 600, letterSpacing: ".06em",
+  textTransform: "uppercase", color: "#6b7a6e", marginBottom: 6,
+};
+const selectStyle: React.CSSProperties = {
+  width: "100%", padding: "0.6rem 0.75rem", border: "1px solid #d5cfc4",
+  borderRadius: 6, fontSize: ".9rem", background: "#fff", color: "#10211c",
+};
+const inputStyle: React.CSSProperties = {
+  width: "100%", padding: "0.6rem 0.75rem", border: "1px solid #d5cfc4",
+  borderRadius: 6, fontSize: ".9rem", background: "#fff", color: "#10211c", boxSizing: "border-box",
+};
