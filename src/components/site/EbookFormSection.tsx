@@ -92,7 +92,7 @@ export default function EbookFormSection() {
               <div style={{ marginBottom: ".25rem" }}>
                 <span style={{ display: "inline-block", background: "#f0fdf4", color: "#16a34a", fontSize: ".72rem", fontWeight: 700, padding: "4px 12px", borderRadius: 20, marginBottom: ".75rem" }}>Download</span>
                 <h2 style={{ fontFamily: "var(--serif, Georgia, serif)", fontSize: "1.5rem", color: "#10211c", margin: 0 }}>Get the Buyer&apos;s Guide</h2>
-                <p style={{ color: "#69736d", fontSize: ".85rem", marginTop: 6 }}>The complete Buyer&apos;s Guide — every step from readiness to closing.</p>
+                <p style={{ color: "#69736d", fontSize: ".85rem", marginTop: 6 }}>The complete Buyer&apos;s Guide Â— every step from readiness to closing.</p>
               </div>
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
