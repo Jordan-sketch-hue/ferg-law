@@ -102,7 +102,7 @@ export default function Nav() {
           {/* Desktop inline links */}
           <nav className="nav-links" id="navLinks">
             {NAV_LINKS.map((l) => (
-              <a key={l.href} href={l.href}>{l.label}</a>
+              <a key={l.href} href={l.href}><span data-edit={`nav.${l.label.toLowerCase().replace(/\s+/g,"")}`}>{l.label}</span></a>
             ))}
             {/* Resources dropdown */}
             <div className="nav-resources-wrap" ref={resourcesRef}>
@@ -111,15 +111,15 @@ export default function Nav() {
                 onClick={() => setResourcesOpen((v) => !v)}
                 aria-expanded={resourcesOpen}
               >
-                Resources <span className="nav-caret" aria-hidden="true">▾</span>
+                <span data-edit="nav.resources">Resources</span> <span className="nav-caret" aria-hidden="true">▾</span>
               </button>
               {resourcesOpen && (
                 <div className="nav-resources-dropdown">
                   {RESOURCE_LINKS.map((l) => (
                     <a key={l.href} href={l.href} onClick={() => setResourcesOpen(false)}>
                       {l.label.includes("®")
-                        ? <>{l.label.replace("®", "")}<sup style={{fontSize:"0.55em",verticalAlign:"super",lineHeight:0}}>®</sup></>
-                        : l.label}
+                        ? <><span data-edit={`nav.resource.${l.href.replace("/","")}`}>{l.label.replace("®", "")}</span><sup style={{fontSize:"0.55em",verticalAlign:"super",lineHeight:0}}>®</sup></>
+                        : <span data-edit={`nav.resource.${l.href.replace("/","")}`}>{l.label}</span>}
                     </a>
                   ))}
                 </div>
@@ -130,7 +130,7 @@ export default function Nav() {
               href={HOME_LINK.href}
               className="nav-home-inline"
             >
-              H.O.M.E. by Ferguson Law<sup style={{fontSize:"0.55em",verticalAlign:"super",lineHeight:0}}>®</sup>
+              <span data-edit="nav.homeLink">H.O.M.E. by Ferguson Law</span><sup style={{fontSize:"0.55em",verticalAlign:"super",lineHeight:0}}>®</sup>
             </a>
           </nav>
 
@@ -215,7 +215,7 @@ export default function Nav() {
                   setTimeout(() => { document.getElementById(id)?.scrollIntoView({ behavior: "smooth" }); }, 320);
                 } else { closeMenu(); }
               }}
-            >{l.label}</a>
+><span data-edit={`nav.${l.label.toLowerCase().replace(/\s+/g,"")}`}>{l.label}</span></a>
           ))}
 
           {/* Portals */}
