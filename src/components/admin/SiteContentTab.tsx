@@ -186,43 +186,32 @@ export default function SiteContentTab({ token }: { token: string }) {
       {/* Main editor */}
       <div style={{ flex: 1, padding: "20px 28px", overflowY: "auto" }}>
 
-        {/* Header row */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, gap: 12 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: G }}>
-              {PAGE_LABELS[activePage] ?? activePage}
-            </h2>
-            {viewPath && (
-              <a
-                href={`https://fergusonlawja.com${viewPath}?edit`}
-                target="_blank" rel="noreferrer"
-                style={{ fontSize: 11, color: MUT, textDecoration: "none",
-                  background: "#f0ede6", borderRadius: 6, padding: "3px 9px" }}
-              >
-                Edit on site ↗
-              </a>
-            )}
+        {/* Editing Mode Toggle — two options side-by-side */}
+        <div style={{ marginBottom: 20, borderRadius: 12, border: `1.5px solid ${BOR}`, background: "#fff", overflow: "hidden" }}>
+          <div style={{ display: "flex" }}>
+            {/* Option A: Backend Forms */}
+            <div style={{ flex: 1, padding: "16px 20px", background: G, display: "flex", flexDirection: "column", gap: 4, borderRight: `1px solid rgba(200,166,92,.3)` }}>
+              <span style={{ fontSize: 11, fontWeight: 800, color: GOLD, letterSpacing: ".05em", textTransform: "uppercase" }}>Backend Forms<span style={{ marginLeft: 8, fontSize: 10, padding: "1px 7px", borderRadius: 99, background: GOLD, color: G, fontWeight: 700 }}>You are here</span></span>
+              <p style={{ margin: 0, fontSize: 11, color: "rgba(200,166,92,.75)" }}>Edit text &amp; images from this dashboard. Good for bulk changes.</p>
+            </div>
+            {/* Option B: Live Site Editor */}
+            <div style={{ flex: 1, padding: "16px 20px", display: "flex", flexDirection: "column", gap: 4 }}>
+              <span style={{ fontSize: 11, fontWeight: 800, color: G, letterSpacing: ".05em", textTransform: "uppercase" }}>Live Site Editor</span>
+              <p style={{ margin: 0, fontSize: 11, color: MUT }}>Click text and images directly on the live page to edit in place.</p>
+              {viewPath ? (
+                <a href={`https://fergusonlawja.com${viewPath}?edit`} target="_blank" rel="noreferrer" style={{ marginTop: 6, display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 14px", borderRadius: 8, background: G, color: GOLD, fontWeight: 700, fontSize: 12, textDecoration: "none" }}>Open Live Editor ↗</a>
+              ) : (
+                <span style={{ fontSize: 11, color: MUT }}>Select a page with a URL to open the live editor.</span>
+              )}
+            </div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            {dirtyCount > 0 && (
-              <span style={{ fontSize: 12, color: GOLD, fontWeight: 600 }}>
-                {dirtyCount} unsaved
-              </span>
-            )}
-            <button
-              type="button"
-              onClick={() => void saveAll()}
-              disabled={dirtyCount === 0}
-              style={{
-                background: dirtyCount > 0 ? G : "#ccc",
-                color: "#fff", border: "none", borderRadius: 8,
-                padding: "8px 18px", fontSize: 13, fontWeight: 700,
-                cursor: dirtyCount > 0 ? "pointer" : "not-allowed",
-              }}
-              title="Save all unsaved blocks (⌘S)"
-            >
-              Save All{dirtyCount > 0 ? ` (${dirtyCount})` : ""}
-            </button>
+          {/* Sub-header: page + save */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 20px", borderTop: `1px solid ${BOR}` }}>
+            <h2 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: G }}>{PAGE_LABELS[activePage] ?? activePage}<span style={{ fontWeight: 400, color: MUT, fontSize: 12, marginLeft: 8 }}>· backend form view</span></h2>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              {dirtyCount > 0 && <span style={{ fontSize: 12, color: GOLD, fontWeight: 600 }}>{dirtyCount} unsaved</span>}
+              <button type="button" onClick={() => void saveAll()} disabled={dirtyCount === 0} style={{ background: dirtyCount > 0 ? G : "#ccc", color: "#fff", border: "none", borderRadius: 8, padding: "7px 16px", fontSize: 13, fontWeight: 700, cursor: dirtyCount > 0 ? "pointer" : "not-allowed" }} title="Save all (⌘S)">Save All{dirtyCount > 0 ? ` (${dirtyCount})` : ""}</button>
+            </div>
           </div>
         </div>
 
