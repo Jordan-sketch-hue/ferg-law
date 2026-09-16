@@ -155,7 +155,7 @@ async function scrapeCentury21(): Promise<Listing[]> {
 
         if (p && sqft && sqft > 0 && priceJmd && priceJmd > 100_000) {
           const propType = type === "land-lots-farms" ? "land" : "built";
-          listings.push({ parish: p, propType, priceJmd, sizeqft: sqft, pricePerSqft: priceJmd / sqft } as Listing);
+          listings.push({ parish: p, propType, priceJmd, sizesqft: sqft, pricePerSqft: priceJmd / sqft });
         }
       }
     } catch (err) {
@@ -196,9 +196,9 @@ async function scrapePropertyAds(): Promise<Listing[]> {
             parish: p,
             propType: isLand ? "land" : "built",
             priceJmd,
-            sizeqft: sqft,
+            sizesqft: sqft,
             pricePerSqft: priceJmd / sqft,
-          } as Listing);
+           });
         }
       }
     } catch (err) {
@@ -231,7 +231,7 @@ async function scrapeBelfield(): Promise<Listing[]> {
           const sqft = toSqft(parseFloat(String(size)), unit);
           if (sqft && sqft > 0 && priceJmd > 100_000) {
             const isLand = /land|lot|plot/i.test(String(item.name ?? ""));
-            listings.push({ parish: p, propType: isLand ? "land" : "built", priceJmd, sizeqft: sqft, pricePerSqft: priceJmd / sqft } as Listing);
+            listings.push({ parish: p, propType: isLand ? "land" : "built", priceJmd, sizesqft: sqft, pricePerSqft: priceJmd / sqft });
           }
         }
       } catch {}
