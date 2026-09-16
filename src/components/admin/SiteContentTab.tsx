@@ -194,7 +194,7 @@ export default function SiteContentTab({ token }: { token: string }) {
             </h2>
             {viewPath && (
               <a
-                href={`https://fergusonlawja.com${viewPath}?edit_mode=1`}
+                href={`https://fergusonlawja.com${viewPath}?edit`}
                 target="_blank" rel="noreferrer"
                 style={{ fontSize: 11, color: MUT, textDecoration: "none",
                   background: "#f0ede6", borderRadius: 6, padding: "3px 9px" }}

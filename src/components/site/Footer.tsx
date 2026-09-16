@@ -1,4 +1,4 @@
-﻿/* eslint-disable @next/next/no-img-element */
+/* eslint-disable @next/next/no-img-element */
 import { SITE, waLink } from "@/lib/site";
 
 /**
@@ -62,7 +62,7 @@ export default function Footer() {
               <a href={`mailto:${SITE.email}`} data-edit="footer.email">
                 Email · {SITE.email}
               </a>
-              <p>Jamaica &amp; worldwide</p>
+              <p data-edit="footer.location">Jamaica &amp; worldwide</p>
             </div>
           </div>
         </div>

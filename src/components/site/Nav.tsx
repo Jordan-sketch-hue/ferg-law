@@ -95,7 +95,7 @@ export default function Nav() {
         <div className="wrap nav-inner">
           <div className="nav-left">
             <a className="brand" href="/" aria-label="Ferguson Law home">
-              <img className="logo-img" src="/img/logo-ferguson.png" alt="Ferguson Law" />
+              <img className="logo-img" src="/img/logo-ferguson.png" data-edit-img="images.logo" alt="Ferguson Law" />
             </a>
           </div>
 
@@ -168,7 +168,7 @@ export default function Nav() {
               className="btn btn-gold nav-consult-btn"
               onClick={(e) => handleNavClick(e, "/booking")}
             >
-              <CalIcon /><span className="btn-label">Book here</span>
+              <CalIcon /><span className="btn-label" data-edit="nav.bookHere">Book here</span>
             </a>
             {/* Book here — mobile only */}
             <a
@@ -176,11 +176,11 @@ export default function Nav() {
               className="btn btn-gold nav-consult-mobile"
               onClick={(e) => handleNavClick(e, "/booking")}
             >
-              <CalIcon /><span className="btn-label">Book here</span>
+              <CalIcon /><span className="btn-label" data-edit="nav.bookHere">Book here</span>
             </a>
             {/* Get started */}
             <a className="btn btn-gold nav-get-started" href="/get-started" onClick={() => track("get_started_click")}>
-              <PenIcon /><span className="btn-label">Get started</span>
+              <PenIcon /><span className="btn-label" data-edit="nav.getStarted">Get started</span>
             </a>
             {/* Hamburger */}
             <button

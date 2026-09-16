@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 /**
  * Consultation CRM — the Ferguson Law back office.
@@ -206,6 +206,13 @@ const TAB_GROUPS: Record<TabGroup, { label: string; tabs: Tab[] }> = {
   email:     { label: "Email",     tabs: ["email","feedback"] },
   directory: { label: "Directory", tabs: ["invites","directory","availability","referrals","workflows"] },
   home:      { label: "H.O.M.E.", tabs: ["home_pros","home_listings","inquiries","recycle_bin"] },
+};
+const GROUP_ICONS: Record<TabGroup, JSX.Element> = {
+  dashboard: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>,
+  crm:       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
+  email:     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>,
+  directory: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3" cy="6" r="1"/><circle cx="3" cy="12" r="1"/><circle cx="3" cy="18" r="1"/></svg>,
+  home:      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>,
 };
 function tabToGroup(t: Tab): TabGroup {
   for (const [g, { tabs }] of Object.entries(TAB_GROUPS) as [TabGroup, { label: string; tabs: Tab[] }][]) {
@@ -908,8 +915,9 @@ export default function AdminDashboard() {
               }, 0);
               return (
                 <button key={g} onClick={() => { setGroup(g); if (!tabs.includes(tab)) switchTab(tabs[0]); }}
-                  style={{ flex:"1 0 auto", padding:"10px 16px 9px", border:"none", borderBottom:isActive?`2px solid ${GOLD}`:"2px solid transparent", background:"transparent", color:isActive?GREEN:MUTED, fontWeight:isActive?700:500, fontSize:".8rem", cursor:"pointer", whiteSpace:"nowrap", marginBottom:-1, letterSpacing:".01em", display:"flex", alignItems:"center", gap:6 }}
+                  style={{ flex:"1 0 auto", padding:"11px 14px 10px", border:"none", borderBottom:isActive?`3px solid ${GOLD}`:"3px solid transparent", background:isActive?"rgba(16,42,30,.06)":"transparent", color:isActive?GREEN:MUTED, fontWeight:isActive?700:500, fontSize:".8rem", cursor:"pointer", whiteSpace:"nowrap", marginBottom:-1, letterSpacing:".01em", display:"flex", alignItems:"center", gap:6, transition:"background 0.15s" }}
                 >
+                  {GROUP_ICONS[g]}
                   {label}
                   {groupCount>0&&<span style={{ fontSize:".62rem", fontWeight:700, padding:"1px 6px", borderRadius:999, background:isActive?"rgba(200,166,92,.2)":"rgba(18,16,12,.07)", color:isActive?"#7a5a1a":MUTED }}>{groupCount}</span>}
                 </button>
