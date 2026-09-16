@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 import { CONSULT_DURATION_MIN } from "@/lib/site";
 import { BookingProvider, BookButton } from "@/components/site/BookingProvider";
@@ -7,14 +7,13 @@ import Reveal from "@/components/site/Reveal";
 import Footer from "@/components/site/Footer";
 import { SITE } from "@/lib/site";
 import { HomeBadge, HomeBadgeCSS } from "@/components/site/HomeBadge";
+import EbookFormSection from "@/components/site/EbookFormSection";
 
 export const metadata: Metadata = {
   title: "H.O.M.E.® Buyer's Guide — Home Ownership Made Easy | Ferguson Law",
   description:
     "The complete H.O.M.E.® Buyers Guide by Ferguson Law — everything a Jamaican home buyer needs to know, from readiness to registered title.",
 };
-
-const PDF_URL = "https://home.fergusonlawja.com/HOME-Guide-Ferguson-Law.pdf";
 
 const ArrowIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
@@ -81,8 +80,8 @@ export default function BuyersGuidePage() {
               <Link className="btn btn-light" href="/booking">
                 Book here <ArrowIcon />
               </Link>
-              <a className="btn btn-ghost-light" href={PDF_URL} target="_blank" rel="noopener noreferrer">
-                Download Free Guide <ArrowIcon />
+              <a className="btn btn-ghost-light" href="#get-guide">
+                Get Access Now <ArrowIcon />
               </a>
             </div>
           </div>
@@ -130,38 +129,24 @@ export default function BuyersGuidePage() {
         </div>
       </section>
 
-      {/* Download CTA */}
+      {/* CTA */}
       <section
         className="section"
         style={{ background: "linear-gradient(165deg,#0e2518 0%,#1a3828 100%)", color: "var(--paper)", textAlign: "center" }}
       >
         <div className="wrap" style={{ maxWidth: 600 }}>
-          <span className="eyebrow" style={{ color: "var(--gold)" }}>Free — no sign-up required</span>
+          <span className="eyebrow" style={{ color: "var(--gold)" }}>Ready to take the next step?</span>
           <h2 style={{ color: "#fff", margin: ".6rem 0 1rem" }}>
-            Download the full H.O.M.E.® Buyer&apos;s Guide
+            Start with a free readiness check - or speak with our attorney.
           </h2>
           <p style={{ color: "rgba(246,242,234,.78)", marginBottom: "1.8rem" }}>
-            Get the complete guide as a PDF. Every step from readiness to registered title,
-            plain English, backed by a Ferguson Law attorney.
+            The H.O.M.E.® readiness assessment tells you exactly where you stand in 3 minutes.
+            When you&apos;re ready, book a {CONSULT_DURATION_MIN}-minute consultation with our attorney.
           </p>
           <div style={{ display: "flex", gap: ".9rem", justifyContent: "center", flexWrap: "wrap" }}>
-            <a
-              href={PDF_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: "inline-flex", alignItems: "center", gap: ".5rem",
-                background: "#c9a86a", color: "#10211c", fontWeight: 700,
-                padding: "14px 28px", borderRadius: 999, textDecoration: "none",
-                fontSize: ".95rem",
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <line x1="12" y1="18" x2="12" y2="6"/><polyline points="9 15 12 18 15 15"/>
-                <line x1="3" y1="21" x2="21" y2="21"/>
-              </svg>
-              Download Free PDF
-            </a>
+            <HomeBadge href={`${SITE.homeApp}readiness`} external dark>
+              Take the readiness assessment
+            </HomeBadge>
             <BookButton className="btn btn-light">
               Book a consultation
             </BookButton>
@@ -169,30 +154,8 @@ export default function BuyersGuidePage() {
         </div>
       </section>
 
-      {/* Readiness CTA */}
-      <section
-        className="section"
-        style={{ background: "#f6f2ea", textAlign: "center" }}
-      >
-        <div className="wrap" style={{ maxWidth: 600 }}>
-          <span className="eyebrow">Ready to take the next step?</span>
-          <h2 style={{ margin: ".6rem 0 1rem" }}>
-            Start with a free readiness check - or speak with our attorney.
-          </h2>
-          <p style={{ color: "var(--muted)", marginBottom: "1.8rem" }}>
-            The H.O.M.E.® readiness assessment tells you exactly where you stand in 3 minutes.
-            When you&apos;re ready, book a {CONSULT_DURATION_MIN}-minute consultation with our attorney.
-          </p>
-          <div style={{ display: "flex", gap: ".9rem", justifyContent: "center", flexWrap: "wrap" }}>
-            <HomeBadge href={`${SITE.homeApp}readiness`} external>
-              Take the readiness assessment
-            </HomeBadge>
-            <BookButton className="btn btn-gold">
-              Book a consultation
-            </BookButton>
-          </div>
-        </div>
-      </section>
+      {/* Inline lead capture form */}
+      <EbookFormSection />
 
       <style>{HomeBadgeCSS}</style>
       <Footer />
