@@ -4,7 +4,6 @@ import "./globals.css";
 import ChatWidget from "@/components/chat/ChatWidget";
 import ContentApply from "@/components/editor/ContentApply";
 import SearchModal from "@/components/site/SearchModal";
-import EditorOverlay from "@/components/editor/EditorOverlay";
 import PageTracker from "@/components/site/PageTracker";
 import SwRegister from "@/components/pwa/SwRegister";
 import SwUpdateToast from "@/components/pwa/SwUpdateToast";
@@ -204,7 +203,6 @@ export default function RootLayout({
         <ChatWidget />
         <ContentApply />
         <SearchModal />
-        <EditorOverlay />
         <SwRegister />
         <SwUpdateToast />
         <PwaAnalyticsInit />

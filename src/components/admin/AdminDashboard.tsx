@@ -288,11 +288,9 @@ function fmtTime(iso: string | null): string {
 export default function AdminDashboard() {
   const [token, setToken] = useState<string | null>(null);
   const [checking, setChecking] = useState(true);
-  const [codeInput, setCodeInput] = useState("");
   const [authError, setAuthError] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
 
-  const [loginMode, setLoginMode] = useState<"account" | "code">("code");
   const [emailInput, setEmailInput] = useState("");
   const [pwInput, setPwInput] = useState("");
   const [showPw, setShowPw] = useState(false);
@@ -331,7 +329,6 @@ export default function AdminDashboard() {
       if (stored) {
         const supabase = createClient();
         const { data, error } = await supabase.rpc("fl_is_admin", { p_token: stored });
-        console.log("[admin-auth] fl_is_admin result:", { data, error, stored });
         if (cancelled) return;
         if (!error && !!data) { setToken(stored); }
         else { try { localStorage.removeItem(TOKEN_KEY); } catch { /* ignore */ } }
@@ -343,20 +340,6 @@ export default function AdminDashboard() {
     })();
     return () => { cancelled = true; };
   }, []);
-
-  const submitCode = useCallback(async () => {
-    const candidate = codeInput.trim();
-    if (!candidate || verifying) return;
-    setVerifying(true); setAuthError(null);
-    const supabase = createClient();
-    const { data, error } = await supabase.rpc("fl_is_admin", { p_token: candidate });
-    console.log("[admin-auth] submitCode result:", { data, error, candidate });
-    if (!error && !!data) {
-      try { localStorage.setItem(TOKEN_KEY, candidate); } catch { /* ignore */ }
-      setToken(candidate); setCodeInput("");
-    } else { setAuthError("That access code was not recognised."); }
-    setVerifying(false);
-  }, [codeInput, verifying]);
 
   const submitLogin = useCallback(async () => {
     const em = emailInput.trim();
@@ -810,57 +793,31 @@ export default function AdminDashboard() {
         <div style={S.authCard}>
           <div style={S.brandMark}>Ferguson Law</div>
           <h1 style={S.authTitle}>Back office</h1>
-          {loginMode === "account" ? (
-            <>
-              <p style={S.authSub}>Sign in to continue.</p>
-              <input type="email" value={emailInput} onChange={(e) => setEmailInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && void submitLogin()} placeholder="Email"
-                style={S.authInput} aria-label="Email" autoComplete="username" autoFocus />
-              <div style={{ position: "relative", marginTop: 10 }}>
-                <input type={showPw ? "text" : "password"} value={pwInput} onChange={(e) => setPwInput(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && void submitLogin()} placeholder="Password"
-                  style={{ ...S.authInput, marginTop: 0, width: "100%", boxSizing: "border-box", paddingRight: 40 }} aria-label="Password" autoComplete="current-password" />
-                <button type="button" onClick={() => setShowPw(v => !v)}
-                  style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", padding: 4, color: "#b9b099", display: "flex", alignItems: "center" }}
-                  aria-label={showPw ? "Hide password" : "Show password"}>
-                  {showPw ? (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                  ) : (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                  )}
-                </button>
-              </div>
-              {authError && <p style={S.authErr}>{authError}</p>}
-              <button type="button" onClick={() => void submitLogin()}
-                disabled={verifying || !emailInput.trim() || !pwInput}
-                style={{ ...S.authBtn, ...(verifying || !emailInput.trim() || !pwInput ? S.btnOff : null) }}>
-                {verifying ? "Signing in…" : "Sign in"}
+          <>
+            <p style={S.authSub}>Sign in to continue.</p>
+            <input type="email" value={emailInput} onChange={(e) => setEmailInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && void submitLogin()} placeholder="Email"
+              style={S.authInput} aria-label="Email" autoComplete="username" autoFocus />
+            <div style={{ position: "relative", marginTop: 10 }}>
+              <input type={showPw ? "text" : "password"} value={pwInput} onChange={(e) => setPwInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && void submitLogin()} placeholder="Password"
+                style={{ ...S.authInput, marginTop: 0, width: "100%", boxSizing: "border-box", paddingRight: 40 }} aria-label="Password" autoComplete="current-password" />
+              <button type="button" onClick={() => setShowPw(v => !v)}
+                style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", padding: 4, color: "#b9b099", display: "flex", alignItems: "center" }}
+                aria-label={showPw ? "Hide password" : "Show password"}>
+                {showPw ? <span>Hide</span> : <span>Show</span>}
               </button>
-              <div style={S.authLinks}>
-                <a href="/reset?request=admin" style={S.authLink}>Forgot password?</a>
-                <button type="button" onClick={() => { setLoginMode("code"); setAuthError(null); }} style={S.authLinkBtn}>
-                  Use an access code
-                </button>
-              </div>
-            </>
-          ) : (
-            <>
-              <p style={S.authSub}>Enter the firm access code to continue.</p>
-              <input type="password" value={codeInput} onChange={(e) => setCodeInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && void submitCode()} placeholder="Access code"
-                style={S.authInput} aria-label="Access code" autoFocus />
-              {authError && <p style={S.authErr}>{authError}</p>}
-              <button type="button" onClick={() => void submitCode()} disabled={verifying || !codeInput.trim()}
-                style={{ ...S.authBtn, ...(verifying || !codeInput.trim() ? S.btnOff : null) }}>
-                {verifying ? "Checking…" : "Enter"}
-              </button>
-              <div style={S.authLinks}>
-                <button type="button" onClick={() => { setLoginMode("account"); setAuthError(null); }} style={S.authLinkBtn}>
-                  Sign in with email instead
-                </button>
-              </div>
-            </>
-          )}
+            </div>
+            {authError && <p style={S.authErr}>{authError}</p>}
+            <button type="button" onClick={() => void submitLogin()}
+              disabled={verifying || !emailInput.trim() || !pwInput}
+              style={{ ...S.authBtn, ...(verifying || !emailInput.trim() || !pwInput ? S.btnOff : null) }}>
+              {verifying ? "Signing in…" : "Sign in"}
+            </button>
+            <div style={S.authLinks}>
+              <a href="/reset?request=admin" style={S.authLink}>Forgot password?</a>
+            </div>
+          </>
         </div>
       </div>
     );
