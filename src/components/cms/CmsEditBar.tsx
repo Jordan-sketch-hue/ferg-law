@@ -121,7 +121,7 @@ function VisualPanel({ payload, onClose }: { payload: EditorBusPayload; onClose:
 
   const applyStyle = useCallback((key: keyof CmsStyles, val: string) => {
     setStyles(p => ({ ...p, [key]: val }));
-    if (payload.element) (payload.element.style as Record<string, string>)[key] = val;
+    if (payload.element) (payload.element.style as unknown as Record<string, string>)[key] = val;
   }, [payload.element]);
 
   useEffect(() => { if (payload.element) payload.element.style.opacity = hidden ? "0.3" : ""; }, [hidden, payload.element]);

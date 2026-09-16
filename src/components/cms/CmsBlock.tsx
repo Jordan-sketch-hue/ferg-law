@@ -70,10 +70,10 @@ export function CmsText({ page, block, fallback = "", as: Tag = "span", classNam
     ...(data.hidden && editMode ? { opacity: 0.3 } : {}),
   };
 
+  const TagEl = Tag as React.ElementType;
   return (
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    <Tag
-      ref={wrapRef as any}
+    <TagEl
+      ref={wrapRef as React.Ref<HTMLElement>}
       className={className}
       style={inlineStyle}
       onClick={handleClick}
@@ -81,7 +81,7 @@ export function CmsText({ page, block, fallback = "", as: Tag = "span", classNam
       {...(selected ? { "data-cms-selected": "" } : {})}
     >
       {data.value ?? fallback}
-    </Tag>
+    </TagEl>
   );
 }
 
@@ -146,8 +146,8 @@ export function CmsImage({ page, block, fallback = "", alt = "", className, styl
     ...(data.hidden && editMode ? { opacity: 0.3 } : {}),
   };
 
-  // eslint-disable-next-line @next/next/no-img-element
   return (
+  // eslint-disable-next-line @next/next/no-img-element
     <img ref={imgRef} src={url} alt={alt} className={className} style={inlineStyle}
       onClick={handleClick}
       {...(editMode ? { "data-cms-editable": "" } : {})}
