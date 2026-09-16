@@ -177,14 +177,6 @@ export default function ValuationEstimatorClient() {
       `}</style>
 
       <div className="val-print-block" style={{ maxWidth: 700, margin: "0 auto", padding: "0 1rem 4rem" }}>
-        {/* Data source indicator */}
-        <div style={{ marginBottom: "1.5rem", padding: "0.6rem 1rem", borderRadius: 8, background: dataSource === "live" ? "#e8f4e8" : "#fff8e8", border: `1px solid ${dataSource === "live" ? "#b2d9b2" : "#e8d5a0"}`, fontSize: ".8rem", color: dataSource === "live" ? "#2d6a2d" : "#7a5c1a", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <span style={{ fontSize: "1rem" }}>{dataSource === "live" ? "✓" : "⏳"}</span>
-          {dataSource === "live"
-            ? `Rate data sourced from active Jamaican property listings · Updated ${formattedDate}`
-            : "Rate data: market estimates · Live listing data updates weekly"}
-        </div>
-
         {/* Card */}
         <div style={{ background: "#fff", border: "1px solid #e8e0d0", borderRadius: 12, padding: "1.75rem", boxShadow: "0 2px 16px rgba(0,0,0,.06)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "1.5rem" }}>
