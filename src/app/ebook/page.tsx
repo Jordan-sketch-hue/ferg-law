@@ -36,7 +36,6 @@ export default function EbookPage() {
               <CmsText page="ebook" block="hero_lede" fallback="Every step from readiness to registered title — plain English, no jargon. NHT, stamp duty, transfer tax, diaspora playbook and more." />
             </p>
             <CmsImage page="ebook" block="cover_img" fallback="/home-buyers-guide-cover.jpg" alt="H.O.M.E. Buyer guide cover" className="ebook-cover" style={{ width: "100%", maxWidth: 400, borderRadius: 16, boxShadow: "0 24px 64px rgba(0,0,0,.45)" }} />
-            />
           </div>
 
           {/* Right — direct download */}
