@@ -187,29 +187,51 @@ export default function SiteContentTab({ token }: { token: string }) {
           letterSpacing: "0.06em", color: MUT, textTransform: "uppercase" }}>
           Pages
         </div>
-        {Object.entries(PAGE_LABELS).map(([slug, label]) => {
-          const active  = activePage === slug;
-          const hasDirt = anyPageDirty(slug);
-          return (
-            <button key={slug} type="button" onClick={() => setActivePage(slug)} style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              width: "100%", textAlign: "left", padding: "9px 16px", fontSize: 13,
-              fontWeight: active ? 700 : 400,
-              color: active ? G : INK,
-              background: active ? "#f0ede6" : "transparent",
-              border: "none", cursor: "pointer",
-              borderLeft: active ? `3px solid ${GOLD}` : "3px solid transparent",
-            }}>
-              <span>{label}</span>
-              {hasDirt && (
-                <span style={{
-                  width: 7, height: 7, borderRadius: "50%",
-                  background: GOLD, flexShrink: 0,
-                }} />
-              )}
-            </button>
+        {(() => {
+          const renderBtn = (slug: string, label: string) => {
+            const active  = activePage === slug;
+            const hasDirt = anyPageDirty(slug);
+            return (
+              <button key={slug} type="button" onClick={() => setActivePage(slug)} style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                width: "100%", textAlign: "left", padding: "9px 16px", fontSize: 13,
+                fontWeight: active ? 700 : 400,
+                color: active ? G : INK,
+                background: active ? "#f0ede6" : "transparent",
+                border: "none", cursor: "pointer",
+                borderLeft: active ? `3px solid ${GOLD}` : "3px solid transparent",
+              }}>
+                <span>{label}</span>
+                {hasDirt && (
+                  <span style={{
+                    width: 7, height: 7, borderRadius: "50%",
+                    background: GOLD, flexShrink: 0,
+                  }} />
+                )}
+              </button>
+            );
+          };
+          const sectionHdr = (txt: string, first?: boolean) => (
+            <div key={"sec-"+txt} style={{
+              padding: "10px 16px 4px", fontSize: 10, fontWeight: 800,
+              letterSpacing: "0.08em", color: GOLD, textTransform: "uppercase",
+              borderTop: first ? "none" : "1px solid #ede8de", marginTop: first ? 0 : 4,
+            }}>{txt}</div>
           );
-        })}
+          const FL    = ["home","about","services","cost-estimator","booking","faq","value-estimator"];
+          const HOME  = ["buyers-guide","ebook","explainers","explainers-nht","explainers-buyer","explainers-seller","explainers-costs","explainers-banker","explainers-agent","explainers-surveyor","glossary","directory"];
+          const LEGAL = ["privacy","terms"];
+          return [
+            sectionHdr("Ferguson Law", true),
+            ...FL.map(s => renderBtn(s, PAGE_LABELS[s])),
+            sectionHdr("H.O.M.E. by Ferguson Law"),
+            ...HOME.map(s => renderBtn(s, PAGE_LABELS[s])),
+            sectionHdr("Legal"),
+            ...LEGAL.map(s => renderBtn(s, PAGE_LABELS[s])),
+            sectionHdr("Shared"),
+            renderBtn("global", PAGE_LABELS["global"]),
+          ];
+        })()}
       </nav>
 
       {/* Main editor */}

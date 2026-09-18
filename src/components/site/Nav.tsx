@@ -4,6 +4,7 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { SITE } from "@/lib/site";
+import { CmsImage } from "@/components/cms/CmsBlock";
 import { track } from "@/lib/analytics";
 
 const NAV_LINKS = [
@@ -95,7 +96,7 @@ export default function Nav() {
         <div className="wrap nav-inner">
           <div className="nav-left">
             <a className="brand" href="/" aria-label="Ferguson Law home">
-              <img className="logo-img" src="/img/logo-ferguson.png" data-edit-img="images.logo" alt="Ferguson Law" />
+              <CmsImage page="global" block="nav_logo" fallback="/img/logo-ferguson.png" alt="Ferguson Law" className="logo-img" />
             </a>
           </div>
 

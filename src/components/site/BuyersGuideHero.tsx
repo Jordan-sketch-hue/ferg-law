@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { track } from "@/lib/analytics";
-import { CmsText } from "@/components/cms/CmsBlock";
+import { CmsText, CmsImage } from "@/components/cms/CmsBlock";
 
 interface FormData {
   full_name: string;
@@ -98,12 +98,7 @@ export default function BuyersGuideHero() {
       {/* 2-col: cover image | form card */}
       <div className="bg-hero-grid" style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3rem", alignItems: "start" }}>
         {/* Cover image */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/img/home-ebook-cover.jpg"
-          alt="The H.O.M.E. Buyer's Guide — Ferguson Law"
-          style={{ width: "100%", maxWidth: 480, borderRadius: 18, boxShadow: "0 24px 60px rgba(0,0,0,.45)", display: "block" }}
-        />
+        <CmsImage page="buyers-guide" block="hero_cover_img" fallback="/img/home-ebook-cover.jpg" alt="H.O.M.E. Buyer Guide" style={{ width: "100%", maxWidth: 480, borderRadius: 18, boxShadow: "0 24px 60px rgba(0,0,0,.45)", display: "block" }} />
 
         {/* Form card */}
         <div style={{ background: "#fff", borderRadius: 20, padding: "2.5rem 2rem", boxShadow: "0 24px 64px rgba(0,0,0,.35)" }}>

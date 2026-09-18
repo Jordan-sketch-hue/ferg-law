@@ -321,7 +321,7 @@ export function CmsEditBar() {
         <div className="flex items-center gap-2">
           {payload && <span className="text-xs text-white/50">Editing: <strong className="text-yellow-300">{payload.block}</strong></span>}
           <button type="button"
-            onClick={() => { setActive(false); setPayload(null); bus.close(); const u = new URL(window.location.href); u.searchParams.delete("edit_mode"); window.history.replaceState({}, "", u.toString()); }}
+            onClick={() => { setActive(false); setPayload(null); bus.close(); const u = new URL(window.location.href); u.searchParams.delete("edit_mode"); u.searchParams.delete("edit"); window.history.replaceState({}, "", u.toString()); }}
             className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold" style={{ background: "rgba(255,255,255,0.1)" }}>
             <X className="h-3.5 w-3.5" /> Exit editor
           </button>

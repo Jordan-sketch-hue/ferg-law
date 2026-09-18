@@ -11,9 +11,10 @@ interface BlockTextProps {
 interface Block { value: string | null; styles: CmsStyles | null; hidden: boolean; }
 
 export function CmsText({ page, block, fallback = "", as: Tag = "span", className, style }: BlockTextProps) {
-  const [data,     setData]     = useState<Block>({ value: null, styles: null, hidden: false });
-  const [editMode, setEditMode] = useState(false);
-  const [selected, setSelected] = useState(false);
+  const [data,        setData]       = useState<Block>({ value: null, styles: null, hidden: false });
+  const [editMode,    setEditMode]   = useState(false);
+  const [selected,    setSelected]   = useState(false);
+  const [seedPending, setSeedPending] = useState(false);
   const wrapRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -29,8 +30,12 @@ export function CmsText({ page, block, fallback = "", as: Tag = "span", classNam
       .eq("page_slug", page).eq("block_key", block)
       .maybeSingle()
       .then(({ data: row }) => {
-        if (row) setData({ value: row.value ?? fallback, styles: (row as Record<string,unknown>).styles as CmsStyles ?? null, hidden: !!((row as Record<string,unknown>).hidden) });
-        else setData({ value: fallback, styles: null, hidden: false });
+        if (row) {
+          setData({ value: row.value ?? fallback, styles: (row as Record<string,unknown>).styles as CmsStyles ?? null, hidden: !!((row as Record<string,unknown>).hidden) });
+        } else {
+          setData({ value: fallback, styles: null, hidden: false });
+          setSeedPending(true);
+        }
       });
 
     const ch = sb.channel(`cms-${page}-${block}`)
@@ -41,6 +46,16 @@ export function CmsText({ page, block, fallback = "", as: Tag = "span", classNam
 
     return () => { void sb.removeChannel(ch); };
   }, [page, block, fallback]);
+
+  useEffect(() => {
+    if (!seedPending || !editMode) return;
+    const sb = createClient();
+    void sb.from("fl_site_blocks").upsert({
+      page_slug: page, block_key: block, value: fallback,
+      content_type: "text", updated_at: new Date().toISOString(), updated_by: "editor",
+    }, { onConflict: "page_slug,block_key" });
+    setSeedPending(false);
+  }, [seedPending, editMode, page, block, fallback]);
 
   useEffect(() => {
     return flEditBus.subscribe(p => {
@@ -92,9 +107,10 @@ interface BlockImageProps {
 }
 
 export function CmsImage({ page, block, fallback = "", alt = "", className, style, loading }: BlockImageProps) {
-  const [data,     setData]     = useState<{ src: string | null; styles: CmsStyles | null; hidden: boolean }>({ src: null, styles: null, hidden: false });
-  const [editMode, setEditMode] = useState(false);
-  const [selected, setSelected] = useState(false);
+  const [data,        setData]       = useState<{ src: string | null; styles: CmsStyles | null; hidden: boolean }>({ src: null, styles: null, hidden: false });
+  const [editMode,    setEditMode]   = useState(false);
+  const [selected,    setSelected]   = useState(false);
+  const [seedPending, setSeedPending] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
@@ -108,8 +124,12 @@ export function CmsImage({ page, block, fallback = "", alt = "", className, styl
       .eq("page_slug", page).eq("block_key", block)
       .maybeSingle()
       .then(({ data: row }) => {
-        if (row) setData({ src: row.value || fallback, styles: (row as Record<string,unknown>).styles as CmsStyles ?? null, hidden: !!((row as Record<string,unknown>).hidden) });
-        else setData({ src: fallback, styles: null, hidden: false });
+        if (row) {
+          setData({ src: row.value || fallback, styles: (row as Record<string,unknown>).styles as CmsStyles ?? null, hidden: !!((row as Record<string,unknown>).hidden) });
+        } else {
+          setData({ src: fallback, styles: null, hidden: false });
+          setSeedPending(true);
+        }
       });
 
     const ch = sb.channel(`cms-img-${page}-${block}`)
@@ -120,6 +140,16 @@ export function CmsImage({ page, block, fallback = "", alt = "", className, styl
 
     return () => { void sb.removeChannel(ch); };
   }, [page, block, fallback]);
+
+  useEffect(() => {
+    if (!seedPending || !editMode) return;
+    const sb = createClient();
+    void sb.from("fl_site_blocks").upsert({
+      page_slug: page, block_key: block, value: fallback,
+      content_type: "image", updated_at: new Date().toISOString(), updated_by: "editor",
+    }, { onConflict: "page_slug,block_key" });
+    setSeedPending(false);
+  }, [seedPending, editMode, page, block, fallback]);
 
   useEffect(() => {
     return flEditBus.subscribe(p => {
