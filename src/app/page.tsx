@@ -37,7 +37,7 @@ export default function Home() {
         <HeroCarousel />
         <div className="hero-scrim" aria-hidden="true"></div>
         <div className="hero-full-inner reveal in">
-          <p className="hero-firm" data-edit="hero.firm">Ferguson Law</p>
+          <p className="hero-firm" data-edit="hero.firm"><CmsText page="home" block="hero_firm" fallback="Ferguson Law" /></p>
           <span className="eyebrow" data-edit="hero.eyebrow">
             Kingston, Jamaica
           </span>
@@ -288,9 +288,9 @@ export default function Home() {
           </div>
           <div className="bf-copy reveal">
             <img className="bf-logo" src="/img/logo-ferguson.png" data-edit-img="images.logo" alt="Ferguson Law" />
-            <span className="eyebrow">One firm, the full practice</span>
+            <span className="eyebrow"><CmsText page="home" block="bf_eyebrow" fallback="One firm, the full practice" /></span>
             <h2>
-              Deep legal expertise – and the <em>banking mind</em> behind it.
+              <CmsText page="home" block="bf_h2" fallback="Deep legal expertise – and the banking mind behind it." />
             </h2>
             <p>
               From commercial, family and estate matters to conveyancing and
@@ -305,8 +305,8 @@ export default function Home() {
                 style={{width:"132px",height:"132px",objectFit:"cover",borderRadius:"15px",objectPosition:"center top"}}
               />
               <div>
-                <span className="k">Principal Attorney-at-Law</span>
-                <b>Owen K. Ferguson, JP</b>
+                <span className="k"><CmsText page="home" block="bf_founder_role" fallback="Principal Attorney-at-Law" /></span>
+                <b><CmsText page="home" block="bf_founder_name" fallback="Owen K. Ferguson, JP" /></b>
               </div>
             </div>
           </div>
@@ -320,10 +320,10 @@ export default function Home() {
       <section className="section" id="stories" style={{ background: "linear-gradient(180deg,var(--paper-2),var(--paper))" }}>
         <div className="wrap">
           <div className="sec-head center reveal">
-            <span className="eyebrow" data-edit="stories.eyebrow">In their words</span>
-            <h2 data-edit="stories.h2">Real Jamaicans. Real ownership.</h2>
+            <span className="eyebrow" data-edit="stories.eyebrow"><CmsText page="home" block="stories_eyebrow" fallback="In their words" /></span>
+            <h2 data-edit="stories.h2"><CmsText page="home" block="stories_h2" fallback="Real Jamaicans. Real ownership." /></h2>
             <p className="lead" style={{ margin: "0 auto" }} data-edit="stories.lead">
-              The whole point of the work – people who finally feel at home.
+              <CmsText page="home" block="stories_lead" fallback="The whole point of the work – people who finally feel at home." />
             </p>
           </div>
           <div className="test-grid">
@@ -337,8 +337,8 @@ export default function Home() {
               <div className="tperson">
                 <img src="/img/couple-signing.jpg" data-edit-img="images.avatar1" alt="Marcus R." />
                 <div>
-                  <div className="nm" data-edit="stories.items.0.name">Marcus R.</div>
-                  <div className="rl" data-edit="stories.items.0.role">Diaspora buyer · Toronto – St. James</div>
+                  <div className="nm" data-edit="stories.items.0.name"><CmsText page="home" block="tcard_0_name" fallback="Marcus R." /></div>
+                  <div className="rl" data-edit="stories.items.0.role"><CmsText page="home" block="tcard_0_role" fallback="Diaspora buyer · Toronto – St. James" /></div>
                 </div>
               </div>
             </div>
@@ -352,8 +352,8 @@ export default function Home() {
               <div className="tperson">
                 <img src="/img/step-assess.webp" data-edit-img="images.avatar2" alt="Keisha L." />
                 <div>
-                  <div className="nm" data-edit="stories.items.1.name">Keisha L.</div>
-                  <div className="rl" data-edit="stories.items.1.role">First-time buyer · St. Andrew</div>
+                  <div className="nm" data-edit="stories.items.1.name"><CmsText page="home" block="tcard_1_name" fallback="Keisha L." /></div>
+                  <div className="rl" data-edit="stories.items.1.role"><CmsText page="home" block="tcard_1_role" fallback="First-time buyer · St. Andrew" /></div>
                 </div>
               </div>
             </div>
@@ -367,8 +367,8 @@ export default function Home() {
               <div className="tperson">
                 <img src="/img/family-moving-in.jpg" data-edit-img="images.avatar3" alt="Andre & Shanice" />
                 <div>
-                  <div className="nm" data-edit="stories.items.2.name">Andre &amp; Shanice</div>
-                  <div className="rl" data-edit="stories.items.2.role">New homeowners · St. Catherine</div>
+                  <div className="nm" data-edit="stories.items.2.name"><CmsText page="home" block="tcard_2_name" fallback="Andre & Shanice" /></div>
+                  <div className="rl" data-edit="stories.items.2.role"><CmsText page="home" block="tcard_2_role" fallback="New homeowners · St. Catherine" /></div>
                 </div>
               </div>
             </div>
@@ -381,9 +381,9 @@ export default function Home() {
         <img className="bg" src="/img/jamaica-coast.webp" data-edit-img="images.coastBandBg" alt="Jamaica's north coast meeting turquoise water" />
         <div className="scrim" aria-hidden="true"></div>
         <div className="wrap">
-          <span className="eyebrow reveal in" data-edit="coast.eyebrow">Jamaica &amp; the world</span>
+          <span className="eyebrow reveal in" data-edit="coast.eyebrow"><CmsText page="home" block="coast_eyebrow" fallback="Jamaica & the world" /></span>
           <h2 className="reveal in" data-edit="coast.h2">
-            Rooted in Jamaica. Working for clients <em>everywhere.</em>
+            <CmsText page="home" block="coast_h2" fallback="Rooted in Jamaica. Working for clients everywhere." />
           </h2>
           <p className="reveal in" data-edit="coast.body">
             Whether you&apos;re in Kingston or in Brooklyn, Toronto or London,
@@ -398,17 +398,17 @@ export default function Home() {
         <div style={{ maxWidth: 980, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "2rem", flexWrap: "wrap" }}>
           <div>
             <div style={{ fontSize: ".72rem", letterSpacing: ".16em", textTransform: "uppercase", color: "#8a6420", fontWeight: 700, marginBottom: ".5rem" }}>
-              H.O.M.E.® by Ferguson Law
+              <CmsText page="home" block="cost_eyebrow" fallback="H.O.M.E.® by Ferguson Law" />
             </div>
             <h2 style={{ fontFamily: "var(--serif, Georgia, serif)", fontSize: "clamp(1.4rem,2.5vw,2rem)", margin: "0 0 .6rem", color: "#10211c", lineHeight: 1.15 }}>
-              What Will My Transaction Cost?
+              <CmsText page="home" block="cost_h2" fallback="What Will My Transaction Cost?" />
             </h2>
             <p style={{ margin: 0, fontSize: ".95rem", color: "#69736d", maxWidth: 440, lineHeight: 1.65 }}>
-              Enter the selling price and get a full breakdown — transfer tax, stamp duty, attorney fees, and more — before you sign anything.
+              <CmsText page="home" block="cost_body" fallback="Enter the selling price and get a full breakdown — transfer tax, stamp duty, attorney fees, and more — before you sign anything." />
             </p>
           </div>
           <a href="/cost-estimator" style={{ display: "inline-block", background: "#10211c", color: "#c9a86a", textDecoration: "none", padding: "14px 28px", borderRadius: 12, fontWeight: 700, fontSize: ".95rem", whiteSpace: "nowrap", flexShrink: 0 }}>
-            Open Cost Estimator →
+            <CmsText page="home" block="cost_btn" fallback="Open Cost Estimator →" />
           </a>
         </div>
       </section>
@@ -417,9 +417,9 @@ export default function Home() {
       <section className="section reach-us" id="contact">
         <div className="wrap">
           <div className="sec-head reveal">
-            <span className="eyebrow" data-edit="contact.eyebrow">How to reach us</span>
-            <h2>We&apos;re here – <em>choose how you connect.</em></h2>
-            <p className="lead">Every path leads to a real person. Pick whatever feels right.</p>
+            <span className="eyebrow" data-edit="contact.eyebrow"><CmsText page="home" block="contact_eyebrow" fallback="How to reach us" /></span>
+            <h2><CmsText page="home" block="contact_h2" fallback="We're here – choose how you connect." /></h2>
+            <p className="lead"><CmsText page="home" block="contact_lead" fallback="Every path leads to a real person. Pick whatever feels right." /></p>
           </div>
           <div className="reach-grid">
             <div className="reach-card reveal" style={{cursor:"pointer"}}>
@@ -427,11 +427,11 @@ export default function Home() {
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
               </div>
               <img className="reach-photo" src="/img/reach-consultation.webp" alt="Book a consultation with Ferguson Law" />
-              <h4>Book a consultation</h4>
-              <p>Book a consultation with our attorney – real answers for your specific situation.</p>
-              <p style={{fontSize:"0.78rem",color:"var(--muted)",marginTop:"0.3rem"}}>In-person meetings by appointment only.</p>
+              <h4><CmsText page="home" block="reach_0_h4" fallback="Book a consultation" /></h4>
+              <p><CmsText page="home" block="reach_0_body" fallback="Book a consultation with our attorney – real answers for your specific situation." /></p>
+              <p style={{fontSize:"0.78rem",color:"var(--muted)",marginTop:"0.3rem"}}><CmsText page="home" block="reach_0_note" fallback="In-person meetings by appointment only." /></p>
               <BookButton className="btn btn-primary reach-btn">
-                <span data-edit="contact.ctaPrimary">Book now</span>
+                <span data-edit="contact.ctaPrimary"><CmsText page="home" block="contact_btn_book" fallback="Book now" /></span>
               </BookButton>
             </div>
             <ChatLink>
@@ -439,8 +439,8 @@ export default function Home() {
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
               </div>
               <img className="reach-photo" src="/img/reach-chat.webp" alt="Chat live with us" />
-              <h4>Chat live</h4>
-              <p>Talk to our AI assistant right now – available 24/7 for general property and legal queries.</p>
+              <h4><CmsText page="home" block="reach_1_h4" fallback="Chat live" /></h4>
+              <p><CmsText page="home" block="reach_1_body" fallback="Talk to our AI assistant right now – available 24/7 for general property and legal queries." /></p>
               <span className="btn btn-gold reach-btn">Start a chat</span>
             </ChatLink>
             <a className="reach-card reveal" href={waLink()}>
@@ -448,8 +448,8 @@ export default function Home() {
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.35 2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6.13 6.13l.96-.96a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
               </div>
               <img className="reach-photo" src="/img/reach-whatsapp.webp" alt="WhatsApp Ferguson Law" />
-              <h4>WhatsApp</h4>
-              <p>Send us a message directly – we respond personally during business hours.</p>
+              <h4><CmsText page="home" block="reach_2_h4" fallback="WhatsApp" /></h4>
+              <p><CmsText page="home" block="reach_2_body" fallback="Send us a message directly – we respond personally during business hours." /></p>
               <span className="btn btn-wa reach-btn">
                 <svg viewBox="0 0 24 24" fill="currentColor" style={{width:"18px",height:"18px",flexShrink:0}}><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/></svg>
                 {SITE.whatsappDisplay}
@@ -460,8 +460,8 @@ export default function Home() {
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>
               </div>
               <img className="reach-photo" src="/img/reach-email.jpg" alt="Email Ferguson Law" />
-              <h4>Email us</h4>
-              <p>Send a detailed message and we&apos;ll get back to you – ideal for complex matters and document sharing.</p>
+              <h4><CmsText page="home" block="reach_3_h4" fallback="Email us" /></h4>
+              <p><CmsText page="home" block="reach_3_body" fallback="Send a detailed message and we'll get back to you – ideal for complex matters and document sharing." /></p>
               <span className="btn btn-light reach-btn">{SITE.email}</span>
             </a>
           </div>

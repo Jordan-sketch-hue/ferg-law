@@ -11,6 +11,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SITE, waLink } from "@/lib/site";
 import BookingPushPrompt from "@/components/pwa/BookingPushPrompt";
+import { CmsText } from "@/components/cms/CmsBlock";
 
 export const metadata: Metadata = {
   title: "Booking — Ferguson Law",
@@ -45,44 +46,47 @@ export default async function BookingCompletePage({
   return (
     <div style={S.wrap}>
       <div style={S.card}>
-        <div style={S.brand}>Ferguson Law</div>
+        <div style={S.brand}>
+          <CmsText page="booking-complete" block="brand_name" fallback="Ferguson Law" />
+        </div>
 
         {paid ? (
           <>
             <div style={{ ...S.check, ...S.checkPaid }}>✓</div>
-            <h1 style={S.h1}>You&apos;re booked.</h1>
+            <h1 style={S.h1}>
+              <CmsText page="booking-complete" block="paid_h1" fallback="You're booked." />
+            </h1>
             <p style={S.p}>
-              Your consultation is confirmed. A
-              confirmation is on its way to your email — and you can send the
-              details to us on WhatsApp below.
+              <CmsText page="booking-complete" block="paid_body" fallback="Your consultation is confirmed. A confirmation is on its way to your email — and you can send the details to us on WhatsApp below." />
             </p>
             {ref && (
               <div style={S.refBadge}>
-                Reference&nbsp; <span style={S.mono}>{ref}</span>
+                <CmsText page="booking-complete" block="ref_label" fallback="Reference" />&nbsp;{" "}
+                <span style={S.mono}>{ref}</span>
               </div>
             )}
             <a href={wa} style={S.goldBtn}>
-              Send details on WhatsApp
+              <CmsText page="booking-complete" block="paid_wa_cta" fallback="Send details on WhatsApp" />
             </a>
             <Link href="/" style={S.ghostBtn}>
-              Return to site
+              <CmsText page="booking-complete" block="paid_return_cta" fallback="Return to site" />
             </Link>
             {ref && <BookingPushPrompt bookingRef={ref} />}
           </>
         ) : (
           <>
             <div style={{ ...S.check, ...S.checkFail }}>!</div>
-            <h1 style={S.h1}>Payment didn&apos;t go through.</h1>
+            <h1 style={S.h1}>
+              <CmsText page="booking-complete" block="failed_h1" fallback="Payment didn't go through." />
+            </h1>
             <p style={S.p}>
-              No charge was made and your slot wasn&apos;t lost. You can try
-              booking again, or message us on WhatsApp and we&apos;ll lock in
-              your consultation for you.
+              <CmsText page="booking-complete" block="failed_body" fallback="No charge was made and your slot wasn't lost. You can try booking again, or message us on WhatsApp and we'll lock in your consultation for you." />
             </p>
             <Link href="/" style={S.goldBtn}>
-              Try booking again
+              <CmsText page="booking-complete" block="failed_retry_cta" fallback="Try booking again" />
             </Link>
             <a href={wa} style={S.ghostBtn}>
-              Book on WhatsApp instead
+              <CmsText page="booking-complete" block="failed_wa_cta" fallback="Book on WhatsApp instead" />
             </a>
           </>
         )}

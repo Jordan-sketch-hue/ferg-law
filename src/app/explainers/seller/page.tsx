@@ -5,6 +5,7 @@ import Nav from "@/components/site/Nav";
 import Reveal from "@/components/site/Reveal";
 import Footer from "@/components/site/Footer";
 import Link from "next/link";
+import { CmsText } from "@/components/cms/CmsBlock";
 
 export const metadata: Metadata = {
   title: "Why Every Property Seller in Jamaica Needs an Attorney | H.O.M.E.® by Ferguson Law",
@@ -41,16 +42,16 @@ export default function GuidePage() {
         <div className="wrap g-wrap">
           <Link href="/explainers" className="g-back">← All guides</Link>
           <span className="eyebrow">H.O.M.E.® by Ferguson Law – Seller Explainer</span>
-          <h1 className="g-h1">Why Every Property Seller in Jamaica Needs an Attorney</h1>
-          <p className="g-sub">Selling Property Is More Than Finding a Buyer</p>
+          <h1 className="g-h1"><CmsText page="explainer-seller" block="hero_h1" fallback="Why Every Property Seller in Jamaica Needs an Attorney" /></h1>
+          <p className="g-sub"><CmsText page="explainer-seller" block="hero_sub" fallback="Selling Property Is More Than Finding a Buyer" /></p>
 
-          <p className="g-lead">Selling your home, land or investment property is one of the most significant financial transactions you will ever undertake.</p>
+          <p className="g-lead"><CmsText page="explainer-seller" block="hero_lede" fallback="Selling your home, land or investment property is one of the most significant financial transactions you will ever undertake." /></p>
           <p>Many sellers believe their job ends once a buyer is found. In reality, the legal process has only just begun.</p>
           <p>An experienced Jamaican Attorney-at-Law protects your interests, ensures the sale proceeds smoothly, and helps you avoid costly mistakes that could delay completion–or even expose you to lawsuits after the sale. Your attorney works to maximise your protection while ensuring the transaction closes efficiently.</p>
 
-          <h2 className="g-h2">Confirming You Are Ready to Sell</h2>
+          <h2 className="g-h2"><CmsText page="explainer-seller" block="sec_1_h2" fallback="Confirming You Are Ready to Sell" /></h2>
           <p>Before your property is placed under contract, your attorney reviews its legal status to identify potential issues before a buyer discovers them.</p>
-          <p className="g-leadin">This includes:</p>
+          <p className="g-leadin"><CmsText page="explainer-seller" block="sec_1_leadin" fallback="This includes:" /></p>
           <ul className="g-list">
             <li>Confirming ownership</li>
             <li>Reviewing your Registered Title</li>
@@ -61,9 +62,9 @@ export default function GuidePage() {
           </ul>
           <p>Resolving these issues early avoids unnecessary delays and strengthens buyer confidence.</p>
 
-          <h2 className="g-h2">Avoiding Failed Sales</h2>
+          <h2 className="g-h2"><CmsText page="explainer-seller" block="sec_2_h2" fallback="Avoiding Failed Sales" /></h2>
           <p>Many property transactions collapse because legal problems are discovered too late.</p>
-          <p className="g-leadin">Common causes include:</p>
+          <p className="g-leadin"><CmsText page="explainer-seller" block="sec_2_leadin" fallback="Common causes include:" /></p>
           <ul className="g-list cols2">
             <li>Missing title documents</li>
             <li>Outstanding mortgages</li>
@@ -75,9 +76,9 @@ export default function GuidePage() {
           </ul>
           <p>Your attorney identifies these issues before they become deal breakers.</p>
 
-          <h2 className="g-h2">Negotiating a Contract That Protects You</h2>
+          <h2 className="g-h2"><CmsText page="explainer-seller" block="sec_3_h2" fallback="Negotiating a Contract That Protects You" /></h2>
           <p>The Agreement for Sale should protect both parties–not just the purchaser.</p>
-          <p className="g-leadin">Your attorney ensures the agreement contains fair provisions relating to:</p>
+          <p className="g-leadin"><CmsText page="explainer-seller" block="sec_3_leadin" fallback="Your attorney ensures the agreement contains fair provisions relating to:" /></p>
           <ul className="g-list cols2">
             <li>Down payment amounts</li>
             <li>Completion dates</li>
@@ -90,9 +91,9 @@ export default function GuidePage() {
           </ul>
           <p>A properly drafted contract significantly reduces the likelihood of disputes.</p>
 
-          <h2 className="g-h2">Protecting Your Down payment</h2>
+          <h2 className="g-h2"><CmsText page="explainer-seller" block="sec_4_h2" fallback="Protecting Your Down payment" /></h2>
           <p>The purchaser&apos;s down payment is intended to demonstrate commitment–not create unnecessary disputes.</p>
-          <p className="g-leadin">Your attorney ensures:</p>
+          <p className="g-leadin"><CmsText page="explainer-seller" block="sec_4_leadin" fallback="Your attorney ensures:" /></p>
           <ul className="g-list">
             <li>Down payments are securely held in an attorney&apos;s client account</li>
             <li>Funds are released only in accordance with the Agreement</li>
@@ -101,9 +102,9 @@ export default function GuidePage() {
           </ul>
           <p>This protects both seller and purchaser throughout the transaction.</p>
 
-          <h2 className="g-h2">Ensuring You Receive Your Purchase Money Safely</h2>
+          <h2 className="g-h2"><CmsText page="explainer-seller" block="sec_5_h2" fallback="Ensuring You Receive Your Purchase Money Safely" /></h2>
           <p>Receiving the purchase price is one of the most critical stages of the transaction.</p>
-          <p className="g-leadin">Your attorney coordinates with:</p>
+          <p className="g-leadin"><CmsText page="explainer-seller" block="sec_5_leadin" fallback="Your attorney coordinates with:" /></p>
           <ul className="g-list cols2">
             <li>Mortgage lenders</li>
             <li>Purchaser&apos;s attorneys</li>
@@ -115,9 +116,9 @@ export default function GuidePage() {
             <p>Funds are <b>verified before title documents are released</b>, reducing the risk of fraud or payment complications.</p>
           </div>
 
-          <h2 className="g-h2">Satisfying Your Legal Obligations</h2>
+          <h2 className="g-h2"><CmsText page="explainer-seller" block="sec_6_h2" fallback="Satisfying Your Legal Obligations" /></h2>
           <p>Every property sale involves legal documentation and statutory compliance.</p>
-          <p className="g-leadin">Your attorney assists with:</p>
+          <p className="g-leadin"><CmsText page="explainer-seller" block="sec_6_leadin" fallback="Your attorney assists with:" /></p>
           <ul className="g-list">
             <li>Preparing transfer documents</li>
             <li>Calculating Transfer Tax and Stamp Duty obligations</li>
@@ -128,8 +129,8 @@ export default function GuidePage() {
           </ul>
           <p>Proper compliance prevents unnecessary delays at closing.</p>
 
-          <h2 className="g-h2">Managing Existing Mortgages</h2>
-          <p className="g-leadin">If your property is mortgaged, your attorney works with your lender to:</p>
+          <h2 className="g-h2"><CmsText page="explainer-seller" block="sec_7_h2" fallback="Managing Existing Mortgages" /></h2>
+          <p className="g-leadin"><CmsText page="explainer-seller" block="sec_7_leadin" fallback="If your property is mortgaged, your attorney works with your lender to:" /></p>
           <ul className="g-list">
             <li>Obtain mortgage payout statements</li>
             <li>Coordinate discharge of the mortgage</li>
@@ -138,9 +139,9 @@ export default function GuidePage() {
           </ul>
           <p>This ensures the purchaser receives good title while protecting your interests.</p>
 
-          <h2 className="g-h2">Protecting You From Future Claims</h2>
+          <h2 className="g-h2"><CmsText page="explainer-seller" block="sec_8_h2" fallback="Protecting You From Future Claims" /></h2>
           <p>A poorly managed transaction can expose sellers to legal claims long after completion.</p>
-          <p className="g-leadin">Your attorney helps minimise the risk of disputes involving:</p>
+          <p className="g-leadin"><CmsText page="explainer-seller" block="sec_8_leadin" fallback="Your attorney helps minimise the risk of disputes involving:" /></p>
           <ul className="g-list cols2">
             <li>Misrepresentation</li>
             <li>Boundary issues</li>
@@ -152,9 +153,9 @@ export default function GuidePage() {
           </ul>
           <p>Clear documentation today prevents expensive litigation tomorrow.</p>
 
-          <h2 className="g-h2">Coordinating Everyone Involved</h2>
+          <h2 className="g-h2"><CmsText page="explainer-seller" block="sec_9_h2" fallback="Coordinating Everyone Involved" /></h2>
           <p>A successful sale requires multiple parties working together.</p>
-          <p className="g-leadin">Your attorney coordinates communication between:</p>
+          <p className="g-leadin"><CmsText page="explainer-seller" block="sec_9_leadin" fallback="Your attorney coordinates communication between:" /></p>
           <ul className="g-list cols2">
             <li>Purchaser&apos;s attorney</li>
             <li>Mortgage institutions</li>
@@ -166,9 +167,9 @@ export default function GuidePage() {
           </ul>
           <p>This keeps the transaction moving toward completion.</p>
 
-          <h2 className="g-h2">Completing the Sale Properly</h2>
+          <h2 className="g-h2"><CmsText page="explainer-seller" block="sec_10_h2" fallback="Completing the Sale Properly" /></h2>
           <p>Completion is much more than handing over the keys.</p>
-          <p className="g-leadin">Your attorney ensures:</p>
+          <p className="g-leadin"><CmsText page="explainer-seller" block="sec_10_leadin" fallback="Your attorney ensures:" /></p>
           <ul className="g-list">
             <li>Purchase monies have been received</li>
             <li>Transfer documents are correctly executed</li>
@@ -179,11 +180,11 @@ export default function GuidePage() {
           </ul>
           <p>A properly completed transaction provides certainty for both parties.</p>
 
-          <h2 className="g-h2">Common Mistakes Sellers Make</h2>
+          <h2 className="g-h2"><CmsText page="explainer-seller" block="sec_11_h2" fallback="Common Mistakes Sellers Make" /></h2>
           <div className="g-call g-call--warn">
             <WarnIcon />
             <div>
-              <p className="g-leadin">Many sellers unintentionally expose themselves to unnecessary risk by:</p>
+              <p className="g-leadin"><CmsText page="explainer-seller" block="sec_11_leadin" fallback="Many sellers unintentionally expose themselves to unnecessary risk by:" /></p>
               <ul>
                 <li>Signing contracts before obtaining legal advice</li>
                 <li>Accepting down payments directly</li>
@@ -196,7 +197,7 @@ export default function GuidePage() {
           </div>
           <p>Early legal advice is almost always less expensive than resolving disputes later.</p>
 
-          <h2 className="g-h2">The Cost of Going It Alone</h2>
+          <h2 className="g-h2"><CmsText page="explainer-seller" block="sec_12_h2" fallback="The Cost of Going It Alone" /></h2>
           <div className="g-table-wrap">
             <table className="g-table">
               <thead>

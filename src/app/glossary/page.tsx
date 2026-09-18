@@ -1,8 +1,9 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import { BookingProvider } from "@/components/site/BookingProvider";
 import Nav from "@/components/site/Nav";
 import Reveal from "@/components/site/Reveal";
 import Footer from "@/components/site/Footer";
+import { CmsText } from "@/components/cms/CmsBlock";
 
 export const metadata: Metadata = {
   title: "Jamaican Property Glossary — H.O.M.E.® by Ferguson Law",
@@ -147,7 +148,7 @@ export default function GlossaryPage() {
             marginBottom: "1rem",
           }}
         >
-          H.O.M.E.® by Ferguson Law
+          <CmsText page="glossary" block="hero_eyebrow" fallback="H.O.M.E.® by Ferguson Law" />
         </span>
         <h1
           style={{
@@ -158,7 +159,7 @@ export default function GlossaryPage() {
             color: "#fff",
           }}
         >
-          Jamaican Property Glossary
+          <CmsText page="glossary" block="hero_h1" fallback="Jamaican Property Glossary" />
         </h1>
         <p
           style={{
@@ -169,35 +170,34 @@ export default function GlossaryPage() {
             color: "rgba(246,242,234,.78)",
           }}
         >
-          Plain-English definitions of the terms you&apos;ll encounter when buying or
-          selling property in Jamaica — and how they compare to UK and USA/Canada equivalents.
+          <CmsText page="glossary" block="hero_sub" fallback="Plain-English definitions of the terms you'll encounter when buying or selling property in Jamaica — and how they compare to UK and USA/Canada equivalents." />
         </p>
       </section>
 
       {/* Section A — Compare terms */}
       <section className="section" style={{ background: "var(--paper)" }}>
         <div className="wrap">
-          <span className="eyebrow">Section A</span>
+          <span className="eyebrow"><CmsText page="glossary" block="section_a_eyebrow" fallback="Section A" /></span>
           <h2 style={{ fontFamily: "var(--serif)", fontSize: "clamp(1.4rem,2.5vw,1.9rem)", margin: ".5rem 0 1.5rem" }}>
-            Terms That Differ Between Jamaica, UK, USA &amp; Canada
+            <CmsText page="glossary" block="section_a_heading" fallback="Terms That Differ Between Jamaica, UK, USA & Canada" />
           </h2>
           <div className="g-table-wrap">
             <table className="g-table">
               <thead>
                 <tr>
-                  <th>Term</th>
-                  <th>Jamaica</th>
-                  <th>UK</th>
-                  <th>USA / Canada</th>
+                  <th><CmsText page="glossary" block="table_th_term" fallback="Term" /></th>
+                  <th><CmsText page="glossary" block="table_th_ja" fallback="Jamaica" /></th>
+                  <th><CmsText page="glossary" block="table_th_uk" fallback="UK" /></th>
+                  <th><CmsText page="glossary" block="table_th_us_ca" fallback="USA / Canada" /></th>
                 </tr>
               </thead>
               <tbody>
-                {COMPARE_TERMS.map((r) => (
+                {COMPARE_TERMS.map((r, i) => (
                   <tr key={r.term}>
-                    <td style={{ fontWeight: 600, color: "var(--ink)" }}>{r.term}</td>
-                    <td>{r.ja}</td>
-                    <td style={{ color: "var(--muted)" }}>{r.uk}</td>
-                    <td style={{ color: "var(--muted)" }}>{r.us}</td>
+                    <td style={{ fontWeight: 600, color: "var(--ink)" }}><CmsText page="glossary" block={`compare_${i}_term`} fallback={r.term} /></td>
+                    <td><CmsText page="glossary" block={`compare_${i}_ja`} fallback={r.ja} /></td>
+                    <td style={{ color: "var(--muted)" }}><CmsText page="glossary" block={`compare_${i}_uk`} fallback={r.uk} /></td>
+                    <td style={{ color: "var(--muted)" }}><CmsText page="glossary" block={`compare_${i}_us`} fallback={r.us} /></td>
                   </tr>
                 ))}
               </tbody>
@@ -209,19 +209,19 @@ export default function GlossaryPage() {
       {/* Section B — Legal terms */}
       <section className="section" style={{ background: "var(--paper-2)", borderTop: "1px solid var(--line)" }}>
         <div className="wrap">
-          <span className="eyebrow">Section B</span>
+          <span className="eyebrow"><CmsText page="glossary" block="section_b_eyebrow" fallback="Section B" /></span>
           <h2 style={{ fontFamily: "var(--serif)", fontSize: "clamp(1.4rem,2.5vw,1.9rem)", margin: ".5rem 0 1.5rem" }}>
-            Legal Terms
+            <CmsText page="glossary" block="section_b_heading" fallback="Legal Terms" />
           </h2>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(300px,1fr))", gap: "1rem" }}>
-            {LEGAL_TERMS.map((item) => (
+            {LEGAL_TERMS.map((item, i) => (
               <div key={item.term} style={{ background: "#fff", borderRadius: 16, padding: "1.4rem 1.3rem", border: "1px solid var(--line)" }}>
-                <h4 style={{ fontFamily: "var(--serif)", color: "var(--ink)", margin: "0 0 .5rem", fontSize: "1rem" }}>{item.term}</h4>
+                <h4 style={{ fontFamily: "var(--serif)", color: "var(--ink)", margin: "0 0 .5rem", fontSize: "1rem" }}><CmsText page="glossary" block={`legal_${i}_name`} fallback={item.term} /></h4>
                 <p style={{ fontSize: ".92rem", color: "var(--muted)", margin: "0 0 .5rem", lineHeight: 1.55 }}>
-                  <strong style={{ color: "var(--ink-2)" }}>Plain English:</strong> {item.plain}
+                  <strong style={{ color: "var(--ink-2)" }}><CmsText page="glossary" block="label_plain_english" fallback="Plain English:" /></strong>{" "}<CmsText page="glossary" block={`legal_${i}_plain`} fallback={item.plain} />
                 </p>
                 <p style={{ fontSize: ".9rem", color: "var(--gold-deep)", margin: 0, lineHeight: 1.5 }}>
-                  <strong>Why it matters:</strong> {item.why}
+                  <strong><CmsText page="glossary" block="label_why_matters" fallback="Why it matters:" /></strong>{" "}<CmsText page="glossary" block={`legal_${i}_why`} fallback={item.why} />
                 </p>
               </div>
             ))}
@@ -232,15 +232,15 @@ export default function GlossaryPage() {
       {/* Section G — Jamaica-specific */}
       <section className="section" style={{ background: "var(--paper)" }}>
         <div className="wrap">
-          <span className="eyebrow">Section C</span>
+          <span className="eyebrow"><CmsText page="glossary" block="section_c_eyebrow" fallback="Section C" /></span>
           <h2 style={{ fontFamily: "var(--serif)", fontSize: "clamp(1.4rem,2.5vw,1.9rem)", margin: ".5rem 0 1.5rem" }}>
-            Jamaica-Specific Terms
+            <CmsText page="glossary" block="section_c_heading" fallback="Jamaica-Specific Terms" />
           </h2>
           <div style={{ display: "grid", gap: "1rem", maxWidth: 760 }}>
-            {JAMAICA_TERMS.map((item) => (
+            {JAMAICA_TERMS.map((item, i) => (
               <div key={item.term} style={{ background: "var(--paper-2)", borderRadius: 14, padding: "1.2rem 1.3rem", border: "1px solid var(--line)", display: "grid", gridTemplateColumns: "100px 1fr", gap: "1rem", alignItems: "start" }}>
-                <span style={{ fontWeight: 800, fontSize: "1.1rem", color: "var(--gold-deep)", fontFamily: "var(--serif)" }}>{item.term}</span>
-                <p style={{ fontSize: ".95rem", color: "var(--muted)", margin: 0, lineHeight: 1.6 }}>{item.desc}</p>
+                <span style={{ fontWeight: 800, fontSize: "1.1rem", color: "var(--gold-deep)", fontFamily: "var(--serif)" }}><CmsText page="glossary" block={`ja_${i}_term`} fallback={item.term} /></span>
+                <p style={{ fontSize: ".95rem", color: "var(--muted)", margin: 0, lineHeight: 1.6 }}><CmsText page="glossary" block={`ja_${i}_desc`} fallback={item.desc} /></p>
               </div>
             ))}
           </div>
@@ -250,17 +250,17 @@ export default function GlossaryPage() {
       {/* Section H — Confusing terms */}
       <section className="section" style={{ background: "var(--paper-2)", borderTop: "1px solid var(--line)" }}>
         <div className="wrap">
-          <span className="eyebrow">Section D</span>
+          <span className="eyebrow"><CmsText page="glossary" block="section_d_eyebrow" fallback="Section D" /></span>
           <h2 style={{ fontFamily: "var(--serif)", fontSize: "clamp(1.4rem,2.5vw,1.9rem)", margin: ".5rem 0 1.5rem" }}>
-            Terms That Often Confuse Overseas Buyers
+            <CmsText page="glossary" block="section_d_heading" fallback="Terms That Often Confuse Overseas Buyers" />
           </h2>
           <div style={{ display: "grid", gap: "1.1rem", maxWidth: 820 }}>
-            {CONFUSING.map((item) => (
+            {CONFUSING.map((item, i) => (
               <div key={item.pair} style={{ background: "#fff", borderRadius: 16, padding: "1.5rem 1.4rem", border: "1px solid var(--line)" }}>
-                <h4 style={{ fontFamily: "var(--serif)", color: "var(--ink)", margin: "0 0 .8rem", fontSize: "1.02rem" }}>{item.pair}</h4>
+                <h4 style={{ fontFamily: "var(--serif)", color: "var(--ink)", margin: "0 0 .8rem", fontSize: "1.02rem" }}><CmsText page="glossary" block={`confusing_${i}_pair`} fallback={item.pair} /></h4>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: ".8rem" }}>
-                  <p style={{ fontSize: ".93rem", color: "var(--muted)", margin: 0, lineHeight: 1.55 }}>{item.a}</p>
-                  <p style={{ fontSize: ".93rem", color: "var(--muted)", margin: 0, lineHeight: 1.55 }}>{item.b}</p>
+                  <p style={{ fontSize: ".93rem", color: "var(--muted)", margin: 0, lineHeight: 1.55 }}><CmsText page="glossary" block={`confusing_${i}_a`} fallback={item.a} /></p>
+                  <p style={{ fontSize: ".93rem", color: "var(--muted)", margin: 0, lineHeight: 1.55 }}><CmsText page="glossary" block={`confusing_${i}_b`} fallback={item.b} /></p>
                 </div>
               </div>
             ))}

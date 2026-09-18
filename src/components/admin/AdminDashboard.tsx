@@ -556,8 +556,22 @@ export default function AdminDashboard() {
       } else if (tab === "clients") {
         const { data } = await supabase.rpc("fl_admin_clients", { p_token: token });
         if (data) setClients(data as Client[]);
+      } else if (tab === "email") {
+        const { data } = await supabase.rpc("fl_admin_emails", { p_token: token });
+        if (data) setEmails(data as InboundEmail[]);
       }
     })();
+  }, [tab, token]);
+
+  // Email tab polling — auto-refresh every 60 s while the email tab is active
+  useEffect(() => {
+    if (!token || tab !== "email") return;
+    const supabase = createClient();
+    const poll = setInterval(async () => {
+      const { data } = await supabase.rpc("fl_admin_emails", { p_token: token });
+      if (data) setEmails(data as InboundEmail[]);
+    }, 60_000);
+    return () => clearInterval(poll);
   }, [tab, token]);
 
   // Mutations

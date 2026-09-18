@@ -1,10 +1,11 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import { BookingProvider, BookButton } from "@/components/site/BookingProvider";
 import Nav from "@/components/site/Nav";
 import Reveal from "@/components/site/Reveal";
 import Footer from "@/components/site/Footer";
 import Link from "next/link";
 import { CONSULT_DURATION_MIN } from "@/lib/site";
+import { CmsText } from "@/components/cms/CmsBlock";
 
 export const metadata: Metadata = {
   title: "10 Things to Expect from Your Real Estate Agent | Ferguson Law",
@@ -96,7 +97,7 @@ export default function AgentExplainer() {
             marginBottom: "1rem",
           }}
         >
-          H.O.M.E.® by Ferguson Law – Property Explainer
+          <CmsText page="explainer-agent" block="hero_eyebrow" fallback="H.O.M.E.® by Ferguson Law – Property Explainer" />
         </span>
         <h1
           style={{
@@ -107,7 +108,7 @@ export default function AgentExplainer() {
             color: "#fff",
           }}
         >
-          10 Things to Expect from Your Real Estate Agent
+          <CmsText page="explainer-agent" block="hero_h1" fallback="10 Things to Expect from Your Real Estate Agent" />
         </h1>
         <p
           style={{
@@ -118,11 +119,11 @@ export default function AgentExplainer() {
             color: "rgba(246,242,234,.78)",
           }}
         >
-          What every Jamaican property buyer and seller should expect from a professional real estate agent — and what to watch for when things fall short.
+          <CmsText page="explainer-agent" block="hero_sub" fallback="What every Jamaican property buyer and seller should expect from a professional real estate agent — and what to watch for when things fall short." />
         </p>
         <div style={{ display: "flex", gap: ".9rem", justifyContent: "center", flexWrap: "wrap" }}>
           <Link href="/explainers" style={{ color: "rgba(246,242,234,.6)", fontSize: ".9rem", textDecoration: "none" }}>
-            ← Back to all Explainers
+            <CmsText page="explainer-agent" block="hero_back_link" fallback="← Back to all Explainers" />
           </Link>
         </div>
       </section>
@@ -131,10 +132,10 @@ export default function AgentExplainer() {
       <section style={{ padding: "3rem 1.5rem 0", background: "var(--paper)" }}>
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
           <p style={{ fontSize: "1.05rem", lineHeight: 1.75, color: "var(--muted)", marginBottom: "1rem" }}>
-            Your real estate agent plays a central role in one of the most significant financial decisions you will ever make. Whether you are buying or selling, the agent you choose — and what you expect from them — can make the difference between a smooth transaction and a stressful one.
+            <CmsText page="explainer-agent" block="intro_p1" fallback="Your real estate agent plays a central role in one of the most significant financial decisions you will ever make. Whether you are buying or selling, the agent you choose — and what you expect from them — can make the difference between a smooth transaction and a stressful one." />
           </p>
           <p style={{ fontSize: "1.05rem", lineHeight: 1.75, color: "var(--muted)" }}>
-            Understanding what a professional agent should deliver helps you hold them accountable, ask the right questions, and recognise when the relationship is not serving your interests.
+            <CmsText page="explainer-agent" block="intro_p2" fallback="Understanding what a professional agent should deliver helps you hold them accountable, ask the right questions, and recognise when the relationship is not serving your interests." />
           </p>
         </div>
       </section>
@@ -152,8 +153,12 @@ export default function AgentExplainer() {
             {POINTS.map((p) => (
               <div key={p.n} className="serv reveal" style={{ padding: "1.8rem 1.6rem" }}>
                 <div className="num">{p.n}</div>
-                <h3 style={{ fontSize: "1.05rem", marginBottom: ".7rem", lineHeight: 1.35 }}>{p.title}</h3>
-                <p style={{ fontSize: ".93rem", color: "var(--muted)", lineHeight: 1.65, margin: 0 }}>{p.body}</p>
+                <h3 style={{ fontSize: "1.05rem", marginBottom: ".7rem", lineHeight: 1.35 }}>
+                  <CmsText page="explainer-agent" block={`point_${p.n}_title`} fallback={p.title} />
+                </h3>
+                <p style={{ fontSize: ".93rem", color: "var(--muted)", lineHeight: 1.65, margin: 0 }}>
+                  <CmsText page="explainer-agent" block={`point_${p.n}_body`} fallback={p.body} />
+                </p>
               </div>
             ))}
           </div>
@@ -173,7 +178,7 @@ export default function AgentExplainer() {
                 marginBottom: ".6rem",
               }}
             >
-              Remember What Your Agent Does — and Doesn&apos;t Do
+              <CmsText page="explainer-agent" block="callout_eyebrow" fallback="Remember What Your Agent Does — and Doesn't Do" />
             </div>
             <h2
               style={{
@@ -183,19 +188,19 @@ export default function AgentExplainer() {
                 color: "#fff",
               }}
             >
-              Your agent finds the property. Your attorney protects the deal.
+              <CmsText page="explainer-agent" block="callout_h2" fallback="Your agent finds the property. Your attorney protects the deal." />
             </h2>
             <p style={{ color: "rgba(246,242,234,.78)", marginBottom: "1rem", maxWidth: 600 }}>
-              A skilled real estate agent is an invaluable guide through the market — but their role ends at the legal boundary. Your attorney reviews and negotiates the sale agreement, conducts title investigations, ensures that the property is free of encumbrances, and protects your interests from contract to completion.
+              <CmsText page="explainer-agent" block="callout_p1" fallback="A skilled real estate agent is an invaluable guide through the market — but their role ends at the legal boundary. Your attorney reviews and negotiates the sale agreement, conducts title investigations, ensures that the property is free of encumbrances, and protects your interests from contract to completion." />
             </p>
             <p style={{ color: "rgba(246,242,234,.7)", marginBottom: "1.5rem", maxWidth: 600, fontSize: ".95rem" }}>
-              Never rely solely on your agent for legal advice. The two roles are complementary — and both are essential to a safe transaction. Ferguson Law works alongside agents, banks and developers to give clients comprehensive protection at every stage of the process.
+              <CmsText page="explainer-agent" block="callout_p2" fallback="Never rely solely on your agent for legal advice. The two roles are complementary — and both are essential to a safe transaction. Ferguson Law works alongside agents, banks and developers to give clients comprehensive protection at every stage of the process." />
             </p>
             <p style={{ color: "rgba(246,242,234,.7)", marginBottom: "1.5rem", maxWidth: 600, fontSize: ".95rem" }}>
-              Book a {CONSULT_DURATION_MIN}-minute consultation with Ferguson Law to review your sale agreement, understand your rights, and ensure your property transaction is legally sound from start to finish.
+              <CmsText page="explainer-agent" block="callout_p3" fallback={`Book a ${CONSULT_DURATION_MIN}-minute consultation with Ferguson Law to review your sale agreement, understand your rights, and ensure your property transaction is legally sound from start to finish.`} />
             </p>
             <BookButton className="btn btn-gold">
-              Book a consultation <ArrowIcon />
+              <CmsText page="explainer-agent" block="callout_btn" fallback="Book a consultation" /> <ArrowIcon />
             </BookButton>
         </div>
       </section>

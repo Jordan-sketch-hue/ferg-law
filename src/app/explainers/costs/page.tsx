@@ -1,10 +1,11 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import { BookingProvider, BookButton } from "@/components/site/BookingProvider";
 import Nav from "@/components/site/Nav";
 import Reveal from "@/components/site/Reveal";
 import Footer from "@/components/site/Footer";
 import Link from "next/link";
 import { SITE, CONSULT_DURATION_MIN } from "@/lib/site";
+import { CmsText } from "@/components/cms/CmsBlock";
 
 export const metadata: Metadata = {
   title: "What a Property Purchase in Jamaica Really Costs | H.O.M.E.® by Ferguson Law",
@@ -116,7 +117,7 @@ export default function CostsExplainer() {
             marginBottom: "1rem",
           }}
         >
-          H.O.M.E.® by Ferguson Law — Property Explainer
+          <CmsText page="explainer-costs" block="hero_eyebrow" fallback="H.O.M.E.® by Ferguson Law — Property Explainer" />
         </span>
         <h1
           style={{
@@ -127,7 +128,7 @@ export default function CostsExplainer() {
             color: "#fff",
           }}
         >
-          What a Property Purchase in Jamaica Really Costs
+          <CmsText page="explainer-costs" block="hero_h1" fallback="What a Property Purchase in Jamaica Really Costs" />
         </h1>
         <p
           style={{
@@ -138,12 +139,13 @@ export default function CostsExplainer() {
             color: "rgba(246,242,234,.78)",
           }}
         >
-          A Jamaican property transaction involves 6 categories of fees beyond the purchase price. Together they can add{" "}
-          <strong style={{ color: "#fff" }}>10–20% to your total cost.</strong> Ferguson Law explains every figure before you commit to anything.
+          <CmsText page="explainer-costs" block="hero_sub" fallback="A Jamaican property transaction involves 6 categories of fees beyond the purchase price. Together they can add" />{" "}
+          <strong style={{ color: "#fff" }}><CmsText page="explainer-costs" block="hero_sub_bold" fallback="10–20% to your total cost." /></strong>{" "}
+          <CmsText page="explainer-costs" block="hero_sub_end" fallback="Ferguson Law explains every figure before you commit to anything." />
         </p>
         <div style={{ display: "flex", gap: ".9rem", justifyContent: "center", flexWrap: "wrap" }}>
           <Link href="/explainers" style={{ color: "rgba(246,242,234,.6)", fontSize: ".9rem", textDecoration: "none" }}>
-            ← Back to all Explainers
+            <CmsText page="explainer-costs" block="hero_back_link" fallback="← Back to all Explainers" />
           </Link>
         </div>
       </section>
@@ -165,7 +167,9 @@ export default function CostsExplainer() {
                 style={{ padding: "1.8rem 1.6rem" }}
               >
                 <div className="num">{c.n}</div>
-                <h3 style={{ fontSize: "1.1rem", marginBottom: ".3rem" }}>{c.name}</h3>
+                <h3 style={{ fontSize: "1.1rem", marginBottom: ".3rem" }}>
+                  <CmsText page="explainer-costs" block={"cost_" + c.n + "_name"} fallback={c.name} />
+                </h3>
                 <div
                   style={{
                     display: "flex",
@@ -184,7 +188,7 @@ export default function CostsExplainer() {
                       padding: ".2rem .6rem",
                     }}
                   >
-                    {c.who}
+                    <CmsText page="explainer-costs" block={"cost_" + c.n + "_who"} fallback={c.who} />
                   </span>
                   <span
                     style={{
@@ -196,10 +200,12 @@ export default function CostsExplainer() {
                       padding: ".2rem .6rem",
                     }}
                   >
-                    {c.pct}
+                    <CmsText page="explainer-costs" block={"cost_" + c.n + "_pct"} fallback={c.pct} />
                   </span>
                 </div>
-                <p style={{ fontSize: ".95rem", color: "var(--muted)", lineHeight: 1.6 }}>{c.desc}</p>
+                <p style={{ fontSize: ".95rem", color: "var(--muted)", lineHeight: 1.6 }}>
+                  <CmsText page="explainer-costs" block={"cost_" + c.n + "_desc"} fallback={c.desc} />
+                </p>
               </div>
             ))}
           </div>
@@ -212,14 +218,14 @@ export default function CostsExplainer() {
         <div style={{ maxWidth: 980, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1.5rem", flexWrap: "wrap" }}>
           <div>
             <div style={{ fontSize: ".72rem", letterSpacing: ".14em", textTransform: "uppercase", color: "var(--gold-deep)", fontWeight: 700, marginBottom: ".4rem" }}>
-              Try the Cost Estimator&#174;
+              <CmsText page="explainer-costs" block="estimator_eyebrow" fallback="Try the Cost Estimator®" />
             </div>
             <p style={{ margin: 0, fontSize: ".95rem", color: "#3a3a3a", maxWidth: 480 }}>
-              Enter the selling price and see a full cost breakdown — rough estimates or actual quotes — for buyer or seller.
+              <CmsText page="explainer-costs" block="estimator_para" fallback="Enter the selling price and see a full cost breakdown — rough estimates or actual quotes — for buyer or seller." />
             </p>
           </div>
           <Link href="/cost-estimator" style={{ display: "inline-block", background: "#10211c", color: "#c9a86a", textDecoration: "none", padding: "12px 24px", borderRadius: 10, fontWeight: 700, fontSize: ".9rem", whiteSpace: "nowrap" }}>
-            Open Cost Estimator →
+            <CmsText page="explainer-costs" block="estimator_btn" fallback="Open Cost Estimator →" />
           </Link>
         </div>
       </section>
@@ -237,7 +243,7 @@ export default function CostsExplainer() {
                 marginBottom: ".6rem",
               }}
             >
-              The bottom line
+              <CmsText page="explainer-costs" block="summary_eyebrow" fallback="The bottom line" />
             </div>
             <h2
               style={{
@@ -247,13 +253,13 @@ export default function CostsExplainer() {
                 color: "#fff",
               }}
             >
-              Most buyers are surprised. <em>You won&apos;t be.</em>
+              <CmsText page="explainer-costs" block="summary_h2" fallback="Most buyers are surprised." />{" "}<em><CmsText page="explainer-costs" block="summary_h2_em" fallback="You won't be." /></em>
             </h2>
             <p style={{ color: "rgba(246,242,234,.78)", marginBottom: "1.5rem", maxWidth: 580 }}>
-              Every deal is different. Book a {CONSULT_DURATION_MIN}-minute consultation and Ferguson Law will walk you through the exact costs for your purchase — before you sign anything.
+              <CmsText page="explainer-costs" block="summary_para" fallback={`Every deal is different. Book a ${CONSULT_DURATION_MIN}-minute consultation and Ferguson Law will walk you through the exact costs for your purchase — before you sign anything.`} />
             </p>
             <BookButton className="btn btn-gold">
-              Book a consultation <ArrowIcon />
+              <CmsText page="explainer-costs" block="summary_btn" fallback="Book a consultation" /> <ArrowIcon />
             </BookButton>
         </div>
       </section>

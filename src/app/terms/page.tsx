@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CmsText } from "@/components/cms/CmsBlock";
 import { SITE } from "@/lib/site";
 import React from "react";
 
@@ -24,7 +25,7 @@ export default function TermsPage() {
         <div style={S.heroInner}>
           <Link href="/" style={{ display:"inline-flex", alignItems:"center", gap:6, fontSize:13, color:"rgba(255,255,255,.55)", marginBottom:20, textDecoration:"none" }}>← Back to Ferguson Law</Link>
           <div style={S.eyebrow}>Ferguson Law</div>
-          <h1 style={S.h1}>Terms of Service</h1>
+          <h1 style={S.h1}><CmsText page="terms" block="hero_h1" fallback="Terms of Service" /></h1>
           <p style={S.meta}>Last updated: July 2026</p>
         </div>
       </div>

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { BookingProvider, useBooking } from "@/components/site/BookingProvider";
 import Nav from "@/components/site/Nav";
 import Footer from "@/components/site/Footer";
+import { CmsText } from "@/components/cms/CmsBlock";
 
 const ArrowIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" style={{ width: 16, height: 16 }}>
@@ -41,7 +42,6 @@ function BookingContent() {
 
   useEffect(() => { openBooking(); }, [openBooking]);
 
-  // When modal is closed after having been opened, go back to homepage
   useEffect(() => {
     if (open) {
       hasOpened.current = true;
@@ -55,7 +55,9 @@ function BookingContent() {
       {/* Hero strip */}
       <section style={{ padding: "5rem 1.5rem 2.5rem", textAlign: "center", maxWidth: 640, margin: "0 auto" }}>
         <p style={{ fontFamily: "var(--serif)", fontSize: "0.78rem", letterSpacing: "0.13em", textTransform: "uppercase", color: "var(--gold)", margin: "0 0 1rem" }}>Ferguson Law</p>
-        <h1 style={{ fontFamily: "var(--serif)", fontSize: "clamp(1.9rem,4vw,2.7rem)", color: "var(--ink)", margin: "0 0 1rem", lineHeight: 1.1 }}>Book a Consultation</h1>
+        <h1 style={{ fontFamily: "var(--serif)", fontSize: "clamp(1.9rem,4vw,2.7rem)", color: "var(--ink)", margin: "0 0 1rem", lineHeight: 1.1 }}>
+          <CmsText page="booking" block="hero_h1" fallback="Book a Consultation" />
+        </h1>
         {matterLabel && (
           <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(200,166,92,.12)", border: "1px solid rgba(200,166,92,.4)", borderRadius: 999, padding: "5px 14px", marginBottom: "1rem", fontSize: "0.8rem", color: "var(--gold-deep)", fontWeight: 600 }}>
             <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--gold)", display: "inline-block" }} />
@@ -63,7 +65,7 @@ function BookingContent() {
           </div>
         )}
         <p style={{ color: "var(--ink-light)", lineHeight: 1.65, margin: "0 0 1.75rem" }}>
-          20 minutes with our attorney - real answers for your specific situation. Pick a service and a time that works for you.
+          <CmsText page="booking" block="hero_lede" fallback="20 minutes with our attorney - real answers for your specific situation. Pick a service and a time that works for you." />
         </p>
         {/* Trust pills */}
         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", justifyContent: "center", marginBottom: "1.75rem" }}>
@@ -83,15 +85,23 @@ function BookingContent() {
 
       {/* Testimonials */}
       <section style={{ maxWidth: 960, margin: "0 auto", padding: "0 1.25rem" }}>
-        <p style={{ textAlign: "center", fontSize: "0.78rem", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--muted,#888)", marginBottom: "1.5rem" }}>In their words</p>
+        <p style={{ textAlign: "center", fontSize: "0.78rem", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--muted,#888)", marginBottom: "1.5rem" }}>
+          <CmsText page="booking" block="testimonials_label" fallback="In their words" />
+        </p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: "1rem" }}>
-          {TESTIMONIALS.map(t => (
+          {TESTIMONIALS.map((t, i) => (
             <div key={t.name} style={{ background: "#fff", borderRadius: 14, padding: "1.5rem", border: "1px solid rgba(18,16,12,.07)", display: "flex", flexDirection: "column", gap: "1rem" }}>
               <p style={{ color: "#b8a060", fontSize: "0.85rem", margin: 0 }}>★★★★★</p>
-              <p style={{ color: "var(--ink)", lineHeight: 1.65, fontSize: "0.9rem", margin: 0, fontStyle: "italic" }}>&ldquo;{t.quote}&rdquo;</p>
+              <p style={{ color: "var(--ink)", lineHeight: 1.65, fontSize: "0.9rem", margin: 0, fontStyle: "italic" }}>
+                &ldquo;<CmsText page="booking" block={`testimonial_${i}_quote`} fallback={t.quote} />&rdquo;
+              </p>
               <div style={{ marginTop: "auto" }}>
-                <p style={{ fontWeight: 700, fontSize: "0.85rem", margin: 0, color: "var(--ink)" }}>{t.name}</p>
-                <p style={{ fontSize: "0.78rem", color: "var(--muted,#888)", margin: 0 }}>{t.role}</p>
+                <p style={{ fontWeight: 700, fontSize: "0.85rem", margin: 0, color: "var(--ink)" }}>
+                  <CmsText page="booking" block={`testimonial_${i}_name`} fallback={t.name} />
+                </p>
+                <p style={{ fontSize: "0.78rem", color: "var(--muted,#888)", margin: 0 }}>
+                  <CmsText page="booking" block={`testimonial_${i}_role`} fallback={t.role} />
+                </p>
               </div>
             </div>
           ))}

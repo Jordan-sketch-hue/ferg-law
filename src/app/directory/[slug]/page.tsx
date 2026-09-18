@@ -6,6 +6,7 @@ import {
   type Partner, type Listing, type Service,
 } from "@/lib/partners/constants";
 import ListingCards from "./ListingCards";
+import { CmsText } from "@/components/cms/CmsBlock";
 
 export const dynamic = "force-dynamic";
 
@@ -52,7 +53,7 @@ export default async function PartnerProfilePage({
           </div>
           {p.kind === "realtor" && p.reb_number ? (
             <div style={{ marginTop: 8, display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, letterSpacing: ".04em", color: "var(--gold-deep)", border: "1px solid var(--gold-deep)", borderRadius: 999, padding: "3px 10px" }}>
-              ✓ REB {p.reb_number}
+              <CmsText page="directory-profile" block="reb_prefix" fallback="✓ REB" />{" "}{p.reb_number}
             </div>
           ) : null}
         </div>
@@ -62,30 +63,46 @@ export default async function PartnerProfilePage({
 
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
         {tel && (
-          <a className="btn btn-gold" href={`whatsapp://send?phone=${tel}`} target="_blank" rel="noopener">WhatsApp</a>
+          <a className="btn btn-gold" href={`whatsapp://send?phone=${tel}`} target="_blank" rel="noopener">
+            <CmsText page="directory-profile" block="btn_whatsapp" fallback="WhatsApp" />
+          </a>
         )}
-        {p.phone && <a className="btn btn-ghost" href={`tel:${p.phone}`}>Call</a>}
-        {p.email && <a className="btn btn-ghost" href={`mailto:${p.email}`}>Email</a>}
+        {p.phone && (
+          <a className="btn btn-ghost" href={`tel:${p.phone}`}>
+            <CmsText page="directory-profile" block="btn_call" fallback="Call" />
+          </a>
+        )}
+        {p.email && (
+          <a className="btn btn-ghost" href={`mailto:${p.email}`}>
+            <CmsText page="directory-profile" block="btn_email" fallback="Email" />
+          </a>
+        )}
         {p.website && (
           <a className="btn btn-ghost" href={p.website.startsWith("http") ? p.website : `https://${p.website}`} target="_blank" rel="noopener">
-            Website
+            <CmsText page="directory-profile" block="btn_website" fallback="Website" />
           </a>
         )}
       </div>
 
       {p.kind === "realtor" ? (
         <section style={{ marginTop: 26 }}>
-          <h2 style={{ fontFamily: "var(--serif)", color: "var(--ink)", fontSize: 24, marginBottom: 14 }}>Listings</h2>
+          <h2 style={{ fontFamily: "var(--serif)", color: "var(--ink)", fontSize: 24, marginBottom: 14 }}>
+            <CmsText page="directory-profile" block="section_listings" fallback="Listings" />
+          </h2>
           {(listings as Listing[] | null)?.length ? (
             <ListingCards listings={listings as Listing[]} />
           ) : (
-            <p style={{ color: "var(--muted)" }}>No listings published yet.</p>
+            <p style={{ color: "var(--muted)" }}>
+              <CmsText page="directory-profile" block="empty_listings" fallback="No listings published yet." />
+            </p>
           )}
         </section>
       ) : (
         <>
           <section style={{ marginTop: 26 }}>
-            <h2 style={{ fontFamily: "var(--serif)", color: "var(--ink)", fontSize: 24, marginBottom: 14 }}>Services &amp; fees</h2>
+            <h2 style={{ fontFamily: "var(--serif)", color: "var(--ink)", fontSize: 24, marginBottom: 14 }}>
+              <CmsText page="directory-profile" block="section_services" fallback="Services & fees" />
+            </h2>
             {(services as Service[] | null)?.length ? (
               <div style={{ display: "grid", gap: 10 }}>
                 {(services as Service[]).map((s) => (
@@ -94,17 +111,21 @@ export default async function PartnerProfilePage({
                       <strong style={{ color: "var(--ink)" }}>{s.name}</strong>
                       {s.description && <div style={{ fontSize: 13.5, color: "var(--muted)", marginTop: 3 }}>{s.description}</div>}
                     </div>
-                    <div className="fee">{s.fee_text || "On request"}</div>
+                    <div className="fee">{s.fee_text || <CmsText page="directory-profile" block="fee_on_request" fallback="On request" />}</div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p style={{ color: "var(--muted)" }}>No services published yet.</p>
+              <p style={{ color: "var(--muted)" }}>
+                <CmsText page="directory-profile" block="empty_services" fallback="No services published yet." />
+              </p>
             )}
           </section>
           {Array.isArray(p.work_photos) && (p.work_photos as { url: string }[]).length > 0 && (
             <section style={{ marginTop: 26 }}>
-              <h2 style={{ fontFamily: "var(--serif)", color: "var(--ink)", fontSize: 24, marginBottom: 14 }}>Work photos</h2>
+              <h2 style={{ fontFamily: "var(--serif)", color: "var(--ink)", fontSize: 24, marginBottom: 14 }}>
+                <CmsText page="directory-profile" block="section_work_photos" fallback="Work photos" />
+              </h2>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 10 }}>
                 {(p.work_photos as { url: string }[]).map((photo, i) => (
                   <img key={i} src={photo.url} alt="" style={{ width: "100%", aspectRatio: "4/3", objectFit: "cover", borderRadius: 10 }} />
@@ -116,7 +137,7 @@ export default async function PartnerProfilePage({
       )}
 
       <div className="disclaimer">
-        <strong>Please note:</strong> {PARTNER_DISCLAIMER}
+        <strong><CmsText page="directory-profile" block="disclaimer_label" fallback="Please note:" /></strong>{" "}{PARTNER_DISCLAIMER}
       </div>
     </div>
   );

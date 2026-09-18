@@ -1,10 +1,11 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import { BookingProvider, BookButton } from "@/components/site/BookingProvider";
 import Nav from "@/components/site/Nav";
 import Reveal from "@/components/site/Reveal";
 import Footer from "@/components/site/Footer";
 import Link from "next/link";
 import { CONSULT_DURATION_MIN } from "@/lib/site";
+import { CmsText } from "@/components/cms/CmsBlock";
 
 export const metadata: Metadata = {
   title: "10 Costly Property Mistakes a Surveyor's ID Report Can Prevent | Ferguson Law",
@@ -96,7 +97,7 @@ export default function SurveyorExplainer() {
             marginBottom: "1rem",
           }}
         >
-          H.O.M.E.® by Ferguson Law – Property Explainer
+          <CmsText page="explainer-surveyor" block="hero_eyebrow" fallback="H.O.M.E.® by Ferguson Law – Property Explainer" />
         </span>
         <h1
           style={{
@@ -107,7 +108,7 @@ export default function SurveyorExplainer() {
             color: "#fff",
           }}
         >
-          10 Costly Property Mistakes a Surveyor&apos;s Identification Report Can Prevent
+          <CmsText page="explainer-surveyor" block="hero_h1" fallback="10 Costly Property Mistakes a Surveyor's Identification Report Can Prevent" />
         </h1>
         <p
           style={{
@@ -118,11 +119,11 @@ export default function SurveyorExplainer() {
             color: "rgba(246,242,234,.78)",
           }}
         >
-          Why a Surveyor&apos;s Identification Report is one of the most important pieces of due diligence a Jamaican property buyer can commission — before signing anything.
+          <CmsText page="explainer-surveyor" block="hero_sub" fallback="Why a Surveyor's Identification Report is one of the most important pieces of due diligence a Jamaican property buyer can commission — before signing anything." />
         </p>
         <div style={{ display: "flex", gap: ".9rem", justifyContent: "center", flexWrap: "wrap" }}>
           <Link href="/explainers" style={{ color: "rgba(246,242,234,.6)", fontSize: ".9rem", textDecoration: "none" }}>
-            ← Back to all Explainers
+            <CmsText page="explainer-surveyor" block="hero_back_link" fallback="← Back to all Explainers" />
           </Link>
         </div>
       </section>
@@ -131,10 +132,10 @@ export default function SurveyorExplainer() {
       <section style={{ padding: "3rem 1.5rem 0", background: "var(--paper)" }}>
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
           <p style={{ fontSize: "1.05rem", lineHeight: 1.75, color: "var(--muted)", marginBottom: "1rem" }}>
-            A Surveyor&apos;s Identification Report (SIR) is prepared by a licensed land surveyor and confirms that the physical land being purchased matches the legal description on the registered title. It identifies the boundaries of the property, flags any encroachments, and reveals access issues that may not be apparent from a simple walk-around.
+            <CmsText page="explainer-surveyor" block="intro_p1" fallback="A Surveyor's Identification Report (SIR) is prepared by a licensed land surveyor and confirms that the physical land being purchased matches the legal description on the registered title. It identifies the boundaries of the property, flags any encroachments, and reveals access issues that may not be apparent from a simple walk-around." />
           </p>
           <p style={{ fontSize: "1.05rem", lineHeight: 1.75, color: "var(--muted)" }}>
-            Many buyers — particularly first-time purchasers — skip this step to save money or accelerate the process. Here are ten reasons that decision often proves to be a costly one.
+            <CmsText page="explainer-surveyor" block="intro_p2" fallback="Many buyers — particularly first-time purchasers — skip this step to save money or accelerate the process. Here are ten reasons that decision often proves to be a costly one." />
           </p>
         </div>
       </section>
@@ -152,8 +153,12 @@ export default function SurveyorExplainer() {
             {POINTS.map((p) => (
               <div key={p.n} className="serv reveal" style={{ padding: "1.8rem 1.6rem" }}>
                 <div className="num">{p.n}</div>
-                <h3 style={{ fontSize: "1.05rem", marginBottom: ".7rem", lineHeight: 1.35 }}>{p.title}</h3>
-                <p style={{ fontSize: ".93rem", color: "var(--muted)", lineHeight: 1.65, margin: 0 }}>{p.body}</p>
+                <h3 style={{ fontSize: "1.05rem", marginBottom: ".7rem", lineHeight: 1.35 }}>
+                  <CmsText page="explainer-surveyor" block={`point_${p.n}_title`} fallback={p.title} />
+                </h3>
+                <p style={{ fontSize: ".93rem", color: "var(--muted)", lineHeight: 1.65, margin: 0 }}>
+                  <CmsText page="explainer-surveyor" block={`point_${p.n}_body`} fallback={p.body} />
+                </p>
               </div>
             ))}
           </div>
@@ -173,7 +178,7 @@ export default function SurveyorExplainer() {
                 marginBottom: ".6rem",
               }}
             >
-              Prevention Is Always Less Expensive Than Correction
+              <CmsText page="explainer-surveyor" block="callout_eyebrow" fallback="Prevention Is Always Less Expensive Than Correction" />
             </div>
             <h2
               style={{
@@ -183,19 +188,19 @@ export default function SurveyorExplainer() {
                 color: "#fff",
               }}
             >
-              Commission the SIR before you sign — not after.
+              <CmsText page="explainer-surveyor" block="callout_h2" fallback="Commission the SIR before you sign — not after." />
             </h2>
             <p style={{ color: "rgba(246,242,234,.78)", marginBottom: "1rem", maxWidth: 600 }}>
-              The cost of a Surveyor&apos;s Identification Report is modest relative to the value of the transaction. The cost of resolving a boundary dispute, correcting an encroachment, or obtaining legal access after closing is not. The SIR is essential due diligence — not an optional extra.
+              <CmsText page="explainer-surveyor" block="callout_p1" fallback="The cost of a Surveyor's Identification Report is modest relative to the value of the transaction. The cost of resolving a boundary dispute, correcting an encroachment, or obtaining legal access after closing is not. The SIR is essential due diligence — not an optional extra." />
             </p>
             <p style={{ color: "rgba(246,242,234,.7)", marginBottom: "1.5rem", maxWidth: 600, fontSize: ".95rem" }}>
-              Ferguson Law recommends that all property buyers in Jamaica commission an SIR as part of the due diligence process — alongside a title investigation and a legal review of the sale agreement. These steps exist to protect buyers from exactly the problems described above.
+              <CmsText page="explainer-surveyor" block="callout_p2" fallback="Ferguson Law recommends that all property buyers in Jamaica commission an SIR as part of the due diligence process — alongside a title investigation and a legal review of the sale agreement. These steps exist to protect buyers from exactly the problems described above." />
             </p>
             <p style={{ color: "rgba(246,242,234,.7)", marginBottom: "1.5rem", maxWidth: 600, fontSize: ".95rem" }}>
-              Book a {CONSULT_DURATION_MIN}-minute consultation with Ferguson Law to discuss your property transaction, understand your due diligence obligations, and make sure every stage of your purchase is handled correctly.
+              <CmsText page="explainer-surveyor" block="callout_p3" fallback={`Book a ${CONSULT_DURATION_MIN}-minute consultation with Ferguson Law to discuss your property transaction, understand your due diligence obligations, and make sure every stage of your purchase is handled correctly.`} />
             </p>
             <BookButton className="btn btn-gold">
-              Book a consultation <ArrowIcon />
+              <CmsText page="explainer-surveyor" block="callout_btn" fallback="Book a consultation" /> <ArrowIcon />
             </BookButton>
         </div>
       </section>

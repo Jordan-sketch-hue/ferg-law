@@ -1,5 +1,4 @@
-﻿import type { Metadata } from "next";
-import Link from "next/link";
+import type { Metadata } from "next";
 import { CONSULT_DURATION_MIN } from "@/lib/site";
 import { BookingProvider, BookButton } from "@/components/site/BookingProvider";
 import Nav from "@/components/site/Nav";
@@ -7,21 +6,25 @@ import Reveal from "@/components/site/Reveal";
 import Footer from "@/components/site/Footer";
 import { SITE } from "@/lib/site";
 import { HomeBadge, HomeBadgeCSS } from "@/components/site/HomeBadge";
-import EbookFormSection from "@/components/site/EbookFormSection";
+import BuyersGuideHero from "@/components/site/BuyersGuideHero";
+import { CmsText } from "@/components/cms/CmsBlock";
 
 export const metadata: Metadata = {
-  title: "H.O.M.E.® Buyer's Guide — Home Ownership Made Easy | Ferguson Law",
+  title: "H.O.M.E.\u00ae Buyer\u2019s Guide \u2014 Home Ownership Made Easy | Ferguson Law",
   description:
-    "The complete H.O.M.E.® Buyers Guide by Ferguson Law — everything a Jamaican home buyer needs to know, from readiness to registered title.",
+    "The complete H.O.M.E.\u00ae Buyers Guide by Ferguson Law \u2014 everything a Jamaican home buyer needs to know, from readiness to registered title.",
 };
 
-const PDF_URL = "https://home.fergusonlawja.com/HOME-Guide-Ferguson-Law.pdf";
-
-const ArrowIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
-    <path d="M5 12h14M13 6l6 6-6 6" />
-  </svg>
-);
+const GUIDE_CARDS = [
+  { n: "01", t: "Know If You\u2019re Ready", d: "Assess your financial position, credit, and savings - before you start shopping." },
+  { n: "02", t: "Understanding the Costs", d: "Transfer tax, stamp duty, attorney fees, valuation, survey - every figure explained." },
+  { n: "03", t: "NHT & Financing", d: "How to access your NHT benefits, qualify for a mortgage, and calculate your down payment." },
+  { n: "04", t: "Finding Your Team", d: "Vetted real estate agents, valuators, surveyors, and lenders - the professionals you need." },
+  { n: "05", t: "The Agreement for Sale", d: "What the contract means, what to watch for, and why your attorney must review it." },
+  { n: "06", t: "From Contract to Title", d: "The legal steps from signed agreement to your name on a registered title." },
+  { n: "07", t: "Buying from Overseas", d: "Power of attorney, source of funds, remote signing - what diaspora buyers need to know." },
+  { n: "08", t: "Protecting Your Investment", d: "Fraud warning signs, due diligence, and why a Ferguson Law attorney is your strongest safeguard." },
+];
 
 export default function BuyersGuidePage() {
   return (
@@ -29,160 +32,50 @@ export default function BuyersGuidePage() {
       <Reveal />
       <Nav />
 
-      {/* Hero */}
-      <section
-        id="top"
-        style={{
-          background: "linear-gradient(165deg,#0e2518 0%,#1a3828 100%)",
-          padding: "4rem 1.5rem",
-          color: "var(--paper)",
-        }}
-      >
-        <div className="wrap" style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "3rem", alignItems: "center" }}>
-          <div>
-            <span
-              style={{
-                display: "inline-block",
-                fontSize: ".72rem",
-                letterSpacing: ".18em",
-                textTransform: "uppercase",
-                color: "var(--gold)",
-                marginBottom: "1rem",
-              }}
-            >
-              H.O.M.E.® by Ferguson Law · Home Ownership Made Easy®
-            </span>
-            <h1
-              style={{
-                fontFamily: "var(--serif)",
-                fontSize: "clamp(2rem,4vw,3.2rem)",
-                lineHeight: 1.08,
-                margin: "0 0 1rem",
-                color: "#fff",
-              }}
-            >
-              The H.O.M.E.® Buyer&apos;s Guide
-            </h1>
-            <p
-              style={{
-                maxWidth: 480,
-                margin: "0 0 2rem",
-                fontSize: "1.05rem",
-                lineHeight: 1.65,
-                color: "rgba(246,242,234,.78)",
-              }}
-            >
-              Everything a Jamaican home buyer needs to know - from readiness to registered
-              title. Plain English. Backed by a Ferguson Law attorney.
-            </p>
-            <div style={{ display: "flex", gap: ".9rem", flexWrap: "wrap" }}>
-              <Link className="btn btn-gold" href="/get-started">
-                Start now <ArrowIcon />
-              </Link>
-              <Link className="btn btn-light" href="/booking">
-                Book here <ArrowIcon />
-              </Link>
-              <a className="btn btn-ghost-light" href={PDF_URL} target="_blank" rel="noopener noreferrer">
-                Download Guide <ArrowIcon />
-              </a>
-            </div>
-          </div>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/img/home-ebook-cover.jpg"
-            alt="The H.O.M.E. Buyers Guide — Ferguson Law"
-            style={{ width: 320, borderRadius: 18, boxShadow: "0 24px 60px rgba(0,0,0,.45)", flexShrink: 0 }}
-            className="bg-hero-img"
-          />
-        </div>
-      </section>
+      {/* Hero: ebook cover image + lead-capture form side by side */}
+      <BuyersGuideHero />
 
       {/* What's in the guide */}
       <section className="section" style={{ background: "linear-gradient(165deg,#0e2518 0%,#1a3828 100%)", color: "var(--paper)" }}>
         <div className="wrap">
           <div className="sec-head reveal">
-            <span className="eyebrow" style={{ color: "var(--gold)" }}>What&apos;s inside</span>
+            <span className="eyebrow" style={{ color: "var(--gold)" }}>
+              <CmsText page="buyers-guide" block="cards_eyebrow" fallback="What\u2019s inside" />
+            </span>
             <h2 style={{ color: "#fff", overflowWrap: "break-word" }}>
-              One guide. Every stage of <em>your journey.</em>
+              <CmsText page="buyers-guide" block="cards_h2" fallback="One guide. Every stage of your journey." />
             </h2>
             <p className="lead" style={{ color: "rgba(246,242,234,.78)" }}>
-              The H.O.M.E.® Buyers Guide covers the entire home-buying process from
-              first question to keys in hand - written for Jamaicans at home and abroad.
+              <CmsText page="buyers-guide" block="cards_lede" fallback="The H.O.M.E.\u00ae Buyers Guide covers the entire home-buying process from first question to keys in hand - written for Jamaicans at home and abroad." />
             </p>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(280px,1fr))", gap: "1.2rem", marginTop: "2rem" }}>
-            {[
-              { n: "01", t: "Know If You're Ready", d: "Assess your financial position, credit, and savings - before you start shopping." },
-              { n: "02", t: "Understanding the Costs", d: "Transfer tax, stamp duty, attorney fees, valuation, survey - every figure explained." },
-              { n: "03", t: "NHT & Financing", d: "How to access your NHT benefits, qualify for a mortgage, and calculate your down payment." },
-              { n: "04", t: "Finding Your Team", d: "Vetted real estate agents, valuators, surveyors, and lenders - the professionals you need." },
-              { n: "05", t: "The Agreement for Sale", d: "What the contract means, what to watch for, and why your attorney must review it." },
-              { n: "06", t: "From Contract to Title", d: "The legal steps from signed agreement to your name on a registered title." },
-              { n: "07", t: "Buying from Overseas", d: "Power of attorney, source of funds, remote signing - what diaspora buyers need to know." },
-              { n: "08", t: "Protecting Your Investment", d: "Fraud warning signs, due diligence, and why a Ferguson Law attorney is your strongest safeguard." },
-            ].map((item) => (
+            {GUIDE_CARDS.map((item) => (
               <div key={item.n} className="serv reveal" style={{ padding: "1.6rem 1.4rem", background: "rgba(255,255,255,.07)", borderColor: "rgba(255,255,255,.12)" }}>
                 <div className="num">{item.n}</div>
-                <h3 style={{ fontSize: "1.05rem", color: "#fff" }}>{item.t}</h3>
-                <p style={{ fontSize: ".95rem", color: "rgba(246,242,234,.7)" }}>{item.d}</p>
+                <h3 style={{ fontSize: "1.05rem", color: "#fff" }}>
+                  <CmsText page="buyers-guide" block={`card_${item.n}_title`} fallback={item.t} />
+                </h3>
+                <p style={{ fontSize: ".95rem", color: "rgba(246,242,234,.7)" }}>
+                  <CmsText page="buyers-guide" block={`card_${item.n}_desc`} fallback={item.d} />
+                </p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Download CTA */}
-      <section
-        className="section"
-        style={{ background: "linear-gradient(165deg,#0e2518 0%,#1a3828 100%)", color: "var(--paper)", textAlign: "center" }}
-      >
-        <div className="wrap" style={{ maxWidth: 600 }}>
-          <span className="eyebrow" style={{ color: "var(--gold)" }}>No sign-up required</span>
-          <h2 style={{ color: "#fff", margin: ".6rem 0 1rem" }}>
-            Download the full H.O.M.E.® Buyer&apos;s Guide
-          </h2>
-          <p style={{ color: "rgba(246,242,234,.78)", marginBottom: "1.8rem" }}>
-            Get the complete guide as a PDF. Every step from readiness to registered title,
-            plain English, backed by a Ferguson Law attorney.
-          </p>
-          <div style={{ display: "flex", gap: ".9rem", justifyContent: "center", flexWrap: "wrap" }}>
-            <a
-              href={PDF_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: "inline-flex", alignItems: "center", gap: ".5rem",
-                background: "#c9a86a", color: "#10211c", fontWeight: 700,
-                padding: "14px 28px", borderRadius: 999, textDecoration: "none",
-                fontSize: ".95rem",
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <line x1="12" y1="18" x2="12" y2="6"/><polyline points="9 15 12 18 15 15"/>
-                <line x1="3" y1="21" x2="21" y2="21"/>
-              </svg>
-              Download PDF
-            </a>
-            <BookButton className="btn btn-light">
-              Book a consultation
-            </BookButton>
-          </div>
-        </div>
-      </section>
-
       {/* Readiness CTA */}
-      <section
-        className="section"
-        style={{ background: "#f6f2ea", textAlign: "center" }}
-      >
+      <section className="section" style={{ background: "#f6f2ea", textAlign: "center" }}>
         <div className="wrap" style={{ maxWidth: 600 }}>
-          <span className="eyebrow">Ready to take the next step?</span>
+          <span className="eyebrow">
+            <CmsText page="buyers-guide" block="readiness_eyebrow" fallback="Ready to take the next step?" />
+          </span>
           <h2 style={{ margin: ".6rem 0 1rem" }}>
-            Start with a free readiness check - or speak with our attorney.
+            <CmsText page="buyers-guide" block="readiness_h2" fallback="Start with a free readiness check \u2014 or speak with our attorney." />
           </h2>
           <p style={{ color: "var(--muted)", marginBottom: "1.8rem" }}>
-            The H.O.M.E.® readiness assessment tells you exactly where you stand in 3 minutes.
-            When you&apos;re ready, book a {CONSULT_DURATION_MIN}-minute consultation with our attorney.
+            <CmsText page="buyers-guide" block="readiness_lede" fallback={`The H.O.M.E.\u00ae readiness assessment tells you exactly where you stand in 3 minutes. When you\u2019re ready, book a ${CONSULT_DURATION_MIN}-minute consultation with our attorney.`} />
           </p>
           <div style={{ display: "flex", gap: ".9rem", justifyContent: "center", flexWrap: "wrap" }}>
             <HomeBadge href={`${SITE.homeApp}readiness`} external>
@@ -194,7 +87,6 @@ export default function BuyersGuidePage() {
           </div>
         </div>
       </section>
-      <EbookFormSection />
 
       <style>{HomeBadgeCSS}</style>
       <Footer />
@@ -202,19 +94,11 @@ export default function BuyersGuidePage() {
       <section style={{ padding: "1rem 0", background: "#f6f2e9", textAlign: "center", borderTop: "1px solid var(--line)" }}>
         <div style={{ maxWidth: 980, margin: "0 auto", color: "#3d463f", fontSize: ".85rem" }}>
           <small>
-            H.O.M.E.® by Ferguson Law - Home Ownership Made Easy® · Informational only, not legal advice.<br />
-            © Ferguson Law. All rights reserved.
+            H.O.M.E.\u00ae by Ferguson Law - Home Ownership Made Easy\u00ae \u00b7 Informational only, not legal advice.<br />
+            \u00a9 Ferguson Law. All rights reserved.
           </small>
         </div>
       </section>
-
-      <style>{`
-        @media(max-width:640px){
-          [style*="grid-template-columns: 1fr 1fr"]{grid-template-columns:1fr !important;}
-          [style*="grid-template-columns: 1fr auto"]{grid-template-columns:1fr !important;}
-          .bg-hero-img{display:none !important;}
-        }
-      `}</style>
     </BookingProvider>
   );
 }

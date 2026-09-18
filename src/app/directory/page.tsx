@@ -1,7 +1,8 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { PARTNER_KINDS, type PartnerKind as Kind } from "@/lib/partners/constants";
 import DirectoryClient from "./DirectoryClient";
+import { CmsText } from "@/components/cms/CmsBlock";
 
 export const dynamic = "force-dynamic";
 
@@ -59,17 +60,21 @@ export default async function DirectoryPage({
   return (
     <div className="dir-wrap">
       <section className="dir-hero">
-        <div className="eyebrow">H.O.M.E.® by Ferguson Law · Find a Professional</div>
-        <h1>Trusted real estate agents, surveyors, valuators &amp; bankers — in one place.</h1>
+        <div className="eyebrow">
+          <CmsText page="directory" block="eyebrow" fallback="H.O.M.E.® by Ferguson Law · Find a Professional" />
+        </div>
+        <h1>
+          <CmsText page="directory" block="hero_h1" fallback="Trusted real estate agents, surveyors, valuators & bankers — in one place." />
+        </h1>
         <p>
-          Browse vetted Jamaican property professionals listed with Ferguson Law. Real estate agents showcase listings; bankers, valuators and land surveyors publish their services and fees.
+          <CmsText page="directory" block="hero_lede" fallback="Browse vetted Jamaican property professionals listed with Ferguson Law. Real estate agents showcase listings; bankers, valuators and land surveyors publish their services and fees." />
         </p>
         <div className="cta-row">
           <Link className="btn btn-gold" href="/directory/join">
-            List your business
+            <CmsText page="directory" block="cta_join" fallback="List your business" />
           </Link>
           <Link className="btn btn-ghost" href="/directory/login">
-            Partner login
+            <CmsText page="directory" block="cta_login" fallback="Partner login" />
           </Link>
         </div>
       </section>

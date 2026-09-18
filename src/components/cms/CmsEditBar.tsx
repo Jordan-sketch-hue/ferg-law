@@ -161,7 +161,7 @@ function VisualPanel({ payload, onClose }: { payload: EditorBusPayload; onClose:
   const isImage = payload.contentType === "image";
 
   return (
-    <div className="fixed bottom-0 right-0 top-11 z-[9100] flex flex-col bg-white" style={{ width: 310, borderLeft: "1.5px solid #e5e7eb", boxShadow: "-4px 0 24px rgba(0,0,0,0.08)" }}>
+    <div className="fixed bottom-0 right-0 top-11 z-[9999] flex flex-col bg-white" style={{ width: 310, borderLeft: "1.5px solid #e5e7eb", boxShadow: "-4px 0 24px rgba(0,0,0,0.08)" }}>
       <div className="flex shrink-0 items-center justify-between px-4 py-3" style={{ background: "#1c3d2e", color: "#fff" }}>
         <div className="flex min-w-0 items-center gap-2">
           <Pencil className="h-3.5 w-3.5 shrink-0 text-yellow-300" />
@@ -291,7 +291,7 @@ export function CmsEditBar() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (!params.has("edit_mode")) return;
+    if (!params.has("edit_mode") && !params.has("edit")) return;
     const token = localStorage.getItem(STORAGE_KEY) ?? "";
     if (VALID_TOKENS.includes(token)) { setActive(true); setAuthed(true); } else setShowGate(true);
   }, []);
@@ -309,7 +309,7 @@ export function CmsEditBar() {
 
   return (
     <>
-      <div className="fixed left-0 right-0 top-0 z-[8999] flex items-center justify-between px-5 py-2"
+      <div className="fixed left-0 right-0 top-0 z-[9999] flex items-center justify-between px-5 py-2"
         style={{ background: "linear-gradient(90deg,#1c3d2e,#0f2a1e)", color: "#fff", boxShadow: "0 2px 20px rgba(0,0,0,0.35)" }}>
         <div className="flex items-center gap-3">
           <Pencil className="h-4 w-4 text-yellow-400" />
@@ -328,7 +328,7 @@ export function CmsEditBar() {
         </div>
       </div>
       <style>{`
-        body { padding-top: 44px !important; padding-right: ${payload ? "310px" : "0"} !important; transition: padding-right 0.2s; }
+        header.nav{top:44px!important;} body { padding-top: 44px !important; padding-right: ${payload ? "310px" : "0"} !important; transition: padding-right 0.2s; }
         [data-cms-editable]:hover { outline: 1.5px dashed #c8a65c !important; outline-offset: 2px; cursor: pointer; }
         [data-cms-selected] { outline: 2px solid #c8a65c !important; outline-offset: 2px; }
       `}</style>

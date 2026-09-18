@@ -4,6 +4,7 @@ import Nav from "@/components/site/Nav";
 import Reveal from "@/components/site/Reveal";
 import Footer from "@/components/site/Footer";
 import { BookingProvider, BookButton } from "@/components/site/BookingProvider";
+import { CmsText } from "@/components/cms/CmsBlock";
 
 const EXPLAINERS = [
   { slug: "nht", title: "Understanding NHT Loan Offerings", tags: ["Financing"] },
@@ -36,22 +37,22 @@ export default function GuidesClient() {
       <Reveal />
       <Nav />
 
-      {/* Dark header — eyebrow + title */}
+      {/* Dark header */}
       <section style={{ background: "linear-gradient(165deg,#0e2518 0%,#1a3828 100%)", padding: "4rem 1.5rem 3rem", color: "var(--paper)" }}>
         <div className="wrap">
           <span style={{ display: "inline-block", fontSize: ".72rem", letterSpacing: ".18em", textTransform: "uppercase", color: "var(--gold)", marginBottom: "1rem" }}>
-            Ferguson Law · Free Resources
+            <CmsText page="explainers" block="hero_eyebrow" fallback="Ferguson Law · Free Resources" />
           </span>
           <h1 style={{ fontFamily: "var(--serif)", fontSize: "clamp(2rem,4vw,3rem)", color: "#fff", margin: "0 0 .8rem" }}>
-            Explainers
+            <CmsText page="explainers" block="hero_h1" fallback="Explainers" />
           </h1>
           <p style={{ color: "rgba(246,242,234,.75)", maxWidth: 520, fontSize: "1rem", lineHeight: 1.65, margin: 0 }}>
-            Plain-English breakdowns of issues that you need to be aware of in Jamaican property transactions.
+            <CmsText page="explainers" block="hero_lede" fallback="Plain-English breakdowns of issues that you need to be aware of in Jamaican property transactions." />
           </p>
         </div>
       </section>
 
-      {/* Cream card body — contrasting section */}
+      {/* Card body */}
       <section style={{ background: "#f6f2e9", padding: "2.5rem 1.5rem 4rem" }}>
         <div className="wrap">
           <div style={{ display: "flex", flexDirection: "column", gap: ".75rem" }}>
@@ -75,7 +76,9 @@ export default function GuidesClient() {
                 onMouseEnter={e => (e.currentTarget.style.background = "#f0ebe1")}
                 onMouseLeave={e => (e.currentTarget.style.background = "#fff")}
               >
-                <span style={{ color: "#1a3828", fontSize: "1rem", fontWeight: 500, flex: 1, minWidth: 0 }}>{ex.title}</span>
+                <span style={{ color: "#1a3828", fontSize: "1rem", fontWeight: 500, flex: 1, minWidth: 0 }}>
+                  <CmsText page="explainers" block={"card_" + ex.slug + "_title"} fallback={ex.title} />
+                </span>
                 <div style={{ display: "flex", gap: ".4rem", flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
                   {ex.tags.map(tag => (
                     <span
@@ -91,7 +94,7 @@ export default function GuidesClient() {
                         whiteSpace: "nowrap",
                       }}
                     >
-                      {tag}
+                      <CmsText page="explainers" block={"tag_" + tag.toLowerCase().replace(/ /g, "_")} fallback={tag} />
                     </span>
                   ))}
                 </div>
@@ -120,7 +123,9 @@ export default function GuidesClient() {
           )}
 
           <div style={{ marginTop: "3rem", textAlign: "center" }}>
-            <BookButton className="btn btn-gold">Book a consultation</BookButton>
+            <BookButton className="btn btn-gold">
+              <CmsText page="explainers" block="cta_btn" fallback="Book a consultation" />
+            </BookButton>
           </div>
         </div>
       </section>

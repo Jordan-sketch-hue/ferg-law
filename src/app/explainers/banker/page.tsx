@@ -1,10 +1,11 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import { BookingProvider, BookButton } from "@/components/site/BookingProvider";
 import Nav from "@/components/site/Nav";
 import Reveal from "@/components/site/Reveal";
 import Footer from "@/components/site/Footer";
 import Link from "next/link";
 import { CONSULT_DURATION_MIN } from "@/lib/site";
+import { CmsText } from "@/components/cms/CmsBlock";
 
 export const metadata: Metadata = {
   title: "10 Things Your Banker Won't Tell You | Ferguson Law",
@@ -96,7 +97,7 @@ export default function BankerExplainer() {
             marginBottom: "1rem",
           }}
         >
-          H.O.M.E.® by Ferguson Law – Property Explainer
+          <CmsText page="explainer-banker" block="hero_eyebrow" fallback="H.O.M.E.® by Ferguson Law – Property Explainer" />
         </span>
         <h1
           style={{
@@ -107,7 +108,7 @@ export default function BankerExplainer() {
             color: "#fff",
           }}
         >
-          10 Things Your Banker Won&apos;t Tell You
+          <CmsText page="explainer-banker" block="hero_h1" fallback="10 Things Your Banker Won't Tell You" />
         </h1>
         <p
           style={{
@@ -118,11 +119,11 @@ export default function BankerExplainer() {
             color: "rgba(246,242,234,.78)",
           }}
         >
-          What every property buyer should know before walking into a bank – the commercial realities and internal policies that your banker may not always volunteer.
+          <CmsText page="explainer-banker" block="hero_sub" fallback="What every property buyer should know before walking into a bank – the commercial realities and internal policies that your banker may not always volunteer." />
         </p>
         <div style={{ display: "flex", gap: ".9rem", justifyContent: "center", flexWrap: "wrap" }}>
           <Link href="/explainers" style={{ color: "rgba(246,242,234,.6)", fontSize: ".9rem", textDecoration: "none" }}>
-            ← Back to all Explainers
+            <CmsText page="explainer-banker" block="hero_back_link" fallback="← Back to all Explainers" />
           </Link>
         </div>
       </section>
@@ -131,10 +132,10 @@ export default function BankerExplainer() {
       <section style={{ padding: "3rem 1.5rem 0", background: "var(--paper)" }}>
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
           <p style={{ fontSize: "1.05rem", lineHeight: 1.75, color: "var(--muted)", marginBottom: "1rem" }}>
-            Your banker is one of the most important people you&apos;ll meet during your journey to buying a home or investing in property. They can unlock financing that makes your dreams possible – or decline an application that seemed certain to succeed.
+            <CmsText page="explainer-banker" block="intro_p1" fallback="Your banker is one of the most important people you'll meet during your journey to buying a home or investing in property. They can unlock financing that makes your dreams possible – or decline an application that seemed certain to succeed." />
           </p>
           <p style={{ fontSize: "1.05rem", lineHeight: 1.75, color: "var(--muted)" }}>
-            Most bankers genuinely want to help. However, they also represent their institution, which means there are commercial realities and internal policies that they may not always volunteer during your conversations. Understanding these realities can save you thousands of dollars, improve your chances of approval and place you in a stronger negotiating position.
+            <CmsText page="explainer-banker" block="intro_p2" fallback="Most bankers genuinely want to help. However, they also represent their institution, which means there are commercial realities and internal policies that they may not always volunteer during your conversations. Understanding these realities can save you thousands of dollars, improve your chances of approval and place you in a stronger negotiating position." />
           </p>
         </div>
       </section>
@@ -152,8 +153,12 @@ export default function BankerExplainer() {
             {POINTS.map((p) => (
               <div key={p.n} className="serv reveal" style={{ padding: "1.8rem 1.6rem" }}>
                 <div className="num">{p.n}</div>
-                <h3 style={{ fontSize: "1.05rem", marginBottom: ".7rem", lineHeight: 1.35 }}>{p.title}</h3>
-                <p style={{ fontSize: ".93rem", color: "var(--muted)", lineHeight: 1.65, margin: 0 }}>{p.body}</p>
+                <h3 style={{ fontSize: "1.05rem", marginBottom: ".7rem", lineHeight: 1.35 }}>
+                  <CmsText page="explainer-banker" block={`point_${p.n}_title`} fallback={p.title} />
+                </h3>
+                <p style={{ fontSize: ".93rem", color: "var(--muted)", lineHeight: 1.65, margin: 0 }}>
+                  <CmsText page="explainer-banker" block={`point_${p.n}_body`} fallback={p.body} />
+                </p>
               </div>
             ))}
           </div>
@@ -173,7 +178,7 @@ export default function BankerExplainer() {
                 marginBottom: ".6rem",
               }}
             >
-              The bottom line
+              <CmsText page="explainer-banker" block="callout_eyebrow" fallback="The bottom line" />
             </div>
             <h2
               style={{
@@ -183,19 +188,19 @@ export default function BankerExplainer() {
                 color: "#fff",
               }}
             >
-              Buying property is a team effort.
+              <CmsText page="explainer-banker" block="callout_h2" fallback="Buying property is a team effort." />
             </h2>
             <p style={{ color: "rgba(246,242,234,.78)", marginBottom: "1rem", maxWidth: 600 }}>
-              A knowledgeable banker is an invaluable partner – but so is a knowledgeable attorney. Your banker helps determine whether financing is available. Your attorney helps ensure the property is legally sound, your interests are protected and the transaction proceeds safely from contract to completion.
+              <CmsText page="explainer-banker" block="callout_p1" fallback="A knowledgeable banker is an invaluable partner – but so is a knowledgeable attorney. Your banker helps determine whether financing is available. Your attorney helps ensure the property is legally sound, your interests are protected and the transaction proceeds safely from contract to completion." />
             </p>
             <p style={{ color: "rgba(246,242,234,.7)", marginBottom: "1.5rem", maxWidth: 600, fontSize: ".95rem" }}>
-              The most successful buyers recognise that purchasing property is a team effort involving the bank, the realtor, the surveyor, the valuator and, most importantly, an experienced conveyancing attorney working on their behalf.
+              <CmsText page="explainer-banker" block="callout_p2" fallback="The most successful buyers recognise that purchasing property is a team effort involving the bank, the realtor, the surveyor, the valuator and, most importantly, an experienced conveyancing attorney working on their behalf." />
             </p>
             <p style={{ color: "rgba(246,242,234,.7)", marginBottom: "1.5rem", maxWidth: 600, fontSize: ".95rem" }}>
-              Need guidance before applying for a mortgage or purchasing property? Book a {CONSULT_DURATION_MIN}-minute consultation and Ferguson Law will help you navigate every stage of the process – from reviewing contracts and conducting title investigations to coordinating with banks, developers and realtors.
+              <CmsText page="explainer-banker" block="callout_p3" fallback={`Need guidance before applying for a mortgage or purchasing property? Book a ${CONSULT_DURATION_MIN}-minute consultation and Ferguson Law will help you navigate every stage of the process – from reviewing contracts and conducting title investigations to coordinating with banks, developers and realtors.`} />
             </p>
             <BookButton className="btn btn-gold">
-              Book a consultation <ArrowIcon />
+              <CmsText page="explainer-banker" block="callout_btn" fallback="Book a consultation" /> <ArrowIcon />
             </BookButton>
         </div>
       </section>

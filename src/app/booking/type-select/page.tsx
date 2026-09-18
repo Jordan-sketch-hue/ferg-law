@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { CmsText } from "@/components/cms/CmsBlock";
 
 const MATTER_TYPES = [
   {
@@ -103,10 +104,10 @@ function Splash({ onDone }: { onDone: () => void }) {
       </div>
       <div style={{ textAlign: "center", opacity: phase === "in" ? 0 : 1, transition: "opacity 0.5s ease 0.2s" }}>
         <p style={{ fontFamily: "var(--font-fraunces,serif)", fontSize: "0.7rem", letterSpacing: "0.25em", textTransform: "uppercase", color: "#C8A65C", margin: "0 0 0.4rem" }}>
-          Ferguson Law
+          <CmsText page="booking-type-select" block="splash_firm_name" fallback="Ferguson Law" />
         </p>
         <p style={{ fontSize: "0.82rem", color: "rgba(255,255,255,.45)", margin: 0 }}>
-          Jamaica&apos;s trusted law firm
+          <CmsText page="booking-type-select" block="splash_tagline" fallback="Jamaica's trusted law firm" />
         </p>
       </div>
       {/* Pulse ring */}
@@ -160,12 +161,14 @@ export default function TypeSelectPage() {
           margin: "0 auto 1rem",
           border: "1px solid rgba(200,166,92,.35)",
         }}>F</div>
-        <p style={{ fontFamily: "var(--serif)", fontSize: "0.72rem", letterSpacing: "0.22em", textTransform: "uppercase", color: "#C8A65C", margin: 0 }}>Ferguson Law</p>
+        <p style={{ fontFamily: "var(--serif)", fontSize: "0.72rem", letterSpacing: "0.22em", textTransform: "uppercase", color: "#C8A65C", margin: 0 }}>
+          <CmsText page="booking-type-select" block="logo_firm_name" fallback="Ferguson Law" />
+        </p>
         <h1 style={{ fontFamily: "var(--serif)", fontSize: "clamp(1.6rem,3.5vw,2.2rem)", color: "#0D1F15", margin: "0.5rem 0 0.5rem", lineHeight: 1.1 }}>
-          What brings you in today?
+          <CmsText page="booking-type-select" block="hero_h1" fallback="What brings you in today?" />
         </h1>
         <p style={{ color: "#5c645e", fontSize: "0.95rem", maxWidth: 440, margin: "0 auto" }}>
-          We&apos;ll tailor your consultation to your specific needs.
+          <CmsText page="booking-type-select" block="hero_lede" fallback="We'll tailor your consultation to your specific needs." />
         </p>
       </div>
 
@@ -207,14 +210,14 @@ export default function TypeSelectPage() {
             {m.icon}
             <div>
               <div style={{ fontFamily: "var(--serif)", fontSize: "1.05rem", fontWeight: 600, color: "#0D1F15", marginBottom: 4 }}>
-                {m.label}
+                <CmsText page="booking-type-select" block={`card_${m.id}_label`} fallback={m.label} />
               </div>
               <div style={{ fontSize: "0.82rem", color: "#69736d", lineHeight: 1.5 }}>
-                {m.desc}
+                <CmsText page="booking-type-select" block={`card_${m.id}_desc`} fallback={m.desc} />
               </div>
             </div>
             <div style={{ marginTop: "auto", display: "flex", alignItems: "center", gap: 6, color: "#C8A65C", fontSize: "0.82rem", fontWeight: 600 }}>
-              Book consultation
+              <CmsText page="booking-type-select" block="card_cta" fallback="Book consultation" />
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: 14, height: 14 }}>
                 <path d="M3 8h10M8 4l5 4-5 4" />
               </svg>
@@ -226,7 +229,7 @@ export default function TypeSelectPage() {
       {/* Skip / live site links */}
       <div style={{ marginTop: "2rem", textAlign: "center", display: "flex", flexDirection: "column", gap: "0.6rem", alignItems: "center" }}>
         <Link href="/booking" style={{ color: "#69736d", fontSize: "0.85rem", textDecoration: "underline", textUnderlineOffset: 3 }}>
-          Skip — go straight to booking
+          <CmsText page="booking-type-select" block="skip_link" fallback="Skip — go straight to booking" />
         </Link>
         <a
           href="https://fergusonlawja.com"
@@ -234,7 +237,7 @@ export default function TypeSelectPage() {
           rel="noopener noreferrer"
           style={{ color: "#C8A65C", fontSize: "0.8rem", display: "flex", alignItems: "center", gap: 4 }}
         >
-          View full website
+          <CmsText page="booking-type-select" block="site_link" fallback="View full website" />
           <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ width: 11, height: 11 }}>
             <path d="M2 10L10 2M10 2H5M10 2v5" />
           </svg>
@@ -242,7 +245,7 @@ export default function TypeSelectPage() {
       </div>
 
       <p style={{ marginTop: "2rem", fontSize: "0.72rem", color: "#9a937f", letterSpacing: "0.06em" }}>
-        20-min consultation · No obligation · Online or in-person
+        <CmsText page="booking-type-select" block="footer_note" fallback="20-min consultation · No obligation · Online or in-person" />
       </p>
     </div>
     </>

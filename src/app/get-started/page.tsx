@@ -1,10 +1,11 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { BookingProvider, useBooking } from "@/components/site/BookingProvider";
 import Nav from "@/components/site/Nav";
 import Footer from "@/components/site/Footer";
+import { CmsText } from "@/components/cms/CmsBlock";
 import { SITE, waLink } from "@/lib/site";
 
 const GREEN = "#102A1E";
@@ -275,9 +276,9 @@ function GetStartedContent() {
       <section style={S.hero}>
         <div style={S.heroInner}>
           <span style={S.eyebrow}>Ferguson Law &nbsp;&middot;&nbsp; Client Journey</span>
-          <h1 style={S.h1}>How can we help you?</h1>
+          <h1 style={S.h1}><CmsText page="get-started" block="hero_h1" fallback="How can we help you?" /></h1>
           <p style={S.heroSub}>
-            Whether you&apos;re buying, selling, or working as a property professional. Here&apos;s exactly what working with Ferguson Law looks like, from the first call to the finish line.
+            <CmsText page="get-started" block="hero_lede" fallback="Whether you're buying, selling, or working as a property professional. Here's exactly what working with Ferguson Law looks like, from the first call to the finish line." />
           </p>
           <div style={S.tabs}>
             {ROLES.map((r) => (
@@ -296,7 +297,7 @@ function GetStartedContent() {
       {/* Journey */}
       <section style={S.journeySection}>
         <div style={S.journeyInner}>
-          <p style={S.tagline}>{role.tagline}</p>
+          <p style={S.tagline}><CmsText page="get-started" block={`role_${role.id}_tagline`} fallback={role.tagline} /></p>
 
           <div style={S.moments}>
             {role.moments.map((m, i) => (
@@ -307,8 +308,8 @@ function GetStartedContent() {
                 </div>
                 <div style={S.momentCard}>
                   <span style={S.momentNum}>{String(i + 1).padStart(2, "0")}</span>
-                  <h3 style={S.momentHeadline}>{m.headline}</h3>
-                  <p style={S.momentBody}>{m.body}</p>
+                  <h3 style={S.momentHeadline}><CmsText page="get-started" block={`role_${role.id}_m${i}_headline`} fallback={m.headline} /></h3>
+                  <p style={S.momentBody}><CmsText page="get-started" block={`role_${role.id}_m${i}_body`} fallback={m.body} /></p>
                   {m.cta && (
                     <a href={m.cta.href} style={S.momentCta}>
                       {m.cta.label} &rarr;

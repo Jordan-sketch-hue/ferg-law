@@ -11,13 +11,11 @@ const TOKEN_KEY    = "fl_admin_token";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
-/** True when the URL (query or hash) requests edit mode. SSR-safe. */
+/** True when the URL hash requests legacy edit mode. SSR-safe.
+ *  ?edit and ?edit_mode are now handled by CmsEditBar. */
 function urlWantsEdit(): boolean {
   if (typeof window === "undefined") return false;
-  return (
-    new URLSearchParams(window.location.search).has("edit") ||
-    window.location.hash.replace(/^#/, "") === "edit"
-  );
+  return window.location.hash.replace(/^#/, "") === "legacy_edit";
 }
 
 // ── AXIOM-style floating pill toolbar ────────────────────────────────────────

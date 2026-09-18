@@ -5,6 +5,7 @@ import Reveal from "@/components/site/Reveal";
 import Footer from "@/components/site/Footer";
 import { waLink } from "@/lib/site";
 import Link from "next/link";
+import { CmsText } from "@/components/cms/CmsBlock";
 
 export const metadata: Metadata = {
   title: "Why Every Jamaican Property Buyer Needs an Attorney | H.O.M.E.® by Ferguson Law",
@@ -49,16 +50,16 @@ export default function GuidePage() {
         <div className="wrap g-wrap">
           <Link href="/explainers" className="g-back">← All guides</Link>
           <span className="eyebrow">H.O.M.E.® by Ferguson Law – Buyer Explainer</span>
-          <h1 className="g-h1">Why Every Jamaican Property Buyer Needs an Attorney</h1>
-          <p className="g-sub">Your Biggest Investment Deserves Your Strongest Protection</p>
+          <h1 className="g-h1"><CmsText page="explainer-buyer" block="hero_h1" fallback="Why Every Jamaican Property Buyer Needs an Attorney" /></h1>
+          <p className="g-sub"><CmsText page="explainer-buyer" block="hero_sub" fallback="Your Biggest Investment Deserves Your Strongest Protection" /></p>
 
-          <p className="g-lead">Buying property is one of the largest financial commitments most people will ever make. Whether you are purchasing your first home, investing in real estate, or buying from overseas, a qualified Jamaican Attorney-at-Law is your strongest safeguard against costly mistakes, fraud and unnecessary delays.</p>
+          <p className="g-lead"><CmsText page="explainer-buyer" block="hero_lede" fallback="Buying property is one of the largest financial commitments most people will ever make. Whether you are purchasing your first home, investing in real estate, or buying from overseas, a qualified Jamaican Attorney-at-Law is your strongest safeguard against costly mistakes, fraud and unnecessary delays." /></p>
           <p>Many property transactions appear straightforward–until something goes wrong. A missing title, an undisclosed mortgage, an unapproved development or a poorly drafted agreement can cost purchasers millions of dollars and years of litigation.</p>
           <p>An attorney&apos;s role is not simply to prepare documents. Your attorney manages legal risk, protects your investment and guides your transaction from contract to registration.</p>
 
-          <h2 className="g-h2">Verifying That the Property Can Be Sold</h2>
+          <h2 className="g-h2"><CmsText page="explainer-buyer" block="sec_1_h2" fallback="Verifying That the Property Can Be Sold" /></h2>
           <p>Before you commit a single dollar, your attorney confirms that the seller has the legal right to sell the property.</p>
-          <p className="g-leadin">This includes:</p>
+          <p className="g-leadin"><CmsText page="explainer-buyer" block="sec_1_leadin" fallback="This includes:" /></p>
           <ul className="g-list">
             <li>Conducting an official title search at the National Land Agency (NLA)</li>
             <li>Confirming ownership</li>
@@ -71,7 +72,7 @@ export default function GuidePage() {
             <p>If a seller says <b>&quot;the title is still being processed,&quot;</b> treat it as a warning sign. <b>Never pay a down payment</b> until your attorney independently verifies the legal status of the property.</p>
           </div>
 
-          <h2 className="g-h2">Protecting You from Property Fraud</h2>
+          <h2 className="g-h2"><CmsText page="explainer-buyer" block="sec_2_h2" fallback="Protecting You from Property Fraud" /></h2>
           <p>Property fraud continues to affect buyers in Jamaica. An experienced attorney helps protect you against:</p>
           <div className="g-tiles">
             {FRAUD.map((f) => (
@@ -83,9 +84,9 @@ export default function GuidePage() {
           </div>
           <p>Early legal investigation is far less expensive than correcting these problems after closing.</p>
 
-          <h2 className="g-h2">Ensuring the Development Is Lawful</h2>
+          <h2 className="g-h2"><CmsText page="explainer-buyer" block="sec_3_h2" fallback="Ensuring the Development Is Lawful" /></h2>
           <p>Purchasing in a new development requires more than trusting attractive brochures and sales presentations.</p>
-          <p className="g-leadin">Your attorney confirms that the development has:</p>
+          <p className="g-leadin"><CmsText page="explainer-buyer" block="sec_2_leadin" fallback="Your attorney confirms that the development has:" /></p>
           <ul className="g-list">
             <li>Registered ownership</li>
             <li>Proper subdivision approval</li>
@@ -95,9 +96,9 @@ export default function GuidePage() {
           </ul>
           <p>Without these approvals, obtaining your registered title may become difficult–or impossible.</p>
 
-          <h2 className="g-h2">Negotiating a Contract That Protects You</h2>
+          <h2 className="g-h2"><CmsText page="explainer-buyer" block="sec_4_h2" fallback="Negotiating a Contract That Protects You" /></h2>
           <p>The Agreement for Sale determines what happens if things go wrong. Many purchasers sign contracts prepared entirely for the developer&apos;s benefit.</p>
-          <p className="g-leadin">Your attorney negotiates critical provisions such as:</p>
+          <p className="g-leadin"><CmsText page="explainer-buyer" block="sec_3_leadin" fallback="Your attorney negotiates critical provisions such as:" /></p>
           <ul className="g-list">
             <li>Fixed completion dates</li>
             <li>Compensation for construction delays</li>
@@ -109,16 +110,16 @@ export default function GuidePage() {
           </ul>
           <p>Well-drafted contracts reduce uncertainty and prevent disputes before they arise.</p>
 
-          <h2 className="g-h2">Protecting Your Down payment</h2>
+          <h2 className="g-h2"><CmsText page="explainer-buyer" block="sec_5_h2" fallback="Protecting Your Down payment" /></h2>
           <p>Your down payment may represent years of savings.</p>
           <div className="g-call g-call--key">
             <KeyIcon />
             <p>Rather than paying funds directly to a developer or vendor, your attorney can ensure monies are <b>held securely in an attorney&apos;s client account</b> and released only when contractual conditions have been satisfied. This significantly reduces financial risk.</p>
           </div>
 
-          <h2 className="g-h2">Helping You Meet Legal and Banking Requirements</h2>
+          <h2 className="g-h2"><CmsText page="explainer-buyer" block="sec_6_h2" fallback="Helping You Meet Legal and Banking Requirements" /></h2>
           <p>Property purchases require compliance with several legal and regulatory requirements.</p>
-          <p className="g-leadin">Your attorney assists with:</p>
+          <p className="g-leadin"><CmsText page="explainer-buyer" block="sec_4_leadin" fallback="Your attorney assists with:" /></p>
           <ul className="g-list">
             <li>Obtaining your Jamaican Tax Registration Number (TRN)</li>
             <li>Anti-Money Laundering (AML) compliance</li>
@@ -129,9 +130,9 @@ export default function GuidePage() {
           </ul>
           <p>Proper preparation prevents unnecessary delays during financing and closing.</p>
 
-          <h2 className="g-h2">Identifying Dangerous Contract Clauses</h2>
+          <h2 className="g-h2"><CmsText page="explainer-buyer" block="sec_7_h2" fallback="Identifying Dangerous Contract Clauses" /></h2>
           <p>Some agreements contain provisions that heavily favour the vendor.</p>
-          <p className="g-leadin">Examples include:</p>
+          <p className="g-leadin"><CmsText page="explainer-buyer" block="sec_5_leadin" fallback="Examples include:" /></p>
           <ul className="g-list">
             <li>Excessive forfeiture of down payments</li>
             <li>&quot;Time is of the essence&quot; clauses with severe penalties</li>
@@ -141,8 +142,8 @@ export default function GuidePage() {
           </ul>
           <p>Your attorney explains these clauses, negotiates fairer terms and ensures you understand the legal consequences before signing.</p>
 
-          <h2 className="g-h2">Managing the Transaction from Beginning to End</h2>
-          <p className="g-leadin">Your attorney coordinates the entire legal process, including:</p>
+          <h2 className="g-h2"><CmsText page="explainer-buyer" block="sec_8_h2" fallback="Managing the Transaction from Beginning to End" /></h2>
+          <p className="g-leadin"><CmsText page="explainer-buyer" block="sec_6_leadin" fallback="Your attorney coordinates the entire legal process, including:" /></p>
           <ul className="g-list">
             <li>Reviewing the Agreement for Sale</li>
             <li>Conducting due diligence</li>
@@ -154,7 +155,7 @@ export default function GuidePage() {
           </ul>
           <p>This allows you to focus on your move while knowing every legal requirement is being properly handled.</p>
 
-          <h2 className="g-h2">The Cost of Not Using an Attorney</h2>
+          <h2 className="g-h2"><CmsText page="explainer-buyer" block="sec_9_h2" fallback="The Cost of Not Using an Attorney" /></h2>
           <p>Attempting to save legal fees can become the most expensive decision in a property transaction. A single mistake can cost substantially more than the legal fees that could have prevented it.</p>
           <div className="g-table-wrap">
             <table className="g-table">

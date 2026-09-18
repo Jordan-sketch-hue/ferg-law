@@ -1,9 +1,10 @@
-﻿"use client";
+"use client";
 
 import Nav from "@/components/site/Nav";
 import Footer from "@/components/site/Footer";
 import { BookingProvider } from "@/components/site/BookingProvider";
 import { track } from "@/lib/analytics";
+import { CmsText } from "@/components/cms/CmsBlock";
 
 const PDF_URL = "https://home.fergusonlawja.com/HOME-Guide-Ferguson-Law.pdf";
 
@@ -26,13 +27,13 @@ export default function EbookPage() {
           {/* Left — cover + blurb */}
           <div className="ebook-left">
             <p style={{ fontSize: ".72rem", fontWeight: 700, letterSpacing: ".18em", textTransform: "uppercase", color: "#c9a86a", marginBottom: "1rem" }}>
-              Download · Ferguson Law
+              <CmsText page="ebook" block="hero_eyebrow" fallback="Download · Ferguson Law" />
             </p>
             <h1 style={{ fontFamily: "var(--serif, Georgia, serif)", fontSize: "clamp(1.8rem,3.5vw,2.8rem)", fontWeight: 600, lineHeight: 1.15, marginBottom: "1.2rem", color: "#fff" }}>
-              The Ferguson Law H.O.M.E.® Buyer&apos;s Guide
+              <CmsText page="ebook" block="hero_h1" fallback="The Ferguson Law H.O.M.E.® Buyer&apos;s Guide" />
             </h1>
             <p style={{ color: "rgba(255,255,255,.75)", fontSize: "1rem", lineHeight: 1.7, marginBottom: "2rem", maxWidth: 420 }}>
-              Every step from readiness to registered title — plain English, no jargon. NHT, stamp duty, transfer tax, diaspora playbook and more.
+              <CmsText page="ebook" block="hero_lede" fallback="Every step from readiness to registered title — plain English, no jargon. NHT, stamp duty, transfer tax, diaspora playbook and more." />
             </p>
             <img
               src="/home-buyers-guide-cover.jpg"
@@ -51,10 +52,10 @@ export default function EbookPage() {
               <polyline points="9 15 12 18 15 15"/>
             </svg>
             <h2 style={{ fontFamily: "var(--serif, Georgia, serif)", fontSize: "1.6rem", color: "#10211c", marginBottom: ".5rem" }}>
-              H.O.M.E.® Buyer&apos;s Guide
+              <CmsText page="ebook" block="card_h2" fallback="H.O.M.E.® Buyer&apos;s Guide" />
             </h2>
             <p style={{ color: "#69736d", fontSize: ".9rem", marginBottom: "1.8rem", lineHeight: 1.6 }}>
-              The complete guide — every step from readiness to closing. No sign-up required.
+              <CmsText page="ebook" block="card_desc" fallback="The complete guide — every step from readiness to closing. No sign-up required." />
             </p>
             <a
               href={PDF_URL}
@@ -63,10 +64,10 @@ export default function EbookPage() {
               onClick={() => track("pdf_download")}
               style={{ display: "inline-block", width: "100%", padding: "15px 0", background: "#c9a86a", color: "#10211c", fontWeight: 700, fontSize: "1rem", borderRadius: 10, textAlign: "center", textDecoration: "none", boxSizing: "border-box" }}
             >
-              Download Guide (PDF)
+              <CmsText page="ebook" block="btn_download" fallback="Download Guide (PDF)" />
             </a>
             <p style={{ marginTop: "1.2rem", fontSize: ".78rem", color: "#aaa" }}>
-              Opens in a new tab. No sign-up required.
+              <CmsText page="ebook" block="btn_disclaimer" fallback="Opens in a new tab. No sign-up required." />
             </p>
           </div>
         </div>
