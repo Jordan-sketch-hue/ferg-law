@@ -4,20 +4,22 @@ import { useEffect, useState } from "react";
 const GOLD = "#c9a86a";
 const DARK = "#10211c";
 
+// Benchmark rates (JMD per sq ft) sourced from RAJ/IDX Broker listings Sept 2026.
+// Numbeo live data overrides per parish when contributors >= threshold.
 const FALLBACK_PARISHES: Record<string, { land: [number, number]; built: [number, number]; label: string }> = {
-  "Kingston & St. Andrew": { land: [8000, 25000], built: [15000, 30000], label: "Kingston & St. Andrew" },
-  "St. James":             { land: [5000, 18000], built: [12000, 22000], label: "St. James" },
-  "St. Catherine":         { land: [3000, 12000], built: [10000, 18000], label: "St. Catherine" },
-  "Clarendon":             { land: [2500,  8000], built: [ 9000, 15000], label: "Clarendon" },
-  "Manchester":            { land: [2500,  8000], built: [ 9000, 16000], label: "Manchester" },
-  "St. Elizabeth":         { land: [2000,  6000], built: [ 8000, 14000], label: "St. Elizabeth" },
-  "Trelawny":              { land: [3000, 10000], built: [ 9000, 16000], label: "Trelawny" },
-  "St. Ann":               { land: [4000, 14000], built: [10000, 19000], label: "St. Ann" },
-  "St. Mary":              { land: [2500,  8000], built: [ 8000, 14000], label: "St. Mary" },
-  "Portland":              { land: [2000,  7000], built: [ 8000, 14000], label: "Portland" },
-  "St. Thomas":            { land: [2000,  6000], built: [ 7000, 13000], label: "St. Thomas" },
-  "Westmoreland":          { land: [2500,  8000], built: [ 8000, 14000], label: "Westmoreland" },
-  "Hanover":               { land: [3000, 10000], built: [ 9000, 16000], label: "Hanover" },
+  "Kingston & St. Andrew": { land: [12000, 38000], built: [18000, 42000], label: "Kingston & St. Andrew" },
+  "St. James":             { land: [ 6000, 22000], built: [14000, 32000], label: "St. James" },
+  "St. Catherine":         { land: [ 3500, 13000], built: [11000, 22000], label: "St. Catherine" },
+  "Manchester":            { land: [ 3000, 10000], built: [10000, 20000], label: "Manchester" },
+  "Clarendon":             { land: [ 3000, 10000], built: [10000, 24000], label: "Clarendon" },
+  "St. Elizabeth":         { land: [ 2500,  9000], built: [ 9000, 22000], label: "St. Elizabeth" },
+  "Trelawny":              { land: [ 4000, 14000], built: [12000, 26000], label: "Trelawny" },
+  "St. Ann":               { land: [ 5000, 18000], built: [13000, 28000], label: "St. Ann" },
+  "St. Mary":              { land: [ 3500, 14000], built: [11000, 26000], label: "St. Mary" },
+  "Portland":              { land: [ 3000, 11000], built: [10000, 22000], label: "Portland" },
+  "St. Thomas":            { land: [ 2500,  9000], built: [10000, 21000], label: "St. Thomas" },
+  "Westmoreland":          { land: [ 4000, 14000], built: [13000, 26000], label: "Westmoreland" },
+  "Hanover":               { land: [ 5000, 16000], built: [15000, 30000], label: "Hanover" },
 };
 
 const CONDITIONS: Record<string, number> = { excellent: 1.18, good: 1, fair: 0.82, poor: 0.65 };

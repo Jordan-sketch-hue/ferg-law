@@ -47,11 +47,19 @@ async function fetchNumbeo(city: string): Promise<{ centre: number; outside: num
 
 // Cities to query on Numbeo → map to canonical parish names
 const NUMBEO_TARGETS = [
-  { city: "Kingston-Jamaica",  parish: "Kingston & St. Andrew", minContributors: 5 },
-  { city: "Mandeville-Jamaica", parish: "Manchester",           minContributors: 3 },
-  { city: "Portmore-Jamaica",  parish: "St. Catherine",         minContributors: 3 },
-  { city: "Montego-Bay",       parish: "St. James",             minContributors: 3 },
-  { city: "Ocho-Rios",         parish: "St. Ann",               minContributors: 3 },
+  { city: "Kingston-Jamaica",   parish: "Kingston & St. Andrew", minContributors: 5 },
+  { city: "Mandeville-Jamaica", parish: "Manchester",            minContributors: 3 },
+  { city: "Portmore-Jamaica",   parish: "St. Catherine",         minContributors: 3 },
+  { city: "Montego-Bay",        parish: "St. James",             minContributors: 3 },
+  { city: "Ocho-Rios",          parish: "St. Ann",               minContributors: 3 },
+  // Extended — fall back gracefully when contributor count < threshold
+  { city: "Negril-Jamaica",     parish: "Westmoreland",          minContributors: 2 },
+  { city: "Falmouth-Jamaica",   parish: "Trelawny",              minContributors: 2 },
+  { city: "Port-Antonio",       parish: "Portland",              minContributors: 2 },
+  { city: "Santa-Cruz-Jamaica", parish: "St. Elizabeth",         minContributors: 2 },
+  { city: "Lucea-Jamaica",      parish: "Hanover",               minContributors: 2 },
+  { city: "Morant-Bay-Jamaica", parish: "St. Thomas",            minContributors: 2 },
+  { city: "Port-Maria-Jamaica", parish: "St. Mary",              minContributors: 2 },
 ];
 
 export async function GET(req: NextRequest) {
