@@ -9,7 +9,7 @@ import Footer from "@/components/site/Footer";
 import HeroCarousel from "@/components/site/HeroCarousel";
 import ChatLink from "@/components/site/ChatLink";
 import PromoVideo from "@/components/site/PromoVideo";
-import { CmsText } from "@/components/cms/CmsBlock";
+import { CmsText, CmsImage } from "@/components/cms/CmsBlock";
 
 const ArrowIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
@@ -38,9 +38,7 @@ export default function Home() {
         <div className="hero-scrim" aria-hidden="true"></div>
         <div className="hero-full-inner reveal in">
           <p className="hero-firm" data-edit="hero.firm"><CmsText page="home" block="hero_firm" fallback="Ferguson Law" /></p>
-          <span className="eyebrow" data-edit="hero.eyebrow">
-            Kingston, Jamaica
-          </span>
+          <span className="eyebrow" data-edit="hero.eyebrow"><CmsText page="home" block="hero_eyebrow" fallback="Kingston, Jamaica" /></span>
           <h1>
             <CmsText page="home" block="hero_h1_line1" fallback="Buying or Selling Property in Jamaica?" />{" "}
             <em><CmsText page="home" block="hero_h1_em" fallback="We Handle It All." /></em>
@@ -51,22 +49,22 @@ export default function Home() {
           <div className="hero-cta">
             <GetStartedLink className="btn btn-gold hero-cta-primary" style={{display:"inline-flex",alignItems:"center",gap:6}}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
-              <span data-edit="hero.ctaPrimary">Get started</span>
+              <span data-edit="hero.ctaPrimary"><CmsText page="home" block="hero_btn_primary" fallback="Get started" /></span>
             </GetStartedLink>
             <BookButton className="btn btn-light hero-cta-book">
               <CalendarIcon />
-              Book here
+              <CmsText page="home" block="hero_btn_book" fallback="Book here" />
             </BookButton>
             <a className="btn btn-light" href="/buyers-guide">
-              H.O.M.E.® Buyers Guide
+              <CmsText page="home" block="hero_btn_guide" fallback="H.O.M.E.® Buyers Guide" />
             </a>
           </div>
           <div className="hero-proof">
             <div className="avatars">
-              <img src="/img/couple-keys.webp" data-edit-img="images.heroAvatar1" alt="Client" loading="lazy" />
-              <img src="/img/people-new-home.webp" data-edit-img="images.heroAvatar2" alt="Client" loading="lazy" />
-              <img src="/img/finance-consult.webp" data-edit-img="images.heroAvatar3" alt="Client" loading="lazy" />
-              <img src="/img/realtor-banner.jpg" data-edit-img="images.heroAvatar4" alt="Client" />
+              <CmsImage page="home" block="img_hero_avatar1" fallback="/img/couple-keys.webp" alt="Client" loading="lazy" />
+              <CmsImage page="home" block="img_hero_avatar2" fallback="/img/people-new-home.webp" alt="Client" loading="lazy" />
+              <CmsImage page="home" block="img_hero_avatar3" fallback="/img/finance-consult.webp" alt="Client" loading="lazy" />
+              <CmsImage page="home" block="img_hero_avatar4" fallback="/img/realtor-banner.jpg" alt="Client" />
             </div>
             <div>
               <span className="stars">★★★★★</span>{" "}
@@ -126,42 +124,42 @@ export default function Home() {
           <div className="serv-grid">
             {/* 1 — Real Estate */}
             <div className="serv reveal">
-              <img className="serv-media" src="/img/re-consult.jpg" data-edit-img="images.serviceImg1" alt="A couple outside their new Kingston property" loading="lazy" />
+              <CmsImage page="home" block="img_serv_1" fallback="/img/re-consult.jpg" className="serv-media" alt="A couple outside their new Kingston property" loading="lazy" />
               <div className="num">01</div>
               <h3 data-edit="services.items.1.title"><CmsText page="home" block="serv_1_title" fallback="Real Estate &amp; Conveyancing" /></h3>
               <p data-edit="services.items.1.body"><CmsText page="home" block="serv_1_body" fallback="Sales, purchases, titles and transfers – plus the H.O.M.E.® home-ownership pathway for first-time and diaspora buyers." /></p>
             </div>
             {/* 2 — Divorce */}
             <div className="serv reveal">
-              <img className="serv-media" src="/img/couple-signing.jpg" data-edit-img="images.serviceImg3" alt="A couple navigating separation" loading="lazy" />
+              <CmsImage page="home" block="img_serv_2" fallback="/img/couple-signing.jpg" className="serv-media" alt="A couple navigating separation" loading="lazy" />
               <div className="num">02</div>
               <h3 data-edit="services.items.3.title"><CmsText page="home" block="serv_2_title" fallback="Divorce &amp; Matrimonial" /></h3>
               <p data-edit="services.items.3.body"><CmsText page="home" block="serv_2_body" fallback="Separation, custody, maintenance and settlements handled with discretion and care." /></p>
             </div>
             {/* 3 — Family & Estate */}
             <div className="serv reveal">
-              <img className="serv-media" src="/img/family-estate.jpg" data-edit-img="images.serviceImg2" alt="A family meeting their attorney about wills and estate planning" loading="lazy" />
+              <CmsImage page="home" block="img_serv_3" fallback="/img/family-estate.jpg" className="serv-media" alt="A family meeting their attorney about wills and estate planning" loading="lazy" />
               <div className="num">03</div>
               <h3 data-edit="services.items.2.title"><CmsText page="home" block="serv_3_title" fallback="Family &amp; Estate" /></h3>
               <p data-edit="services.items.2.body"><CmsText page="home" block="serv_3_body" fallback="Wills, probate, estate planning and family matters handled with discretion and care." /></p>
             </div>
             {/* 4 — Sports Law */}
             <div className="serv reveal">
-              <img className="serv-media" src="/img/sports-law.jpg" data-edit-img="images.serviceImg5" alt="Sports law – contracts and representation for athletes" loading="lazy" />
+              <CmsImage page="home" block="img_serv_4" fallback="/img/sports-law.jpg" className="serv-media" alt="Sports law – contracts and representation for athletes" loading="lazy" />
               <div className="num">04</div>
               <h3 data-edit="services.items.5.title"><CmsText page="home" block="serv_4_title" fallback="Sports Law" /></h3>
               <p data-edit="services.items.5.body"><CmsText page="home" block="serv_4_body" fallback="Contracts, image rights and representation for athletes, clubs and sporting bodies." /></p>
             </div>
             {/* 5 — Intellectual Property */}
             <div className="serv reveal">
-              <img className="serv-media" src="/img/serv-5.jpg" data-edit-img="images.serviceImg4" alt="Intellectual property protection" loading="lazy" />
+              <CmsImage page="home" block="img_serv_5" fallback="/img/serv-5.jpg" className="serv-media" alt="Intellectual property protection" loading="lazy" />
               <div className="num">05</div>
               <h3 data-edit="services.items.4.title"><CmsText page="home" block="serv_5_title" fallback="Intellectual Property" /></h3>
               <p data-edit="services.items.4.body"><CmsText page="home" block="serv_5_body" fallback="Trademarks, copyright and IP protection for creators, brands and businesses." /></p>
             </div>
             {/* 6 — Corporate & Commercial */}
             <div className="serv reveal">
-              <img className="serv-media" src="/img/owen-corporate-2026.jpg" alt="Owen K. Ferguson in a modern corporate office" loading="lazy" />
+              <CmsImage page="home" block="img_serv_6" fallback="/img/owen-corporate-2026.jpg" className="serv-media" alt="Owen K. Ferguson in a modern corporate office" loading="lazy" />
               <div className="num">06</div>
               <h3 data-edit="services.items.0.title"><CmsText page="home" block="serv_6_title" fallback="Corporate &amp; Commercial" /></h3>
               <p data-edit="services.items.0.body"><CmsText page="home" block="serv_6_body" fallback="Company formation, contracts, compliance and advisory for businesses at home and abroad." /></p>
@@ -174,11 +172,7 @@ export default function Home() {
       <section className="section about" id="about">
         <div className="wrap about-grid">
           <div className="about-photo reveal">
-            <img
-              src="/img/owen-portrait-vertical.jpg"
-              data-edit-img="images.founderPhoto"
-              alt="Owen K. Ferguson, JP – Founder &amp; Principal Attorney-at-Law"
-            />
+            <CmsImage page="home" block="img_founder_about" fallback="/img/owen-portrait-vertical.jpg" alt="Owen K. Ferguson, JP – Founder &amp; Principal Attorney-at-Law" />
             <div className="about-badge">
               <span className="ab-k" data-edit="about.badgeRole">
                 <CmsText page="home" block="about_badge_role" fallback="Founder &amp; Principal" />
@@ -205,17 +199,17 @@ export default function Home() {
               <CmsText page="home" block="about_body3" fallback="As a Justice of the Peace and member of both the Jamaican Bar Association and the International Bar Association, Owen brings institutional standing alongside personal, attentive service. Whether the matter is a first property purchase, a complex commercial deal, a will, or a family estate, clients leave with clarity, not confusion." />
             </p>
             <ul className="creds">
-              <li>Attorney-at-Law · 10+ years</li>
-              <li>20+ years banking &amp; finance</li>
-              <li>Norman Manley Law School, 2013</li>
-              <li>Post-graduate law &amp; business, University of London</li>
-              <li>Jamaican Bar Association</li>
-              <li>International Bar Association</li>
-              <li>Justice of the Peace</li>
-              <li>NLA Conveyancing Course</li>
+              <li><CmsText page="home" block="cred_0" fallback="Attorney-at-Law · 10+ years" /></li>
+              <li><CmsText page="home" block="cred_1" fallback="20+ years banking &amp; finance" /></li>
+              <li><CmsText page="home" block="cred_2" fallback="Norman Manley Law School, 2013" /></li>
+              <li><CmsText page="home" block="cred_3" fallback="Post-graduate law &amp; business, University of London" /></li>
+              <li><CmsText page="home" block="cred_4" fallback="Jamaican Bar Association" /></li>
+              <li><CmsText page="home" block="cred_5" fallback="International Bar Association" /></li>
+              <li><CmsText page="home" block="cred_6" fallback="Justice of the Peace" /></li>
+              <li><CmsText page="home" block="cred_7" fallback="NLA Conveyancing Course" /></li>
             </ul>
             <BookButton className="btn btn-gold">
-              Book a consultation <ArrowIcon />
+              <CmsText page="home" block="about_btn_book" fallback="Book a consultation" /> <ArrowIcon />
             </BookButton>
           </div>
         </div>
@@ -237,21 +231,21 @@ export default function Home() {
           </div>
           <div className="proc-steps">
             <div className="pstep reveal">
-              <img className="pstep-thumb" src="/img/p-discover.jpg" data-edit-img="images.process1" alt="Client booking a consultation" />
+              <CmsImage page="home" block="img_proc_1" fallback="/img/p-discover.jpg" className="pstep-thumb" alt="Client booking a consultation" />
               <div className="s-n" data-edit="process.steps.0.n">Step 01</div>
               <h3 data-edit="process.steps.0.title"><CmsText page="home" block="proc_1_title" fallback="Check Your Readiness" /></h3>
               <p data-edit="process.steps.0.body"><CmsText page="home" block="proc_1_body" fallback="Take the free H.O.M.E.® readiness assessment – know exactly where you stand before spending a dollar." /></p>
               <a className="tag pstep-link" href={`${SITE.homeApp}readiness`}>Take the assessment –</a>
             </div>
             <div className="pstep reveal">
-              <img className="pstep-thumb" src="/img/p-verify.jpg" data-edit-img="images.process2" alt="Find a trusted professional" />
+              <CmsImage page="home" block="img_proc_2" fallback="/img/p-verify.jpg" className="pstep-thumb" alt="Find a trusted professional" />
               <div className="s-n" data-edit="process.steps.1.n">Step 02</div>
               <h3 data-edit="process.steps.1.title"><CmsText page="home" block="proc_2_title" fallback="Find Your Team" /></h3>
               <p data-edit="process.steps.1.body"><CmsText page="home" block="proc_2_body" fallback="Browse real estate agents, surveyors, valuators and lenders in the H.O.M.E.® directory." /></p>
               <a className="tag pstep-link" href="/directory">Find a professional –</a>
             </div>
             <div className="pstep reveal">
-              <img className="pstep-thumb" src="/img/p-engage.jpg" data-edit-img="images.process3" alt="Read the explainers" />
+              <CmsImage page="home" block="img_proc_3" fallback="/img/p-engage.jpg" className="pstep-thumb" alt="Read the explainers" />
               <div className="s-n" data-edit="process.steps.2.n">Step 03</div>
               <h3 data-edit="process.steps.2.title"><CmsText page="home" block="proc_3_title" fallback="Understand the Process" /></h3>
               <p data-edit="process.steps.2.body"><CmsText page="home" block="proc_3_body" fallback="Read the free property explainers or download the full H.O.M.E.® Buyers Guide – plain English, no jargon." /></p>
@@ -261,7 +255,7 @@ export default function Home() {
               </div>
             </div>
             <div className="pstep reveal">
-              <img className="pstep-thumb" src="/img/p-track.jpg" data-edit-img="images.process4" alt="Book a consultation with Ferguson Law" />
+              <CmsImage page="home" block="img_proc_4" fallback="/img/p-track.jpg" className="pstep-thumb" alt="Book a consultation with Ferguson Law" />
               <div className="s-n" data-edit="process.steps.3.n">Step 04</div>
               <h3 data-edit="process.steps.3.title"><CmsText page="home" block="proc_4_title" fallback="Book Your Consultation" /></h3>
               <p data-edit="process.steps.3.body"><CmsText page="home" block="proc_4_body" fallback="When you're ready, book a consultation with Ferguson Law – online, anytime." /></p>
@@ -287,23 +281,14 @@ export default function Home() {
             ></video>
           </div>
           <div className="bf-copy reveal">
-            <img className="bf-logo" src="/img/logo-ferguson.png" data-edit-img="images.logo" alt="Ferguson Law" />
+            <CmsImage page="home" block="img_bf_logo" fallback="/img/logo-ferguson.png" className="bf-logo" alt="Ferguson Law" />
             <span className="eyebrow"><CmsText page="home" block="bf_eyebrow" fallback="One firm, the full practice" /></span>
             <h2>
               <CmsText page="home" block="bf_h2" fallback="Deep legal expertise – and the banking mind behind it." />
             </h2>
-            <p>
-              From commercial, family and estate matters to conveyancing and
-              titles, Ferguson Law pairs legal and banking expertise under one
-              trusted name – for Jamaica and the diaspora.
-            </p>
+          <p><CmsText page="home" block="bf_body" fallback="From commercial, family and estate matters to conveyancing and titles, Ferguson Law pairs legal and banking expertise under one trusted name – for Jamaica and the diaspora." /></p>
             <div className="bf-founder">
-              <img
-                src="/img/owen-portrait-vertical.jpg"
-                data-edit-img="images.founderPhotoDark"
-                alt="Owen K. Ferguson, JP"
-                style={{width:"132px",height:"132px",objectFit:"cover",borderRadius:"15px",objectPosition:"center top"}}
-              />
+              <CmsImage page="home" block="img_bf_founder" fallback="/img/owen-portrait-vertical.jpg" alt="Owen K. Ferguson, JP" style={{width:"132px",height:"132px",objectFit:"cover",borderRadius:"15px",objectPosition:"center top"}} />
               <div>
                 <span className="k"><CmsText page="home" block="bf_founder_role" fallback="Principal Attorney-at-Law" /></span>
                 <b><CmsText page="home" block="bf_founder_name" fallback="Owen K. Ferguson, JP" /></b>
@@ -329,13 +314,9 @@ export default function Home() {
           <div className="test-grid">
             <div className="tcard reveal">
               <div className="stars">★★★★★</div>
-              <p className="q" data-edit="stories.items.0.quote">
-                I&apos;m in Toronto and thought buying back home would be a
-                nightmare. Ferguson Law handled everything - I signed online and
-                got my title without one stressful day off work.
-              </p>
+              <p className="q" data-edit="stories.items.0.quote"><CmsText page="home" block="tcard_0_quote" fallback="I&apos;m in Toronto and thought buying back home would be a nightmare. Ferguson Law handled everything - I signed online and got my title without one stressful day off work." /></p>
               <div className="tperson">
-                <img src="/img/couple-signing.jpg" data-edit-img="images.avatar1" alt="Marcus R." />
+                <CmsImage page="home" block="img_avatar1" fallback="/img/couple-signing.jpg" alt="Marcus R." />
                 <div>
                   <div className="nm" data-edit="stories.items.0.name"><CmsText page="home" block="tcard_0_name" fallback="Marcus R." /></div>
                   <div className="rl" data-edit="stories.items.0.role"><CmsText page="home" block="tcard_0_role" fallback="Diaspora buyer · Toronto – St. James" /></div>
@@ -344,13 +325,9 @@ export default function Home() {
             </div>
             <div className="tcard reveal">
               <div className="stars">★★★★★</div>
-              <p className="q" data-edit="stories.items.1.quote">
-                The readiness score told me the truth - I wasn&apos;t ready yet.
-                Six months later I was. No other lawyer ever made it that clear or
-                that human.
-              </p>
+              <p className="q" data-edit="stories.items.1.quote"><CmsText page="home" block="tcard_1_quote" fallback="The readiness score told me the truth - I wasn&apos;t ready yet. Six months later I was. No other lawyer ever made it that clear or that human." /></p>
               <div className="tperson">
-                <img src="/img/step-assess.webp" data-edit-img="images.avatar2" alt="Keisha L." />
+                <CmsImage page="home" block="img_avatar2" fallback="/img/step-assess.webp" alt="Keisha L." />
                 <div>
                   <div className="nm" data-edit="stories.items.1.name"><CmsText page="home" block="tcard_1_name" fallback="Keisha L." /></div>
                   <div className="rl" data-edit="stories.items.1.role"><CmsText page="home" block="tcard_1_role" fallback="First-time buyer · St. Andrew" /></div>
@@ -359,13 +336,9 @@ export default function Home() {
             </div>
             <div className="tcard reveal">
               <div className="stars">★★★★★</div>
-              <p className="q" data-edit="stories.items.2.quote">
-                They understood the money <em>and</em> the law. Closing costs,
-                NHT, the contract - explained like a friend would, not a textbook.
-                Keys in hand in weeks.
-              </p>
+              <p className="q" data-edit="stories.items.2.quote"><CmsText page="home" block="tcard_2_quote" fallback="They understood the money and the law. Closing costs, NHT, the contract - explained like a friend would, not a textbook. Keys in hand in weeks." /></p>
               <div className="tperson">
-                <img src="/img/family-moving-in.jpg" data-edit-img="images.avatar3" alt="Andre & Shanice" />
+                <CmsImage page="home" block="img_avatar3" fallback="/img/family-moving-in.jpg" alt="Andre &amp; Shanice" />
                 <div>
                   <div className="nm" data-edit="stories.items.2.name"><CmsText page="home" block="tcard_2_name" fallback="Andre & Shanice" /></div>
                   <div className="rl" data-edit="stories.items.2.role"><CmsText page="home" block="tcard_2_role" fallback="New homeowners · St. Catherine" /></div>
@@ -378,18 +351,14 @@ export default function Home() {
 
       {/* COAST BAND */}
       <section className="coast-band">
-        <img className="bg" src="/img/jamaica-coast.webp" data-edit-img="images.coastBandBg" alt="Jamaica's north coast meeting turquoise water" />
+        <CmsImage page="home" block="img_coast_bg" fallback="/img/jamaica-coast.webp" className="bg" alt="Jamaica north coast" />
         <div className="scrim" aria-hidden="true"></div>
         <div className="wrap">
           <span className="eyebrow reveal in" data-edit="coast.eyebrow"><CmsText page="home" block="coast_eyebrow" fallback="Jamaica & the world" /></span>
           <h2 className="reveal in" data-edit="coast.h2">
             <CmsText page="home" block="coast_h2" fallback="Rooted in Jamaica. Working for clients everywhere." />
           </h2>
-          <p className="reveal in" data-edit="coast.body">
-            Whether you&apos;re in Kingston or in Brooklyn, Toronto or London,
-            Ferguson Law makes it simple to handle your property, business and
-            family matters back home – done right, from anywhere.
-          </p>
+          <p className="reveal in" data-edit="coast.body"><CmsText page="home" block="coast_body" fallback="Whether you&apos;re in Kingston or in Brooklyn, Toronto or London, Ferguson Law makes it simple to handle your property, business and family matters back home – done right, from anywhere." /></p>
         </div>
       </section>
 
@@ -426,7 +395,7 @@ export default function Home() {
               <div className="reach-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
               </div>
-              <img className="reach-photo" src="/img/reach-consultation.webp" alt="Book a consultation with Ferguson Law" />
+              <CmsImage page="home" block="img_reach_1" fallback="/img/reach-consultation.webp" className="reach-photo" alt="Book a consultation with Ferguson Law" />
               <h4><CmsText page="home" block="reach_0_h4" fallback="Book a consultation" /></h4>
               <p><CmsText page="home" block="reach_0_body" fallback="Book a consultation with our attorney – real answers for your specific situation." /></p>
               <p style={{fontSize:"0.78rem",color:"var(--muted)",marginTop:"0.3rem"}}><CmsText page="home" block="reach_0_note" fallback="In-person meetings by appointment only." /></p>
@@ -438,16 +407,16 @@ export default function Home() {
               <div className="reach-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
               </div>
-              <img className="reach-photo" src="/img/reach-chat.webp" alt="Chat live with us" />
+              <CmsImage page="home" block="img_reach_2" fallback="/img/reach-chat.webp" className="reach-photo" alt="Chat live with us" />
               <h4><CmsText page="home" block="reach_1_h4" fallback="Chat live" /></h4>
               <p><CmsText page="home" block="reach_1_body" fallback="Talk to our AI assistant right now – available 24/7 for general property and legal queries." /></p>
-              <span className="btn btn-gold reach-btn">Start a chat</span>
+              <span className="btn btn-gold reach-btn"><CmsText page="home" block="reach_chat_btn" fallback="Start a chat" /></span>
             </ChatLink>
             <a className="reach-card reveal" href={waLink()}>
               <div className="reach-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.35 2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6.13 6.13l.96-.96a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
               </div>
-              <img className="reach-photo" src="/img/reach-whatsapp.webp" alt="WhatsApp Ferguson Law" />
+              <CmsImage page="home" block="img_reach_3" fallback="/img/reach-whatsapp.webp" className="reach-photo" alt="WhatsApp Ferguson Law" />
               <h4><CmsText page="home" block="reach_2_h4" fallback="WhatsApp" /></h4>
               <p><CmsText page="home" block="reach_2_body" fallback="Send us a message directly – we respond personally during business hours." /></p>
               <span className="btn btn-wa reach-btn">
@@ -459,7 +428,7 @@ export default function Home() {
               <div className="reach-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>
               </div>
-              <img className="reach-photo" src="/img/reach-email.jpg" alt="Email Ferguson Law" />
+              <CmsImage page="home" block="img_reach_4" fallback="/img/reach-email.jpg" className="reach-photo" alt="Email Ferguson Law" />
               <h4><CmsText page="home" block="reach_3_h4" fallback="Email us" /></h4>
               <p><CmsText page="home" block="reach_3_body" fallback="Send a detailed message and we'll get back to you – ideal for complex matters and document sharing." /></p>
               <span className="btn btn-light reach-btn">{SITE.email}</span>

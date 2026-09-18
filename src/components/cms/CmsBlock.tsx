@@ -88,9 +88,10 @@ export function CmsText({ page, block, fallback = "", as: Tag = "span", classNam
 interface BlockImageProps {
   page: string; block: string; fallback?: string;
   alt?: string; className?: string; style?: React.CSSProperties;
+  loading?: "lazy" | "eager";
 }
 
-export function CmsImage({ page, block, fallback = "", alt = "", className, style }: BlockImageProps) {
+export function CmsImage({ page, block, fallback = "", alt = "", className, style, loading }: BlockImageProps) {
   const [data,     setData]     = useState<{ src: string | null; styles: CmsStyles | null; hidden: boolean }>({ src: null, styles: null, hidden: false });
   const [editMode, setEditMode] = useState(false);
   const [selected, setSelected] = useState(false);
@@ -148,7 +149,7 @@ export function CmsImage({ page, block, fallback = "", alt = "", className, styl
 
   return (
   // eslint-disable-next-line @next/next/no-img-element
-    <img ref={imgRef} src={url} alt={alt} className={className} style={inlineStyle}
+    <img ref={imgRef} src={url} alt={alt} className={className} style={inlineStyle} loading={loading}
       onClick={handleClick}
       {...(editMode ? { "data-cms-editable": "" } : {})}
       {...(selected ? { "data-cms-selected": "" } : {})}
