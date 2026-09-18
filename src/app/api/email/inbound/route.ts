@@ -12,7 +12,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 
-const WEBHOOK_SECRET = process.env.RESEND_WEBHOOK_SECRET;
+const WEBHOOK_SECRET = process.env.RESEND_WEBHOOK_SECRET?.replace(/^\uFEFF/, "").trim();
 
 type EmailAddress = { address?: string; name?: string } | string;
 

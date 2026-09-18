@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import React, { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { flEditBus, CmsStyles } from "@/components/cms/CmsEditBar";
@@ -31,7 +31,7 @@ export function CmsText({ page, block, fallback = "", as: Tag = "span", classNam
       .maybeSingle()
       .then(({ data: row }) => {
         if (row) {
-          setData({ value: row.value ?? fallback, styles: (row as Record<string,unknown>).styles as CmsStyles ?? null, hidden: !!((row as Record<string,unknown>).hidden) });
+          setData({ value: row.value || fallback, styles: (row as Record<string,unknown>).styles as CmsStyles ?? null, hidden: !!((row as Record<string,unknown>).hidden) });
         } else {
           setData({ value: fallback, styles: null, hidden: false });
           setSeedPending(true);
@@ -41,7 +41,7 @@ export function CmsText({ page, block, fallback = "", as: Tag = "span", classNam
     const ch = sb.channel(`cms-${page}-${block}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "fl_site_blocks", filter: `page_slug=eq.${page}` }, p => {
         const row = p.new as { block_key: string; value: string; styles: CmsStyles; hidden: boolean };
-        if (row.block_key === block) setData({ value: row.value ?? fallback, styles: row.styles ?? null, hidden: !!row.hidden });
+        if (row.block_key === block) setData({ value: row.value || fallback, styles: row.styles ?? null, hidden: !!row.hidden });
       }).subscribe();
 
     return () => { void sb.removeChannel(ch); };
@@ -95,7 +95,7 @@ export function CmsText({ page, block, fallback = "", as: Tag = "span", classNam
       {...(editMode ? { "data-cms-editable": "", title: `Click to edit: ${page}.${block}` } : {})}
       {...(selected ? { "data-cms-selected": "" } : {})}
     >
-      {data.value ?? fallback}
+      {data.value || fallback}
     </TagEl>
   );
 }
