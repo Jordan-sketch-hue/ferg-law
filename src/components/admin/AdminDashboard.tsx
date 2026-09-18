@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 /**
  * Consultation CRM — the Ferguson Law back office.
@@ -380,6 +380,34 @@ export default function AdminDashboard() {
       if (!cancelled && typeof data === "string" && data) setAccountEmail(data);
     })();
     return () => { cancelled = true; };
+  }, [token]);
+
+  // Admin push subscription — fires on every login to keep endpoint fresh
+  useEffect(() => {
+    if (!token) return;
+    if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
+    const VAPID = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+    if (!VAPID) return;
+    void (async () => {
+      try {
+        let perm = Notification.permission;
+        if (perm === 'default') perm = await Notification.requestPermission();
+        if (perm !== 'granted') return;
+        const reg = await navigator.serviceWorker.ready;
+        const padding = '='.repeat((4 - (VAPID.length % 4)) % 4);
+        const b64 = (VAPID + padding).replace(/-/g, '+').replace(/_/g, '/');
+        const key = new Uint8Array([...atob(b64)].map(c => c.charCodeAt(0)));
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: key as unknown as ArrayBuffer,
+        });
+        await fetch('/api/push/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ subscription: sub, userRole: 'admin', userRef: token }),
+        });
+      } catch { /* silent */ }
+    })();
   }, [token]);
 
   const fetchAll = useCallback(async (tok: string) => {

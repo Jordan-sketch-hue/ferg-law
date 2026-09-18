@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
@@ -43,6 +43,31 @@ export default function PushPromptGlobal() {
     });
 
     return () => subscription.unsubscribe();
+  }, []);
+
+  // Silent re-subscribe on each page load when permission already granted
+  useEffect(() => {
+    if (!('Notification' in window) || !('serviceWorker' in navigator) || !VAPID_PUBLIC) return;
+    if (Notification.permission !== 'granted') return;
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data }) => {
+      const uid = data.session?.user?.id;
+      if (!uid) return;
+      void (async () => {
+        try {
+          const reg = await navigator.serviceWorker.ready;
+          const sub = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC) as unknown as ArrayBuffer,
+          });
+          await fetch('/api/push/subscribe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ subscription: sub, userRole: 'client', userRef: uid }),
+          });
+        } catch { /* silent */ }
+      })();
+    });
   }, []);
 
   const enable = async () => {
