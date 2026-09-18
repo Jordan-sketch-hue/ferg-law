@@ -16,7 +16,7 @@ export function CmsText({ page, block, fallback = "", as: Tag = "span", classNam
   const [selected,    setSelected]   = useState(false);
   const [seedPending, setSeedPending] = useState(false);
   const wrapRef = useRef<HTMLElement>(null);
-  const channelSuffix = useRef(Math.random().toString(36).slice(2, 8));
+  const uid = useRef(Math.random().toString(36).slice(2, 8)).current;
 
   useEffect(() => {
     const check = () => setEditMode(!!(window as Window & { __flEditMode?: boolean }).__flEditMode);
@@ -39,7 +39,7 @@ export function CmsText({ page, block, fallback = "", as: Tag = "span", classNam
         }
       });
 
-    const ch = sb.channel(`cms-${page}-${block}-${channelSuffix.current}`)
+    const ch = sb.channel(`cms-${page}-${block}-${uid}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "fl_site_blocks", filter: `page_slug=eq.${page}` }, p => {
         const row = p.new as { block_key: string; value: string; styles: CmsStyles; hidden: boolean };
         if (row.block_key === block) setData({ value: row.value || fallback, styles: row.styles ?? null, hidden: !!row.hidden });
@@ -113,7 +113,7 @@ export function CmsImage({ page, block, fallback = "", alt = "", className, styl
   const [selected,    setSelected]   = useState(false);
   const [seedPending, setSeedPending] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
-  const channelSuffix = useRef(Math.random().toString(36).slice(2, 8));
+  const uid = useRef(Math.random().toString(36).slice(2, 8)).current;
 
   useEffect(() => {
     const check = () => setEditMode(!!(window as Window & { __flEditMode?: boolean }).__flEditMode);
@@ -134,7 +134,7 @@ export function CmsImage({ page, block, fallback = "", alt = "", className, styl
         }
       });
 
-    const ch = sb.channel(`cms-img-${page}-${block}-${channelSuffix.current}`)
+    const ch = sb.channel(`cms-img-${page}-${block}-${uid}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "fl_site_blocks", filter: `page_slug=eq.${page}` }, p => {
         const row = p.new as { block_key: string; value: string; styles: CmsStyles; hidden: boolean };
         if (row.block_key === block) setData({ src: row.value || fallback, styles: row.styles ?? null, hidden: !!row.hidden });
