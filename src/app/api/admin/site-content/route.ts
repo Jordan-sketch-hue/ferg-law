@@ -6,22 +6,25 @@ const VALID_TOKENS = [
   process.env.FL_ADMIN_TOKEN_OWEN    ?? "ferguson-admin-2026",
 ];
 
+type Table = "fl_site_blocks" | "home_site_blocks";
+function resolveTable(site?: string | null): Table {
+  return site === "home" ? "home_site_blocks" : "fl_site_blocks";
+}
+
 export async function POST(req: NextRequest) {
   const body = await req.json() as {
-    token: string;
-    page_slug: string;
-    block_key: string;
-    content_type: string;
-    value: string;
-    label?: string;
+    token: string; site?: string;
+    page_slug: string; block_key: string;
+    content_type: string; value: string; label?: string;
   };
 
   if (!VALID_TOKENS.includes(body.token)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const table = resolveTable(body.site);
   const supabase = createAdminClient();
-  const { error } = await supabase.from("fl_site_blocks").upsert({
+  const { error } = await supabase.from(table).upsert({
     page_slug:    body.page_slug,
     block_key:    body.block_key,
     content_type: body.content_type,
@@ -38,12 +41,14 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const token = searchParams.get("token") ?? "";
+  const site  = searchParams.get("site");
   if (!VALID_TOKENS.includes(token)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const table = resolveTable(site);
   const supabase = createAdminClient();
   const { data, error } = await supabase
-    .from("fl_site_blocks")
+    .from(table)
     .select("*")
     .order("page_slug")
     .order("sort_order");

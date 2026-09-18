@@ -30,7 +30,8 @@ export async function POST(req: NextRequest) {
 
   const { data: { publicUrl } } = supabase.storage.from("site-media").getPublicUrl(path);
 
-  const { error: dbErr } = await supabase.from("fl_site_blocks").upsert({
+  const uploadTable = form.get("site") === "home" ? "home_site_blocks" : "fl_site_blocks";
+  const { error: dbErr } = await supabase.from(uploadTable).upsert({
     page_slug, block_key, content_type: "image", value: publicUrl,
     updated_at: new Date().toISOString(),
     updated_by: token.includes("jordan") ? "Jordan" : "Owen",
