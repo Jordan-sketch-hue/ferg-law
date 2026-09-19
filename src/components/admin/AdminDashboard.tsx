@@ -2967,7 +2967,7 @@ function EmailTab({ emails, token, onMarkRead }: {
   return (
     <div style={{ display: "flex", height: isMobile ? "auto" : "calc(100vh - 300px)", minHeight: isMobile ? 0 : 400, overflow: "hidden", flexDirection: isMobile ? "column" : "row" }}>
       {/* Inbox list */}
-      <div style={{ width: isMobile ? "100%" : 300, flexShrink: 0, borderRight: isMobile ? "none" : "1px solid rgba(18,16,12,.1)", overflowY: "auto", display: isMobile && !!selected ? "none" : "block" }}>
+      <div style={{ width: isMobile ? "100%" : 300, flexShrink: 0, borderRight: isMobile ? "none" : "1px solid rgba(18,16,12,.1)", overflowY: "auto", display: isMobile && (!!selected || composing) ? "none" : "block" }}>
         {/* Pane toggle */}
         <div style={{ display: "flex", borderBottom: "1px solid rgba(18,16,12,.08)" }}>
           {(["inbox", "sent"] as const).map((p) => (
@@ -4252,6 +4252,8 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
   const [payRef, setPayRef] = useState("");
   const msgEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => { const chk = () => setIsMobile(window.innerWidth < 640); chk(); window.addEventListener("resize", chk); return () => window.removeEventListener("resize", chk); }, []);
 
   useEffect(() => {
     const q = clientQuery.trim();
@@ -4604,9 +4606,9 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
   if (loading) return <div style={{ padding: 20, color: MUTED }}>Loading CMS matters…</div>;
 
   return (
-    <div style={{ display: "flex", height: "calc(100vh - 260px)", minHeight: 500, overflow: "hidden" }}>
+    <div style={{ display: "flex", height: isMobile ? "auto" : "calc(100vh - 260px)", minHeight: isMobile ? 0 : 500, overflow: "hidden", flexDirection: isMobile ? "column" : "row" }}>
       {/* Left sidebar */}
-      <div style={{ width: 280, flexShrink: 0, borderRight: `1px solid rgba(18,16,12,.1)`, overflowY: "auto", padding: "16px 12px" }}>
+      <div style={{ width: isMobile ? "100%" : 280, flexShrink: 0, borderRight: isMobile ? "none" : `1px solid rgba(18,16,12,.1)`, borderBottom: isMobile ? `1px solid rgba(18,16,12,.1)` : "none", overflowY: "auto", padding: "16px 12px", display: isMobile && !!selected ? "none" : "block" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
           <span style={{ fontWeight: 700, fontSize: 13, color: GREEN }}>CMS Matters</span>
           <button onClick={() => setOpenMatter(true)} style={{
@@ -4660,7 +4662,12 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
       </div>
 
       {/* Right pane */}
-      <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column" }}>
+      <div style={{ flex: 1, overflowY: "auto", display: isMobile && !selected ? "none" : "flex", flexDirection: "column" }}>
+        {isMobile && !!selected && (
+          <button onClick={() => setSelected(null)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 16px", background: "transparent", border: "none", borderBottom: "1px solid rgba(18,16,12,.1)", color: GREEN, fontWeight: 700, fontSize: 13, cursor: "pointer", width: "100%" }}>
+            \u2190 Matters
+          </button>
+        )}
         {!selected ? (
           <div style={{ padding: 40, textAlign: "center", color: MUTED, fontSize: 14 }}>
             Select a matter to view details
