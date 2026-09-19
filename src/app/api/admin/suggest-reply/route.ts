@@ -46,7 +46,7 @@ Write a professional, warm, and concise reply. Rules:
 
   try {
     const msg = await client.messages.create({
-      model: "claude-sonnet-4-6",
+      model: "claude-sonnet-5",
       max_tokens: 350,
       messages: [{ role: "user", content: prompt }],
     });
