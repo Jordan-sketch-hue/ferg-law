@@ -57,6 +57,6 @@ Write a professional, warm, and concise reply. Rules:
     return Response.json({ ok: true, suggestion });
   } catch (err) {
     console.error("[suggest-reply] Claude error:", err);
-    return Response.json({ ok: false, error: String(err) }, { status: 500 });
+    return Response.json({ ok: false, error: "Could not generate suggestion" }, { status: 500 });
   }
 }
