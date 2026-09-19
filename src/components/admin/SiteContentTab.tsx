@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -91,6 +91,7 @@ export default function SiteContentTab({ token }: { token: string }) {
   const [saved,       setSaved]      = useState<Record<string, boolean>>({});
   const [err,         setErr]        = useState<Record<string, string>>({});
   const [dragging,    setDragging]   = useState<string | null>(null);
+  const [isMobile,    setIsMobile]   = useState(false);
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const PAGE_LABELS = site === "home" ? HOME_PAGE_LABELS : FL_PAGE_LABELS;
@@ -114,6 +115,13 @@ export default function SiteContentTab({ token }: { token: string }) {
   }, [token]);
 
   useEffect(() => { void load(site); }, [load, site]);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   // Switch site — reset to home page and reload
   function switchSite(s: Site) {
@@ -190,10 +198,10 @@ export default function SiteContentTab({ token }: { token: string }) {
   const viewPath = PAGE_PATHS[activePage];
 
   return (
-    <div style={{ display: "flex", minHeight: 560, fontFamily: "inherit", background: BG }}>
+    <div style={{ display: "flex", minHeight: 560, fontFamily: "inherit", background: BG, flexDirection: isMobile ? "column" : "row" }}>
 
       {/* Sidebar nav */}
-      <nav style={{ width: 200, flexShrink: 0, borderRight: `1px solid ${BOR}`, paddingTop: 0, background: BG }}>
+      <nav style={{ width: isMobile ? "100%" : 200, flexShrink: 0, borderRight: isMobile ? "none" : `1px solid ${BOR}`, borderBottom: isMobile ? `1px solid ${BOR}` : "none", paddingTop: 0, background: BG }}>
         {/* Site switcher */}
         <div style={{ display: "flex", borderBottom: `1px solid ${BOR}`, marginBottom: 4 }}>
           {(["fl","home"] as Site[]).map(s => (
@@ -239,7 +247,7 @@ export default function SiteContentTab({ token }: { token: string }) {
       </nav>
 
       {/* Main editor */}
-      <div style={{ flex: 1, padding: "20px 28px", overflowY: "auto" }}>
+      <div style={{ flex: 1, padding: isMobile ? "16px" : "20px 28px", overflowY: "auto" }}>
         {/* Editing Mode Toggle */}
         <div style={{ marginBottom: 20, borderRadius: 12, border: `1.5px solid ${BOR}`, background: "#fff", overflow: "hidden" }}>
           <div style={{ display: "flex" }}>

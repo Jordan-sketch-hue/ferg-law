@@ -1,18 +1,5 @@
-﻿/**
- * POST /api/email/inbound
- * Handles both Resend inbound webhook AND forwardemail.net webhook.
- *
- * Resend payload: { data: { from: "Name <email>", to: [...], subject, text, html } }
- * forwardemail.net payload: { from: { address, name }, to: [{address}], subject, text, html }
- *
- * To activate without changing MX records:
- *   In forwardemail.net dashboard > Domain > Webhooks, add:
- *   https://fergusonlawja.com/api/email/inbound
- */
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
-
-const WEBHOOK_SECRET = process.env.RESEND_WEBHOOK_SECRET?.replace(/^\uFEFF/, "").trim();
 
 type EmailAddress = { address?: string; name?: string } | string;
 
@@ -31,18 +18,10 @@ function firstOf<T>(v: T | T[]): T {
 
 export async function POST(req: NextRequest) {
   try {
-    if (WEBHOOK_SECRET) {
-      const sig = req.headers.get("x-webhook-secret") || req.headers.get("x-resend-signature");
-      if (sig !== WEBHOOK_SECRET) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-      }
-    }
-
     const body = await req.json() as Record<string, unknown>;
 
-    // Resend wraps in data key; forwardemail.net sends flat
-    const isResend = !!body.data && typeof (body.data as Record<string, unknown>).from === "string";
-    const payload = isResend
+    // Resend inbound payload: { data: { from, to, subject, text, html } }
+    const payload = (body.data && typeof (body.data as Record<string, unknown>).from === "string")
       ? (body.data as Record<string, unknown>)
       : body;
 

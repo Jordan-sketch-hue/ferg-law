@@ -1,12 +1,12 @@
-/**
+﻿/**
  * POST /api/admin/suggest-reply
  * Body: { token, subject, body }
  * Returns: { ok, suggestion }
- * Uses the same LLM stack as the chatbot (Groq → Gemini → OpenRouter).
+ * Uses claude-sonnet-4-6 via ANTHROPIC_API_KEY.
  */
 import { NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
-import { generateReply } from "@/lib/chat/llm";
+import Anthropic from "@anthropic-ai/sdk";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,17 +21,42 @@ export async function POST(req: NextRequest) {
   const { data: isAdmin } = await supabase.rpc("fl_is_admin", { p_token: token });
   if (!isAdmin) return Response.json({ ok: false, error: "Unauthorized" }, { status: 401 });
 
-  const prompt = `You are the assistant for Ferguson Law, a Jamaican law firm run by Owen K. Ferguson JP.
-Draft a professional, warm, and concise email reply to the following inbound email.
-Write only the body of the reply — no subject line, no "Dear" salutation placeholder, just the reply body starting from the greeting.
-Keep it under 120 words. Sign off as "Owen K. Ferguson, JP — Ferguson Law".
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return Response.json({ ok: false, error: "AI not configured" }, { status: 500 });
 
-Inbound subject: ${subject ?? "(no subject)"}
+  const client = new Anthropic({ apiKey });
 
-Inbound message:
-${(body ?? "").slice(0, 800)}`;
+  const prompt = `You are drafting a professional email reply on behalf of Ferguson Law, a Jamaican law firm specialising in property conveyancing, estate law, and family law. The attorney is Owen K. Ferguson JP.
 
-  const result = await generateReply({ system: "You draft professional legal correspondence.", messages: [{ role: "user", content: prompt }], maxTokens: 200 });
-  if (!result.ok) return Response.json({ ok: false, error: "Could not generate suggestion" }, { status: 500 });
-  return Response.json({ ok: true, suggestion: result.text });
+The firm received this inbound email:
+
+Subject: ${subject ?? "(no subject)"}
+
+Message:
+${(body ?? "").slice(0, 1200)}
+
+Write a professional, warm, and concise reply. Rules:
+- Start with a proper greeting (e.g. "Dear Ms./Mr. [Last Name],")
+- Acknowledge their specific enquiry
+- Confirm Ferguson Law can assist and invite them to book a consultation
+- If the email mentions a property value or specific matter, reference it naturally
+- Keep it under 130 words
+- End with: "Warm regards,\nOwen K. Ferguson, JP\nFerguson Law\n(876) 831-5563"
+- Write ONLY the email body — no subject line, no metadata`;
+
+  try {
+    const msg = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 350,
+      messages: [{ role: "user", content: prompt }],
+    });
+
+    const suggestion = (msg.content[0] as { type: string; text: string }).text?.trim();
+    if (!suggestion) return Response.json({ ok: false, error: "Empty response" }, { status: 500 });
+
+    return Response.json({ ok: true, suggestion });
+  } catch (err) {
+    console.error("[suggest-reply] Claude error:", err);
+    return Response.json({ ok: false, error: "Could not generate suggestion" }, { status: 500 });
+  }
 }
