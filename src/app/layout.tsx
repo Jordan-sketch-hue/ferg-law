@@ -79,7 +79,7 @@ export const metadata: Metadata = {
     locale: "en_JM",
   },
   twitter: {
-    card: "summary_large_image",
+    card: "summary",
     title: "Ferguson Law | Jamaica Property Lawyer & Conveyancing",
     description:
       "Your trusted legal partner — guiding buyers, sellers and the diaspora from first question to registered title.",
