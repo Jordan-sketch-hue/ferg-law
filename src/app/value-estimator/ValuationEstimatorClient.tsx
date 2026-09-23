@@ -4,38 +4,39 @@ import { useEffect, useState } from "react";
 const GOLD = "#c9a86a";
 const DARK = "#10211c";
 
-// Benchmark rates (JMD per sq ft) sourced from RAJ/IDX Broker listings Sept 2026.
-// Numbeo live data overrides per parish when contributors >= threshold.
 const FALLBACK_PARISHES: Record<string, { land: [number, number]; built: [number, number]; label: string }> = {
-  "Kingston & St. Andrew": { land: [12000, 38000], built: [18000, 42000], label: "Kingston & St. Andrew" },
-  "St. James":             { land: [ 6000, 22000], built: [14000, 32000], label: "St. James" },
-  "St. Catherine":         { land: [ 3500, 13000], built: [11000, 22000], label: "St. Catherine" },
-  "Manchester":            { land: [ 3000, 10000], built: [10000, 20000], label: "Manchester" },
-  "Clarendon":             { land: [ 3000, 10000], built: [10000, 24000], label: "Clarendon" },
-  "St. Elizabeth":         { land: [ 2500,  9000], built: [ 9000, 22000], label: "St. Elizabeth" },
-  "Trelawny":              { land: [ 4000, 14000], built: [12000, 26000], label: "Trelawny" },
-  "St. Ann":               { land: [ 5000, 18000], built: [13000, 28000], label: "St. Ann" },
-  "St. Mary":              { land: [ 3500, 14000], built: [11000, 26000], label: "St. Mary" },
-  "Portland":              { land: [ 3000, 11000], built: [10000, 22000], label: "Portland" },
-  "St. Thomas":            { land: [ 2500,  9000], built: [10000, 21000], label: "St. Thomas" },
-  "Westmoreland":          { land: [ 4000, 14000], built: [13000, 26000], label: "Westmoreland" },
-  "Hanover":               { land: [ 5000, 16000], built: [15000, 30000], label: "Hanover" },
+  "Kingston & St. Andrew": { land: [ 8000, 25000], built: [15000, 30000], label: "Kingston & St. Andrew" },
+  "St. James":             { land: [ 5000, 18000], built: [12000, 22000], label: "St. James" },
+  "St. Catherine":         { land: [ 3000, 12000], built: [10000, 18000], label: "St. Catherine" },
+  "Manchester":            { land: [ 2500,  8000], built: [ 9000, 16000], label: "Manchester" },
+  "Clarendon":             { land: [ 2500,  8000], built: [ 9000, 15000], label: "Clarendon" },
+  "St. Elizabeth":         { land: [ 2000,  6000], built: [ 8000, 14000], label: "St. Elizabeth" },
+  "Trelawny":              { land: [ 3000, 10000], built: [ 9000, 16000], label: "Trelawny" },
+  "St. Ann":               { land: [ 4000, 14000], built: [10000, 19000], label: "St. Ann" },
+  "St. Mary":              { land: [ 2500,  8000], built: [ 8000, 14000], label: "St. Mary" },
+  "Portland":              { land: [ 2000,  7000], built: [ 8000, 14000], label: "Portland" },
+  "St. Thomas":            { land: [ 2000,  6000], built: [ 7000, 13000], label: "St. Thomas" },
+  "Westmoreland":          { land: [ 2500,  8000], built: [ 8000, 14000], label: "Westmoreland" },
+  "Hanover":               { land: [ 3000, 10000], built: [ 9000, 16000], label: "Hanover" },
 };
 
-const CONDITIONS: Record<string, number> = { excellent: 1.18, good: 1, fair: 0.82, poor: 0.65 };
+const CONDITION_MULT: Record<string, number> = { excellent: 1.15, good: 1.0, fair: 0.85, poor: 0.70 };
+const FITTINGS_MULT: Record<string, number>  = { luxury: 1.12, standard: 1.0, basic: 0.88, unfinished: 0.72 };
+const CONSTR_MULT:   Record<string, number>  = { concrete: 1.0, steel: 1.05, wood: 0.85 };
+const AMENITY_BONUS: Record<string, number>  = { pool: 0.08, garage: 0.05, parking: 0.03, solar: 0.04, generator: 0.03 };
 const JMD_PER_USD = 157;
 
 function fmt(n: number) { return new Intl.NumberFormat("en-JM").format(Math.round(n)); }
-
-// Thousands-separator formatting for text inputs
+function fmtRounded(n: number) {
+  if (n >= 1_000_000) return new Intl.NumberFormat("en-JM").format(Math.round(n / 1_000_000) * 1_000_000);
+  return new Intl.NumberFormat("en-JM").format(Math.round(n / 1000) * 1000);
+}
 function fmtInput(raw: string): string {
   const digits = raw.replace(/,/g, "");
   if (!digits || isNaN(Number(digits))) return raw;
   return new Intl.NumberFormat("en-JM").format(Number(digits));
 }
-function parseInput(formatted: string): string {
-  return formatted.replace(/,/g, "");
-}
+function parseInput(formatted: string): string { return formatted.replace(/,/g, ""); }
 
 interface BenchmarkRow {
   parish: string;
@@ -51,51 +52,54 @@ async function fetchLiveRates(): Promise<{ rates: ParishRates; lastUpdated: stri
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return { rates: FALLBACK_PARISHES, lastUpdated: null };
-
   try {
     const res = await fetch(
       `${url}/rest/v1/valuation_benchmarks?select=parish,prop_type,rate_low,rate_high,scraped_at&order=scraped_at.desc`,
       { headers: { apikey: key, Authorization: `Bearer ${key}` }, cache: "no-store" },
     );
     if (!res.ok) return { rates: FALLBACK_PARISHES, lastUpdated: null };
-
     const rows: BenchmarkRow[] = await res.json();
     if (!rows.length) return { rates: FALLBACK_PARISHES, lastUpdated: null };
-
     const merged: Record<string, Partial<{ land: [number, number]; built: [number, number]; scraped_at: string }>> = {};
     for (const row of rows) {
       if (!merged[row.parish]) merged[row.parish] = { scraped_at: row.scraped_at };
       merged[row.parish][row.prop_type] = [row.rate_low, row.rate_high];
     }
-
     const rates: ParishRates = {};
     for (const [parish, data] of Object.entries(merged)) {
-      const land = data.land ?? FALLBACK_PARISHES[parish]?.land ?? [2000, 8000];
+      const land  = data.land  ?? FALLBACK_PARISHES[parish]?.land  ?? [2000, 8000];
       const built = data.built ?? FALLBACK_PARISHES[parish]?.built ?? [8000, 16000];
       rates[parish] = { land, built, label: parish };
     }
-
     for (const [parish, fb] of Object.entries(FALLBACK_PARISHES)) {
       if (!rates[parish]) rates[parish] = fb;
     }
-
-    const latestScrapedAt = rows[0]?.scraped_at ?? null;
-    return { rates, lastUpdated: latestScrapedAt };
+    return { rates, lastUpdated: rows[0]?.scraped_at ?? null };
   } catch {
     return { rates: FALLBACK_PARISHES, lastUpdated: null };
   }
 }
 
 export default function ValuationEstimatorClient() {
-  const [parish, setParish] = useState("Kingston & St. Andrew");
-  const [propType, setPropType] = useState<"house" | "land" | "apartment" | "commercial">("house");
-  const [landDisplay, setLandDisplay] = useState("");
+  const [parish, setParish]             = useState("Kingston & St. Andrew");
+  const [propType, setPropType]         = useState<"house" | "land" | "apartment" | "commercial">("house");
+  const [community, setCommunity]       = useState("");
+  const [landDisplay, setLandDisplay]   = useState("");
   const [builtDisplay, setBuiltDisplay] = useState("");
-  const [condition, setCondition] = useState("good");
-  const [result, setResult] = useState<{ low: number; high: number; midUsd: number } | null>(null);
-  const [parishes, setParishes] = useState<ParishRates>(FALLBACK_PARISHES);
-  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
-  const [dataSource, setDataSource] = useState<"live" | "fallback">("fallback");
+  const [bedrooms, setBedrooms]         = useState("3");
+  const [bathrooms, setBathrooms]       = useState("2");
+  const [construction, setConstr]       = useState("concrete");
+  const [yearBuilt, setYearBuilt]       = useState("");
+  const [fittings, setFittings]         = useState("standard");
+  const [condition, setCondition]       = useState("good");
+  const [amenities, setAmenities]       = useState<string[]>([]);
+  const [nlaRef, setNlaRef]             = useState("");
+  const [result, setResult]             = useState<{ low: number; high: number; midJmd: number; midUsd: number } | null>(null);
+  const [parishes, setParishes]         = useState<ParishRates>(FALLBACK_PARISHES);
+  const [lastUpdated, setLastUpdated]   = useState<string | null>(null);
+  const [dataSource, setDataSource]     = useState<"live" | "fallback">("fallback");
+
+  const isLandOnly = propType === "land";
 
   useEffect(() => {
     fetchLiveRates().then(({ rates, lastUpdated: lu }) => {
@@ -105,47 +109,78 @@ export default function ValuationEstimatorClient() {
     });
   }, []);
 
-  function handleLandChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const raw = parseInput(e.target.value);
+  function handleNumInput(val: string, setter: (v: string) => void) {
+    const raw = parseInput(val);
     if (raw === "" || /^\d*$/.test(raw)) {
-      setLandDisplay(raw ? fmtInput(raw) : "");
+      setter(raw ? fmtInput(raw) : "");
       setResult(null);
     }
   }
 
-  function handleBuiltChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const raw = parseInput(e.target.value);
-    if (raw === "" || /^\d*$/.test(raw)) {
-      setBuiltDisplay(raw ? fmtInput(raw) : "");
-      setResult(null);
-    }
+  function toggleAmenity(key: string) {
+    setAmenities(prev => prev.includes(key) ? prev.filter(a => a !== key) : [...prev, key]);
+    setResult(null);
   }
 
   function calculate() {
     const pData = parishes[parish];
     if (!pData) return;
     const l = parseFloat(parseInput(landDisplay));
-    const b = parseFloat(parseInput(builtDisplay)) || 0;
+    const b = isLandOnly ? 0 : (parseFloat(parseInput(builtDisplay)) || 0);
     if (!l || isNaN(l)) return;
-    const condMult = CONDITIONS[condition] ?? 1;
-    const typeMult = propType === "apartment" ? 0.82 : propType === "commercial" ? 1.25 : 1;
-    const totalLow  = (pData.land[0] * l * condMult + (b > 0 ? pData.built[0] * b * condMult : 0)) * typeMult;
-    const totalHigh = (pData.land[1] * l * condMult + (b > 0 ? pData.built[1] * b * condMult : 0)) * typeMult;
-    const midJmd = (totalLow + totalHigh) / 2;
-    setResult({ low: totalLow, high: totalHigh, midUsd: midJmd / JMD_PER_USD });
+
+    const condMult     = CONDITION_MULT[condition]      ?? 1;
+    const fittingsMult = isLandOnly ? 1 : (FITTINGS_MULT[fittings]      ?? 1);
+    const constrMult   = isLandOnly ? 1 : (CONSTR_MULT[construction]     ?? 1);
+    const typeMult     = propType === "apartment" ? 0.82 : propType === "commercial" ? 1.25 : 1;
+
+    const beds  = isLandOnly ? 3 : (parseInt(bedrooms)  || 3);
+    const baths = isLandOnly ? 2 : (parseInt(bathrooms) || 2);
+    const bedroomMult  = 1 + Math.max(0, beds  - 3) * 0.03;
+    const bathroomMult = 1 + Math.max(0, baths - 2) * 0.02;
+
+    const amenityMult = 1 + (isLandOnly ? 0 : amenities.reduce((sum, a) => sum + (AMENITY_BONUS[a] ?? 0), 0));
+
+    let ageMult = 1.0;
+    const yr = parseInt(yearBuilt);
+    if (!isLandOnly && yr > 1900) {
+      const age = new Date().getFullYear() - yr;
+      if (age >= 60) ageMult = 0.80;
+      else if (age >= 40) ageMult = 0.88;
+      else if (age >= 20) ageMult = 0.95;
+    }
+
+    const extraMult = bedroomMult * bathroomMult * amenityMult * constrMult * fittingsMult * ageMult;
+
+    const low  = (pData.land[0] * l + (b > 0 ? pData.built[0] * b : 0)) * typeMult * condMult * extraMult;
+    const high = (pData.land[1] * l + (b > 0 ? pData.built[1] * b : 0)) * typeMult * condMult * extraMult;
+    const midJmd = (low + high) / 2;
+    setResult({ low, high, midJmd, midUsd: midJmd / JMD_PER_USD });
   }
 
   function downloadCSV() {
     if (!result) return;
+    const yr  = parseInt(yearBuilt);
+    const age = yr > 1900 ? `${new Date().getFullYear() - yr} years` : "N/A";
     const rows = [
       ["Field", "Value"],
       ["Parish", parish],
+      ["Community / Scheme", community || "N/A"],
       ["Property Type", propType],
-      ["Condition", condition],
+      ["Overall Condition", condition],
+      ["Condition of Fittings", isLandOnly ? "N/A" : fittings],
+      ["Construction", isLandOnly ? "N/A" : construction],
       ["Land Area (sq ft)", parseInput(landDisplay)],
-      ["Built Area (sq ft)", parseInput(builtDisplay) || "N/A"],
+      ["Built Area (sq ft)", isLandOnly ? "N/A" : (parseInput(builtDisplay) || "N/A")],
+      ["Bedrooms", isLandOnly ? "N/A" : bedrooms],
+      ["Bathrooms", isLandOnly ? "N/A" : bathrooms],
+      ["Year Built", yearBuilt || "N/A"],
+      ["Approx Age", age],
+      ["Amenities", isLandOnly ? "N/A" : (amenities.join(", ") || "None")],
+      ["NLA / Reference", nlaRef || "N/A"],
       ["Estimate Low (JMD)", Math.round(result.low)],
       ["Estimate High (JMD)", Math.round(result.high)],
+      ["Midpoint (JMD)", Math.round(result.midJmd)],
       ["Midpoint (USD)", Math.round(result.midUsd)],
       ["Data Source", dataSource === "live" ? `Market listings (${formattedDate})` : "Market estimates"],
       ["Generated", new Date().toLocaleDateString("en-JM", { year: "numeric", month: "short", day: "numeric" })],
@@ -158,11 +193,7 @@ export default function ValuationEstimatorClient() {
     a.click();
   }
 
-  function printPDF() {
-    window.print();
-  }
-
-  const parishList = Object.keys(parishes).sort();
+  const parishList   = Object.keys(parishes).sort();
   const formattedDate = lastUpdated
     ? new Date(lastUpdated).toLocaleDateString("en-JM", { year: "numeric", month: "short", day: "numeric" })
     : null;
@@ -175,12 +206,15 @@ export default function ValuationEstimatorClient() {
           .val-print-block { display: block !important; }
           .val-print-block * { display: revert !important; }
         }
-        .val-print-block { }
+        .amenity-chip { cursor: pointer; padding: 0.35rem 0.75rem; border-radius: 20px; font-size: .78rem; font-weight: 600; transition: background .15s, color .15s; }
+        .amenity-chip.on  { background: #c9a86a; color: #fff; border: 1px solid #c9a86a; }
+        .amenity-chip.off { background: #fff; color: #6b7a6e; border: 1px solid #d5cfc4; }
       `}</style>
 
       <div className="val-print-block" style={{ maxWidth: 700, margin: "0 auto", padding: "0 1rem 4rem" }}>
-        {/* Card */}
         <div style={{ background: "#fff", border: "1px solid #e8e0d0", borderRadius: 12, padding: "1.75rem", boxShadow: "0 2px 16px rgba(0,0,0,.06)" }}>
+
+          {/* Header */}
           <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "1.5rem" }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={GOLD} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
@@ -190,17 +224,24 @@ export default function ValuationEstimatorClient() {
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+
             {/* Parish */}
             <div style={{ gridColumn: "1/-1" }}>
-              <label style={labelStyle}>Parish</label>
+              <label style={labelStyle}>Parish <span style={{ color: "#e05" }}>*</span></label>
               <select value={parish} onChange={e => { setParish(e.target.value); setResult(null); }} style={selectStyle}>
                 {parishList.map(p => <option key={p} value={p}>{parishes[p].label}</option>)}
               </select>
             </div>
 
+            {/* Community */}
+            <div style={{ gridColumn: "1/-1" }}>
+              <label style={labelStyle}>Community / Scheme <span style={{ color: "#9aaa9e", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(optional)</span></label>
+              <input type="text" placeholder="e.g. Portmore Pines, Cherry Gardens" value={community} onChange={e => setCommunity(e.target.value)} style={inputStyle} />
+            </div>
+
             {/* Property Type */}
             <div>
-              <label style={labelStyle}>Property Type</label>
+              <label style={labelStyle}>Property Type <span style={{ color: "#e05" }}>*</span></label>
               <select value={propType} onChange={e => { setPropType(e.target.value as typeof propType); setResult(null); }} style={selectStyle}>
                 <option value="house">House / Villa</option>
                 <option value="land">Land / Lot</option>
@@ -209,9 +250,9 @@ export default function ValuationEstimatorClient() {
               </select>
             </div>
 
-            {/* Condition */}
+            {/* Overall Condition */}
             <div>
-              <label style={labelStyle}>Condition</label>
+              <label style={labelStyle}>Overall Condition</label>
               <select value={condition} onChange={e => { setCondition(e.target.value); setResult(null); }} style={selectStyle}>
                 <option value="excellent">Excellent</option>
                 <option value="good">Good</option>
@@ -222,34 +263,106 @@ export default function ValuationEstimatorClient() {
 
             {/* Land area */}
             <div>
-              <label style={labelStyle}>Land Area (sq ft)</label>
-              <input
-                type="text"
-                inputMode="numeric"
-                placeholder="e.g. 6,000"
-                value={landDisplay}
-                onChange={handleLandChange}
-                style={inputStyle}
-              />
+              <label style={labelStyle}>Land Area (sq ft) <span style={{ color: "#e05" }}>*</span></label>
+              <input type="text" inputMode="numeric" placeholder="e.g. 6,000" value={landDisplay}
+                onChange={e => handleNumInput(e.target.value, setLandDisplay)} style={inputStyle} />
             </div>
 
             {/* Built area */}
-            {propType !== "land" && (
+            {!isLandOnly && (
               <div>
-                <label style={labelStyle}>Built Area (sq ft)</label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  placeholder="e.g. 1,800"
-                  value={builtDisplay}
-                  onChange={handleBuiltChange}
-                  style={inputStyle}
-                />
+                <label style={labelStyle}>Built / Floor Area (sq ft)</label>
+                <input type="text" inputMode="numeric" placeholder="e.g. 1,800" value={builtDisplay}
+                  onChange={e => handleNumInput(e.target.value, setBuiltDisplay)} style={inputStyle} />
               </div>
             )}
+
+            {/* Bedrooms & Bathrooms */}
+            {!isLandOnly && (
+              <>
+                <div>
+                  <label style={labelStyle}>Bedrooms</label>
+                  <select value={bedrooms} onChange={e => { setBedrooms(e.target.value); setResult(null); }} style={selectStyle}>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6+</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={labelStyle}>Bathrooms</label>
+                  <select value={bathrooms} onChange={e => { setBathrooms(e.target.value); setResult(null); }} style={selectStyle}>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5+</option>
+                  </select>
+                </div>
+              </>
+            )}
+
+            {/* Construction & Fittings */}
+            {!isLandOnly && (
+              <>
+                <div>
+                  <label style={labelStyle}>Construction</label>
+                  <select value={construction} onChange={e => { setConstr(e.target.value); setResult(null); }} style={selectStyle}>
+                    <option value="concrete">Concrete / Block</option>
+                    <option value="steel">Steel Frame</option>
+                    <option value="wood">Wood Frame</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={labelStyle}>Condition of Fittings</label>
+                  <select value={fittings} onChange={e => { setFittings(e.target.value); setResult(null); }} style={selectStyle}>
+                    <option value="luxury">Luxury</option>
+                    <option value="standard">Standard</option>
+                    <option value="basic">Basic</option>
+                    <option value="unfinished">Unfinished</option>
+                  </select>
+                </div>
+              </>
+            )}
+
+            {/* Year built */}
+            {!isLandOnly && (
+              <div>
+                <label style={labelStyle}>Year Built <span style={{ color: "#9aaa9e", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(optional)</span></label>
+                <input type="text" inputMode="numeric" placeholder="e.g. 2005" value={yearBuilt}
+                  onChange={e => { setYearBuilt(e.target.value.replace(/\D/g, "").slice(0, 4)); setResult(null); }}
+                  style={inputStyle} maxLength={4} />
+              </div>
+            )}
+
+            {/* NLA Reference */}
+            <div style={{ gridColumn: isLandOnly ? "1/-1" : undefined }}>
+              <label style={labelStyle}>NLA / Property Reference <span style={{ color: "#9aaa9e", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(optional)</span></label>
+              <input type="text" placeholder="e.g. 1234/567/89" value={nlaRef} onChange={e => setNlaRef(e.target.value)} style={inputStyle} />
+            </div>
+
           </div>
 
-          <button onClick={calculate} style={{ marginTop: "1.5rem", width: "100%", padding: "0.85rem", background: GOLD, color: "#fff", border: "none", borderRadius: 8, fontWeight: 700, fontSize: "1rem", cursor: "pointer", letterSpacing: ".03em" }}>
+          {/* Amenities */}
+          {!isLandOnly && (
+            <div style={{ marginTop: "1rem" }}>
+              <label style={{ ...labelStyle, marginBottom: 10 }}>Amenities</label>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+                {(["pool", "garage", "parking", "solar", "generator"] as const).map(key => (
+                  <button key={key} type="button" onClick={() => toggleAmenity(key)}
+                    className={`amenity-chip ${amenities.includes(key) ? "on" : "off"}`}>
+                    {key.charAt(0).toUpperCase() + key.slice(1)}
+                    {amenities.includes(key) && ` +${(AMENITY_BONUS[key] * 100).toFixed(0)}%`}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <button onClick={calculate}
+            style={{ marginTop: "1.5rem", width: "100%", padding: "0.85rem", background: GOLD, color: "#fff", border: "none", borderRadius: 8, fontWeight: 700, fontSize: "1rem", cursor: "pointer", letterSpacing: ".03em" }}>
             Estimate Value
           </button>
 
@@ -258,31 +371,35 @@ export default function ValuationEstimatorClient() {
             <div id="val-result" style={{ marginTop: "1.5rem", padding: "1.25rem", background: "#f5f0e8", borderRadius: 10, borderLeft: `4px solid ${GOLD}` }}>
               <p style={{ margin: "0 0 0.25rem", fontSize: ".75rem", fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: GOLD }}>Estimated Market Value</p>
               <p style={{ margin: "0 0 0.5rem", fontSize: "1.5rem", fontWeight: 700, color: DARK }}>
-                J${fmt(result.low)} &ndash; J${fmt(result.high)}
+                J${fmtRounded(result.low)} &ndash; J${fmtRounded(result.high)}
               </p>
               <p style={{ margin: 0, fontSize: ".85rem", color: "#6b7a6e" }}>
-                Midpoint: approx. US${fmt(result.midUsd)}
+                Midpoint: approx. J${fmtRounded(result.midJmd)} &nbsp;&middot;&nbsp; US${fmt(result.midUsd)}
               </p>
+
+              <p style={{ margin: "0.5rem 0 0", fontSize: ".72rem" }}>
+                <span style={{ padding: "0.2rem 0.55rem", borderRadius: 20, background: dataSource === "live" ? "#e8f4ec" : "#f0ede7", color: dataSource === "live" ? "#2d7a4a" : "#7a6535", fontWeight: 700, fontSize: ".7rem", letterSpacing: ".04em" }}>
+                  {dataSource === "live" ? `LIVE DATA \xB7 ${formattedDate}` : "MARKET ESTIMATES"}
+                </span>
+              </p>
+
               <p style={{ margin: "0.75rem 0 0", fontSize: ".75rem", color: "#9aaa9e", lineHeight: 1.5 }}>
                 Indicative estimate based on {dataSource === "live" ? "current market listings" : "market benchmarks"} — not a formal valuation. Ferguson Law is not a valuation firm. For a certified appraisal, engage a chartered valuator.
               </p>
 
-              {/* Export buttons */}
+              {/* Export + CTA buttons */}
               <div style={{ marginTop: "1rem", display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
-                <button
-                  onClick={downloadCSV}
-                  style={{ padding: "0.5rem 1rem", background: "#fff", border: `1px solid ${GOLD}`, borderRadius: 6, color: DARK, fontSize: ".8rem", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: "0.4rem" }}
-                >
+                <button onClick={downloadCSV} style={exportBtnStyle}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                   Save as CSV
                 </button>
-                <button
-                  onClick={printPDF}
-                  style={{ padding: "0.5rem 1rem", background: "#fff", border: `1px solid ${GOLD}`, borderRadius: 6, color: DARK, fontSize: ".8rem", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: "0.4rem" }}
-                >
+                <button onClick={() => window.print()} style={exportBtnStyle}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                   Save as PDF
                 </button>
+                <a href="/booking" style={{ ...exportBtnStyle, textDecoration: "none", cursor: "pointer" }}>
+                  Book Consultation
+                </a>
               </div>
             </div>
           )}
@@ -303,4 +420,9 @@ const selectStyle: React.CSSProperties = {
 const inputStyle: React.CSSProperties = {
   width: "100%", padding: "0.6rem 0.75rem", border: "1px solid #d5cfc4",
   borderRadius: 6, fontSize: ".9rem", background: "#fff", color: "#10211c", boxSizing: "border-box",
+};
+const exportBtnStyle: React.CSSProperties = {
+  padding: "0.5rem 1rem", background: "#fff", border: "1px solid #c9a86a",
+  borderRadius: 6, color: "#10211c", fontSize: ".8rem", fontWeight: 600, cursor: "pointer",
+  display: "inline-flex", alignItems: "center", gap: "0.4rem",
 };
