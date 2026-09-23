@@ -112,13 +112,6 @@ function ClientLoginForm() {
             ? "Track your property matter and connect with your professionals."
             : "Register to access your Ferguson Law client portal."}
         </p>
-        {/* Skip link */}
-        <div style={{ textAlign: "right", marginBottom: 8 }}>
-          <Link href="/admin" style={{ fontSize: "0.8rem", color: "var(--muted,#69736d)", textDecoration: "underline", textUnderlineOffset: 3 }}>
-            Back office
-          </Link>
-        </div>
-
         {err && <div className="dform-err">{err}</div>}
         {ok  && <div className="dform-ok">{ok}</div>}
 
