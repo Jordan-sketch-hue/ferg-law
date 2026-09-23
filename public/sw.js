@@ -3,8 +3,8 @@
  * Caching strategies, push notifications, background sync, update detection.
  */
 
-const VERSION = 'fl-v5';
-const ASSETS_CACHE = 'fl-assets-v5';
+const VERSION = 'fl-v6';
+const ASSETS_CACHE = 'fl-assets-v6';
 const OFFLINE_URL = '/offline.html';
 
 const PRECACHE = [
@@ -46,6 +46,14 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
 
   if (url.origin !== self.location.origin) return;
+
+  // Never cache Next.js App Router flight responses. A payload from an older
+  // deployment cannot be rendered by a newer client bundle and triggers the
+  // browser's "This page couldn't load" error.
+  if (url.searchParams.has('_rsc') || request.headers.has('RSC')) {
+    event.respondWith(fetch(request));
+    return;
+  }
 
   // Network-only: write mutations
   if (
