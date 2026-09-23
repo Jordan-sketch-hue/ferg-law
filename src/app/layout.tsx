@@ -77,12 +77,21 @@ export const metadata: Metadata = {
     url: "https://fergusonlawja.com",
     siteName: "Ferguson Law",
     locale: "en_JM",
+    images: [
+      {
+        url: "https://fergusonlawja.com/ferguson-law-logo.jpg",
+        width: 512,
+        height: 512,
+        alt: "Ferguson Law — Jamaica Property Lawyer & Conveyancing",
+      },
+    ],
   },
   twitter: {
     card: "summary",
     title: "Ferguson Law | Jamaica Property Lawyer & Conveyancing",
     description:
       "Your trusted legal partner — guiding buyers, sellers and the diaspora from first question to registered title.",
+    images: ["https://fergusonlawja.com/ferguson-law-logo.jpg"],
   },
   alternates: {
     canonical: "https://fergusonlawja.com",
