@@ -3,8 +3,8 @@
  * Caching strategies, push notifications, background sync, update detection.
  */
 
-const VERSION = 'fl-v4';
-const ASSETS_CACHE = 'fl-assets-v4';
+const VERSION = 'fl-v6';
+const ASSETS_CACHE = 'fl-assets-v6';
 const OFFLINE_URL = '/offline.html';
 
 const PRECACHE = [
@@ -46,6 +46,14 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
 
   if (url.origin !== self.location.origin) return;
+
+  // Never cache Next.js App Router flight responses. A payload from an older
+  // deployment cannot be rendered by a newer client bundle and triggers the
+  // browser's "This page couldn't load" error.
+  if (url.searchParams.has('_rsc') || request.headers.has('RSC')) {
+    event.respondWith(fetch(request));
+    return;
+  }
 
   // Network-only: write mutations
   if (
@@ -138,13 +146,20 @@ async function staleWhileRevalidate(request) {
 async function navigateFetch(request) {
   try {
     const res = await fetch(request);
-    const cache = await caches.open(VERSION);
-    cache.put(request, res.clone());
+    if (res.ok) {
+      const cache = await caches.open(VERSION);
+      cache.put(request, res.clone());
+    }
     return res;
   } catch {
     const cached = await caches.match(request);
     if (cached) return cached;
-    return caches.match(OFFLINE_URL);
+
+    const offline = await caches.match(OFFLINE_URL);
+    return offline || new Response('You are offline. Please reconnect and try again.', {
+      status: 503,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+    });
   }
 }
 
