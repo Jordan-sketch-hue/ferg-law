@@ -40,10 +40,10 @@
       "icons": [{ "src": "/favicon-32.png", "sizes": "32x32", "type": "image/png" }]
     },
     {
-      "name": "Admin Panel",
-      "short_name": "Admin",
-      "description": "Owen's admin dashboard",
-      "url": "/admin",
+      "name": "Value Estimator",
+      "short_name": "Estimate",
+      "description": "Get a free indicative property value",
+      "url": "/value-estimator",
       "icons": [{ "src": "/favicon-32.png", "sizes": "32x32", "type": "image/png" }]
     }
   ],
