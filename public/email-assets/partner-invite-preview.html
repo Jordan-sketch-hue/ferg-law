@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Partner Invite Preview — Ferguson Law</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0f1a13; font-family: Georgia, serif; min-height: 100vh; }
+  .top-bar {
+    background: #0f1a13;
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #1e3324;
+  }
+  .brand { color: #c9a84c; font-size: 13px; letter-spacing: 3px; text-transform: uppercase; }
+  .page-title { color: #ffffff; font-size: 16px; font-weight: 400; }
+  .tabs {
+    display: flex;
+    gap: 0;
+    padding: 24px 32px 0;
+    border-bottom: 2px solid #1e3324;
+  }
+  .tab {
+    padding: 10px 28px;
+    font-size: 13px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #6b8070;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: color 0.2s;
+  }
+  .tab.active {
+    color: #c9a84c;
+    border-bottom-color: #c9a84c;
+  }
+  .preview-wrap {
+    padding: 32px 0;
+    background: #e8e5de;
+    min-height: calc(100vh - 120px);
+  }
+  .pane { display: none; }
+  .pane.active { display: block; }
+
+  /* EMAIL TEMPLATE STYLES */
+  .email-outer {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 0 16px;
+  }
+  .email-card {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    background: #ffffff;
+    font-family: Georgia, serif;
+  }
+  .hdr {
+    background-color: #1a3828;
+    padding: 28px 40px;
+  }
+  .hdr .label {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: #c9a84c;
+    text-transform: uppercase;
+    margin: 0 0 6px;
+  }
+  .hdr .title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #ffffff;
+    line-height: 1.3;
+    margin: 0;
+  }
+  .gold-bar { background-color: #c9a84c; height: 3px; }
+  .hero-img { display: block; width: 100%; max-width: 600px; border: 0; }
+  .body-pad { padding: 36px 40px 24px; }
+  .body-pad p { font-size: 15px; color: #333333; line-height: 1.7; margin: 0 0 16px; }
+  .body-pad p:last-child { margin: 0; }
+  .body-pad .greeting { color: #1a3828; }
+  .divider { border: none; border-top: 1px solid #e8e4dc; margin: 0 40px; }
+  .section { padding: 28px 40px; }
+  .section-label {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: #c9a84c;
+    text-transform: uppercase;
+    margin: 0 0 20px;
+  }
+  .two-col { display: flex; gap: 32px; }
+  .col { flex: 1; }
+  .area-title { font-size: 14px; font-weight: 700; color: #1a3828; margin: 0 0 4px; }
+  .area-desc { font-size: 13px; color: #555555; line-height: 1.6; margin: 0 0 20px; }
+  .area-desc:last-child { margin: 0; }
+  .second-img { display: block; width: 100%; max-width: 520px; border: 0; border-radius: 2px; }
+  .second-img-wrap { padding: 28px 40px 0; }
+  .benefits { padding: 28px 40px 24px; }
+  .benefit { font-size: 14px; color: #333333; line-height: 1.7; margin: 0 0 10px; }
+  .benefit:last-child { margin: 0; }
+  .cta-wrap { padding: 8px 40px 40px; text-align: center; }
+  .cta-btn {
+    display: inline-block;
+    background-color: #c9a84c;
+    color: #1a3828;
+    font-family: Georgia, serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-decoration: none;
+    padding: 16px 40px;
+  }
+  .cta-url { font-size: 12px; color: #888888; margin: 16px 0 0; }
+  .gold-bar-sm { background-color: #c9a84c; height: 2px; }
+  .footer {
+    background-color: #1a3828;
+    padding: 24px 40px;
+    text-align: center;
+  }
+  .footer .fl { font-size: 13px; color: #c9a84c; letter-spacing: 1px; margin: 0 0 6px; }
+  .footer .contact { font-size: 12px; color: #aaaaaa; margin: 0 0 4px; }
+  .footer .domain { font-size: 11px; color: #666666; margin: 0; }
+
+  /* NO-IMAGE PLACEHOLDERS */
+  .img-placeholder {
+    background: #f0ede7;
+    border: 2px dashed #c9a84c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #888;
+    font-size: 13px;
+    font-family: Georgia, serif;
+    letter-spacing: 0.5px;
+  }
+  .hero-placeholder { height: 400px; }
+  .second-placeholder { height: 200px; max-width: 520px; }
+</style>
+</head>
+<body>
+<div class="top-bar">
+  <span class="brand">Ferguson Law</span>
+  <span class="page-title">Partner Invitation — Email Preview</span>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('images')">With Images</div>
+  <div class="tab" onclick="switchTab('noimages')">No Images (Fallback)</div>
+</div>
+
+<div class="preview-wrap">
+
+  <!-- WITH IMAGES -->
+  <div class="pane active" id="pane-images">
+    <div class="email-outer">
+      <div class="email-card">
+        <div class="hdr">
+          <p class="label">Ferguson Law</p>
+          <p class="title">Professional Partnership<br>Invitation</p>
+        </div>
+        <div class="gold-bar"></div>
+        <img class="hero-img" src="https://ibtadbwtrxglujkzqofs.supabase.co/storage/v1/object/public/fl-matter-files/email/ti-consult.jpg" alt="Legal consultation at Ferguson Law" width="600" height="400" />
+        <div class="body-pad">
+          <p class="greeting">Dear Fellow Professional,</p>
+          <p>We are extending a formal invitation to qualified real estate agents, mortgage brokers, attorneys, and financial advisors to join the <strong>Ferguson Law Client Portal</strong> as a registered partner.</p>
+          <p>Our portal is built to make cross-professional collaboration seamless — connecting your clients with the legal expertise they need to close with confidence.</p>
+        </div>
+        <hr class="divider">
+        <div class="section">
+          <p class="section-label">How We Support Your Clients</p>
+          <div class="two-col">
+            <div class="col">
+              <p class="area-title">Conveyancing</p>
+              <p class="area-desc">Title transfers, sale agreements, and property due diligence handled with precision.</p>
+              <p class="area-title">H.O.M.E. Program</p>
+              <p class="area-desc">Helping overseas buyers and diaspora clients navigate Jamaican real estate law from abroad.</p>
+            </div>
+            <div class="col">
+              <p class="area-title">Contracts &amp; Agreements</p>
+              <p class="area-desc">Commercial leases, joint venture structures, and bespoke agreements drafted for your deals.</p>
+              <p class="area-title">Diaspora &amp; Estate Services</p>
+              <p class="area-desc">Wills, probate, and estate administration for families across borders.</p>
+            </div>
+          </div>
+        </div>
+        <hr class="divider">
+        <div class="second-img-wrap">
+          <img class="second-img" src="https://ibtadbwtrxglujkzqofs.supabase.co/storage/v1/object/public/fl-matter-files/email/ti-couple.jpg" alt="Clients receiving keys" width="520" height="347" />
+        </div>
+        <div class="benefits">
+          <p class="section-label">Partner Benefits</p>
+          <p class="benefit">&bull;&nbsp; Priority scheduling for your referred clients</p>
+          <p class="benefit">&bull;&nbsp; Direct access to our case management portal</p>
+          <p class="benefit">&bull;&nbsp; Co-branded referral documentation</p>
+          <p class="benefit">&bull;&nbsp; Dedicated liaison for ongoing matters</p>
+        </div>
+        <div class="cta-wrap">
+          <a class="cta-btn" href="https://fergusonlawja.com/professionals">Register as a Partner</a>
+          <p class="cta-url">fergusonlawja.com/professionals</p>
+        </div>
+        <div class="gold-bar-sm"></div>
+        <div class="footer">
+          <p class="fl">Ferguson Law</p>
+          <p class="contact">contact@fergusonlawja.com &nbsp;|&nbsp; +1 876 320 0235</p>
+          <p class="domain">fergusonlawja.com</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NO IMAGES -->
+  <div class="pane" id="pane-noimages">
+    <div class="email-outer">
+      <div class="email-card">
+        <div class="hdr">
+          <p class="label">Ferguson Law</p>
+          <p class="title">Professional Partnership<br>Invitation</p>
+        </div>
+        <div class="gold-bar"></div>
+        <div class="img-placeholder hero-placeholder">
+          [Hero Image: Legal Consultation Scene]
+        </div>
+        <div class="body-pad">
+          <p class="greeting">Dear Fellow Professional,</p>
+          <p>We are extending a formal invitation to qualified real estate agents, mortgage brokers, attorneys, and financial advisors to join the <strong>Ferguson Law Client Portal</strong> as a registered partner.</p>
+          <p>Our portal is built to make cross-professional collaboration seamless — connecting your clients with the legal expertise they need to close with confidence.</p>
+        </div>
+        <hr class="divider">
+        <div class="section">
+          <p class="section-label">How We Support Your Clients</p>
+          <div class="two-col">
+            <div class="col">
+              <p class="area-title">Conveyancing</p>
+              <p class="area-desc">Title transfers, sale agreements, and property due diligence handled with precision.</p>
+              <p class="area-title">H.O.M.E. Program</p>
+              <p class="area-desc">Helping overseas buyers and diaspora clients navigate Jamaican real estate law from abroad.</p>
+            </div>
+            <div class="col">
+              <p class="area-title">Contracts &amp; Agreements</p>
+              <p class="area-desc">Commercial leases, joint venture structures, and bespoke agreements drafted for your deals.</p>
+              <p class="area-title">Diaspora &amp; Estate Services</p>
+              <p class="area-desc">Wills, probate, and estate administration for families across borders.</p>
+            </div>
+          </div>
+        </div>
+        <hr class="divider">
+        <div style="padding: 28px 40px 0;">
+          <div class="img-placeholder second-placeholder">
+            [Second Image: Clients Receiving Keys]
+          </div>
+        </div>
+        <div class="benefits">
+          <p class="section-label">Partner Benefits</p>
+          <p class="benefit">&bull;&nbsp; Priority scheduling for your referred clients</p>
+          <p class="benefit">&bull;&nbsp; Direct access to our case management portal</p>
+          <p class="benefit">&bull;&nbsp; Co-branded referral documentation</p>
+          <p class="benefit">&bull;&nbsp; Dedicated liaison for ongoing matters</p>
+        </div>
+        <div class="cta-wrap">
+          <a class="cta-btn" href="https://fergusonlawja.com/professionals">Register as a Partner</a>
+          <p class="cta-url">fergusonlawja.com/professionals</p>
+        </div>
+        <div class="gold-bar-sm"></div>
+        <div class="footer">
+          <p class="fl">Ferguson Law</p>
+          <p class="contact">contact@fergusonlawja.com &nbsp;|&nbsp; +1 876 320 0235</p>
+          <p class="domain">fergusonlawja.com</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('pane-' + id).classList.add('active');
+}
+</script>
+</body>
+</html>
