@@ -3136,8 +3136,15 @@ function EmailTab({ emails, token, onMarkRead }: {
                 <iframe
                   srcDoc={selected.body_html}
                   sandbox="allow-same-origin"
-                  style={{ width: "100%", minHeight: 220, border: "none", display: "block" }}
+                  style={{ width: "100%", minHeight: 400, border: "none", display: "block" }}
                   title="Email body"
+                  onLoad={(e) => {
+                    const f = e.currentTarget;
+                    try {
+                      const h = f.contentDocument?.documentElement?.scrollHeight ?? f.contentDocument?.body?.scrollHeight;
+                      if (h && h > 0) f.style.height = `${h + 24}px`;
+                    } catch { /* cross-origin guard */ }
+                  }}
                 />
               ) : selected.body_text ? (
                 <div style={{ padding: 20, fontSize: ".9rem", lineHeight: 1.7, color: INK, whiteSpace: "pre-wrap" }}>
