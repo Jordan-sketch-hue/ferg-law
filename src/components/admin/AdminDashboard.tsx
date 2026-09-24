@@ -3113,6 +3113,12 @@ function EmailTab({ emails, token, onMarkRead }: {
           <div style={{ color: MUTED, textAlign: "center", paddingTop: 60 }}>Select an email to read</div>
         ) : (
           <div>
+            {isMobile && (
+              <button type="button" onClick={() => setSelected(null)}
+                style={{ background: "none", border: "none", color: GOLD, fontWeight: 700, fontSize: ".88rem", cursor: "pointer", padding: "0 0 12px 0", display: "flex", alignItems: "center", gap: 4 }}>
+                ← Inbox
+              </button>
+            )}
             <div style={{ marginBottom: 16 }}>
               <div style={{ fontFamily: "var(--serif, Georgia, serif)", fontWeight: 700, fontSize: "1.15rem", color: GREEN }}>{selected.subject || "(no subject)"}</div>
               <div style={{ fontSize: ".8rem", color: MUTED, marginTop: 4 }}>
@@ -3121,8 +3127,21 @@ function EmailTab({ emails, token, onMarkRead }: {
               </div>
               {selected.to_email && <div style={{ fontSize: ".8rem", color: MUTED }}>To: {selected.to_email}</div>}
             </div>
-            <div style={{ background: "#faf8f2", borderRadius: 10, padding: 20, marginBottom: 20, fontSize: ".9rem", lineHeight: 1.7, color: INK, whiteSpace: "pre-wrap", minHeight: 100 }}>
-              {selected.body_text || selected.body_html?.replace(/<[^>]+>/g, "") || "(empty)"}
+            <div style={{ background: "#faf8f2", borderRadius: 10, marginBottom: 20, minHeight: 100, overflow: "hidden" }}>
+              {selected.body_html ? (
+                <iframe
+                  srcDoc={selected.body_html}
+                  sandbox="allow-same-origin"
+                  style={{ width: "100%", minHeight: 220, border: "none", display: "block" }}
+                  title="Email body"
+                />
+              ) : selected.body_text ? (
+                <div style={{ padding: 20, fontSize: ".9rem", lineHeight: 1.7, color: INK, whiteSpace: "pre-wrap" }}>
+                  {selected.body_text}
+                </div>
+              ) : (
+                <div style={{ padding: 20, fontSize: ".88rem", color: MUTED, fontStyle: "italic" }}>No text content in this email.</div>
+              )}
             </div>
             {!replyOpen ? (
               <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
