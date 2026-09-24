@@ -269,11 +269,6 @@
         <p class="blast-sub">Paste any list format — CSV, plain text, spreadsheet rows. AI extracts names and emails.</p>
 
         <div class="blast-section">
-          <label class="blast-label">Admin Access Code</label>
-          <input id="blast-token" type="password" class="blast-input" placeholder="Enter access code" autocomplete="off" />
-        </div>
-
-        <div class="blast-section">
           <label class="blast-label">Subject Line</label>
           <input id="blast-subject" type="text" class="blast-input" value="You're Invited: Ferguson Law Partner Directory" />
         </div>
@@ -401,9 +396,7 @@ function selectAll(val) {
 }
 
 async function sendBlast() {
-  const token = document.getElementById('blast-token').value.trim();
   const subject = document.getElementById('blast-subject').value.trim();
-  if (!token) { alert('Enter your access code.'); return; }
   if (!subject) { alert('Enter a subject line.'); return; }
 
   const selected = parsedRecipients.filter((_, i) => {
@@ -428,7 +421,7 @@ async function sendBlast() {
     const res = await fetch('/api/blast/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token, recipients: selected, subject })
+      body: JSON.stringify({ recipients: selected, subject })
     });
     const data = await res.json();
 

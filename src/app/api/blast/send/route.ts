@@ -4,7 +4,6 @@
  * Body: { token, recipients: [{name, email}], subject }
  */
 import { NextRequest, NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/supabase/server";
 import { Resend } from "resend";
 
 const FROM = "Ferguson Law <contact@fergusonlawja.com>";
@@ -126,20 +125,13 @@ function buildEmail(name: string): string {
 }
 
 export async function POST(req: NextRequest) {
-  const { token, recipients, subject } = (await req.json()) as {
-    token: string;
+  const { recipients, subject } = (await req.json()) as {
     recipients: { name: string; email: string }[];
     subject: string;
   };
 
-  if (!token || !recipients?.length || !subject) {
+  if (!recipients?.length || !subject) {
     return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
-  }
-
-  const supabase = createAdminClient();
-  const { data: isAdmin, error: authErr } = await supabase.rpc("fl_is_admin", { p_token: token });
-  if (authErr || !isAdmin) {
-    return NextResponse.json({ error: "Not authorised." }, { status: 403 });
   }
 
   if (!process.env.RESEND_API_KEY) {
