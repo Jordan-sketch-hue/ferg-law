@@ -3,6 +3,14 @@ import { createAdminClient } from "@/lib/supabase/server";
 
 type EmailAddress = { address?: string; name?: string } | string;
 
+function extractStr(obj: Record<string, unknown>, keys: string[]): string {
+  for (const k of keys) {
+    const v = obj[k];
+    if (v && typeof v === "string" && v.trim()) return v;
+  }
+  return "";
+}
+
 function resolveAddress(val: EmailAddress): { email: string; name: string | null } {
   if (!val) return { email: "", name: null };
   if (typeof val === "string") {
@@ -46,13 +54,16 @@ export async function POST(req: NextRequest) {
     }
 
     const supabase = createAdminClient();
+    const bodyHtml = extractStr(payload, ["html", "html_body", "htmlBody", "bodyHtml", "body_html"]);
+    const bodyText = extractStr(payload, ["text", "text_body", "textBody", "bodyText", "body_text", "plain", "body"]);
+
     const { error } = await supabase.from("fl_inbound_emails").insert({
       from_email: fromEmail,
       from_name: fromName,
       to_email: toEmail || null,
       subject: String(payload.subject ?? ""),
-      body_text: String(payload.text ?? ""),
-      body_html: String(payload.html ?? ""),
+      body_text: bodyText,
+      body_html: bodyHtml,
       reply_to: replyTo,
       thread_id: threadId,
     });

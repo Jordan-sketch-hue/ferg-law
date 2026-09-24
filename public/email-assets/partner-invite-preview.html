@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="format-detection" content="telephone=no,email=no,address=no">
 <title>Partner Invite Preview — Ferguson Law</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.snow.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: #0f1a13; font-family: Georgia, serif; min-height: 100vh; }
@@ -274,6 +276,27 @@
         </div>
 
         <div class="blast-section">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <label class="blast-label" style="margin:0;">Email Body</label>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <button class="blast-btn-sm" onclick="genBodyAI()" id="gen-btn">Generate with AI</button>
+              <button class="blast-btn-sm" onclick="insertImageUrl()">Insert Image URL</button>
+            </div>
+          </div>
+          <div style="margin-bottom:8px;">
+            <span style="font-size:11px;color:#888;font-family:Georgia,serif;">Use <code style="background:#f0ede7;padding:2px 5px;font-size:11px;">{{name}}</code> to personalize by recipient name</span>
+          </div>
+          <div id="quill-editor" style="min-height:300px;background:#fff;border:1px solid #ddd;font-family:Georgia,serif;"></div>
+          <div id="gen-prompt-row" style="display:none;margin-top:10px;">
+            <input id="gen-prompt" type="text" class="blast-input" placeholder="Describe what the email should say (e.g. invite real estate agents to join our partner directory)..." />
+            <div style="display:flex;gap:8px;margin-top:8px;">
+              <button class="blast-btn" onclick="runGen()" id="run-gen-btn">Generate</button>
+              <button class="blast-btn-sm" onclick="cancelGen()">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="blast-section">
           <label class="blast-label">Paste Your List</label>
           <textarea id="blast-list" class="blast-textarea" placeholder="Paste names and emails in any format:&#10;&#10;John Smith, john@realty.com&#10;jane.doe@century21.com — Jane Doe&#10;Name: Marcus Brown | Email: marcus@propertiesja.com&#10;&#10;CSV, plain text, copied spreadsheet rows — all accepted."></textarea>
         </div>
@@ -344,6 +367,112 @@
 
 <script>
 let parsedRecipients = [];
+let quill;
+
+// -- Quill init --
+document.addEventListener('DOMContentLoaded', function() {
+  var toolbarOptions = [
+    [{ 'header': [1, 2, 3, false] }],
+    [{ 'size': ['small', false, 'large', 'huge'] }],
+    ['bold', 'italic', 'underline', 'strike'],
+    [{ 'color': [] }, { 'background': [] }],
+    [{ 'align': [] }],
+    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+    ['link', 'image'],
+    ['clean']
+  ];
+
+  quill = new Quill('#quill-editor', {
+    theme: 'snow',
+    modules: {
+      toolbar: {
+        container: toolbarOptions,
+        handlers: { image: imageUploadHandler }
+      }
+    },
+    placeholder: 'Compose your email here... Use {{name}} to personalize.'
+  });
+
+  // Default body content
+  quill.clipboard.dangerouslyPasteHTML(`
+    <p>Dear {{name}},</p>
+    <p>Every deal you close is a reflection of your professionalism. When it is time to sign, the legal process can make or break the experience for your clients — and your reputation along with it.</p>
+    <p>We are inviting licensed real estate agents across Jamaica to join the <strong>Ferguson Law Partner Directory</strong>. Register once and start directing your buyers and sellers to a legal team built for speed, security, and a seamless close.</p>
+    <p>Your clients deserve a frictionless path to ownership. You deserve a legal partner who helps you deliver it.</p>
+    <p><a href="https://fergusonlawja.com/directory">Join the Partner Directory</a></p>
+    <p>Warm regards,<br><strong>Ferguson Law</strong><br>contact@fergusonlawja.com | +1 876 320 0235</p>
+  `);
+});
+
+async function imageUploadHandler() {
+  const input = document.createElement('input');
+  input.setAttribute('type', 'file');
+  input.setAttribute('accept', 'image/*');
+  input.click();
+  input.onchange = async () => {
+    const file = input.files[0];
+    if (!file) return;
+    const fd = new FormData();
+    fd.append('file', file);
+    try {
+      const res = await fetch('/api/blast/upload-image', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.url) {
+        const range = quill.getSelection(true);
+        quill.insertEmbed(range.index, 'image', data.url);
+        quill.setSelection(range.index + 1);
+      } else {
+        alert('Upload failed: ' + (data.error || 'Unknown error'));
+      }
+    } catch(e) {
+      alert('Upload failed: ' + e.message);
+    }
+  };
+}
+
+function insertImageUrl() {
+  const url = prompt('Enter image URL:');
+  if (!url) return;
+  const range = quill.getSelection(true);
+  quill.insertEmbed(range.index, 'image', url);
+  quill.setSelection(range.index + 1);
+}
+
+function genBodyAI() {
+  const row = document.getElementById('gen-prompt-row');
+  row.style.display = row.style.display === 'none' ? 'block' : 'none';
+}
+function cancelGen() {
+  document.getElementById('gen-prompt-row').style.display = 'none';
+  document.getElementById('gen-prompt').value = '';
+}
+
+async function runGen() {
+  const prompt = document.getElementById('gen-prompt').value.trim();
+  if (!prompt) { alert('Enter a description first.'); return; }
+  const btn = document.getElementById('run-gen-btn');
+  btn.textContent = 'Generating...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('/api/blast/gen-body', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
+    });
+    const data = await res.json();
+    if (data.html) {
+      quill.clipboard.dangerouslyPasteHTML(data.html);
+      cancelGen();
+    } else {
+      alert('Generation failed: ' + (data.error || 'Unknown error'));
+    }
+  } catch(e) {
+    alert('Generation failed: ' + e.message);
+  } finally {
+    btn.textContent = 'Generate';
+    btn.disabled = false;
+  }
+}
 
 function switchTab(id) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -421,7 +550,7 @@ async function sendBlast() {
     const res = await fetch('/api/blast/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ recipients: selected, subject })
+      body: JSON.stringify({ recipients: selected, subject, bodyHtml: quill ? quill.root.innerHTML : null })
     });
     const data = await res.json();
 

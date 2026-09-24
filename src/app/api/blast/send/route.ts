@@ -124,10 +124,60 @@ function buildEmail(name: string): string {
 </html>`;
 }
 
+function wrapCustomBody(name: string, bodyHtml: string): string {
+  const greeting = name?.trim() ? `Dear ${name.trim().split(" ")[0]},` : "Dear Real Estate Professional,";
+  const personalised = bodyHtml
+    .replace(/\{\{name\}\}/gi, name?.trim().split(" ")[0] || "there");
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0;padding:0;background:#f2f0eb;font-family:Georgia,serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f2f0eb;padding:24px 0;">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;">
+
+  <tr>
+    <td bgcolor="#1a3828" style="background-color:#1a3828;padding:28px 40px;">
+      <p style="margin:0;font-family:Georgia,serif;font-size:11px;letter-spacing:3px;color:#c9a84c;text-transform:uppercase;">Ferguson Law</p>
+      <p style="margin:6px 0 0;font-family:Georgia,serif;font-size:22px;font-weight:700;color:#ffffff;line-height:1.3;">${greeting}</p>
+    </td>
+  </tr>
+
+  <tr><td style="background:#c9a84c;height:3px;line-height:3px;font-size:0;">&nbsp;</td></tr>
+
+  <tr>
+    <td style="padding:36px 40px 32px;font-family:Georgia,serif;font-size:15px;color:#333333;line-height:1.7;">
+      ${personalised}
+    </td>
+  </tr>
+
+  <tr><td style="background:#c9a84c;height:2px;line-height:2px;font-size:0;">&nbsp;</td></tr>
+
+  <tr>
+    <td bgcolor="#1a3828" style="background-color:#1a3828;padding:24px 40px;text-align:center;">
+      <p style="margin:0 0 6px;font-family:Georgia,serif;font-size:13px;color:#c9a84c;letter-spacing:1px;">Ferguson Law</p>
+      <p style="margin:0 0 4px;font-family:Georgia,serif;font-size:12px;color:#aaaaaa;line-height:1.6;">contact@fergusonlawja.com &nbsp;|&nbsp; +1 876 320 0235</p>
+      <p style="margin:0 0 12px;font-family:Georgia,serif;font-size:11px;color:#666666;">fergusonlawja.com</p>
+      <p style="margin:0;font-family:Georgia,serif;font-size:10px;color:#888888;line-height:1.6;">To opt out of future correspondence, reply with "unsubscribe" or email contact@fergusonlawja.com.</p>
+    </td>
+  </tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>`;
+}
+
 export async function POST(req: NextRequest) {
-  const { recipients, subject } = (await req.json()) as {
+  const { recipients, subject, bodyHtml } = (await req.json()) as {
     recipients: { name: string; email: string }[];
     subject: string;
+    bodyHtml?: string;
   };
 
   if (!recipients?.length || !subject) {
@@ -148,7 +198,7 @@ export async function POST(req: NextRequest) {
         replyTo: REPLY_TO,
         to: recipient.email,
         subject,
-        html: buildEmail(recipient.name),
+        html: bodyHtml ? wrapCustomBody(recipient.name, bodyHtml) : buildEmail(recipient.name),
       });
       results.push({ email: recipient.email, status: "sent" });
       // Small delay to avoid Resend rate limits

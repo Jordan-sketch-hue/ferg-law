@@ -2200,6 +2200,10 @@ function CalendarTab({ appts, token, onStatus, onRefresh }: { appts: Appointment
           onRefresh={onRefresh}
         />
       )}
+
+      <div style={{ marginTop: 24 }}>
+        <BlockedDatesPanel token={token} />
+      </div>
     </div>
   );
 }
