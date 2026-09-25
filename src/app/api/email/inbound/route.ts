@@ -49,9 +49,14 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json() as Record<string, unknown>;
 
-    // Resend inbound payload: { type: "email.received", data: { from, to, subject, email_id, ... } }
-    // NOTE: Resend does NOT include html/text in the webhook — body must be fetched via API using email_id
-    const payload = (body.data && typeof (body.data as Record<string, unknown>).from === "string")
+    // Log the full raw payload so we can debug Resend's format
+    console.log(`INBOUND_RAW type=${body.type ?? "none"} keys=${Object.keys(body).join(",")} data_keys=${body.data ? Object.keys(body.data as object).join(",") : "none"}`);
+    console.log(`INBOUND_PAYLOAD_SAMPLE ${JSON.stringify(body).slice(0, 2000)}`);
+
+    // Resend inbound payload: { type: "email.received", data: { from, to, subject, email_id, html, text, ... } }
+    // Always prefer body.data when it exists — do NOT gate on typeof from === "string"
+    // because Resend may send `from` as either a plain string or an {email, name} object.
+    const payload: Record<string, unknown> = (body.data && typeof body.data === "object")
       ? (body.data as Record<string, unknown>)
       : body;
 
@@ -68,18 +73,30 @@ export async function POST(req: NextRequest) {
       : null;
     const replyTo = replyToFirst ? resolveAddress(replyToFirst).email : null;
 
-    const headers = payload.headers as Record<string, string> | undefined;
-    const threadId = (headers?.["x-thread-id"] ?? payload.message_id ?? null) as string | null;
+    // Handle headers as either an array [{name,value}] or a flat object
+    const headersRaw = payload.headers;
+    let threadId: string | null = null;
+    if (Array.isArray(headersRaw)) {
+      const threadHeader = (headersRaw as { name: string; value: string }[]).find(
+        (h) => h.name?.toLowerCase() === "x-thread-id"
+      );
+      threadId = threadHeader?.value ?? (payload.message_id as string | null) ?? null;
+    } else if (headersRaw && typeof headersRaw === "object") {
+      const h = headersRaw as Record<string, string>;
+      threadId = h["x-thread-id"] ?? h["X-Thread-Id"] ?? (payload.message_id as string | null) ?? null;
+    } else {
+      threadId = (payload.message_id as string | null) ?? null;
+    }
 
     if (!fromEmail) {
       return NextResponse.json({ error: "Missing from" }, { status: 400 });
     }
 
-    // Check webhook payload first (Resend may include html/text directly)
-    const payloadHtml = typeof payload.html === "string" ? payload.html : "";
-    const payloadText = typeof payload.text === "string" ? payload.text : "";
+    // Extract body from webhook payload — Resend includes html/text in data when available
+    const payloadHtml = typeof payload.html === "string" ? payload.html.trim() : "";
+    const payloadText = typeof payload.text === "string" ? payload.text.trim() : "";
 
-    // Fall back to Resend API fetch using email_id
+    // Fall back to Resend API fetch using email_id if payload has no body
     const emailId = typeof payload.email_id === "string" ? payload.email_id : "";
     const { html: fetchedHtml, text: fetchedText } = (payloadHtml || payloadText)
       ? { html: payloadHtml, text: payloadText }
@@ -87,7 +104,7 @@ export async function POST(req: NextRequest) {
 
     const bodyHtml = fetchedHtml;
     const bodyText = fetchedText;
-    console.log(`BODY_CHECK payload_html=${!!payloadHtml} payload_text=${!!payloadText} fetched_html=${!!fetchedHtml} fetched_text=${!!fetchedText}`);
+    console.log(`BODY_CHECK payload_html=${!!payloadHtml} payload_text=${!!payloadText} fetched_html=${!!fetchedHtml} fetched_text=${!!fetchedText} email_id=${emailId}`);
 
     const supabase = createAdminClient();
 

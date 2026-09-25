@@ -2882,6 +2882,9 @@ function EmailTab({ emails, token, onMarkRead, onDelete }: {
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [suggesting, setSuggesting] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [editingBody, setEditingBody] = useState(false);
+  const [bodyDraft, setBodyDraft] = useState("");
+  const [savingBody, setSavingBody] = useState(false);
   const [showSpam, setShowSpam] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
@@ -2935,6 +2938,8 @@ function EmailTab({ emails, token, onMarkRead, onDelete }: {
     setReplyOpen(false);
     setReplyBody("");
     setSendResult(null);
+    setEditingBody(false);
+    setBodyDraft("");
     if (!e.read) {
       void fetch("/api/admin/email-read", {
         method: "POST",
@@ -3165,8 +3170,34 @@ function EmailTab({ emails, token, onMarkRead, onDelete }: {
                 <div style={{ padding: 20, fontSize: ".9rem", lineHeight: 1.7, color: INK, whiteSpace: "pre-wrap" }}>
                   {selected.body_text}
                 </div>
+              ) : editingBody ? (
+                <div style={{ padding: 16 }}>
+                  <textarea
+                    value={bodyDraft}
+                    onChange={(e) => setBodyDraft(e.target.value)}
+                    rows={8}
+                    placeholder="Paste the email body here…"
+                    style={{ width: "100%", resize: "vertical", borderRadius: 8, border: "1px solid rgba(18,16,12,.2)", padding: "10px 12px", fontSize: ".88rem", fontFamily: "inherit", outline: "none", boxSizing: "border-box", marginBottom: 10 }}
+                  />
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button type="button" disabled={savingBody || !bodyDraft.trim()} onClick={async () => {
+                      if (!selected || savingBody || !bodyDraft.trim()) return;
+                      setSavingBody(true);
+                      const res = await fetch("/api/admin/set-email-body", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token, id: selected.id, body_text: bodyDraft.trim() }) });
+                      const json = (await res.json().catch(() => ({}))) as { ok?: boolean };
+                      if (json.ok) { setSelected({ ...selected, body_text: bodyDraft.trim() }); setEditingBody(false); setBodyDraft(""); }
+                      setSavingBody(false);
+                    }} style={{ ...S.authBtn, width: "auto", padding: "8px 18px", ...(savingBody || !bodyDraft.trim() ? S.btnOff : null) }}>
+                      {savingBody ? "Saving…" : "Save"}
+                    </button>
+                    <button type="button" onClick={() => { setEditingBody(false); setBodyDraft(""); }} style={{ padding: "8px 16px", borderRadius: 999, border: "1px solid rgba(18,16,12,.2)", background: "#fff", fontSize: ".85rem", cursor: "pointer" }}>Cancel</button>
+                  </div>
+                </div>
               ) : (
-                <div style={{ padding: 20, fontSize: ".88rem", color: MUTED, fontStyle: "italic" }}>No text content in this email.</div>
+                <div style={{ padding: 20, display: "flex", alignItems: "center", gap: 16 }}>
+                  <span style={{ fontSize: ".88rem", color: MUTED, fontStyle: "italic" }}>No body captured.</span>
+                  <button type="button" onClick={() => { setEditingBody(true); setBodyDraft(""); }} style={{ padding: "6px 14px", borderRadius: 999, border: `1px solid ${GOLD}`, background: "rgba(200,166,92,.08)", color: "#8a6a22", fontWeight: 600, fontSize: ".8rem", cursor: "pointer" }}>+ Add body</button>
+                </div>
               )}
             </div>
             {!replyOpen ? (
