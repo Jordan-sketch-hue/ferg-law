@@ -24,14 +24,30 @@ function firstOf<T>(v: T | T[]): T {
   return Array.isArray(v) ? v[0] : v;
 }
 
+async function fetchResendEmailBody(emailId: string): Promise<{ html: string; text: string }> {
+  const key = process.env.RESEND_API_KEY;
+  if (!key || !emailId) return { html: "", text: "" };
+  try {
+    const r = await fetch(`https://api.resend.com/emails/${emailId}`, {
+      headers: { Authorization: `Bearer ${key}` },
+    });
+    if (!r.ok) return { html: "", text: "" };
+    const d = await r.json() as Record<string, unknown>;
+    return {
+      html: typeof d.html === "string" ? d.html : "",
+      text: typeof d.text === "string" ? d.text : "",
+    };
+  } catch {
+    return { html: "", text: "" };
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json() as Record<string, unknown>;
 
-    // DEBUG: log full raw payload so we can see the real field names from Resend
-    console.log("INBOUND_RAW:", JSON.stringify(body).slice(0, 4000));
-
-    // Resend inbound payload: { data: { from, to, subject, text, html } }
+    // Resend inbound payload: { type: "email.received", data: { from, to, subject, email_id, ... } }
+    // NOTE: Resend does NOT include html/text in the webhook — body must be fetched via API using email_id
     const payload = (body.data && typeof (body.data as Record<string, unknown>).from === "string")
       ? (body.data as Record<string, unknown>)
       : body;
@@ -39,7 +55,7 @@ export async function POST(req: NextRequest) {
     const fromRaw = payload.from as EmailAddress;
     const { email: fromEmail, name: fromName } = resolveAddress(fromRaw);
 
-    const toRaw = payload.to;
+    const toRaw = payload.to ?? payload.received_for;
     const toFirst = firstOf(toRaw as EmailAddress | EmailAddress[]);
     const { email: toEmail } = resolveAddress(toFirst);
 
@@ -50,15 +66,16 @@ export async function POST(req: NextRequest) {
     const replyTo = replyToFirst ? resolveAddress(replyToFirst).email : null;
 
     const headers = payload.headers as Record<string, string> | undefined;
-    const threadId = headers?.["x-thread-id"] ?? null;
+    const threadId = (headers?.["x-thread-id"] ?? payload.message_id ?? null) as string | null;
 
     if (!fromEmail) {
       return NextResponse.json({ error: "Missing from" }, { status: 400 });
     }
 
+    const emailId = typeof payload.email_id === "string" ? payload.email_id : "";
+    const { html: bodyHtml, text: bodyText } = await fetchResendEmailBody(emailId);
+
     const supabase = createAdminClient();
-    const bodyHtml = extractStr(payload, ["html", "html_body", "htmlBody", "bodyHtml", "body_html"]);
-    const bodyText = extractStr(payload, ["text", "text_body", "textBody", "bodyText", "body_text", "plain", "body"]);
 
     const { error } = await supabase.from("fl_inbound_emails").insert({
       from_email: fromEmail,
