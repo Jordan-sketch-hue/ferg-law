@@ -31,13 +31,16 @@ async function fetchResendEmailBody(emailId: string): Promise<{ html: string; te
     const r = await fetch(`https://api.resend.com/emails/${emailId}`, {
       headers: { Authorization: `Bearer ${key}` },
     });
+    const raw = await r.text();
+    console.log(`RESEND_API status=${r.status} emailId=${emailId} body=${raw.slice(0, 500)}`);
     if (!r.ok) return { html: "", text: "" };
-    const d = await r.json() as Record<string, unknown>;
+    const d = JSON.parse(raw) as Record<string, unknown>;
     return {
       html: typeof d.html === "string" ? d.html : "",
       text: typeof d.text === "string" ? d.text : "",
     };
-  } catch {
+  } catch (e) {
+    console.error("fetchResendEmailBody error:", e);
     return { html: "", text: "" };
   }
 }
@@ -72,8 +75,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing from" }, { status: 400 });
     }
 
+    // Check webhook payload first (Resend may include html/text directly)
+    const payloadHtml = typeof payload.html === "string" ? payload.html : "";
+    const payloadText = typeof payload.text === "string" ? payload.text : "";
+
+    // Fall back to Resend API fetch using email_id
     const emailId = typeof payload.email_id === "string" ? payload.email_id : "";
-    const { html: bodyHtml, text: bodyText } = await fetchResendEmailBody(emailId);
+    const { html: fetchedHtml, text: fetchedText } = (payloadHtml || payloadText)
+      ? { html: payloadHtml, text: payloadText }
+      : await fetchResendEmailBody(emailId);
+
+    const bodyHtml = fetchedHtml;
+    const bodyText = fetchedText;
+    console.log(`BODY_CHECK payload_html=${!!payloadHtml} payload_text=${!!payloadText} fetched_html=${!!fetchedHtml} fetched_text=${!!fetchedText}`);
 
     const supabase = createAdminClient();
 
