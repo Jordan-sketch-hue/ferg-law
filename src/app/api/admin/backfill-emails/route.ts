@@ -52,6 +52,27 @@ export async function POST(req: NextRequest) {
 
   const results: { id: string; email_id: string; status: number; got_html: boolean; got_text: boolean }[] = [];
 
+  // Also fetch all emails without email_id for subject matching
+  const { data: allRows } = await supabase
+    .from("fl_inbound_emails")
+    .select("id, email_id, from_email, subject, body_html, body_text")
+    .is("email_id", null);
+  const noIdTargets = ((allRows as EmailRow[] & { from_email: string; subject: string }[]) ?? []).filter(
+    (r) => !r.body_html?.trim() && !r.body_text?.trim()
+  );
+
+  // Fetch Resend outbound list for subject matching
+  const key = process.env.RESEND_API_KEY!;
+  const listR = await fetch("https://api.resend.com/emails?limit=100", {
+    headers: { Authorization: `Bearer ${key}` },
+  });
+  type ResendListEmail = { id: string; from: string; subject: string };
+  let outboundEmails: ResendListEmail[] = [];
+  if (listR.ok) {
+    const parsed = (await listR.json()) as { data?: ResendListEmail[] } | ResendListEmail[];
+    outboundEmails = Array.isArray(parsed) ? parsed : (parsed.data ?? []);
+  }
+
   for (const row of targets) {
     const { html, text, status } = await fetchBodyFromResend(row.email_id!);
     if (html || text) {
@@ -63,5 +84,23 @@ export async function POST(req: NextRequest) {
     results.push({ id: row.id, email_id: row.email_id!, status, got_html: !!html, got_text: !!text });
   }
 
-  return NextResponse.json({ ok: true, processed: targets.length, results });
+  // Subject-match fallback for emails with no email_id
+  for (const row of noIdTargets as (EmailRow & { from_email: string; subject: string })[]) {
+    const match = outboundEmails.find(
+      (r) => r.subject?.trim().toLowerCase() === row.subject?.trim().toLowerCase() &&
+             r.from?.includes(row.from_email)
+    );
+    if (match) {
+      const { html, text, status } = await fetchBodyFromResend(match.id);
+      if (html || text) {
+        await supabase
+          .from("fl_inbound_emails")
+          .update({ body_html: html || null, body_text: text || null, email_id: match.id })
+          .eq("id", row.id);
+        results.push({ id: row.id, email_id: match.id, status, got_html: !!html, got_text: !!text });
+      }
+    }
+  }
+
+  return NextResponse.json({ ok: true, processed: targets.length + noIdTargets.length, results });
 }

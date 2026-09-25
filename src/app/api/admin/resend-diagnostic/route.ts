@@ -97,7 +97,8 @@ export async function POST(req: NextRequest) {
     console.log(`RESEND_FETCH email_id=${e.email_id} status=${r.status} html=${html.length} text=${text.length} snippet=${r.body.slice(0, 150)}`);
   }
 
-  // 4. For DB emails WITHOUT email_id, match by subject+sender to Resend list
+  // 4. For DB emails WITHOUT email_id, match by subject+sender to Resend list,
+  //    then fetch the matched email individually (list endpoint has no body content)
   const subjectMatches: { db_id: string; matched_resend_id: string; html_len: number; text_len: number }[] = [];
   if (resendEmails.length > 0) {
     for (const dbEmail of empty.filter((e) => !e.email_id)) {
@@ -106,12 +107,24 @@ export async function POST(req: NextRequest) {
           r.subject?.trim().toLowerCase() === dbEmail.subject?.trim().toLowerCase() &&
           (r.from?.includes(dbEmail.from_email) || dbEmail.from_email?.includes(r.from?.split("<")[1]?.replace(">","") ?? "___"))
       );
-      if (match && (match.html || match.text)) {
-        await supabase
-          .from("fl_inbound_emails")
-          .update({ body_html: match.html || null, body_text: match.text || null, email_id: match.id })
-          .eq("id", dbEmail.id);
-        subjectMatches.push({ db_id: dbEmail.id, matched_resend_id: match.id, html_len: (match.html ?? "").length, text_len: (match.text ?? "").length });
+      if (match) {
+        // List endpoint has no body — fetch individually by outbound Resend ID
+        const individual = await resendGet(`/emails/${match.id}`, key);
+        console.log(`SUBJECT_MATCH_FETCH id=${match.id} status=${individual.status} snippet=${individual.body.slice(0, 150)}`);
+        if (individual.status === 200) {
+          try {
+            const d = JSON.parse(individual.body) as Record<string, unknown>;
+            const html = typeof d.html === "string" ? d.html : "";
+            const text = typeof d.text === "string" ? d.text : "";
+            if (html || text) {
+              await supabase
+                .from("fl_inbound_emails")
+                .update({ body_html: html || null, body_text: text || null, email_id: match.id })
+                .eq("id", dbEmail.id);
+              subjectMatches.push({ db_id: dbEmail.id, matched_resend_id: match.id, html_len: html.length, text_len: text.length });
+            }
+          } catch { /* parse error */ }
+        }
       }
     }
   }
