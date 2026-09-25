@@ -42,7 +42,7 @@ async function resendGet(path: string, key: string) {
 }
 
 export async function POST(req: NextRequest) {
-  const { token } = (await req.json()) as { token?: string };
+  const { token, test_ids } = (await req.json()) as { token?: string; test_ids?: string[] };
   if (!token) return NextResponse.json({ error: "Missing token" }, { status: 400 });
 
   const supabase = createAdminClient();
@@ -116,6 +116,24 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // 5. Test specific IDs passed in request (for debugging known inbound email_ids)
+  const testIdResults: { id: string; status: number; keys: string[]; has_html: boolean; has_text: boolean; snippet: string }[] = [];
+  for (const eid of (test_ids ?? [])) {
+    const r = await resendGet(`/emails/${eid}`, key);
+    let keys: string[] = [];
+    let hasHtml = false;
+    let hasText = false;
+    if (r.status === 200) {
+      try {
+        const d = JSON.parse(r.body) as Record<string, unknown>;
+        keys = Object.keys(d);
+        hasHtml = typeof d.html === "string" && d.html.length > 0;
+        hasText = typeof d.text === "string" && d.text.length > 0;
+      } catch { /* */ }
+    }
+    testIdResults.push({ id: eid, status: r.status, keys, has_html: hasHtml, has_text: hasText, snippet: r.body.slice(0, 300) });
+  }
+
   return NextResponse.json({
     ok: true,
     resend_list_status: listResult.status,
@@ -124,5 +142,6 @@ export async function POST(req: NextRequest) {
     db_empty_count: empty.length,
     direct_fetches: directFetches,
     subject_matches: subjectMatches,
+    test_id_results: testIdResults,
   });
 }
