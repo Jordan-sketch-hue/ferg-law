@@ -2885,6 +2885,8 @@ function EmailTab({ emails, token, onMarkRead, onDelete }: {
   const [editingBody, setEditingBody] = useState(false);
   const [bodyDraft, setBodyDraft] = useState("");
   const [savingBody, setSavingBody] = useState(false);
+  const [syncingResend, setSyncingResend] = useState(false);
+  const [syncResult, setSyncResult] = useState<string | null>(null);
   const [showSpam, setShowSpam] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
@@ -3013,6 +3015,38 @@ function EmailTab({ emails, token, onMarkRead, onDelete }: {
               style={{ marginTop: 8, width: "100%", padding: "7px 16px", fontSize: ".78rem", border: "1px solid rgba(18,16,12,.15)", borderRadius: 6, background: showSpam ? "rgba(180,50,50,.08)" : "transparent", color: showSpam ? "#b43232" : MUTED, cursor: "pointer" }}>
               {showSpam ? "Hide spam" : `Show spam (${emails.filter(e => e.is_spam).length})`}
             </button>
+            <button
+              type="button"
+              disabled={syncingResend}
+              onClick={async () => {
+                setSyncingResend(true);
+                setSyncResult(null);
+                try {
+                  const res = await fetch("/api/admin/backfill-resend-received", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ token }),
+                  });
+                  const json = (await res.json().catch(() => ({}))) as { ok?: boolean; fixed?: number; processed?: number; message?: string };
+                  if (json.ok) {
+                    setSyncResult(json.message ?? `Synced ${json.fixed ?? 0}/${json.processed ?? 0} emails`);
+                  } else {
+                    setSyncResult("Sync failed");
+                  }
+                } catch {
+                  setSyncResult("Sync error");
+                } finally {
+                  setSyncingResend(false);
+                }
+              }}
+              style={{ marginTop: 6, width: "100%", padding: "7px 16px", fontSize: ".78rem", border: `1px solid ${GOLD}`, borderRadius: 6, background: "rgba(200,166,92,.06)", color: syncingResend ? MUTED : "#8a6a22", cursor: syncingResend ? "not-allowed" : "pointer", fontWeight: 600 }}>
+              {syncingResend ? "Syncing…" : "Sync bodies from Resend"}
+            </button>
+            {syncResult && (
+              <div style={{ marginTop: 5, fontSize: ".73rem", color: syncResult.includes("fail") || syncResult.includes("error") ? "#b43232" : "#2a7a4f", textAlign: "center" }}>
+                {syncResult}
+              </div>
+            )}
           </div>
         )}
         {pane === "sent" ? (
@@ -3194,8 +3228,41 @@ function EmailTab({ emails, token, onMarkRead, onDelete }: {
                   </div>
                 </div>
               ) : (
-                <div style={{ padding: 20, display: "flex", alignItems: "center", gap: 16 }}>
+                <div style={{ padding: 20, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                   <span style={{ fontSize: ".88rem", color: MUTED, fontStyle: "italic" }}>No body captured.</span>
+                  {selected.email_id && (
+                    <button
+                      type="button"
+                      disabled={syncingResend}
+                      onClick={async () => {
+                        if (!selected.email_id || syncingResend) return;
+                        setSyncingResend(true);
+                        try {
+                          const res = await fetch("/api/admin/backfill-resend-received", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ token }),
+                          });
+                          const json = (await res.json().catch(() => ({}))) as { ok?: boolean; fixed?: number; results?: { id: string; fixed: boolean }[] };
+                          if (json.ok && json.results) {
+                            const thisRow = json.results.find(r => r.id === selected.id);
+                            if (thisRow?.fixed) {
+                              // Reload email from DB to show updated body
+                              window.location.reload();
+                            } else {
+                              setSyncResult("Body not found in Resend");
+                            }
+                          }
+                        } catch {
+                          setSyncResult("Fetch error");
+                        } finally {
+                          setSyncingResend(false);
+                        }
+                      }}
+                      style={{ padding: "6px 14px", borderRadius: 999, border: "1px solid rgba(18,16,12,.2)", background: "#fff", color: MUTED, fontSize: ".8rem", cursor: syncingResend ? "not-allowed" : "pointer" }}>
+                      {syncingResend ? "Fetching…" : "Fetch from Resend"}
+                    </button>
+                  )}
                   <button type="button" onClick={() => { setEditingBody(true); setBodyDraft(""); }} style={{ padding: "6px 14px", borderRadius: 999, border: `1px solid ${GOLD}`, background: "rgba(200,166,92,.08)", color: "#8a6a22", fontWeight: 600, fontSize: ".8rem", cursor: "pointer" }}>+ Add body</button>
                 </div>
               )}
