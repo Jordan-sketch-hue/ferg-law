@@ -28,6 +28,9 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json() as Record<string, unknown>;
 
+    // DEBUG: log full raw payload so we can see the real field names from Resend
+    console.log("INBOUND_RAW:", JSON.stringify(body).slice(0, 4000));
+
     // Resend inbound payload: { data: { from, to, subject, text, html } }
     const payload = (body.data && typeof (body.data as Record<string, unknown>).from === "string")
       ? (body.data as Record<string, unknown>)
