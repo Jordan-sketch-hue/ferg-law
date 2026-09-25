@@ -233,6 +233,7 @@ interface BinItem {
 
 interface InboundEmail {
   id: string;
+  email_id?: string | null;
   created_at: string;
   from_email: string;
   from_name: string | null;
@@ -1004,7 +1005,7 @@ export default function AdminDashboard() {
           {tab === "cms" && token && <CmsTab token={token} onUnreadChange={setCmsUnread} />}
           {tab === "calendar" && <CalendarTab appts={appts} token={token ?? ""} onStatus={setApptStatus} onRefresh={() => { if (token) void fetchAll(token); }} />}
           {tab === "chats" && <ChatsTable convos={convos} loading={loading} />}
-          {tab === "email" && token && <EmailTab emails={emails} token={token} onMarkRead={(id) => setEmails(prev => prev.map(e => e.id === id ? { ...e, read: true } : e))} />}
+          {tab === "email" && token && <EmailTab emails={emails} token={token} onMarkRead={(id) => setEmails(prev => prev.map(e => e.id === id ? { ...e, read: true } : e))} onDelete={(id) => setEmails(prev => prev.filter(e => e.id !== id))} />}
           {tab === "invites" && <InvitesPanel invites={invites} loading={loading} onCreate={createInvite} onDeactivate={deactivateInvite} onDelete={deleteInvite} />}
           {tab === "directory" && <ListingsPanel listings={listings} loading={loading} onStatus={setListingStatus} />}
           {tab === "availability" && <AvailabilityTab availability={availability} onSave={saveAvailability} token={token ?? ""} />}
@@ -2862,8 +2863,8 @@ interface SentEmail {
   context: string | null;
 }
 
-function EmailTab({ emails, token, onMarkRead }: {
-  emails: InboundEmail[]; token: string; onMarkRead: (id: string) => void;
+function EmailTab({ emails, token, onMarkRead, onDelete }: {
+  emails: InboundEmail[]; token: string; onMarkRead: (id: string) => void; onDelete: (id: string) => void;
 }) {
   const [pane, setPane] = useState<"inbox" | "sent">("inbox");
   const [sentEmails, setSentEmails] = useState<SentEmail[]>([]);
@@ -2880,6 +2881,7 @@ function EmailTab({ emails, token, onMarkRead }: {
   const [newBody, setNewBody] = useState("");
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [suggesting, setSuggesting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [showSpam, setShowSpam] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
@@ -2913,6 +2915,19 @@ function EmailTab({ emails, token, onMarkRead }: {
     const json = (await res.json().catch(() => ({}))) as { ok?: boolean; suggestion?: string };
     if (json.ok && json.suggestion) { setReplyBody(json.suggestion); setReplyOpen(true); }
     setSuggesting(false);
+  }
+
+  async function deleteEmail(e: InboundEmail) {
+    if (deleting || !confirm(`Delete email from ${e.from_email}? This cannot be undone.`)) return;
+    setDeleting(true);
+    const res = await fetch("/api/admin/delete-email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, id: e.id }),
+    });
+    const json = (await res.json().catch(() => ({}))) as { ok?: boolean };
+    if (json.ok) { setSelected(null); onDelete(e.id); }
+    setDeleting(false);
   }
 
   function selectEmail(e: InboundEmail) {
@@ -3155,7 +3170,7 @@ function EmailTab({ emails, token, onMarkRead }: {
               )}
             </div>
             {!replyOpen ? (
-              <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+              <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
                 <button type="button" onClick={() => setReplyOpen(true)}
                   style={{ ...S.authBtn, width: "auto", padding: "9px 22px" }}>
                   Reply
@@ -3163,6 +3178,10 @@ function EmailTab({ emails, token, onMarkRead }: {
                 <button type="button" onClick={() => void suggestReply()} disabled={suggesting}
                   style={{ padding: "9px 18px", borderRadius: 999, border: `1px solid ${GOLD}`, background: "rgba(200,166,92,.08)", color: "#8a6a22", fontWeight: 600, fontSize: ".82rem", cursor: "pointer", ...(suggesting ? S.btnOff : null) }}>
                   {suggesting ? "Thinking…" : "✦ AI draft"}
+                </button>
+                <button type="button" onClick={() => void deleteEmail(selected)} disabled={deleting}
+                  style={{ padding: "9px 16px", borderRadius: 999, border: "1px solid rgba(160,40,40,.3)", background: "rgba(180,50,50,.06)", color: "#a02828", fontWeight: 600, fontSize: ".82rem", cursor: "pointer", marginLeft: "auto", ...(deleting ? S.btnOff : null) }}>
+                  {deleting ? "Deleting…" : "Delete"}
                 </button>
               </div>
             ) : (

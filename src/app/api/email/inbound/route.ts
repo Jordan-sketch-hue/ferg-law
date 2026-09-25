@@ -100,6 +100,7 @@ export async function POST(req: NextRequest) {
       body_html: bodyHtml,
       reply_to: replyTo,
       thread_id: threadId,
+      email_id: emailId || null,
     });
 
     if (error) {
