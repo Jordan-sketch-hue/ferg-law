@@ -230,6 +230,8 @@ export async function POST(req: NextRequest) {
       }
 
       // Notify Owen (email + WhatsApp)
+      const owenSubject = `New Booking (Free): ${name} — ${title}`;
+      const owenBody = `New free booking\n\nRef: ${ref}\nName: ${name}\nEmail: ${email}\nPhone: ${phone}\nService: ${title}\nWhen: ${whenLabel}\nNotes: ${notes || "—"}`;
       try {
         const resendKey = process.env.RESEND_API_KEY;
         if (resendKey) {
@@ -239,12 +241,26 @@ export async function POST(req: NextRequest) {
             body: JSON.stringify({
               from: "Ferguson Law <info@fergusonlawja.com>",
               to: [process.env.FERGUSON_STAFF_EMAIL || "owen@fergusonlawja.com"],
-              subject: `New Booking (Free): ${name} — ${title}`,
-              text: `New free booking\n\nRef: ${ref}\nName: ${name}\nEmail: ${email}\nPhone: ${phone}\nService: ${title}\nWhen: ${whenLabel}\nNotes: ${notes || "—"}`,
+              subject: owenSubject,
+              text: owenBody,
             }),
           });
         }
       } catch { /* swallow */ }
+      // Store the notification body in our own DB so the admin inbox always shows it
+      try {
+        await supabase.from("fl_inbound_emails").insert({
+          from_email: "info@fergusonlawja.com",
+          from_name: "Ferguson Law",
+          to_email: process.env.FERGUSON_STAFF_EMAIL || "owen@fergusonlawja.com",
+          subject: owenSubject,
+          body_text: owenBody,
+          body_html: null,
+          reply_to: null,
+          thread_id: ref,
+          email_id: null,
+        });
+      } catch { /* swallow — notification already sent */ }
       void notifyOwenWA(`📅 *New booking (free)*\n${name} · ${title}\n${whenLabel}\n${email} · ${phone}\nRef: ${ref}`);
 
       return Response.json({ ok: true, ref, free: true, startsAtLabel: whenLabel });
@@ -319,6 +335,8 @@ export async function POST(req: NextRequest) {
 
     // NO confirmation email here — it fires on the return once paid.
     // Notify Owen of pending booking
+    const pendingSubject = `New Booking: ${name} — ${title}`;
+    const pendingBody = `New booking (payment pending)\n\nRef: ${ref}\nName: ${name}\nEmail: ${email}\nPhone: ${phone}\nService: ${title}\nWhen: ${whenLabel}\nAmount: JMD ${amount.toLocaleString()}\nNotes: ${notes || "—"}`;
     try {
       const resendKey = process.env.RESEND_API_KEY;
       if (resendKey) {
@@ -328,11 +346,24 @@ export async function POST(req: NextRequest) {
           body: JSON.stringify({
             from: "Ferguson Law <info@fergusonlawja.com>",
             to: ["owen@fergusonlawja.com"],
-            subject: `New Booking: ${name} — ${title}`,
-            text: `New booking (payment pending)\n\nRef: ${ref}\nName: ${name}\nEmail: ${email}\nPhone: ${phone}\nService: ${title}\nWhen: ${whenLabel}\nAmount: JMD ${amount.toLocaleString()}\nNotes: ${notes || "—"}`,
+            subject: pendingSubject,
+            text: pendingBody,
           }),
         });
       }
+    } catch { /* swallow */ }
+    try {
+      await supabase.from("fl_inbound_emails").insert({
+        from_email: "info@fergusonlawja.com",
+        from_name: "Ferguson Law",
+        to_email: "owen@fergusonlawja.com",
+        subject: pendingSubject,
+        body_text: pendingBody,
+        body_html: null,
+        reply_to: null,
+        thread_id: ref,
+        email_id: null,
+      });
     } catch { /* swallow */ }
     void notifyOwenWA(`📅 *New booking (pending payment)*\n${name} · ${title}\n${whenLabel}\nJ$${amount.toLocaleString()} · ${email}\nRef: ${ref}`);
 
