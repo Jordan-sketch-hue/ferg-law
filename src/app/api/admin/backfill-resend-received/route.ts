@@ -32,20 +32,7 @@ async function fetchResendReceived(key: string): Promise<ResendReceivedEmail[]> 
 }
 
 async function fetchResendEmailById(key: string, emailId: string): Promise<{ html: string; text: string } | null> {
-  // Try outbound endpoint first
-  const r1 = await fetch(`https://api.resend.com/emails/${emailId}`, {
-    headers: { Authorization: `Bearer ${key}` },
-  });
-  const raw1 = await r1.text();
-  console.log(`RESEND_BY_ID_OUTBOUND id=${emailId} status=${r1.status} preview=${raw1.slice(0, 200)}`);
-  if (r1.ok) {
-    const d = JSON.parse(raw1) as Record<string, unknown>;
-    const html = typeof d.html === "string" ? d.html : "";
-    const text = typeof d.text === "string" ? d.text : "";
-    if (html || text) return { html, text };
-  }
-
-  // Try receiving-specific endpoint
+  // Received mail only exists at /emails/receiving/{id}
   const r2 = await fetch(`https://api.resend.com/emails/receiving/${emailId}`, {
     headers: { Authorization: `Bearer ${key}` },
   });
@@ -72,70 +59,60 @@ export async function POST(req: NextRequest) {
   const key = process.env.RESEND_API_KEY;
   if (!key) return NextResponse.json({ error: "RESEND_API_KEY not configured" }, { status: 500 });
 
-  // Find rows with email_id but no body
+  // Find rows with no body (with or without a stored email_id)
   const { data: rows, error: dbErr } = await supabase
     .from("fl_inbound_emails")
     .select("id, email_id, from_email, subject, body_text, body_html")
-    .not("email_id", "is", null)
-    .or("body_text.is.null,body_text.eq.")
     .order("created_at", { ascending: false })
-    .limit(50);
+    .limit(200);
 
   if (dbErr) return NextResponse.json({ error: dbErr.message }, { status: 500 });
 
-  const targets = (rows ?? []).filter(
-    (r) => r.email_id && !r.body_text?.trim() && !r.body_html?.trim()
-  );
+  const targets = (rows ?? []).filter((r) => !r.body_text?.trim() && !r.body_html?.trim());
 
   if (targets.length === 0) {
     return NextResponse.json({ ok: true, message: "No rows need backfill", processed: 0 });
   }
 
-  // Try listing all received emails first to batch match
+  // List received emails (metadata only) — used to recover email_id for older rows
   const receivedList = await fetchResendReceived(key);
-  const receivedByIdMap = new Map<string, ResendReceivedEmail>();
-  for (const e of receivedList) {
-    if (e.id) receivedByIdMap.set(e.id, e);
-  }
+  const norm = (s?: string) => (s ?? "").trim().toLowerCase();
+  const addr = (s?: string) => norm(s?.match(/<(.+?)>/)?.[1] ?? s);
 
-  const results: { id: string; email_id: string; subject: string; fixed: boolean; method: string }[] = [];
+  const results: { id: string; email_id: string; subject: string; fixed: boolean; method: string; error?: string }[] = [];
 
   for (const row of targets) {
-    const emailId = row.email_id as string;
-    let bodyHtml = "";
-    let bodyText = "";
-    let method = "none";
+    let emailId = (row.email_id as string | null) ?? "";
+    let method = "direct";
 
-    // Try list match first
-    const fromList = receivedByIdMap.get(emailId);
-    if (fromList) {
-      bodyHtml = fromList.html ?? "";
-      bodyText = fromList.text ?? "";
-      method = "list";
-    }
-
-    // If not found in list, try direct fetch
-    if (!bodyHtml && !bodyText) {
-      const direct = await fetchResendEmailById(key, emailId);
-      if (direct) {
-        bodyHtml = direct.html;
-        bodyText = direct.text;
-        method = "direct";
+    if (!emailId) {
+      const match = receivedList.find(
+        (e) => norm(e.subject) === norm(row.subject) && addr(e.from) === norm(row.from_email)
+      );
+      if (!match) {
+        results.push({ id: row.id, email_id: "", subject: row.subject, fixed: false, method: "no-match" });
+        continue;
       }
+      emailId = match.id;
+      method = "matched";
     }
 
-    if (bodyHtml || bodyText) {
-      await supabase
-        .from("fl_inbound_emails")
-        .update({
-          ...(bodyHtml ? { body_html: bodyHtml } : {}),
-          ...(bodyText ? { body_text: bodyText } : {}),
-        })
-        .eq("id", row.id);
-      results.push({ id: row.id, email_id: emailId, subject: row.subject, fixed: true, method });
-    } else {
+    const direct = await fetchResendEmailById(key, emailId);
+    if (!direct) {
       results.push({ id: row.id, email_id: emailId, subject: row.subject, fixed: false, method });
+      continue;
     }
+
+    const { error: upErr } = await supabase
+      .from("fl_inbound_emails")
+      .update({
+        email_id: emailId,
+        ...(direct.html ? { body_html: direct.html } : {}),
+        ...(direct.text ? { body_text: direct.text } : {}),
+      })
+      .eq("id", row.id);
+    if (upErr) console.error(`BACKFILL_UPDATE_ERR id=${row.id}`, upErr);
+    results.push({ id: row.id, email_id: emailId, subject: row.subject, fixed: !upErr, method, ...(upErr ? { error: upErr.message } : {}) });
   }
 
   return NextResponse.json({

@@ -27,22 +27,27 @@ function firstOf<T>(v: T | T[]): T {
 async function fetchResendEmailBody(emailId: string): Promise<{ html: string; text: string }> {
   const key = process.env.RESEND_API_KEY;
   if (!key || !emailId) return { html: "", text: "" };
-  try {
-    const r = await fetch(`https://api.resend.com/emails/${emailId}`, {
-      headers: { Authorization: `Bearer ${key}` },
-    });
-    const raw = await r.text();
-    console.log(`RESEND_API status=${r.status} emailId=${emailId} body=${raw.slice(0, 500)}`);
-    if (!r.ok) return { html: "", text: "" };
-    const d = JSON.parse(raw) as Record<string, unknown>;
-    return {
-      html: typeof d.html === "string" ? d.html : "",
-      text: typeof d.text === "string" ? d.text : "",
-    };
-  } catch (e) {
-    console.error("fetchResendEmailBody error:", e);
-    return { html: "", text: "" };
+  // Received mail lives at /emails/receiving/{id}; /emails/{id} is sent-mail only (404s here).
+  // Retry briefly — the webhook can fire a moment before the body is queryable.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const r = await fetch(`https://api.resend.com/emails/receiving/${emailId}`, {
+        headers: { Authorization: `Bearer ${key}` },
+      });
+      const raw = await r.text();
+      console.log(`RESEND_RECEIVING status=${r.status} emailId=${emailId} attempt=${attempt} preview=${raw.slice(0, 200)}`);
+      if (r.ok) {
+        const d = JSON.parse(raw) as Record<string, unknown>;
+        const html = typeof d.html === "string" ? d.html : "";
+        const text = typeof d.text === "string" ? d.text : "";
+        if (html || text) return { html, text };
+      }
+    } catch (e) {
+      console.error("fetchResendEmailBody error:", e);
+    }
+    await new Promise((res) => setTimeout(res, 1500));
   }
+  return { html: "", text: "" };
 }
 
 export async function POST(req: NextRequest) {

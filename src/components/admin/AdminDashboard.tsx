@@ -3030,6 +3030,7 @@ function EmailTab({ emails, token, onMarkRead, onDelete }: {
                   const json = (await res.json().catch(() => ({}))) as { ok?: boolean; fixed?: number; processed?: number; message?: string };
                   if (json.ok) {
                     setSyncResult(json.message ?? `Synced ${json.fixed ?? 0}/${json.processed ?? 0} emails`);
+                    if ((json.fixed ?? 0) > 0) window.location.reload();
                   } else {
                     setSyncResult("Sync failed");
                   }
