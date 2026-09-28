@@ -59,6 +59,26 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        // Admin panel: relax img-src so HTML emails can display external images/logos
+        source: "/admin",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: [
+              "default-src 'self'",
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.anthropic.com https://api.groq.com https://openrouter.ai https://generativelanguage.googleapis.com",
+              "font-src 'self' https://fonts.gstatic.com data:",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+              "img-src 'self' data: blob: https: http:",
+              "frame-ancestors 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+            ].join("; "),
+          },
+        ],
+      },
+      {
         source: "/api/ebook/:path*",
         headers: [
           { key: "Access-Control-Allow-Origin", value: "*" },
