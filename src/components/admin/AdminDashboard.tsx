@@ -299,6 +299,7 @@ export default function AdminDashboard() {
   const [showPw, setShowPw] = useState(false);
   const [accountEmail, setAccountEmail] = useState<string | null>(null);
   const [showAccount, setShowAccount] = useState(false);
+  const [notifPerm, setNotifPerm] = useState<NotificationPermission | "unsupported">("default");
 
   const [tab, setTab] = useState<Tab>("overview");
   const [group, setGroup] = useState<TabGroup>("dashboard");
@@ -381,6 +382,13 @@ export default function AdminDashboard() {
       if (!cancelled && typeof data === "string" && data) setAccountEmail(data);
     })();
     return () => { cancelled = true; };
+  }, [token]);
+
+  // Track notification permission so the UI can show an enable button
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!("Notification" in window)) { setNotifPerm("unsupported"); return; }
+    setNotifPerm(Notification.permission);
   }, [token]);
 
   // Admin push subscription — fires on every login to keep endpoint fresh
@@ -799,6 +807,34 @@ export default function AdminDashboard() {
     setHomePros([]); setHomeListings([]); setEmails([]); setInquiries([]);
   }, []);
 
+  const enablePushNotifications = useCallback(async () => {
+    if (!token || !("Notification" in window) || !("serviceWorker" in navigator)) return;
+    const VAPID_PUBLIC = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+    if (!VAPID_PUBLIC) return;
+    try {
+      const perm = await Notification.requestPermission();
+      setNotifPerm(perm);
+      if (perm !== "granted") return;
+      const reg = await navigator.serviceWorker.ready;
+      function urlBase64ToUint8Array(b64: string): Uint8Array {
+        const padding = "=".repeat((4 - (b64.length % 4)) % 4);
+        const base64 = (b64 + padding).replace(/-/g, "+").replace(/_/g, "/");
+        const raw = atob(base64);
+        return new Uint8Array([...raw].map(c => c.charCodeAt(0)));
+      }
+      const existing = await reg.pushManager.getSubscription();
+      const sub = existing ?? await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC) as unknown as ArrayBuffer,
+      });
+      await fetch("/api/push/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subscription: sub, userRole: "admin", userRef: token }),
+      });
+    } catch { /* ignore */ }
+  }, [token]);
+
   // Role — Jordan sees everything; Owen gets a simplified label on his greeting
   const isJordan = accountEmail === "jordanrmorris01@icloud.com";
 
@@ -921,6 +957,16 @@ export default function AdminDashboard() {
             style={{ ...S.ghostBtn, ...(loading ? S.btnOff : null) }}>
             {loading ? "Refreshing…" : "Refresh"}
           </button>
+          {notifPerm !== "granted" && notifPerm !== "unsupported" && (
+            <button
+              type="button"
+              onClick={() => void enablePushNotifications()}
+              style={{ ...S.ghostBtn, background: "rgba(200,166,92,.25)", border: "1px solid rgba(200,166,92,.6)", fontWeight: 700 }}
+              title={notifPerm === "denied" ? "Notification permission was denied — reset it in browser settings then click here" : "Enable push notifications for appointment alerts"}
+            >
+              {notifPerm === "denied" ? "🔕 Notifications blocked" : "🔔 Enable notifications"}
+            </button>
+          )}
           {accountEmail && (
             <button type="button" onClick={() => setShowAccount(true)} style={S.ghostBtn}>Account</button>
           )}

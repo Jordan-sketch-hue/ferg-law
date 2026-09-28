@@ -126,6 +126,14 @@ export async function GET(req: NextRequest) {
           p_kind: kind,
         });
         result[kind] += 1;
+
+        // Push admin notification for every reminder that actually fires
+        const kindLabel: Record<string, string> = { "24h": "tomorrow", "2h": "in 2 hours", "1h": "in 1 hour", "15m": "in 15 min" };
+        await pushToAdmins(
+          `Reminder sent — ${row.name || "Client"}`,
+          `${row.service || "Consultation"} ${kindLabel[kind] ?? kind} · ${fullWhenLabel(row.starts_at)}`,
+          "/admin?tab=bookings",
+        );
       }
     }
   }
