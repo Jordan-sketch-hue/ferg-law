@@ -55,6 +55,38 @@ export default function SettingsPage() {
   const [error, setError] = useState("");
   const [newCC, setNewCC] = useState<CcContact>({ name: "", whatsapp: "", email: "" });
   const [addingCC, setAddingCC] = useState(false);
+  const [pushState, setPushState] = useState<"unsupported" | "default" | "granted" | "denied" | "loading">("unsupported");
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !("Notification" in window)) return;
+    setPushState(Notification.permission as "default" | "granted" | "denied");
+  }, []);
+
+  const enablePush = async () => {
+    const vapid = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+    if (!vapid || !("serviceWorker" in navigator)) return;
+    setPushState("loading");
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") { setPushState(permission as "denied"); return; }
+      const reg = await navigator.serviceWorker.ready;
+      const padding = "=".repeat((4 - (vapid.length % 4)) % 4);
+      const base64 = (vapid + padding).replace(/-/g, "+").replace(/_/g, "/");
+      const raw = atob(base64);
+      const key = new Uint8Array([...raw].map((c) => c.charCodeAt(0)));
+      const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key as unknown as ArrayBuffer });
+      const uid = (await supabase().auth.getUser()).data.user?.id;
+      await fetch("/api/push/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subscription: sub, userRole: "client", userRef: uid ?? "" }),
+      });
+      setPushState("granted");
+      try { localStorage.removeItem("fl_push_prompted"); } catch { /* noop */ }
+    } catch {
+      setPushState("denied");
+    }
+  };
 
   useEffect(() => {
     (async () => {
@@ -138,6 +170,36 @@ export default function SettingsPage() {
               </div>
             </div>
           ))}
+
+          {/* Push notification toggle */}
+          {pushState !== "unsupported" && (
+            <div style={S.row(toggleKeys.length)}>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: "#10211c", marginBottom: 3 }}>Browser push notifications</div>
+                <div style={{ fontSize: 13, color: "#6a6a6a", lineHeight: 1.5 }}>
+                  {pushState === "granted"
+                    ? "Enabled — you will receive browser alerts for updates on your matter."
+                    : pushState === "denied"
+                    ? "Blocked in your browser. To enable, open your browser's site settings and allow notifications for this site."
+                    : pushState === "loading"
+                    ? "Setting up..."
+                    : "Get browser alerts for case updates, messages, and appointment reminders — even when the tab is closed."}
+                </div>
+              </div>
+              {pushState === "denied" ? (
+                <span style={{ fontSize: 12, color: "#b00", flexShrink: 0, maxWidth: 70, textAlign: "right" as const, lineHeight: 1.4 }}>Blocked</span>
+              ) : pushState === "loading" ? (
+                <div style={{ ...S.pill(false), opacity: 0.5 }}><div style={S.dot(false)} /></div>
+              ) : (
+                <div
+                  onClick={pushState === "default" ? enablePush : undefined}
+                  style={{ ...S.pill(pushState === "granted"), cursor: pushState === "default" ? "pointer" : "default" }}
+                >
+                  <div style={S.dot(pushState === "granted")} />
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* CC contacts */}
