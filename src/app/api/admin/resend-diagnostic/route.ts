@@ -1,26 +1,19 @@
 /**
  * POST /api/admin/resend-diagnostic
- * Admin-only: calls Resend API to list and retrieve inbound email bodies.
- * Tries GET /emails (list), then GET /emails/{id} per stored email_id.
- * Also matches by subject to find bodies for emails without stored email_id.
+ * Admin-only: syncs inbound email bodies from Resend's receiving API.
+ * Uses /emails/receiving endpoint (NOT /emails which is sent-mail only).
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 
-interface ResendEmail {
+interface ResendReceivedEmail {
   id: string;
-  from: string;
-  to: string[];
-  subject: string;
+  from?: string;
+  to?: string[];
+  subject?: string;
   html?: string;
   text?: string;
   created_at?: string;
-  last_event?: string;
-}
-
-interface ResendListResponse {
-  data: ResendEmail[];
-  object: string;
 }
 
 interface DBEmail {
@@ -52,19 +45,19 @@ export async function POST(req: NextRequest) {
   const key = process.env.RESEND_API_KEY;
   if (!key) return NextResponse.json({ error: "RESEND_API_KEY not set" }, { status: 503 });
 
-  // 1. List emails from Resend (all types)
-  const listResult = await resendGet("/emails?limit=100", key);
-  console.log(`RESEND_LIST status=${listResult.status} snippet=${listResult.body.slice(0, 300)}`);
+  // 1. List received emails from Resend (received-mail only endpoint)
+  const listResult = await resendGet("/emails/receiving?limit=100", key);
+  console.log(`RESEND_DIAG_LIST status=${listResult.status} snippet=${listResult.body.slice(0, 300)}`);
 
-  let resendEmails: ResendEmail[] = [];
+  let resendEmails: ResendReceivedEmail[] = [];
   if (listResult.status === 200) {
     try {
-      const parsed = JSON.parse(listResult.body) as ResendListResponse | ResendEmail[];
+      const parsed = JSON.parse(listResult.body) as { data?: ResendReceivedEmail[] } | ResendReceivedEmail[];
       resendEmails = Array.isArray(parsed) ? parsed : (parsed.data ?? []);
     } catch { /* parse error */ }
   }
 
-  // 2. Get all DB emails with no body
+  // 2. Get all DB emails
   const { data: dbEmails } = await supabase
     .from("fl_inbound_emails")
     .select("id, email_id, from_email, subject, body_html, body_text, created_at")
@@ -74,10 +67,10 @@ export async function POST(req: NextRequest) {
     (e) => !e.body_html?.trim() && !e.body_text?.trim()
   );
 
-  // 3. For DB emails WITH email_id, fetch directly
+  // 3. For DB emails WITH email_id, fetch from receiving endpoint
   const directFetches: { db_id: string; email_id: string; status: number; html_len: number; text_len: number }[] = [];
   for (const e of ((dbEmails as DBEmail[]) ?? []).filter((e) => e.email_id)) {
-    const r = await resendGet(`/emails/${e.email_id}`, key);
+    const r = await resendGet(`/emails/receiving/${e.email_id}`, key);
     let html = "";
     let text = "";
     if (r.status === 200) {
@@ -94,23 +87,22 @@ export async function POST(req: NextRequest) {
       } catch { /* parse error */ }
     }
     directFetches.push({ db_id: e.id, email_id: e.email_id!, status: r.status, html_len: html.length, text_len: text.length });
-    console.log(`RESEND_FETCH email_id=${e.email_id} status=${r.status} html=${html.length} text=${text.length} snippet=${r.body.slice(0, 150)}`);
+    console.log(`RESEND_DIAG_FETCH email_id=${e.email_id} status=${r.status} html=${html.length} text=${text.length}`);
   }
 
-  // 4. For DB emails WITHOUT email_id, match by subject+sender to Resend list,
-  //    then fetch the matched email individually (list endpoint has no body content)
+  // 4. For DB emails WITHOUT email_id, match by subject+sender against received list
+  const norm = (s?: string) => (s ?? "").trim().toLowerCase();
+  const addr = (s?: string) => norm(s?.match(/<(.+?)>/)?.[1] ?? s);
+
   const subjectMatches: { db_id: string; matched_resend_id: string; html_len: number; text_len: number }[] = [];
   if (resendEmails.length > 0) {
     for (const dbEmail of empty.filter((e) => !e.email_id)) {
       const match = resendEmails.find(
-        (r) =>
-          r.subject?.trim().toLowerCase() === dbEmail.subject?.trim().toLowerCase() &&
-          (r.from?.includes(dbEmail.from_email) || dbEmail.from_email?.includes(r.from?.split("<")[1]?.replace(">","") ?? "___"))
+        (r) => norm(r.subject) === norm(dbEmail.subject) && addr(r.from) === norm(dbEmail.from_email)
       );
       if (match) {
-        // List endpoint has no body — fetch individually by outbound Resend ID
-        const individual = await resendGet(`/emails/${match.id}`, key);
-        console.log(`SUBJECT_MATCH_FETCH id=${match.id} status=${individual.status} snippet=${individual.body.slice(0, 150)}`);
+        const individual = await resendGet(`/emails/receiving/${match.id}`, key);
+        console.log(`RESEND_DIAG_SUBJECT_MATCH id=${match.id} status=${individual.status}`);
         if (individual.status === 200) {
           try {
             const d = JSON.parse(individual.body) as Record<string, unknown>;
@@ -129,27 +121,25 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // 5. Test specific IDs passed in request (for debugging known inbound email_ids)
-  const testIdResults: { id: string; status: number; keys: string[]; has_html: boolean; has_text: boolean; snippet: string }[] = [];
+  // 5. Test specific IDs against receiving endpoint
+  const testIdResults: { id: string; status: number; has_html: boolean; has_text: boolean; snippet: string }[] = [];
   for (const eid of (test_ids ?? [])) {
-    const r = await resendGet(`/emails/${eid}`, key);
-    let keys: string[] = [];
+    const r = await resendGet(`/emails/receiving/${eid}`, key);
     let hasHtml = false;
     let hasText = false;
     if (r.status === 200) {
       try {
         const d = JSON.parse(r.body) as Record<string, unknown>;
-        keys = Object.keys(d);
         hasHtml = typeof d.html === "string" && d.html.length > 0;
         hasText = typeof d.text === "string" && d.text.length > 0;
       } catch { /* */ }
     }
-    testIdResults.push({ id: eid, status: r.status, keys, has_html: hasHtml, has_text: hasText, snippet: r.body.slice(0, 300) });
+    testIdResults.push({ id: eid, status: r.status, has_html: hasHtml, has_text: hasText, snippet: r.body.slice(0, 300) });
   }
 
   return NextResponse.json({
     ok: true,
-    resend_list_status: listResult.status,
+    resend_received_list_status: listResult.status,
     resend_emails_found: resendEmails.length,
     resend_email_subjects: resendEmails.slice(0, 10).map((e) => ({ id: e.id, subject: e.subject, from: e.from })),
     db_empty_count: empty.length,
