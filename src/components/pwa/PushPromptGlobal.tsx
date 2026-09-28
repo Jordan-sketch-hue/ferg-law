@@ -26,6 +26,10 @@ export default function PushPromptGlobal() {
     const tryShow = (id: string) => {
       if (Notification.permission !== 'default') return; // already granted or denied
       try { if (localStorage.getItem(STORAGE_KEY)) return; } catch { return; }
+      // Don't overlap with the install banner — only show push prompt once install is resolved
+      const installDismissed = (() => { try { return !!localStorage.getItem('fl-install-dismissed-v2'); } catch { return false; } })();
+      const isInstalled = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as { standalone?: boolean }).standalone === true;
+      if (!installDismissed && !isInstalled) return;
       setUserId(id);
       // Small delay so the page finishes loading first
       setTimeout(() => setShow(true), 1800);
@@ -36,13 +40,24 @@ export default function PushPromptGlobal() {
       if (data.session?.user) tryShow(data.session.user.id);
     });
 
+    // Also try showing when install banner gets dismissed this session
+    const onInstallResolved = () => {
+      supabase.auth.getSession().then(({ data }) => {
+        if (data.session?.user) tryShow(data.session.user.id);
+      });
+    };
+    window.addEventListener('fl-install-resolved', onInstallResolved);
+
     // Fire when auth state changes (sign-in event)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session?.user) tryShow(session.user.id);
       if (event === 'SIGNED_OUT') { setShow(false); setUserId(null); }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener('fl-install-resolved', onInstallResolved);
+    };
   }, []);
 
   // Silent re-subscribe on each page load when permission already granted

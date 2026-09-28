@@ -67,6 +67,7 @@ export default function InstallBanner({
   const dismiss = () => {
     setVisible(false);
     localStorage.setItem(DISMISSED_KEY, '1');
+    window.dispatchEvent(new Event('fl-install-resolved'));
   };
 
   const install = async () => {
@@ -75,7 +76,8 @@ export default function InstallBanner({
       deferredPrompt.prompt();
       const result = await deferredPrompt.userChoice;
       setInstalling(false);
-      if (result.outcome === 'accepted') dismiss();
+      if (result.outcome === 'accepted') { dismiss(); }
+      else { setInstalling(false); }
     } else if (platform === 'ios') {
       setStep('ios-guide');
     } else {
