@@ -1,6 +1,7 @@
 ﻿/* eslint-disable @next/next/no-img-element */
 import type { Metadata } from "next";
 import "./directory.css";
+import { DirectoryFooter } from "./DirectoryFooter";
 
 export const metadata: Metadata = {
   title: "Find a Professional — H.O.M.E.® by Ferguson Law",
@@ -33,15 +34,7 @@ export default function DirectoryLayout({ children }: { children: React.ReactNod
 
       <main>{children}</main>
 
-      <footer className="dir-foot">
-        <div className="dir-wrap">
-          <a href="/">← Back to Ferguson Law</a>
-          <p>
-            Ferguson Law lists these professionals as a convenience and does not
-            endorse or guarantee any of them. © {new Date().getFullYear()} Ferguson Law.
-          </p>
-        </div>
-      </footer>
+      <DirectoryFooter />
     </>
   );
 }

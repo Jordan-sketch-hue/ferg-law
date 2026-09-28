@@ -1471,7 +1471,7 @@ function BookingsTable({ appts, loading, token, onStatus, onCancel, onRefresh }:
   const [linkSending, setLinkSending] = useState<string | null>(null);
   const [linkResult, setLinkResult] = useState<Record<string, { ok: boolean; msg: string }>>({});
   const [newBooking, setNewBooking] = useState(false);
-  const [filter, setFilter] = useState<BookingFilter>("all");
+  const [filter, setFilter] = useState<BookingFilter>("upcoming");
   const [sort, setSort] = useState<BookingSort>("soonest");
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
@@ -1566,7 +1566,7 @@ function BookingsTable({ appts, loading, token, onStatus, onCancel, onRefresh }:
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     {a.email && <button type="button" onClick={() => setComposing(a)} style={{ ...S.waBtn, background: "#c9a86a", color: "#10211c" }}>Email</button>}
                     {a.email && a.status === "confirmed" && <button type="button" onClick={() => void sendMeetingLink(a)} disabled={linkSending === a.id} style={{ ...S.waBtn, background: "rgba(16,42,30,.1)", color: GREEN, opacity: linkSending === a.id ? 0.6 : 1 }}>{linkSending === a.id ? "Sending…" : "Meeting link"}</button>}
-                    {a.status !== "cancelled" && <button type="button" onClick={() => onCancel(a.id)} style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)" }}>Cancel</button>}
+                    {(a.status === "pending" || a.status === "confirmed") && new Date(a.starts_at) > new Date() && <button type="button" onClick={() => onCancel(a.id)} style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)" }}>Cancel</button>}
                     {linkResult[a.id] && <span style={{ fontSize: ".72rem", color: linkResult[a.id].ok ? "#2f7a52" : "#a23b3b" }}>{linkResult[a.id].msg}</span>}
                   </div>
                 </div>
@@ -1612,7 +1612,7 @@ function BookingsTable({ appts, loading, token, onStatus, onCancel, onRefresh }:
                             {linkSending === a.id ? "Sending…" : "Send meeting link"}
                           </button>
                         )}
-                        {a.status !== "cancelled" && (
+                        {(a.status === "pending" || a.status === "confirmed") && new Date(a.starts_at) > new Date() && (
                           <button type="button" onClick={() => onCancel(a.id)}
                             style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)" }}>
                             Cancel
@@ -2114,6 +2114,11 @@ function MilestonePanel({ matterId, token, matter, onClose, inline }: {
 function CalendarTab({ appts, token, onStatus, onRefresh }: { appts: Appointment[]; token: string; onStatus: (id: string, s: string) => void; onRefresh: () => void }) {
   const [weekOffset, setWeekOffset] = useState(0);
   const [activeAppt, setActiveAppt] = useState<Appointment | null>(null);
+  const [blockedSlots, setBlockedSlots] = useState<{ starts_at: string }[]>([]);
+  useEffect(() => {
+    void createClient().rpc("fl_admin_list_blocked_slots", { p_token: token })
+      .then(({ data }) => setBlockedSlots((data as { starts_at: string }[]) ?? []));
+  }, [token]);
 
   // Compute current week start (Monday) in Jamaica time
   const weekStart = (() => {
@@ -2141,6 +2146,15 @@ function CalendarTab({ appts, token, onStatus, onRefresh }: { appts: Appointment
       const aDay = formatInTimeZone(new Date(a.starts_at), TZ, "yyyy-MM-dd");
       const aHour = parseInt(formatInTimeZone(new Date(a.starts_at), TZ, "H"), 10);
       return aDay === dayStr && aHour === hour;
+    });
+  }
+
+  function isBlockedSlot(day: Date, hour: number): boolean {
+    const dayStr = formatInTimeZone(day, TZ, "yyyy-MM-dd");
+    return blockedSlots.some((b) => {
+      const bDay = formatInTimeZone(new Date(b.starts_at), TZ, "yyyy-MM-dd");
+      const bHour = parseInt(formatInTimeZone(new Date(b.starts_at), TZ, "H"), 10);
+      return bDay === dayStr && bHour === hour;
     });
   }
 
@@ -2174,6 +2188,7 @@ function CalendarTab({ appts, token, onStatus, onRefresh }: { appts: Appointment
                 <td style={{ ...S.td, color: MUTED, whiteSpace: "nowrap", verticalAlign: "top", paddingTop: 10, fontSize: ".76rem" }}>{h % 12 || 12}{h < 12 ? "am" : "pm"}</td>
                 {days.map((d, di) => {
                   const appt = apptForSlot(d, h);
+                  const blocked = !appt && isBlockedSlot(d, h);
                   return (
                     <td key={di} style={{ ...S.td, verticalAlign: "top", padding: 6, minWidth: 88 }}>
                       {appt ? (
@@ -2182,6 +2197,10 @@ function CalendarTab({ appts, token, onStatus, onRefresh }: { appts: Appointment
                           <div style={{ fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{appt.name || "Visitor"}</div>
                           <div style={{ opacity: .75, fontSize: ".7rem" }}>{appt.service?.slice(0, 20) || "Consult"}</div>
                         </button>
+                      ) : blocked ? (
+                        <div style={{ width: "100%", borderRadius: 8, padding: "6px 8px", fontSize: ".72rem", fontWeight: 600, color: "#7a6a3a", background: "repeating-linear-gradient(45deg,rgba(200,166,92,.1),rgba(200,166,92,.1) 4px,rgba(200,166,92,.04) 4px,rgba(200,166,92,.04) 8px)", border: "1px solid rgba(200,166,92,.3)" }}>
+                          Blocked
+                        </div>
                       ) : null}
                     </td>
                   );
@@ -2795,7 +2814,7 @@ function OverviewPanel({ leads, appts, convos, matters, homePros, emails, inquir
 
       <div style={{ fontWeight: 700, fontSize: ".78rem", textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 12 }}>Upcoming appointments</div>
       <div style={{ background: "#fff", border: "1px solid rgba(18,16,12,.08)", borderRadius: 12, overflow: "hidden" }}>
-        {appts.filter(a => new Date(a.starts_at).getTime() >= now && a.status !== "cancelled").slice(0, 5).map((a, i) => (
+        {appts.filter(a => new Date(a.starts_at).getTime() >= now && a.status !== "cancelled").sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime()).slice(0, 5).map((a, i) => (
           <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderTop: i > 0 ? "1px solid rgba(18,16,12,.06)" : "none" }}>
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 600, fontSize: ".88rem", color: GREEN }}>{a.name || "—"}</div>

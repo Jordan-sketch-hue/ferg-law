@@ -169,7 +169,7 @@ export default function AppointmentAttentionPanel({ appt, token, onClose, onStat
             </div>
           )}
           <div style={{ marginTop: 10, display: "flex", gap: 14, fontSize: ".82rem" }}>
-            <span>{url ? "✓" : "○"} Zoom/meeting link {url ? "available" : "not generated"}</span>
+            <span>{url ? "✓ Zoom link ready — use Send meeting link to share with client" : "○ No Zoom link generated yet"}</span>
           </div>
         </div>
 
