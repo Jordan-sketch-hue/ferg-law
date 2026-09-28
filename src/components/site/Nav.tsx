@@ -46,7 +46,7 @@ const CalIcon = () => (
 
 
 export default function Nav() {
-  const [scrolled, setScrolled] = useState(false);
+  const [scrolled, setScrolled] = useState(() => typeof window !== "undefined" ? window.scrollY > 8 : false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [resourcesOpen, setResourcesOpen] = useState(false);
   const resourcesRef = useRef<HTMLDivElement>(null);
@@ -209,10 +209,14 @@ export default function Nav() {
             <a key={l.href} href={l.href}
               onClick={(e) => {
                 if (l.href.includes("#")) {
-                  e.preventDefault();
-                  setMenuOpen(false);
-                  const id = l.href.split("#")[1];
-                  setTimeout(() => { document.getElementById(id)?.scrollIntoView({ behavior: "smooth" }); }, 320);
+                  if (pathname === "/") {
+                    e.preventDefault();
+                    setMenuOpen(false);
+                    const id = l.href.split("#")[1];
+                    setTimeout(() => { document.getElementById(id)?.scrollIntoView({ behavior: "smooth" }); }, 320);
+                  } else {
+                    closeMenu();
+                  }
                 } else { closeMenu(); }
               }}
 ><span data-edit={`nav.${l.label.toLowerCase().replace(/\s+/g,"")}`}>{l.label}</span></a>
