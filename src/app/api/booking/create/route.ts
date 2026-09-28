@@ -239,7 +239,7 @@ export async function POST(req: NextRequest) {
             method: "POST",
             headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
             body: JSON.stringify({
-              from: "Ferguson Law <info@fergusonlawja.com>",
+              from: "Ferguson Law <contact@fergusonlawja.com>",
               to: [process.env.FERGUSON_STAFF_EMAIL || "owen@fergusonlawja.com"],
               subject: owenSubject,
               text: owenBody,
@@ -250,7 +250,7 @@ export async function POST(req: NextRequest) {
       // Store the notification body in our own DB so the admin inbox always shows it
       try {
         await supabase.from("fl_inbound_emails").insert({
-          from_email: "info@fergusonlawja.com",
+          from_email: "contact@fergusonlawja.com",
           from_name: "Ferguson Law",
           to_email: process.env.FERGUSON_STAFF_EMAIL || "owen@fergusonlawja.com",
           subject: owenSubject,
@@ -344,7 +344,7 @@ export async function POST(req: NextRequest) {
           method: "POST",
           headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
           body: JSON.stringify({
-            from: "Ferguson Law <info@fergusonlawja.com>",
+            from: "Ferguson Law <contact@fergusonlawja.com>",
             to: ["owen@fergusonlawja.com"],
             subject: pendingSubject,
             text: pendingBody,
@@ -354,7 +354,7 @@ export async function POST(req: NextRequest) {
     } catch { /* swallow */ }
     try {
       await supabase.from("fl_inbound_emails").insert({
-        from_email: "info@fergusonlawja.com",
+        from_email: "contact@fergusonlawja.com",
         from_name: "Ferguson Law",
         to_email: "owen@fergusonlawja.com",
         subject: pendingSubject,

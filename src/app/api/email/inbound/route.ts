@@ -139,7 +139,7 @@ export async function POST(req: NextRequest) {
         method: "POST",
         headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          from: "Ferguson Law <info@fergusonlawja.com>",
+          from: "Ferguson Law <contact@fergusonlawja.com>",
           to: [staffEmail],
           bcc: ["jordanroad631@gmail.com"],
           subject: `New enquiry: ${String(payload.subject ?? "(no subject)")}`,

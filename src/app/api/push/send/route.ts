@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
   }
 
   webpush.setVapidDetails(
-    'mailto:info@fergusonlawja.com',
+    'mailto:contact@fergusonlawja.com',
     vapidPublic,
     vapidPrivate
   );
