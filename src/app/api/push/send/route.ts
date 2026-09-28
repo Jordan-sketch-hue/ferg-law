@@ -6,16 +6,23 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
-  webpush.setVapidDetails(
-    'mailto:info@fergusonlawja.com',
-    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-    process.env.VAPID_PRIVATE_KEY!
-  );
   // Internal-only — guard with a shared secret
   const secret = req.headers.get('x-push-secret');
   if (secret !== process.env.PUSH_INTERNAL_SECRET) {
     return Response.json({ ok: false }, { status: 401 });
   }
+
+  const vapidPublic = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  const vapidPrivate = process.env.VAPID_PRIVATE_KEY;
+  if (!vapidPublic || !vapidPrivate) {
+    return Response.json({ ok: false, error: 'VAPID keys not configured' }, { status: 503 });
+  }
+
+  webpush.setVapidDetails(
+    'mailto:info@fergusonlawja.com',
+    vapidPublic,
+    vapidPrivate
+  );
 
   const {
     role,          // 'admin' | 'client' | 'partner' | 'public' — or omit for all
