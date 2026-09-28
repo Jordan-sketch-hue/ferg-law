@@ -107,7 +107,7 @@ function Splash({ onDone }: { onDone: () => void }) {
           <CmsText page="booking-type-select" block="splash_firm_name" fallback="Ferguson Law" />
         </p>
         <p style={{ fontSize: "0.82rem", color: "rgba(255,255,255,.45)", margin: 0 }}>
-          <CmsText page="booking-type-select" block="splash_tagline" fallback="Counsel · Compliance · Care" />
+          <CmsText page="booking-type-select" block="splash_tagline" fallback="Counsel · Care · Competence" />
         </p>
       </div>
       {/* Pulse ring */}

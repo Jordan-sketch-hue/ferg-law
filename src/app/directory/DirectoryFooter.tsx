@@ -3,7 +3,7 @@ import { usePathname } from "next/navigation";
 
 export function DirectoryFooter() {
   const pathname = usePathname();
-  const isClientPortal = pathname.startsWith("/directory/dashboard");
+  const isClientPortal = pathname.startsWith("/directory/dashboard") || pathname.startsWith("/directory/client");
 
   return (
     <footer className="dir-foot">
