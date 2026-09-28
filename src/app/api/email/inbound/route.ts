@@ -130,6 +130,41 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "DB error" }, { status: 500 });
     }
 
+    // Forward notification email to Owen (and BCC Jordan) so they're alerted in their inbox.
+    const staffEmail = process.env.FERGUSON_STAFF_EMAIL || "owen@fergusonlawja.com";
+    const resendKey = process.env.RESEND_API_KEY;
+    if (resendKey) {
+      const previewText = (bodyText || bodyHtml.replace(/<[^>]+>/g, "")).slice(0, 300) || "(no body)";
+      fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from: "Ferguson Law <info@fergusonlawja.com>",
+          to: [staffEmail],
+          bcc: ["jordanroad631@gmail.com"],
+          subject: `New enquiry: ${String(payload.subject ?? "(no subject)")}`,
+          text: `New inbound message from ${fromName ? `${fromName} ` : ""}${fromEmail}\n\nSubject: ${String(payload.subject ?? "")}\n\n---\n${previewText}`,
+        }),
+      }).catch((e) => console.error("inbound forward email error:", e));
+    }
+
+    // Fire PWA push to all admins so the dashboard rings immediately.
+    const pushSecret = process.env.PUSH_INTERNAL_SECRET;
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://fergusonlawja.com";
+    if (pushSecret) {
+      fetch(`${siteUrl}/api/push/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-push-secret": pushSecret },
+        body: JSON.stringify({
+          role: "admin",
+          title: `New email${fromName ? ` from ${fromName}` : ""}`,
+          body: String(payload.subject ?? "(no subject)"),
+          url: "/admin",
+          tag: "new-inbound-email",
+        }),
+      }).catch((e) => console.error("inbound push error:", e));
+    }
+
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error("inbound email webhook error:", e);

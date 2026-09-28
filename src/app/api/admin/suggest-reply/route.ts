@@ -41,7 +41,7 @@ Write a professional, warm, and concise reply. Rules:
 - Confirm Ferguson Law can assist and invite them to book a consultation
 - If the email mentions a property value or specific matter, reference it naturally
 - Keep it under 130 words
-- End with: "Warm regards,\nOwen K. Ferguson, JP\nFerguson Law\n(876) 831-5563"
+- End with: "Warm regards,\nOwen K. Ferguson, JP\nFerguson Law\n(876) 320-0235"
 - Write ONLY the email body — no subject line, no metadata`;
 
   try {
