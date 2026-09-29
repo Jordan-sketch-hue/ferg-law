@@ -131,9 +131,15 @@ export async function POST(req: NextRequest) {
     }
 
     // Forward notification email to Owen (and BCC Jordan) so they're alerted in their inbox.
+    // Skip if the sender is our own domain — prevents infinite loops when system emails
+    // (morning digest, notification forwards) land at contact@fergusonlawja.com.
+    const isInternalSender = fromEmail.toLowerCase().endsWith("@fergusonlawja.com");
     const staffEmail = process.env.FERGUSON_STAFF_EMAIL || "owen@fergusonlawja.com";
     const resendKey = process.env.RESEND_API_KEY;
-    if (resendKey) {
+    if (resendKey && !isInternalSender) {
+      const rawSubject = String(payload.subject ?? "(no subject)");
+      // Strip any accumulated "New enquiry: " prefixes before adding one.
+      const cleanSubject = rawSubject.replace(/^(New enquiry:\s*)+/i, "");
       const previewText = (bodyText || bodyHtml.replace(/<[^>]+>/g, "")).slice(0, 300) || "(no body)";
       fetch("https://api.resend.com/emails", {
         method: "POST",
@@ -142,8 +148,8 @@ export async function POST(req: NextRequest) {
           from: "Ferguson Law <contact@fergusonlawja.com>",
           to: [staffEmail],
           bcc: ["jordanroad631@gmail.com"],
-          subject: `New enquiry: ${String(payload.subject ?? "(no subject)")}`,
-          text: `New inbound message from ${fromName ? `${fromName} ` : ""}${fromEmail}\n\nSubject: ${String(payload.subject ?? "")}\n\n---\n${previewText}`,
+          subject: `New enquiry: ${cleanSubject}`,
+          text: `New inbound message from ${fromName ? `${fromName} ` : ""}${fromEmail}\n\nSubject: ${cleanSubject}\n\n---\n${previewText}`,
         }),
       }).catch((e) => console.error("inbound forward email error:", e));
     }
