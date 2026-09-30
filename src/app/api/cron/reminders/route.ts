@@ -30,6 +30,7 @@ type DueRow = {
   email: string | null;
   service: string | null;
   starts_at: string | null;
+  meta?: { meeting_url?: string | null } | null;
 };
 
 type ApptRow = {
@@ -86,10 +87,11 @@ export async function GET(req: NextRequest) {
       // Need the appointment id (fl_due_reminders only returns ref) for the log FK.
       const { data: apptRows } = await supabase
         .from("appointments")
-        .select("id")
+        .select("id, meta")
         .eq("ref", row.ref)
         .limit(1);
       const appointmentId = apptRows?.[0]?.id as string | undefined;
+      const meetingUrl = (apptRows?.[0]?.meta as { meeting_url?: string } | null)?.meeting_url ?? undefined;
 
       const adminEmail = process.env.FERGUSON_ADMIN_EMAIL || process.env.FERGUSON_STAFF_EMAIL || "owenkferguson@hotmail.com";
       const send = await sendBookingReminder({
@@ -100,6 +102,7 @@ export async function GET(req: NextRequest) {
         ref: row.ref,
         kind,
         adminBcc: adminEmail,
+        meetingUrl,
       });
 
       if (appointmentId) {
