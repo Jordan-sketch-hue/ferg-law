@@ -81,7 +81,7 @@ export async function GET(req: NextRequest) {
     const resend = new Resend(key);
     await resend.emails.send({
       from: "Ferguson Law <contact@fergusonlawja.com>",
-      to: [process.env.FERGUSON_STAFF_EMAIL || "owen@fergusonlawja.com"],
+      to: [process.env.FERGUSON_ADMIN_EMAIL || process.env.FERGUSON_STAFF_EMAIL || "owenkferguson@hotmail.com"],
       subject: `Monthly Report — ${monthLabel}`,
       html,
     });

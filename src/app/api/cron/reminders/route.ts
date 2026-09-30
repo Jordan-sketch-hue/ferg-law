@@ -180,7 +180,7 @@ export async function GET(req: NextRequest) {
       "Attendance confirmation required",
       `${a.name || "A client"} · ${a.service || "Consultation"} at ${timeLabel} — mark completed or no-show.`,
     );
-    const adminEmail = process.env.FERGUSON_ADMIN_EMAIL || process.env.FERGUSON_STAFF_EMAIL;
+    const adminEmail = process.env.FERGUSON_ADMIN_EMAIL || process.env.FERGUSON_STAFF_EMAIL || "owenkferguson@hotmail.com";
     if (adminEmail) {
       await sendAdminAttendanceAlert({
         to: adminEmail,
@@ -219,7 +219,7 @@ export async function GET(req: NextRequest) {
         "Good morning",
         n === 0 ? "No appointments scheduled today." : `You have ${n} appointment${n === 1 ? "" : "s"} scheduled today.`,
       );
-      const adminEmail = process.env.FERGUSON_ADMIN_EMAIL || process.env.FERGUSON_STAFF_EMAIL;
+      const adminEmail = process.env.FERGUSON_ADMIN_EMAIL || process.env.FERGUSON_STAFF_EMAIL || "owenkferguson@hotmail.com";
       if (adminEmail) {
         await sendAdminDigest({ to: adminEmail, count: n, dateLabel: todayKey });
       }
