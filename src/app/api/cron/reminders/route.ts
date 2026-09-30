@@ -91,6 +91,7 @@ export async function GET(req: NextRequest) {
         .limit(1);
       const appointmentId = apptRows?.[0]?.id as string | undefined;
 
+      const adminEmail = process.env.FERGUSON_ADMIN_EMAIL || process.env.FERGUSON_STAFF_EMAIL || "owenkferguson@hotmail.com";
       const send = await sendBookingReminder({
         to: row.email,
         name: row.name || "",
@@ -98,6 +99,7 @@ export async function GET(req: NextRequest) {
         whenLabel: fullWhenLabel(row.starts_at),
         ref: row.ref,
         kind,
+        adminBcc: adminEmail,
       });
 
       if (appointmentId) {

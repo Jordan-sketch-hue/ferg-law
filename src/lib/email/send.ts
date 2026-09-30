@@ -55,6 +55,7 @@ export async function sendBookingConfirmation(
 
 export type SendBookingReminderArgs = SendBookingConfirmationArgs & {
   kind: "24h" | "2h" | "1h" | "15m";
+  adminBcc?: string;
 };
 
 const REMINDER_SOON_LABEL: Record<SendBookingReminderArgs["kind"], string> = {
@@ -71,7 +72,7 @@ export async function sendBookingReminder(
   const key = process.env.RESEND_API_KEY;
   if (!key) return { skipped: true };
 
-  const { to, name, service, whenLabel, ref, kind } = args;
+  const { to, name, service, whenLabel, ref, kind, adminBcc } = args;
   const firstName = (name || "").trim().split(/\s+/)[0] || "there";
   const soon = REMINDER_SOON_LABEL[kind];
   const wa = waLink(
@@ -83,6 +84,7 @@ export async function sendBookingReminder(
     const { data, error } = await resend.emails.send({
       from: FROM,
       to,
+      ...(adminBcc ? { bcc: [adminBcc] } : {}),
       subject: `Reminder — your consultation is ${soon} (${ref})`,
       html: buildHtml({
         firstName,
