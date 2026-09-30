@@ -52,7 +52,7 @@ INSERT INTO public.fl_site_blocks (page_slug, block_key, content_type, label, va
   ('home','stats_2_label','text','Stat 2 Label','Years Experience',11),
   ('global','phone_display','text','Phone (display)','(876) 320-0235',1),
   ('global','email_display','text','Email Address','contact@fergusonlawja.com',2),
-  ('global','footer_tagline','text','Footer Tagline','Counsel · Compliance · Care',3),
+  ('global','footer_tagline','text','Footer Tagline','Counsel · Care · Competence',3),
   ('about','headline','text','Page Headline','About Ferguson Law',1),
   ('about','founder_bio','richtext','Founder Bio','Owen K. Ferguson, JP is the founder and principal attorney-at-law at Ferguson Law.',2),
   ('about','founder_image','image','Founder Photo','',3),

@@ -370,7 +370,7 @@ function GetStartedContent() {
       {/* Pillars */}
       <section style={S.pillarsSection}>
         <div style={S.pillarsInner}>
-          <p style={S.pillarsEyebrow}>Counsel &middot; Compliance &middot; Care</p>
+          <p style={S.pillarsEyebrow}>Counsel &middot; Care &middot; Competence</p>
           <div style={S.pillars}>
             {[
               {
