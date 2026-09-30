@@ -410,11 +410,22 @@ export default function AdminDashboard() {
           userVisibleOnly: true,
           applicationServerKey: key as unknown as ArrayBuffer,
         });
-        await fetch('/api/push/subscribe', {
+        const res = await fetch('/api/push/subscribe', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ subscription: sub, userRole: 'admin', userRef: token }),
         });
+        // Send immediate confirmation push so admin knows notifications are active
+        if (res.ok) {
+          await reg.showNotification('Ferguson Law', {
+            body: 'Push notifications are active on this device.',
+            icon: '/favicon-512.png',
+            badge: '/favicon-180.png',
+            tag: 'push-confirm',
+            data: { url: '/admin' },
+            vibrate: [200, 100, 200],
+          } as NotificationOptions);
+        }
       } catch { /* silent */ }
     })();
   }, [token]);
