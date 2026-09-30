@@ -72,7 +72,7 @@ export async function sendBookingReminder(
   const key = process.env.RESEND_API_KEY;
   if (!key) return { skipped: true };
 
-  const { to, name, service, whenLabel, ref, kind, adminBcc } = args;
+  const { to, name, service, whenLabel, ref, kind, adminBcc, meetingUrl } = args;
   const firstName = (name || "").trim().split(/\s+/)[0] || "there";
   const soon = REMINDER_SOON_LABEL[kind];
   const wa = waLink(
@@ -92,10 +92,11 @@ export async function sendBookingReminder(
         whenLabel,
         ref,
         wa,
+        meetingUrl,
         lead: `A quick reminder, ${escapeHtml(firstName)}.`,
         body: `Your Ferguson Law consultation is <strong>${soon}</strong>. The details are below — reply or tap WhatsApp if anything needs to change.`,
       }),
-      text: buildText({ firstName, service, whenLabel, ref, wa }),
+      text: buildText({ firstName, service, whenLabel, ref, wa, meetingUrl }),
     });
     if (error) return { ok: false, error: error.message || String(error) };
     return { ok: true, id: data?.id };
