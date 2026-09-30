@@ -20,6 +20,7 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { sendBookingReminder, sendAdminDigest, sendAdminAttendanceAlert } from "@/lib/email/send";
 import { fullWhenLabel } from "@/lib/booking/format";
 import { TZ } from "@/lib/booking/availability";
+import { notifyOwenWA } from "@/lib/wa-notify";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -132,13 +133,20 @@ export async function GET(req: NextRequest) {
         });
         result[kind] += 1;
 
-        // Push admin notification for every reminder that actually fires
+        // Push admin notification + WhatsApp alert for every reminder that fires
         const kindLabel: Record<string, string> = { "24h": "tomorrow", "2h": "in 2 hours", "1h": "in 1 hour", "15m": "in 15 min" };
         await pushToAdmins(
           `Reminder sent — ${row.name || "Client"}`,
           `${row.service || "Consultation"} ${kindLabel[kind] ?? kind} · ${fullWhenLabel(row.starts_at)}`,
           "/admin?tab=bookings",
         );
+        const waLines = [
+          `*Reminder sent — ${row.name || "Client"}*`,
+          `${row.service || "Consultation"} · ${kindLabel[kind] ?? kind}`,
+          fullWhenLabel(row.starts_at),
+          ...(meetingUrl ? [`Zoom: ${meetingUrl}`] : []),
+        ];
+        void notifyOwenWA(waLines.join("\n"));
       }
     }
   }
@@ -195,6 +203,9 @@ export async function GET(req: NextRequest) {
         ref: a.ref,
       });
     }
+    void notifyOwenWA(
+      `*Action required*\n${a.name || "A client"} · ${a.service || "Consultation"} at ${timeLabel}\nMark outcome: fergusonlawja.com/admin`
+    );
   }
 
   // 3. Once-daily morning digest. Window is a full hour (7:00-7:59 Jamaica) so
@@ -228,6 +239,10 @@ export async function GET(req: NextRequest) {
       if (adminEmail) {
         await sendAdminDigest({ to: adminEmail, count: n, dateLabel: todayKey });
       }
+      const digestMsg = n === 0
+        ? `*Good morning*\nNo appointments today (${todayKey}).\nfergusonlawja.com/admin`
+        : `*Good morning*\n${n} appointment${n === 1 ? "" : "s"} today (${todayKey}).\nfergusonlawja.com/admin`;
+      void notifyOwenWA(digestMsg);
     }
   }
 
