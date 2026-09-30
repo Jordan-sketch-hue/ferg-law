@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ferguson Law — Partner Invite Draft</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #f4f1ec;
+    font-family: 'Inter', sans-serif;
+    color: #1a1a1a;
+    min-height: 100vh;
+    padding: 32px 16px;
+  }
+
+  /* ─── Segment switcher ─── */
+  .segment-bar {
+    max-width: 640px;
+    margin: 0 auto 24px;
+    display: flex;
+    gap: 0;
+    border: 1px solid #c8a65c;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #fff;
+  }
+  .seg-btn {
+    flex: 1;
+    padding: 10px 16px;
+    background: transparent;
+    border: none;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #888;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
+  .seg-btn + .seg-btn { border-left: 1px solid #c8a65c; }
+  .seg-btn.active { background: #1a1a1a; color: #c8a65c; }
+
+  /* ─── Email card ─── */
+  .email-wrap {
+    max-width: 640px;
+    margin: 0 auto;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 2px;
+    overflow: hidden;
+    box-shadow: 0 2px 24px rgba(0,0,0,0.06);
+  }
+
+  /* Hero image */
+  .hero-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16/7;
+    overflow: hidden;
+    background: #1a1a1a;
+  }
+  .hero-img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: opacity 0.3s;
+  }
+  .hero-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to bottom, transparent 40%, rgba(10,10,10,0.55) 100%);
+  }
+  .hero-logo {
+    position: absolute;
+    bottom: 20px; left: 28px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #c8a65c;
+  }
+
+  /* Image swap overlay */
+  .img-swap-btn {
+    position: absolute;
+    top: 12px; right: 12px;
+    width: 34px; height: 34px;
+    background: rgba(255,255,255,0.92);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 10;
+  }
+  .hero-wrap:hover .img-swap-btn { opacity: 1; }
+  .img-swap-btn svg { width: 16px; height: 16px; }
+  input[type="file"] { display: none; }
+
+  /* Body content */
+  .email-body {
+    padding: 36px 40px 28px;
+  }
+
+  .eyebrow {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #c8a65c;
+    margin-bottom: 12px;
+  }
+
+  .headline {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 1.25;
+    color: #111;
+    margin-bottom: 20px;
+  }
+
+  .divider {
+    width: 40px;
+    height: 1px;
+    background: #c8a65c;
+    margin-bottom: 20px;
+  }
+
+  .body-text {
+    font-size: 14px;
+    line-height: 1.75;
+    color: #444;
+    margin-bottom: 18px;
+  }
+
+  .pain-block {
+    background: #f9f7f3;
+    border-left: 3px solid #c8a65c;
+    padding: 16px 20px;
+    margin: 22px 0;
+    border-radius: 0 2px 2px 0;
+  }
+  .pain-label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #c8a65c;
+    margin-bottom: 8px;
+  }
+  .pain-text {
+    font-size: 13px;
+    line-height: 1.65;
+    color: #333;
+  }
+
+  .benefit-list {
+    list-style: none;
+    padding: 0;
+    margin: 20px 0;
+  }
+  .benefit-list li {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    font-size: 13.5px;
+    color: #333;
+    line-height: 1.6;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0ede7;
+  }
+  .benefit-list li:last-child { border-bottom: none; }
+  .check-icon {
+    flex-shrink: 0;
+    width: 18px; height: 18px;
+    margin-top: 1px;
+  }
+
+  /* Consult image mid-section */
+  .mid-img-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16/6;
+    overflow: hidden;
+    background: #eee;
+    margin: 28px 0;
+  }
+  .mid-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .mid-img-swap {
+    position: absolute;
+    top: 10px; right: 10px;
+    width: 32px; height: 32px;
+    background: rgba(255,255,255,0.9);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 10;
+  }
+  .mid-img-wrap:hover .mid-img-swap { opacity: 1; }
+
+  /* CTA */
+  .cta-wrap {
+    text-align: center;
+    padding: 28px 0 10px;
+  }
+  .cta-btn {
+    display: inline-block;
+    padding: 13px 36px;
+    background: #1a1a1a;
+    color: #c8a65c;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border: none;
+    border-radius: 1px;
+    cursor: pointer;
+  }
+  .cta-sub {
+    font-size: 11px;
+    color: #999;
+    margin-top: 10px;
+    letter-spacing: 0.04em;
+  }
+
+  /* Footer */
+  .email-footer {
+    padding: 22px 40px;
+    border-top: 1px solid #f0ede7;
+    text-align: center;
+  }
+  .footer-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #1a1a1a;
+    margin-bottom: 4px;
+  }
+  .footer-addr {
+    font-size: 11px;
+    color: #666;
+    line-height: 1.6;
+  }
+
+  /* ─── Edit tooltip ─── */
+  [contenteditable]:hover,
+  [contenteditable]:focus {
+    outline: 1px dashed #c8a65c;
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+  [contenteditable]:focus { outline-style: solid; }
+
+  /* ─── Orientation notice ─── */
+  #edit-notice {
+    position: fixed;
+    bottom: 28px; right: 28px;
+    background: #1a1a1a;
+    color: #fff;
+    border-radius: 6px;
+    padding: 18px 22px 16px;
+    width: 272px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+    z-index: 9999;
+    font-family: 'Inter', sans-serif;
+    transition: opacity 0.4s, transform 0.4s;
+  }
+  #edit-notice.hidden { opacity: 0; transform: translateY(12px); pointer-events: none; }
+  .notice-close {
+    position: absolute;
+    top: 10px; right: 12px;
+    background: none; border: none;
+    color: #888; font-size: 16px; cursor: pointer; line-height: 1;
+  }
+  .notice-title {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #c8a65c;
+    margin-bottom: 12px;
+  }
+  .notice-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    margin-bottom: 9px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #ccc;
+  }
+  .notice-row svg { flex-shrink: 0; margin-top: 1px; opacity: 0.7; }
+  .notice-row span { color: #fff; }
+  .notice-dismiss {
+    margin-top: 14px;
+    width: 100%;
+    padding: 8px;
+    background: transparent;
+    border: 1px solid #333;
+    border-radius: 3px;
+    color: #888;
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  .notice-dismiss:hover { border-color: #555; color: #aaa; }
+
+  @media (max-width: 600px) {
+    .email-body { padding: 28px 24px 20px; }
+    .email-footer { padding: 18px 24px; }
+    .headline { font-size: 22px; }
+    #edit-notice { bottom: 16px; right: 16px; left: 16px; width: auto; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Segment switcher -->
+<div class="segment-bar">
+  <button class="seg-btn active" onclick="setSegment('ab')">Agents &amp; Brokers</button>
+  <button class="seg-btn" onclick="setSegment('sv')">Surveyors &amp; Valuators</button>
+</div>
+
+<!-- Email card -->
+<div class="email-wrap">
+
+  <!-- Hero -->
+  <div class="hero-wrap">
+    <img class="hero-img" id="hero-img" src="/email-assets/hero-couple.png" alt="Homebuyers">
+    <div class="hero-overlay"></div>
+    <div class="hero-logo">Ferguson Law</div>
+    <button class="img-swap-btn" onclick="document.getElementById('hero-file').click()" title="Swap image">
+      <svg viewBox="0 0 20 20" fill="none" stroke="#333" stroke-width="1.6">
+        <rect x="3" y="3" width="14" height="14" rx="1.5"/>
+        <circle cx="7.5" cy="7.5" r="1.5"/>
+        <path d="M17 13l-4-4-3 3-2-2-5 5"/>
+      </svg>
+    </button>
+    <input type="file" id="hero-file" accept="image/*" onchange="swapImage('hero-img', this)">
+  </div>
+
+  <!-- Body -->
+  <div class="email-body">
+
+    <p class="eyebrow" contenteditable="true">Partnership Invitation</p>
+
+    <!-- AB segment -->
+    <div id="seg-ab">
+      <h1 class="headline" contenteditable="true">Your clients deserve faster results — and so do you.</h1>
+      <div class="divider"></div>
+      <p class="body-text" contenteditable="true">Dear Agent / Broker,</p>
+      <p class="body-text" contenteditable="true">We see what slows you down. Long waits for commission disbursements. Attorneys who go quiet once a file is handed over. Transactions that drag on — not because of complexity, but because of poor communication.</p>
+
+      <div class="pain-block">
+        <div class="pain-label">The real cost of the wrong legal partner</div>
+        <p class="pain-text" contenteditable="true">Delayed closings. Frustrated clients. Commission cheques that sit for weeks while everyone waits on paperwork that should have been done already. You've been there.</p>
+      </div>
+
+      <p class="body-text" contenteditable="true">Ferguson Law operates differently. We treat every referral as a partnership, not a transaction — with direct attorney access, clear milestones, and commission disbursements handled as a priority, not an afterthought.</p>
+
+      <ul class="benefit-list">
+        <li>
+          <svg class="check-icon" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="8.5" stroke="#c8a65c"/><path d="M5.5 9l2.5 2.5 4.5-4.5" stroke="#c8a65c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span contenteditable="true">Priority communication — you and your client always know where the matter stands</span>
+        </li>
+        <li>
+          <svg class="check-icon" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="8.5" stroke="#c8a65c"/><path d="M5.5 9l2.5 2.5 4.5-4.5" stroke="#c8a65c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span contenteditable="true">Commission disbursements processed at closing — no unnecessary delays</span>
+        </li>
+        <li>
+          <svg class="check-icon" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="8.5" stroke="#c8a65c"/><path d="M5.5 9l2.5 2.5 4.5-4.5" stroke="#c8a65c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span contenteditable="true">A referral arrangement built around your workflow — not ours</span>
+        </li>
+        <li>
+          <svg class="check-icon" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="8.5" stroke="#c8a65c"/><path d="M5.5 9l2.5 2.5 4.5-4.5" stroke="#c8a65c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span contenteditable="true">Track-record in residential and commercial conveyancing across Jamaica</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- SV segment (hidden by default) -->
+    <div id="seg-sv" style="display:none">
+      <h1 class="headline" contenteditable="true">Professional services deserve prompt payment — full stop.</h1>
+      <div class="divider"></div>
+      <p class="body-text" contenteditable="true">Dear Surveyor / Valuator,</p>
+      <p class="body-text" contenteditable="true">Your reports close transactions. Your work is load-bearing. And yet, in too many cases, you're the last to be paid — chasing firms that hold disbursements long after the deal is done.</p>
+
+      <div class="pain-block">
+        <div class="pain-label">The problem with the current system</div>
+        <p class="pain-text" contenteditable="true">Outstanding invoices. Unclear timelines. Legal firms that treat your fee as a line item to be settled whenever convenient. Your expertise drives transactions forward — you should be compensated accordingly.</p>
+      </div>
+
+      <p class="body-text" contenteditable="true">Ferguson Law formalizes a different kind of working relationship. When you refer a client or collaborate on a conveyancing matter, your professional fee is treated as a contractual obligation — accounted for and disbursed in line with the transaction close.</p>
+
+      <ul class="benefit-list">
+        <li>
+          <svg class="check-icon" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="8.5" stroke="#c8a65c"/><path d="M5.5 9l2.5 2.5 4.5-4.5" stroke="#c8a65c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span contenteditable="true">Fees treated as a priority disbursement — not a follow-up conversation</span>
+        </li>
+        <li>
+          <svg class="check-icon" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="8.5" stroke="#c8a65c"/><path d="M5.5 9l2.5 2.5 4.5-4.5" stroke="#c8a65c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span contenteditable="true">Clear payment timelines agreed upfront on every matter</span>
+        </li>
+        <li>
+          <svg class="check-icon" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="8.5" stroke="#c8a65c"/><path d="M5.5 9l2.5 2.5 4.5-4.5" stroke="#c8a65c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span contenteditable="true">Collaborative approach — your professional opinion matters to the file</span>
+        </li>
+        <li>
+          <svg class="check-icon" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="8.5" stroke="#c8a65c"/><path d="M5.5 9l2.5 2.5 4.5-4.5" stroke="#c8a65c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span contenteditable="true">Ongoing partnership with a firm that values long-term professional relationships</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Mid consult image (shared) -->
+    <div class="mid-img-wrap">
+      <img class="mid-img" id="consult-img" src="/email-assets/hero-consult.png" alt="Ferguson Law consultation">
+      <button class="mid-img-swap" onclick="document.getElementById('consult-file').click()" title="Swap image">
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="#333" stroke-width="1.6">
+          <rect x="3" y="3" width="14" height="14" rx="1.5"/>
+          <circle cx="7.5" cy="7.5" r="1.5"/>
+          <path d="M17 13l-4-4-3 3-2-2-5 5"/>
+        </svg>
+      </button>
+      <input type="file" id="consult-file" accept="image/*" onchange="swapImage('consult-img', this)">
+    </div>
+
+    <!-- Shared closing -->
+    <p class="body-text" contenteditable="true">We are inviting a select group of professionals to establish a formal referral arrangement with Ferguson Law. This is not a mass sign-up — it is a curated partnership built on mutual trust and professional respect.</p>
+    <p class="body-text" contenteditable="true">If you would like to learn more about how this arrangement works, we would welcome a brief conversation at your convenience.</p>
+
+    <div class="cta-wrap">
+      <a class="cta-btn" href="#" contenteditable="false">Get in Touch</a>
+      <p class="cta-sub" contenteditable="true">Reply to this email or call us directly to arrange a conversation.</p>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="email-footer">
+    <p class="footer-name" contenteditable="true">Ferguson Law</p>
+    <p class="footer-addr" contenteditable="true">Kingston, Jamaica &nbsp;|&nbsp; (876) 123-4567 &nbsp;|&nbsp; info@fergusonlaw.com</p>
+  </div>
+</div>
+
+<!-- Edit notice -->
+<div id="edit-notice">
+  <button class="notice-close" onclick="dismissNotice()">&#215;</button>
+  <div class="notice-title">This draft is yours to edit</div>
+  <div class="notice-row">
+    <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 3l3 3-10 10H4v-3L14 3z"/></svg>
+    <div><span>Click any text</span> to edit it directly</div>
+  </div>
+  <div class="notice-row">
+    <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="14" height="14" rx="1.5"/><circle cx="7.5" cy="7.5" r="1.5"/><path d="M17 13l-4-4-3 3-2-2-5 5"/></svg>
+    <div>Hover over <span>any image</span> and click the swap button to replace it</div>
+  </div>
+  <div class="notice-row">
+    <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 4v12M4 10h12" stroke-linecap="round"/></svg>
+    <div>Toggle between <span>Agents</span> and <span>Surveyors</span> using the tabs above</div>
+  </div>
+  <button class="notice-dismiss" onclick="dismissNotice()">Got it</button>
+</div>
+
+<script>
+  function setSegment(seg) {
+    document.querySelectorAll('.seg-btn').forEach((b, i) => {
+      b.classList.toggle('active', (seg === 'ab' && i === 0) || (seg === 'sv' && i === 1));
+    });
+    document.getElementById('seg-ab').style.display = seg === 'ab' ? '' : 'none';
+    document.getElementById('seg-sv').style.display = seg === 'sv' ? '' : 'none';
+  }
+
+  function swapImage(imgId, input) {
+    if (!input.files || !input.files[0]) return;
+    const reader = new FileReader();
+    reader.onload = e => { document.getElementById(imgId).src = e.target.result; };
+    reader.readAsDataURL(input.files[0]);
+    input.value = '';
+  }
+
+  function dismissNotice() {
+    document.getElementById('edit-notice').classList.add('hidden');
+    try { localStorage.setItem('fl_partner_notice_dismissed', '1'); } catch(e) {}
+  }
+
+  // Auto-dismiss if seen before
+  try {
+    if (localStorage.getItem('fl_partner_notice_dismissed') === '1') {
+      document.getElementById('edit-notice').classList.add('hidden');
+    }
+  } catch(e) {}
+</script>
+</body>
+</html>
