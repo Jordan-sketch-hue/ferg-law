@@ -12,8 +12,8 @@ export async function POST(req: NextRequest) {
     return Response.json({ ok: false }, { status: 401 });
   }
 
-  const vapidPublic = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-  const vapidPrivate = process.env.VAPID_PRIVATE_KEY;
+  const vapidPublic = (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "").replace(/=+$/, "");
+  const vapidPrivate = (process.env.VAPID_PRIVATE_KEY ?? "").replace(/=+$/, "");
   if (!vapidPublic || !vapidPrivate) {
     return Response.json({ ok: false, error: 'VAPID keys not configured' }, { status: 503 });
   }

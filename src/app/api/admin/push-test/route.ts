@@ -14,8 +14,8 @@ export async function POST(req: NextRequest) {
   const { data: isAdmin } = await supabase.rpc("fl_is_admin", { p_token: token ?? "" });
   if (!isAdmin) return Response.json({ ok: false, error: "Unauthorized" }, { status: 401 });
 
-  const vapidPublic = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-  const vapidPrivate = process.env.VAPID_PRIVATE_KEY;
+  const vapidPublic = (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "").replace(/=+$/, "");
+  const vapidPrivate = (process.env.VAPID_PRIVATE_KEY ?? "").replace(/=+$/, "");
   if (!vapidPublic || !vapidPrivate) {
     return Response.json({ ok: false, error: "VAPID keys not configured" }, { status: 503 });
   }
