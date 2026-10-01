@@ -102,7 +102,7 @@ export async function sendBookingReminder(
   const key = process.env.RESEND_API_KEY;
   if (!key) return { skipped: true };
 
-  const { to, name, service, whenLabel, ref, kind, adminBcc } = args;
+  const { to, name, service, whenLabel, ref, kind, adminBcc, meetingUrl } = args;
   const firstName = (name || "").trim().split(/\s+/)[0] || "there";
   const soon = REMINDER_SOON_LABEL[kind];
   const wa = waLink(
