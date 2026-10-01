@@ -995,7 +995,7 @@ export default function AdminDashboard() {
                 : "Enable push notifications for appointment alerts"
               }
             >
-              {notifPerm === "denied" ? "🔕 Blocked" : notifPerm === "granted" ? "🔔 Test push" : "🔔 Enable"}
+              {notifPerm === "denied" ? "🔕 Blocked" : notifPerm === "granted" ? "🔔" : "🔔 Enable"}
             </button>
           )}
           {accountEmail && (
