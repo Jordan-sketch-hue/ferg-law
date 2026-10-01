@@ -20,7 +20,6 @@ import EbookLeadsTab from "@/components/admin/EbookLeadsTab";
 import AttentionOverview, { AttentionBadge } from "@/components/admin/AttentionOverview";
 import AppointmentAttentionPanel from "@/components/admin/AppointmentAttentionPanel";
 import { computeAttentionStatus, type AttentionStatus } from "@/lib/attention/status";
-import AdminPushBell from "@/components/admin/AdminPushBell";
 
 const TOKEN_KEY = "fl_admin_token";
 const TZ = "America/Jamaica";
@@ -896,7 +895,6 @@ export default function AdminDashboard() {
             style={{ ...S.ghostBtn, ...(loading ? S.btnOff : null) }}>
             {loading ? "Refreshing…" : "Refresh"}
           </button>
-          {token && <AdminPushBell token={token} />}
           {accountEmail && (
             <button type="button" onClick={() => setShowAccount(true)} style={S.ghostBtn}>Account</button>
           )}
