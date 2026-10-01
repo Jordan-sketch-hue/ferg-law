@@ -823,6 +823,17 @@ export default function AdminDashboard() {
     const VAPID_PUBLIC = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
     if (!VAPID_PUBLIC) return;
     try {
+      // If already granted, just send a test push to confirm it's working
+      if (Notification.permission === "granted") {
+        const res = await fetch("/api/admin/push-test", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token }),
+        });
+        const data = await res.json() as { ok: boolean; sent?: number; error?: string };
+        if (!data.ok) alert(data.error ?? "No push subscription found. Try disabling and re-enabling notifications in your browser settings.");
+        return;
+      }
       const perm = await Notification.requestPermission();
       setNotifPerm(perm);
       if (perm !== "granted") return;
