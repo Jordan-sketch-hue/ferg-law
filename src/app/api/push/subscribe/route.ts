@@ -24,6 +24,7 @@ export async function POST(req: NextRequest) {
       endpoint = body.endpoint;
       p256dh = body.p256dh ?? "";
       auth = body.auth ?? "";
+      userRef = body.token ?? null;
       // Validate via fl_is_admin so any valid admin token works (not just FL_ADMIN_TOKEN)
       const { data: isAdmin } = await supabase.rpc("fl_is_admin", { p_token: body.token ?? "" });
       if (!isAdmin) {
