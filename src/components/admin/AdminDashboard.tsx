@@ -968,14 +968,23 @@ export default function AdminDashboard() {
             style={{ ...S.ghostBtn, ...(loading ? S.btnOff : null) }}>
             {loading ? "Refreshing…" : "Refresh"}
           </button>
-          {notifPerm !== "granted" && notifPerm !== "unsupported" && (
+          {notifPerm !== "unsupported" && (
             <button
               type="button"
               onClick={() => void enablePushNotifications()}
-              style={{ ...S.ghostBtn, background: "rgba(200,166,92,.25)", border: "1px solid rgba(200,166,92,.6)", fontWeight: 700 }}
-              title={notifPerm === "denied" ? "Notification permission was denied — reset it in browser settings then click here" : "Enable push notifications for appointment alerts"}
+              style={{
+                ...S.ghostBtn,
+                background: notifPerm === "granted" ? "rgba(200,166,92,.12)" : "rgba(200,166,92,.25)",
+                border: "1px solid rgba(200,166,92,.6)",
+                fontWeight: 700,
+              }}
+              title={
+                notifPerm === "denied" ? "Blocked — open iOS Settings > Safari > this site and allow notifications, then tap here"
+                : notifPerm === "granted" ? "Notifications are on — tap to re-register this device"
+                : "Enable push notifications for appointment alerts"
+              }
             >
-              {notifPerm === "denied" ? "🔕 Notifications blocked" : "🔔 Enable notifications"}
+              {notifPerm === "denied" ? "🔕 Blocked" : notifPerm === "granted" ? "🔔 On" : "🔔 Enable"}
             </button>
           )}
           {accountEmail && (
