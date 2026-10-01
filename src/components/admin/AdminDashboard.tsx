@@ -13,7 +13,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { formatInTimeZone } from "date-fns-tz";
 import { createClient } from "@/lib/supabase/client";
-import { waLink } from "@/lib/site";
 import AnalyticsTab from "@/components/admin/AnalyticsTab";
 import SiteContentTab from "@/components/admin/SiteContentTab";
 import EbookLeadsTab from "@/components/admin/EbookLeadsTab";
@@ -1282,7 +1281,8 @@ function LeadsTable({ leads, loading, token, onStatus, onDelete }: { leads: Lead
       {isMobile ? (
         <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "12px 16px" }}>
           {leads.map((l) => {
-            const wa = l.phone ? waLink("Hello " + (l.name ?? "") + ", this is Ferguson Law following up on your enquiry.") : null;
+            const waMsg = `Hello ${l.name ?? ""}, this is Ferguson Law following up on your enquiry.`;
+            const wa = l.phone ? `https://wa.me/${l.phone.replace(/\D/g, "")}?text=${encodeURIComponent(waMsg)}` : null;
             return (
               <div key={l.id} style={{ background: "#fff", border: "1px solid rgba(18,16,12,.1)", borderRadius: 12, padding: "14px 16px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginBottom: 6 }}>
@@ -1309,7 +1309,7 @@ function LeadsTable({ leads, loading, token, onStatus, onDelete }: { leads: Lead
           <thead><tr><Th>Date</Th><Th>Name</Th><Th>Contact</Th><Th>Service</Th><Th>Source</Th><Th>Message</Th><Th>Status</Th><Th>Actions</Th></tr></thead>
           <tbody>
             {leads.map((l) => {
-              const wa = l.phone ? waLink(`Hello ${l.name ?? ""}, this is Ferguson Law following up on your enquiry.`) : null;
+              const wa = l.phone ? `https://wa.me/${l.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Hello ${l.name ?? ""}, this is Ferguson Law following up on your enquiry.`)}` : null;
               return (
                 <tr key={l.id} style={S.tr}>
                   <Td>{fmtDate(l.created_at)}</Td>

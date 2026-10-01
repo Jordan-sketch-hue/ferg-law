@@ -7,6 +7,7 @@
  */
 import { Resend } from "resend";
 import { SITE, waLink } from "@/lib/site";
+import { createAdminClient } from "@/lib/supabase/server";
 
 export type SendBookingConfirmationArgs = {
   to: string;
@@ -24,6 +25,20 @@ export type SendResult =
 
 const FROM = process.env.FERGUSON_FROM_EMAIL || "Ferguson Law <contact@fergusonlawja.com>";
 
+async function logEmail(to: string, subject: string, bodyText: string, resendId: string | null | undefined, context: string) {
+  try {
+    const admin = createAdminClient();
+    await admin.from("fl_email_log").insert({
+      to_email: to,
+      subject,
+      body_preview: bodyText.slice(0, 300),
+      body_full: bodyText,
+      resend_id: resendId ?? null,
+      context,
+    }).then(() => null, () => null);
+  } catch { /* non-fatal */ }
+}
+
 export async function sendBookingConfirmation(
   args: SendBookingConfirmationArgs,
 ): Promise<SendResult> {
@@ -39,14 +54,17 @@ export async function sendBookingConfirmation(
 
   try {
     const resend = new Resend(key);
+    const subject = `Consultation booked — ${ref}`;
+    const text = buildText({ firstName, service, whenLabel, ref, wa, meetingUrl });
     const { data, error } = await resend.emails.send({
       from: FROM,
       to,
-      subject: `Consultation booked — ${ref}`,
+      subject,
       html: buildHtml({ firstName, service, whenLabel, ref, wa, meetingUrl }),
-      text: buildText({ firstName, service, whenLabel, ref, wa, meetingUrl }),
+      text,
     });
     if (error) return { ok: false, error: error.message || String(error) };
+    await logEmail(to, subject, text, data?.id, "booking-confirmation");
     return { ok: true, id: data?.id };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
@@ -81,11 +99,13 @@ export async function sendBookingReminder(
 
   try {
     const resend = new Resend(key);
+    const subject = `Reminder — your consultation is ${soon} (${ref})`;
+    const text = buildText({ firstName, service, whenLabel, ref, wa, meetingUrl });
     const { data, error } = await resend.emails.send({
       from: FROM,
       to,
       ...(adminBcc ? { bcc: [adminBcc] } : {}),
-      subject: `Reminder — your consultation is ${soon} (${ref})`,
+      subject,
       html: buildHtml({
         firstName,
         service,
@@ -96,9 +116,10 @@ export async function sendBookingReminder(
         lead: `A quick reminder, ${escapeHtml(firstName)}.`,
         body: `Your Ferguson Law consultation is <strong>${soon}</strong>. The details are below — reply or tap WhatsApp if anything needs to change.`,
       }),
-      text: buildText({ firstName, service, whenLabel, ref, wa, meetingUrl }),
+      text,
     });
     if (error) return { ok: false, error: error.message || String(error) };
+    await logEmail(to, subject, text, data?.id, `booking-reminder-${kind}`);
     return { ok: true, id: data?.id };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
@@ -142,14 +163,16 @@ export async function sendBookingUpdate(
 
   try {
     const resend = new Resend(key);
+    const text = buildText({ firstName, service, whenLabel, ref, wa, meetingUrl: kind === "cancelled" ? undefined : meetingUrl });
     const { data, error } = await resend.emails.send({
       from: FROM,
       to,
       subject: copy.subject,
       html: buildHtml({ firstName, service, whenLabel, ref, wa, lead: copy.lead, body: copy.body, meetingUrl: kind === "cancelled" ? undefined : meetingUrl }),
-      text: buildText({ firstName, service, whenLabel, ref, wa, meetingUrl: kind === "cancelled" ? undefined : meetingUrl }),
+      text,
     });
     if (error) return { ok: false, error: error.message || String(error) };
+    await logEmail(to, copy.subject, text, data?.id, `autolink: ${kind}`);
     return { ok: true, id: data?.id };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
