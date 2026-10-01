@@ -795,11 +795,9 @@ export default function AdminDashboard() {
   }, []);
 
   const togglePushNotifications = useCallback(async () => {
-    if (!token) { alert("Not signed in."); return; }
-    if (!("serviceWorker" in navigator)) { alert("Service worker not supported on this browser."); return; }
-    if (!("Notification" in window)) { alert("Push notifications require this app to be installed to your home screen first."); return; }
+    if (!token || !("serviceWorker" in navigator) || !("Notification" in window)) return;
     const VAPID_PUBLIC = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-    if (!VAPID_PUBLIC) { alert("Push not configured — VAPID key missing."); return; }
+    if (!VAPID_PUBLIC) return;
 
     try {
       const reg = await navigator.serviceWorker.ready;
@@ -823,7 +821,6 @@ export default function AdminDashboard() {
       let perm = Notification.permission;
       if (perm === "default") perm = await Notification.requestPermission();
       setNotifPerm(perm);
-      if (perm === "denied") { alert("Notifications blocked. Open Settings > Safari > this site and allow notifications, then try again."); return; }
       if (perm !== "granted") return;
 
       function urlBase64ToUint8Array(b64: string): Uint8Array {
@@ -839,21 +836,16 @@ export default function AdminDashboard() {
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC) as unknown as ArrayBuffer,
       });
 
+      // .toJSON() is required — raw PushSubscription doesn't serialize keys via JSON.stringify
       const res = await fetch("/api/push/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ subscription: sub, userRole: "admin", userRef: token }),
+        body: JSON.stringify({ subscription: sub.toJSON(), userRole: "admin", userRef: token }),
       });
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({})) as { error?: string };
-        alert("Subscribe failed: " + (err.error ?? res.status));
-        return;
-      }
-      setPushOn(true);
+      if (res.ok) setPushOn(true);
     } catch (e) {
       console.error("[push toggle]", e);
-      alert("Push error: " + String(e));
     }
   }, [token, pushOn]);
 

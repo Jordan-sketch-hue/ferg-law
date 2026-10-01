@@ -48,7 +48,7 @@ export default function NotificationBell() {
       await fetch('/api/push/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subscription: sub, userRole: 'client', userRef: uid ?? '' }),
+        body: JSON.stringify({ subscription: sub.toJSON(), userRole: 'client', userRef: uid ?? '' }),
       });
       setPushState('granted');
       try { localStorage.removeItem('fl_push_prompted'); } catch { /* noop */ }
