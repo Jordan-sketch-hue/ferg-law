@@ -175,7 +175,8 @@ export async function GET(req: NextRequest) {
       p_channel: "push",
       p_for_starts_at: a.starts_at,
     });
-    if (alreadyLogged) continue;
+    // Treat null (RPC error) as already-logged to prevent spam on failures.
+    if (alreadyLogged !== false) continue;
 
     await supabase.rpc("fl_admin_log_reminder", {
       p_token: token,

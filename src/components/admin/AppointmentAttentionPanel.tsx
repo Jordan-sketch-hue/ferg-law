@@ -68,6 +68,9 @@ export default function AppointmentAttentionPanel({ appt, token, onClose, onStat
   const [showReschedule, setShowReschedule] = useState(false);
   const [rDate, setRDate] = useState("");
   const [rTime, setRTime] = useState("10:00");
+  const [followUpNotes, setFollowUpNotes] = useState("");
+  const [showFollowUp, setShowFollowUp] = useState(false);
+  const [clientCreated, setClientCreated] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -124,7 +127,45 @@ export default function AppointmentAttentionPanel({ appt, token, onClose, onStat
 
   function markOutcome(outcome: "completed" | "no_show") {
     onStatus(appt.id, outcome);
-    onClose();
+    // After marking completed, show the post-consultation panel instead of closing
+    if (outcome === "completed") {
+      setShowFollowUp(true);
+    } else {
+      onClose();
+    }
+  }
+
+  async function sendFollowUp() {
+    setBusy("followup"); setFeedback(null);
+    try {
+      const r = await fetch("/api/admin/send-followup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-admin-token": token },
+        body: JSON.stringify({ id: appt.id, notes: followUpNotes || undefined }),
+      });
+      const d = await r.json() as { ok?: boolean; skipped?: boolean; error?: string };
+      setFeedback(d.ok ? "Follow-up email sent." : d.skipped ? "Email not configured (skipped)." : (d.error ?? "Failed."));
+    } catch { setFeedback("Network error."); }
+    setBusy(null);
+  }
+
+  async function createClientFromAppt() {
+    if (clientCreated) return;
+    setBusy("client"); setFeedback(null);
+    try {
+      const r = await createClient().rpc("fl_admin_upsert_client", {
+        p_token: token,
+        p_name: appt.name || "",
+        p_email: appt.email ?? null,
+        p_phone: appt.phone ?? null,
+        p_type: "individual",
+        p_country: null,
+        p_notes: `Created from appointment ${appt.ref} — ${appt.service || "Consultation"}`,
+      });
+      if (r.error) { setFeedback(r.error.message || "Could not create client."); }
+      else { setClientCreated(true); setFeedback("Client record created."); }
+    } catch { setFeedback("Network error."); }
+    setBusy(null);
   }
 
   return (
@@ -233,9 +274,61 @@ export default function AppointmentAttentionPanel({ appt, token, onClose, onStat
           </div>
         )}
 
-        {(appt.status === "completed" || appt.status === "no_show" || appt.status === "cancelled") && (
+        {(appt.status === "no_show" || appt.status === "cancelled") && (
           <div style={{ fontSize: ".82rem", color: MUTED, borderTop: "1px solid rgba(18,16,12,.08)", paddingTop: 14 }}>
             {ATTENTION_LABEL[status]} — no further action needed.
+          </div>
+        )}
+
+        {(appt.status === "completed" || showFollowUp) && (
+          <div style={{ borderTop: "1px solid rgba(18,16,12,.08)", paddingTop: 16, marginTop: 4 }}>
+            <div style={{ fontWeight: 700, fontSize: ".7rem", textTransform: "uppercase", letterSpacing: ".07em", color: MUTED, marginBottom: 12 }}>Post-consultation actions</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {/* Follow-up email */}
+              <div style={{ background: "#f8f6f1", borderRadius: 10, padding: "12px 14px" }}>
+                <div style={{ fontWeight: 600, fontSize: ".85rem", color: GREEN, marginBottom: 6 }}>Send follow-up email to client</div>
+                <textarea
+                  value={followUpNotes}
+                  onChange={(e) => setFollowUpNotes(e.target.value)}
+                  placeholder="Optional: add consultation notes or next steps to include in the email…"
+                  rows={3}
+                  style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid rgba(18,16,12,.15)", fontSize: ".82rem", resize: "vertical", fontFamily: "inherit", boxSizing: "border-box" }}
+                />
+                <button
+                  type="button"
+                  onClick={() => void sendFollowUp()}
+                  disabled={busy === "followup"}
+                  style={{ marginTop: 8, padding: "8px 18px", borderRadius: 999, border: "none", background: GOLD, color: "#0e2518", fontWeight: 700, cursor: "pointer", fontSize: ".84rem" }}>
+                  {busy === "followup" ? "Sending…" : "Send follow-up email"}
+                </button>
+              </div>
+
+              {/* Create client */}
+              <button
+                type="button"
+                onClick={() => void createClientFromAppt()}
+                disabled={busy === "client" || clientCreated}
+                style={{
+                  ...btnStyle,
+                  background: clientCreated ? "rgba(47,122,82,.1)" : undefined,
+                  color: clientCreated ? "#2f7a52" : GREEN,
+                  border: clientCreated ? "1px solid rgba(47,122,82,.25)" : undefined,
+                  textAlign: "left",
+                }}>
+                {clientCreated ? "✓ Client record created" : busy === "client" ? "Creating…" : "+ Create client record"}
+              </button>
+
+              {/* Create matter */}
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  window.location.href = "/admin?tab=matters";
+                }}
+                style={{ ...btnStyle, textAlign: "left" }}>
+                + Create matter
+              </button>
+            </div>
           </div>
         )}
       </div>

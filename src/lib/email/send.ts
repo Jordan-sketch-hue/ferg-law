@@ -309,6 +309,108 @@ export async function sendPasswordReset(args: {
   }
 }
 
+export type SendConsultationFollowUpArgs = {
+  to: string;
+  name: string;
+  service: string;
+  ref: string;
+  adminBcc?: string;
+  notes?: string;
+};
+
+/** Post-consultation follow-up: outcome summary, next steps, referral ask. */
+export async function sendConsultationFollowUp(
+  args: SendConsultationFollowUpArgs,
+): Promise<SendResult> {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) return { skipped: true };
+
+  const { to, name, service, ref, adminBcc, notes } = args;
+  const firstName = (name || "").trim().split(/\s+/)[0] || "there";
+  const wa = waLink(
+    `Hi Ferguson Law — following up on my consultation.\nRef: ${ref}\nService: ${service}`,
+  );
+  const bookingUrl = SITE.bookingUrl;
+  const notesHtml = notes ? `<p style="font-size:16px;line-height:1.75;margin:0 0 22px;color:#3a3a3a;background:#f8f6f1;border-left:3px solid #c9a86a;padding:12px 16px;border-radius:0 8px 8px 0;">${escapeHtml(notes)}</p>` : "";
+
+  const html = `<!doctype html>
+<html lang="en">
+  <head>
+    <meta name="color-scheme" content="light" />
+    <meta name="supported-color-schemes" content="light" />
+  </head>
+  <body style="margin:0;padding:0;background:#f4f1ec;font-family:Georgia,'Times New Roman',serif;color:#1c1c1c;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f1ec;padding:40px 16px;">
+      <tr><td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e7e1d6;">
+          <tr>
+            <td style="background:#10211c;padding:34px 40px;">
+              <div style="font-size:13px;letter-spacing:3px;text-transform:uppercase;color:#c9a86a;">Ferguson Law</div>
+              <div style="font-size:13px;color:#9fb3ab;margin-top:6px;">${SITE.tagline}</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:44px 40px 8px;">
+              <p style="font-size:26px;line-height:1.3;margin:0 0 22px;color:#10211c;">Thank you, ${escapeHtml(firstName)}.</p>
+              <p style="font-size:16px;line-height:1.75;margin:0 0 22px;color:#3a3a3a;">
+                Thank you for your consultation with Ferguson Law regarding <strong>${escapeHtml(service)}</strong>. We value your trust and want to make sure you have everything you need to move forward.
+              </p>
+              ${notesHtml}
+              <p style="font-size:16px;line-height:1.75;margin:0 0 8px;color:#3a3a3a;">
+                <strong>Next steps</strong> — our team will be in touch with any follow-up documentation or actions required. If you have questions in the meantime, reply to this email or reach us on WhatsApp.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:18px 40px 8px;">
+              <p style="font-size:15px;line-height:1.6;margin:0 0 14px;color:#555555;font-style:italic;">
+                Know someone who needs legal advice? A referral means a great deal to us.
+              </p>
+              <a href="${bookingUrl}" style="display:inline-block;background:#c9a86a;color:#10211c;text-decoration:none;font-size:15px;font-weight:bold;padding:14px 34px;border-radius:9px;">Book for a friend or family member</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 40px 40px;">
+              <hr style="border:none;border-top:1px solid #ece6da;margin:0 0 18px;" />
+              <p style="font-size:13px;margin:0 0 6px;color:#9a9a9a;">Have questions? <a href="${wa}" style="color:#c9a86a;">WhatsApp us</a></p>
+              <p style="font-size:12px;line-height:1.6;margin:0;color:#aaa;">Ferguson Law, 22B Old Hope Road, Kingston 5, Jamaica &nbsp;&middot;&nbsp; Ref: ${escapeHtml(ref)}</p>
+            </td>
+          </tr>
+        </table>
+      </td></tr>
+    </table>
+  </body>
+</html>`;
+
+  const text = [
+    `Thank you, ${firstName}.`,
+    ``,
+    `Thank you for your consultation regarding ${service} (${ref}).`,
+    notes ? `\nNotes from your consultation:\n${notes}\n` : "",
+    `Next steps: our team will be in touch. Reply to this email or WhatsApp us with any questions.`,
+    ``,
+    `Know someone who needs legal help? Refer them — ${bookingUrl}`,
+    ``,
+    `Ferguson Law, 22B Old Hope Road, Kingston 5, Jamaica.`,
+  ].join("\n");
+
+  try {
+    const resend = new Resend(key);
+    const { data, error } = await resend.emails.send({
+      from: FROM,
+      to,
+      ...(adminBcc ? { bcc: [adminBcc] } : {}),
+      subject: `Thank you for your consultation — ${ref}`,
+      html,
+      text,
+    });
+    if (error) return { ok: false, error: error.message || String(error) };
+    return { ok: true, id: data?.id };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
 function buildHtml(d: {
   firstName: string;
   service: string;
