@@ -2963,6 +2963,7 @@ function EmailTab({ emails, token, onMarkRead, onDelete }: {
   const [savingBody, setSavingBody] = useState(false);
   const [syncingResend, setSyncingResend] = useState(false);
   const [syncResult, setSyncResult] = useState<string | null>(null);
+  const [fetchingBody, setFetchingBody] = useState(false);
   const [showSpam, setShowSpam] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
@@ -3155,12 +3156,38 @@ function EmailTab({ emails, token, onMarkRead, onDelete }: {
               <div style={{ display: "inline-block", marginTop: 6, fontSize: ".72rem", background: "rgba(47,122,82,.1)", color: GREEN, borderRadius: 999, padding: "2px 10px" }}>{selectedSent.status}</div>
             </div>
             <div style={{ background: "#faf8f2", borderRadius: 10, padding: 20, fontSize: ".9rem", lineHeight: 1.7, color: INK, whiteSpace: "pre-wrap", minHeight: 100 }}>
-              {selectedSent.body_full || selectedSent.body_preview || "(no content available)"}
+              {selectedSent.body_full || selectedSent.body_preview || (
+                <span style={{ color: MUTED, fontStyle: "italic" }}>
+                  {selectedSent.resend_id ? "Content not stored locally." : "(no content available)"}
+                </span>
+              )}
             </div>
             {!selectedSent.body_full && selectedSent.body_preview && (
               <div style={{ fontSize: ".76rem", color: MUTED, marginTop: 8 }}>
                 Sent before full-body logging was added — only the first 300 characters were saved for this one.
               </div>
+            )}
+            {!selectedSent.body_full && !selectedSent.body_preview && selectedSent.resend_id && (
+              <button
+                type="button"
+                disabled={fetchingBody}
+                onClick={async () => {
+                  setFetchingBody(true);
+                  const res = await fetch("/api/admin/fetch-sent-body", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ token, id: selectedSent.id, resend_id: selectedSent.resend_id }),
+                  });
+                  const json = await res.json() as { ok?: boolean; body?: string; error?: string };
+                  if (json.ok && json.body) {
+                    setSelectedSent({ ...selectedSent, body_full: json.body });
+                    setSentEmails(prev => prev.map(e => e.id === selectedSent.id ? { ...e, body_full: json.body ?? null, body_preview: (json.body ?? "").slice(0, 300) } : e));
+                  }
+                  setFetchingBody(false);
+                }}
+                style={{ marginTop: 8, fontSize: ".8rem", padding: "6px 14px", border: `1px solid ${GREEN}40`, borderRadius: 6, background: "rgba(47,122,82,.08)", color: GREEN, cursor: "pointer" }}>
+                {fetchingBody ? "Loading…" : "Load content from Resend"}
+              </button>
             )}
           </div>
         ) : pane === "sent" ? (
