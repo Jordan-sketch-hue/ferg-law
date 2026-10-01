@@ -980,11 +980,11 @@ export default function AdminDashboard() {
               }}
               title={
                 notifPerm === "denied" ? "Blocked — open iOS Settings > Safari > this site and allow notifications, then tap here"
-                : notifPerm === "granted" ? "Notifications are on — tap to re-register this device"
+                : notifPerm === "granted" ? "Tap to send a test push and confirm notifications are working"
                 : "Enable push notifications for appointment alerts"
               }
             >
-              {notifPerm === "denied" ? "🔕 Blocked" : notifPerm === "granted" ? "🔔 On" : "🔔 Enable"}
+              {notifPerm === "denied" ? "🔕 Blocked" : notifPerm === "granted" ? "🔔 Test push" : "🔔 Enable"}
             </button>
           )}
           {accountEmail && (
