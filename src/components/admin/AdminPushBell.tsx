@@ -42,7 +42,7 @@ export default function AdminPushBell({ token }: Props) {
   // On mount: detect current subscription state without side effects
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (!("Notification" in window) || !("serviceWorker" in navigator) || !VAPID_PUBLIC) {
+    if (!("Notification" in window) || !("serviceWorker" in navigator)) {
       setStatus("unsupported");
       return;
     }
@@ -56,7 +56,8 @@ export default function AdminPushBell({ token }: Props) {
   }, []);
 
   const toggle = useCallback(async () => {
-    if (!("Notification" in window) || !("serviceWorker" in navigator) || !VAPID_PUBLIC) return;
+    if (!("Notification" in window) || !("serviceWorker" in navigator)) return;
+    if (!VAPID_PUBLIC) { console.error("[push] NEXT_PUBLIC_VAPID_PUBLIC_KEY is not set"); return; }
 
     const reg = await navigator.serviceWorker.ready;
 
