@@ -57,13 +57,11 @@ export default function AdminPushBell({ token }: Props) {
 
   const toggle = useCallback(async () => {
     if (!("Notification" in window) || !("serviceWorker" in navigator)) return;
-    if (!VAPID_PUBLIC) { console.error("[push] NEXT_PUBLIC_VAPID_PUBLIC_KEY is not set"); return; }
 
-    const reg = await navigator.serviceWorker.ready;
-
-    // --- TURN OFF ---
+    // --- TURN OFF (no VAPID needed) ---
     if (status === "on") {
       try {
+        const reg = await navigator.serviceWorker.ready;
         const existing = await reg.pushManager.getSubscription();
         if (existing) {
           await fetch("/api/admin/push-unsubscribe", {
@@ -80,6 +78,9 @@ export default function AdminPushBell({ token }: Props) {
 
     // --- TURN ON ---
     if (status !== "off") return;
+    if (!VAPID_PUBLIC) { console.error("[push] NEXT_PUBLIC_VAPID_PUBLIC_KEY is not set"); return; }
+
+    const reg = await navigator.serviceWorker.ready;
 
     let perm = Notification.permission;
     if (perm === "default") perm = await Notification.requestPermission();
