@@ -7,6 +7,34 @@
  */
 import { Resend } from "resend";
 import { SITE, waLink } from "@/lib/site";
+import { createAdminClient } from "@/lib/supabase/server";
+
+/** Fire-and-forget — never throws, never blocks the send result. */
+async function logEmail(args: {
+  to: string;
+  toName?: string | null;
+  subject: string;
+  bodyText: string;
+  bodyHtml?: string;
+  resendId?: string | null;
+  context: string;
+}) {
+  try {
+    const admin = createAdminClient();
+    await admin.from("fl_email_log").insert({
+      to_email: args.to,
+      to_name: args.toName ?? null,
+      subject: args.subject,
+      body_preview: args.bodyText.slice(0, 300),
+      body_full: args.bodyText,
+      resend_id: args.resendId ?? null,
+      context: args.context,
+      status: "sent",
+    });
+  } catch {
+    // logging is best-effort — never surface errors
+  }
+}
 
 export type SendBookingConfirmationArgs = {
   to: string;
@@ -39,14 +67,16 @@ export async function sendBookingConfirmation(
 
   try {
     const resend = new Resend(key);
+    const bodyText = buildText({ firstName, service, whenLabel, ref, wa, meetingUrl });
     const { data, error } = await resend.emails.send({
       from: FROM,
       to,
       subject: `Consultation booked — ${ref}`,
       html: buildHtml({ firstName, service, whenLabel, ref, wa, meetingUrl }),
-      text: buildText({ firstName, service, whenLabel, ref, wa, meetingUrl }),
+      text: bodyText,
     });
     if (error) return { ok: false, error: error.message || String(error) };
+    void logEmail({ to, toName: name, subject: `Consultation booked — ${ref}`, bodyText, resendId: data?.id, context: "booking_confirmation" });
     return { ok: true, id: data?.id };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
@@ -81,6 +111,7 @@ export async function sendBookingReminder(
 
   try {
     const resend = new Resend(key);
+    const bodyText = buildText({ firstName, service, whenLabel, ref, wa, meetingUrl });
     const { data, error } = await resend.emails.send({
       from: FROM,
       to,
@@ -96,9 +127,10 @@ export async function sendBookingReminder(
         lead: `A quick reminder, ${escapeHtml(firstName)}.`,
         body: `Your Ferguson Law consultation is <strong>${soon}</strong>. The details are below — reply or tap WhatsApp if anything needs to change.`,
       }),
-      text: buildText({ firstName, service, whenLabel, ref, wa, meetingUrl }),
+      text: bodyText,
     });
     if (error) return { ok: false, error: error.message || String(error) };
+    void logEmail({ to, toName: name, subject: `Reminder — your consultation is ${soon} (${ref})`, bodyText, resendId: data?.id, context: `reminder_${kind}` });
     return { ok: true, id: data?.id };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
@@ -142,14 +174,16 @@ export async function sendBookingUpdate(
 
   try {
     const resend = new Resend(key);
+    const bodyText = buildText({ firstName, service, whenLabel, ref, wa, meetingUrl: kind === "cancelled" ? undefined : meetingUrl });
     const { data, error } = await resend.emails.send({
       from: FROM,
       to,
       subject: copy.subject,
       html: buildHtml({ firstName, service, whenLabel, ref, wa, lead: copy.lead, body: copy.body, meetingUrl: kind === "cancelled" ? undefined : meetingUrl }),
-      text: buildText({ firstName, service, whenLabel, ref, wa, meetingUrl: kind === "cancelled" ? undefined : meetingUrl }),
+      text: bodyText,
     });
     if (error) return { ok: false, error: error.message || String(error) };
+    void logEmail({ to, toName: name, subject: copy.subject, bodyText, resendId: data?.id, context: `booking_${kind}` });
     return { ok: true, id: data?.id };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
@@ -241,6 +275,7 @@ export async function sendNurtureEmail(args: SendNurtureEmailArgs): Promise<Send
       text,
     });
     if (error) return { ok: false, error: error.message || String(error) };
+    void logEmail({ to, toName: name, subject: `Your question to Ferguson Law`, bodyText: text, resendId: data?.id, context: "nurture" });
     return { ok: true, id: data?.id };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
@@ -303,6 +338,7 @@ export async function sendPasswordReset(args: {
       text,
     });
     if (error) return { ok: false, error: error.message || String(error) };
+    void logEmail({ to, subject: "Set your Ferguson Law password", bodyText: text, resendId: data?.id, context: "password_reset" });
     return { ok: true, id: data?.id };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
@@ -405,6 +441,7 @@ export async function sendConsultationFollowUp(
       text,
     });
     if (error) return { ok: false, error: error.message || String(error) };
+    void logEmail({ to, toName: name, subject: `Thank you for your consultation — ${ref}`, bodyText: text, resendId: data?.id, context: "consultation_followup" });
     return { ok: true, id: data?.id };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
@@ -594,6 +631,7 @@ export async function sendAdminDigest(args: {
       text,
     });
     if (error) return { ok: false, error: error.message || String(error) };
+    void logEmail({ to, subject: `Morning digest — ${dateLabel}`, bodyText: text, resendId: data?.id, context: "admin_digest" });
     return { ok: true, id: data?.id };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
@@ -662,6 +700,7 @@ export async function sendAdminAttendanceAlert(args: {
       text,
     });
     if (error) return { ok: false, error: error.message || String(error) };
+    void logEmail({ to, subject: `Attendance confirmation required — ${ref}`, bodyText: text, resendId: data?.id, context: "admin_attendance_alert" });
     return { ok: true, id: data?.id };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
