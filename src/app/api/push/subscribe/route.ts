@@ -55,8 +55,8 @@ export async function POST(req: NextRequest) {
     if (error) return Response.json({ ok: false, error: error.message }, { status: 500 });
 
     // Send a welcome push so the admin confirms it works
-    const vapidPublic = (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "").replace(/=+$/, "");
-    const vapidPrivate = (process.env.VAPID_PRIVATE_KEY ?? "").replace(/=+$/, "");
+    const vapidPublic = (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "").replace(/^﻿/, "").replace(/=+$/, "");
+    const vapidPrivate = (process.env.VAPID_PRIVATE_KEY ?? "").replace(/^﻿/, "").replace(/=+$/, "");
     if (vapidPublic && vapidPrivate) {
       try {
         webpush.setVapidDetails("mailto:contact@fergusonlawja.com", vapidPublic, vapidPrivate);
