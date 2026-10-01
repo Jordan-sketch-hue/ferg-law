@@ -140,10 +140,6 @@ export async function notifyFileUploadedToStaff(matterId: string, fileName: stri
   if (!ctx) return;
   await Promise.all([
     sendFileUploadedToStaff(ctx.title, ctx.clientName, fileName).catch(() => null),
-    pushToAdmin(
-      `Document received — ${ctx.clientName}`,
-      `${ctx.clientName} uploaded "${fileName}" on ${ctx.title}`,
-      '/admin'
-    ),
+    pushToAdmins(`Document received — ${ctx.clientName}`, `${ctx.clientName} uploaded "${fileName}" on ${ctx.title}`, "/admin", "fl-cms-file"),
   ]);
 }
