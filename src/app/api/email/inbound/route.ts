@@ -1,5 +1,6 @@
 ﻿import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
+import { pushToAdmins } from "@/lib/push";
 
 type EmailAddress = { address?: string; name?: string } | string;
 
@@ -154,21 +155,13 @@ export async function POST(req: NextRequest) {
       }).catch((e) => console.error("inbound forward email error:", e));
     }
 
-    // Fire PWA push to all admins so the dashboard rings immediately.
-    const pushSecret = process.env.PUSH_INTERNAL_SECRET;
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://fergusonlawja.com";
-    if (pushSecret) {
-      fetch(`${siteUrl}/api/push/send`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-push-secret": pushSecret },
-        body: JSON.stringify({
-          role: "admin",
-          title: `New email${fromName ? ` from ${fromName}` : ""}`,
-          body: String(payload.subject ?? "(no subject)"),
-          url: "/admin",
-          tag: "new-inbound-email",
-        }),
-      }).catch((e) => console.error("inbound push error:", e));
+    if (!isInternalSender) {
+      void pushToAdmins(
+        `New Email${fromName ? ` — ${fromName}` : ""}`,
+        String(payload.subject ?? "(no subject)"),
+        "/admin?tab=email",
+        "fl-email",
+      );
     }
 
     return NextResponse.json({ ok: true });

@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { sendKycSubmittedToStaff } from "@/lib/email/cms";
+import { pushToAdmins } from "@/lib/push";
 
 export async function GET() {
   const supabase = await createClient();
@@ -106,10 +107,9 @@ export async function POST(req: NextRequest) {
     .eq("client_id", user.id)
     .eq("kyc_status", "pending");
 
-  void sendKycSubmittedToStaff(
-    user.user_metadata?.full_name || user.email?.split("@")[0] || "Client",
-    user.email!,
-  ).catch(() => null);
+  const clientName = String(user.user_metadata?.full_name || user.email?.split("@")[0] || "Client");
+  void sendKycSubmittedToStaff(clientName, user.email!).catch(() => null);
+  void pushToAdmins(`KYC Submitted — ${clientName}`, "Review required", "/admin?tab=clients", "fl-kyc");
 
   return NextResponse.json({ ok: true });
 }

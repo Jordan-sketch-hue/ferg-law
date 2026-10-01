@@ -5,6 +5,7 @@ import { CHAT_TOOLS, executeTool } from "@/lib/chat/tools";
 import { generateReply, hasAnyLLMKey, type ChatMsg } from "@/lib/chat/llm";
 import { SITE } from "@/lib/site";
 import { notifyOwenWA } from "@/lib/wa-notify";
+import { pushToAdmins } from "@/lib/push";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -105,6 +106,7 @@ export async function POST(req: Request) {
       void notifyOwenWA(
         `Ferguson Law Live Chat — visitor requested a human agent.\nName: ${visitor.name || "website visitor"}\nView: https://ferguson-law.vercel.app/agent`,
       );
+      void pushToAdmins("Live Chat — Human Requested", visitor.name || "Website visitor", "/admin?tab=chats", "fl-chat");
       return Response.json({
         conversationId: cid,
         status: "waiting_agent",
@@ -140,6 +142,7 @@ export async function POST(req: Request) {
       void notifyOwenWA(
         `Ferguson Law Live Chat — new message from visitor.\nFrom: ${visitor.name || "website visitor"}\nMessage: ${incoming.substring(0, 120)}\nView: https://ferguson-law.vercel.app/agent`,
       );
+      void pushToAdmins("New Chat Message", `${visitor.name || "Website visitor"}: ${incoming.slice(0, 60)}`, "/admin?tab=chats", "fl-chat");
       return Response.json({ conversationId: cid, status, handledByHuman: true });
     }
 

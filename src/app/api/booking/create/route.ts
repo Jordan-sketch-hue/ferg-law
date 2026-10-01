@@ -27,6 +27,7 @@ import { fullWhenLabel, dateChipLabel, slotTimeLabel } from "@/lib/booking/forma
 import { sendBookingConfirmation } from "@/lib/email/send";
 import { logReminderEvent } from "@/lib/attention/reminderLog";
 import { notifyOwenWA } from "@/lib/wa-notify";
+import { pushToAdmins } from "@/lib/push";
 import { consultFee } from "@/lib/payments/fees";
 import { createPayment } from "@/lib/payments/wipay";
 
@@ -262,6 +263,7 @@ export async function POST(req: NextRequest) {
         });
       } catch { /* swallow — notification already sent */ }
       void notifyOwenWA(`📅 *New booking (free)*\n${name} · ${title}\n${whenLabel}\n${email} · ${phone}\nRef: ${ref}`);
+      void pushToAdmins(`New Booking — ${name}`, `${title} · ${whenLabel}`, "/admin?tab=bookings", "fl-booking");
 
       return Response.json({ ok: true, ref, free: true, startsAtLabel: whenLabel });
     }
@@ -366,6 +368,7 @@ export async function POST(req: NextRequest) {
       });
     } catch { /* swallow */ }
     void notifyOwenWA(`📅 *New booking (pending payment)*\n${name} · ${title}\n${whenLabel}\nJ$${amount.toLocaleString()} · ${email}\nRef: ${ref}`);
+    void pushToAdmins(`New Booking — ${name}`, `${title} · ${whenLabel} · payment pending`, "/admin?tab=bookings", "fl-booking");
 
     return Response.json({ ok: true, ref, payUrl, amount });
   } catch {

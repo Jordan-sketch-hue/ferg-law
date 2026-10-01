@@ -21,6 +21,7 @@ import { sendBookingReminder, sendAdminDigest, sendAdminAttendanceAlert } from "
 import { fullWhenLabel } from "@/lib/booking/format";
 import { TZ } from "@/lib/booking/availability";
 import { notifyOwenWA } from "@/lib/wa-notify";
+import { pushToAdmins } from "@/lib/push";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -45,20 +46,6 @@ type ApptRow = {
 };
 
 const REMINDER_KINDS = ["24h", "2h", "1h", "15m"] as const;
-
-async function pushToAdmins(title: string, body: string, url = "/admin") {
-  const secret = process.env.PUSH_INTERNAL_SECRET;
-  if (!secret) return;
-  try {
-    await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || "https://ferguson-law.vercel.app"}/api/push/send`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-push-secret": secret },
-      body: JSON.stringify({ role: "admin", title, body, url, tag: "appointment-attention" }),
-    });
-  } catch {
-    /* push is best-effort — never blocks the cron */
-  }
-}
 
 export async function GET(req: NextRequest) {
   const secret = process.env.CRON_SECRET;

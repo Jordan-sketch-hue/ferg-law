@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { notifyOwenWA } from "@/lib/wa-notify";
+import { pushToAdmins } from "@/lib/push";
 import { SITE } from "@/lib/site";
 
 const INTEREST_LABELS: Record<string, string> = {
@@ -45,6 +46,7 @@ export async function POST(req: NextRequest) {
   });
 
   void notifyOwenWA(`🔔 *New website enquiry*\n${name} · ${interestLabel}\n${email}`);
+  void pushToAdmins(`New Lead — ${name}`, interestLabel, "/admin?tab=leads", "fl-lead");
   return NextResponse.json({ ok: true });
 }
 

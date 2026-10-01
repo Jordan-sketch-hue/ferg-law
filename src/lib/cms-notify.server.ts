@@ -16,6 +16,7 @@ import {
   sendFileUploadedToStaff,
   sendMilestoneToCC,
 } from "@/lib/email/cms";
+import { pushToAdmins, pushToClient } from "@/lib/push";
 
 interface CcContact {
   name: string;
@@ -96,6 +97,7 @@ export async function notifyMilestoneDone(matterId: string, milestoneName: strin
       p_title: "Matter update",
       p_body: `"${milestoneName}" has been completed on ${ctx.title}.`,
     });
+    void pushToClient(userId, `Matter Update — ${ctx.title}`, `"${milestoneName}" has been completed.`, "/directory/client", "fl-milestone");
   }
 
   if (ctx.notifyWhatsapp && ctx.phone) {
@@ -117,19 +119,11 @@ export async function notifyNewMessageToClient(matterId: string) {
   if (ctx.notifyWhatsapp && ctx.phone) {
     await sendWhatsAppText(ctx.phone, `Ferguson Law sent you a new message on ${ctx.title}. Check your client portal.`).catch(() => null);
   }
-}
-
-async function pushToAdmin(title: string, body: string, url = '/admin') {
-  const secret = process.env.PUSH_INTERNAL_SECRET;
-  if (!secret) return;
-  await fetch(
-    `${process.env.NEXT_PUBLIC_SITE_URL || 'https://fergusonlawja.com'}/api/push/send`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-push-secret': secret },
-      body: JSON.stringify({ role: 'admin', title, body, url, requireInteraction: true }),
-    }
-  ).catch(() => null);
+  const supabase = createAdminClient();
+  const userId = await getUserIdForMatter(matterId, supabase);
+  if (userId) {
+    void pushToClient(userId, `New Message — ${ctx.title}`, "Ferguson Law sent you a message.", "/directory/client", "fl-message");
+  }
 }
 
 export async function notifyNewMessageToStaff(matterId: string) {
@@ -137,11 +131,7 @@ export async function notifyNewMessageToStaff(matterId: string) {
   if (!ctx) return;
   await Promise.all([
     sendNewMessageToStaff(ctx.title, ctx.clientName).catch(() => null),
-    pushToAdmin(
-      `New message — ${ctx.clientName}`,
-      `${ctx.clientName} sent a message on ${ctx.title}`,
-      '/admin'
-    ),
+    pushToAdmins(`New message — ${ctx.clientName}`, `${ctx.clientName} sent a message on ${ctx.title}`, "/admin", "fl-cms-message"),
   ]);
 }
 
