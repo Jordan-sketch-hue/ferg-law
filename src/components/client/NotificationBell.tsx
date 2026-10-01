@@ -3,6 +3,15 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
+const VAPID_PUBLIC = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
+
+function urlBase64ToUint8Array(b64: string): Uint8Array {
+  const padding = '='.repeat((4 - (b64.length % 4)) % 4);
+  const base64 = (b64 + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(base64);
+  return new Uint8Array([...raw].map((c) => c.charCodeAt(0)));
+}
+
 interface Notification {
   id: string;
   matter_id: string | null;
@@ -15,8 +24,38 @@ interface Notification {
 export default function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [pushState, setPushState] = useState<'unsupported' | 'default' | 'granted' | 'denied' | 'loading'>('unsupported');
   const panelRef = useRef<HTMLDivElement>(null);
   const sb = createClient();
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('Notification' in window) || !VAPID_PUBLIC) return;
+    setPushState(Notification.permission as 'default' | 'granted' | 'denied');
+  }, []);
+
+  const enablePush = async () => {
+    if (!('serviceWorker' in navigator) || !VAPID_PUBLIC) return;
+    setPushState('loading');
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') { setPushState(permission as 'denied'); return; }
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC) as unknown as ArrayBuffer,
+      });
+      const uid = (await sb.auth.getUser()).data.user?.id;
+      await fetch('/api/push/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subscription: sub, userRole: 'client', userRef: uid ?? '' }),
+      });
+      setPushState('granted');
+      try { localStorage.removeItem('fl_push_prompted'); } catch { /* noop */ }
+    } catch {
+      setPushState('denied');
+    }
+  };
 
   async function load() {
     const { data } = await sb.rpc("fl_get_notifications");
@@ -117,6 +156,37 @@ export default function NotificationBell() {
               </div>
             ))}
           </div>
+          {/* Push notification toggle */}
+          {pushState !== 'unsupported' && (
+            <div style={{ padding: "12px 16px", borderTop: "1px solid var(--line)", background: "#fafaf8", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)" }}>Push notifications</div>
+                <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>
+                  {pushState === 'granted' && 'On — updates sent to this device'}
+                  {pushState === 'denied' && 'Blocked — open browser site settings to allow'}
+                  {pushState === 'default' && 'Off — tap to enable'}
+                  {pushState === 'loading' && 'Setting up…'}
+                </div>
+              </div>
+              {pushState === 'default' && (
+                <button
+                  onClick={() => void enablePush()}
+                  style={{ flexShrink: 0, background: "#c9a86a", color: "#10211c", border: "none", borderRadius: 8, padding: "7px 14px", fontWeight: 700, fontSize: 12, cursor: "pointer" }}
+                >
+                  Enable
+                </button>
+              )}
+              {pushState === 'granted' && (
+                <span style={{ flexShrink: 0, fontSize: 18 }}>🔔</span>
+              )}
+              {pushState === 'denied' && (
+                <span style={{ flexShrink: 0, fontSize: 18 }}>🔕</span>
+              )}
+              {pushState === 'loading' && (
+                <span style={{ flexShrink: 0, fontSize: 12, color: "var(--muted)" }}>…</span>
+              )}
+            </div>
+          )}
           <div style={{ padding: "10px 16px", borderTop: "1px solid var(--line)", background: "#fafaf8" }}>
             <Link href="/directory/settings" onClick={() => setOpen(false)}
               style={{ fontSize: 12, color: "var(--gold-deep)", fontWeight: 600, textDecoration: "none" }}>
