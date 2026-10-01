@@ -795,14 +795,17 @@ export default function AdminDashboard() {
   }, []);
 
   const togglePushNotifications = useCallback(async () => {
-    if (!token || !("Notification" in window) || !("serviceWorker" in navigator)) return;
+    if (!token) { alert("Not signed in."); return; }
+    if (!("serviceWorker" in navigator)) { alert("Service worker not supported on this browser."); return; }
+    if (!("Notification" in window)) { alert("Push notifications require this app to be installed to your home screen first."); return; }
     const VAPID_PUBLIC = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-    if (!VAPID_PUBLIC) return;
+    if (!VAPID_PUBLIC) { alert("Push not configured — VAPID key missing."); return; }
+
     try {
       const reg = await navigator.serviceWorker.ready;
 
       if (pushOn) {
-        // --- TURN OFF: unsubscribe browser + remove from DB ---
+        // --- TURN OFF ---
         const existing = await reg.pushManager.getSubscription();
         if (existing) {
           await fetch("/api/admin/push-unsubscribe", {
@@ -816,10 +819,11 @@ export default function AdminDashboard() {
         return;
       }
 
-      // --- TURN ON: request permission if needed, subscribe, save to DB ---
+      // --- TURN ON ---
       let perm = Notification.permission;
       if (perm === "default") perm = await Notification.requestPermission();
       setNotifPerm(perm);
+      if (perm === "denied") { alert("Notifications blocked. Open Settings > Safari > this site and allow notifications, then try again."); return; }
       if (perm !== "granted") return;
 
       function urlBase64ToUint8Array(b64: string): Uint8Array {
@@ -835,14 +839,22 @@ export default function AdminDashboard() {
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC) as unknown as ArrayBuffer,
       });
 
-      // subscribe route automatically sends the "Notifications are on" push
-      await fetch("/api/push/subscribe", {
+      const res = await fetch("/api/push/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ subscription: sub, userRole: "admin", userRef: token }),
       });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({})) as { error?: string };
+        alert("Subscribe failed: " + (err.error ?? res.status));
+        return;
+      }
       setPushOn(true);
-    } catch { /* ignore */ }
+    } catch (e) {
+      console.error("[push toggle]", e);
+      alert("Push error: " + String(e));
+    }
   }, [token, pushOn]);
 
   // Role — Jordan sees everything; Owen gets a simplified label on his greeting
@@ -967,28 +979,27 @@ export default function AdminDashboard() {
             style={{ ...S.ghostBtn, ...(loading ? S.btnOff : null) }}>
             {loading ? "Refreshing…" : "Refresh"}
           </button>
-          {notifPerm !== "unsupported" && (
-            <button
-              type="button"
-              onClick={() => void togglePushNotifications()}
-              style={{
-                ...S.ghostBtn,
-                background: pushOn ? "rgba(200,166,92,.2)" : "transparent",
-                border: pushOn ? "1.5px solid rgba(200,166,92,.8)" : "1.5px solid rgba(200,166,92,.3)",
-                color: pushOn ? "#c8a65c" : notifPerm === "denied" ? "#888" : "#c8a65c",
-                fontSize: 18,
-                padding: "4px 8px",
-                lineHeight: 1,
-              }}
-              title={
-                notifPerm === "denied" ? "Notifications blocked — open device settings to allow"
-                : pushOn ? "Notifications ON — tap to turn off"
-                : "Notifications OFF — tap to turn on"
-              }
-            >
-              {notifPerm === "denied" ? "🔕" : pushOn ? "🔔" : "🔔"}
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => void togglePushNotifications()}
+            style={{
+              ...S.ghostBtn,
+              background: pushOn ? "rgba(200,166,92,.2)" : "transparent",
+              border: pushOn ? "1.5px solid rgba(200,166,92,.8)" : "1.5px solid rgba(200,166,92,.3)",
+              color: pushOn ? "#c8a65c" : notifPerm === "denied" ? "#888" : "#c8a65c",
+              fontSize: 18,
+              padding: "4px 8px",
+              lineHeight: 1,
+            }}
+            title={
+              notifPerm === "unsupported" ? "Install this app to your home screen to enable push"
+              : notifPerm === "denied" ? "Notifications blocked — open device settings to allow"
+              : pushOn ? "Notifications ON — tap to turn off"
+              : "Notifications OFF — tap to turn on"
+            }
+          >
+            {notifPerm === "denied" ? "🔕" : pushOn ? "🔔" : "🔔"}
+          </button>
           {accountEmail && (
             <button type="button" onClick={() => setShowAccount(true)} style={S.ghostBtn}>Account</button>
           )}
