@@ -4,7 +4,7 @@
  */
 export const SITE = {
   name: "Ferguson Law",
-  tagline: "Counsel · Compliance · Care",
+  tagline: "Counsel · Care · Competence",
   city: "Kingston, Jamaica",
   founder: "Owen K. Ferguson, JP",
   founderRole: "Founder & Principal Attorney-at-Law",
