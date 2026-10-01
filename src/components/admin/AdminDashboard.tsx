@@ -300,6 +300,7 @@ export default function AdminDashboard() {
   const [accountEmail, setAccountEmail] = useState<string | null>(null);
   const [showAccount, setShowAccount] = useState(false);
   const [notifPerm, setNotifPerm] = useState<NotificationPermission | "unsupported">("default");
+  const [pushOn, setPushOn] = useState(false);
 
   const [tab, setTab] = useState<Tab>("overview");
   const [group, setGroup] = useState<TabGroup>("dashboard");
@@ -391,41 +392,16 @@ export default function AdminDashboard() {
     setNotifPerm(Notification.permission);
   }, [token]);
 
-  // Admin push subscription — fires on every login to keep endpoint fresh
+  // Check existing push subscription state on login (read-only — no auto-subscribe)
   useEffect(() => {
-    if (!token) return;
+    if (!token) { setPushOn(false); return; }
     if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
-    const VAPID = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-    if (!VAPID) return;
     void (async () => {
       try {
-        let perm = Notification.permission;
-        if (perm === 'default') perm = await Notification.requestPermission();
-        if (perm !== 'granted') return;
+        if (Notification.permission !== 'granted') return;
         const reg = await navigator.serviceWorker.ready;
-        const padding = '='.repeat((4 - (VAPID.length % 4)) % 4);
-        const b64 = (VAPID + padding).replace(/-/g, '+').replace(/_/g, '/');
-        const key = new Uint8Array([...atob(b64)].map(c => c.charCodeAt(0)));
-        const sub = await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: key as unknown as ArrayBuffer,
-        });
-        const res = await fetch('/api/push/subscribe', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ subscription: sub, userRole: 'admin', userRef: token }),
-        });
-        // Send immediate confirmation push so admin knows notifications are active
-        if (res.ok) {
-          await reg.showNotification('Ferguson Law', {
-            body: 'Push notifications are active on this device.',
-            icon: '/favicon-512.png',
-            badge: '/favicon-180.png',
-            tag: 'push-confirm',
-            data: { url: '/admin' },
-            vibrate: [200, 100, 200],
-          } as NotificationOptions);
-        }
+        const existing = await reg.pushManager.getSubscription();
+        setPushOn(!!existing);
       } catch { /* silent */ }
     })();
   }, [token]);
@@ -818,44 +794,56 @@ export default function AdminDashboard() {
     setHomePros([]); setHomeListings([]); setEmails([]); setInquiries([]);
   }, []);
 
-  const enablePushNotifications = useCallback(async () => {
+  const togglePushNotifications = useCallback(async () => {
     if (!token || !("Notification" in window) || !("serviceWorker" in navigator)) return;
     const VAPID_PUBLIC = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
     if (!VAPID_PUBLIC) return;
     try {
-      // If already granted, just send a test push to confirm it's working
-      if (Notification.permission === "granted") {
-        const res = await fetch("/api/admin/push-test", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token }),
-        });
-        const data = await res.json() as { ok: boolean; sent?: number; error?: string };
-        if (!data.ok) alert(data.error ?? "No push subscription found. Try disabling and re-enabling notifications in your browser settings.");
+      const reg = await navigator.serviceWorker.ready;
+
+      if (pushOn) {
+        // --- TURN OFF: unsubscribe browser + remove from DB ---
+        const existing = await reg.pushManager.getSubscription();
+        if (existing) {
+          await fetch("/api/admin/push-unsubscribe", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token, endpoint: existing.endpoint }),
+          });
+          await existing.unsubscribe();
+        }
+        setPushOn(false);
         return;
       }
-      const perm = await Notification.requestPermission();
+
+      // --- TURN ON: request permission if needed, subscribe, save to DB ---
+      let perm = Notification.permission;
+      if (perm === "default") perm = await Notification.requestPermission();
       setNotifPerm(perm);
       if (perm !== "granted") return;
-      const reg = await navigator.serviceWorker.ready;
+
       function urlBase64ToUint8Array(b64: string): Uint8Array {
         const padding = "=".repeat((4 - (b64.length % 4)) % 4);
         const base64 = (b64 + padding).replace(/-/g, "+").replace(/_/g, "/");
         const raw = atob(base64);
         return new Uint8Array([...raw].map(c => c.charCodeAt(0)));
       }
+
       const existing = await reg.pushManager.getSubscription();
       const sub = existing ?? await reg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC) as unknown as ArrayBuffer,
       });
+
+      // subscribe route automatically sends the "Notifications are on" push
       await fetch("/api/push/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ subscription: sub, userRole: "admin", userRef: token }),
       });
+      setPushOn(true);
     } catch { /* ignore */ }
-  }, [token]);
+  }, [token, pushOn]);
 
   // Role — Jordan sees everything; Owen gets a simplified label on his greeting
   const isJordan = accountEmail === "jordanrmorris01@icloud.com";
@@ -982,20 +970,23 @@ export default function AdminDashboard() {
           {notifPerm !== "unsupported" && (
             <button
               type="button"
-              onClick={() => void enablePushNotifications()}
+              onClick={() => void togglePushNotifications()}
               style={{
                 ...S.ghostBtn,
-                background: notifPerm === "granted" ? "rgba(200,166,92,.12)" : "rgba(200,166,92,.25)",
-                border: "1px solid rgba(200,166,92,.6)",
-                fontWeight: 700,
+                background: pushOn ? "rgba(200,166,92,.2)" : "transparent",
+                border: pushOn ? "1.5px solid rgba(200,166,92,.8)" : "1.5px solid rgba(200,166,92,.3)",
+                color: pushOn ? "#c8a65c" : notifPerm === "denied" ? "#888" : "#c8a65c",
+                fontSize: 18,
+                padding: "4px 8px",
+                lineHeight: 1,
               }}
               title={
-                notifPerm === "denied" ? "Blocked — open iOS Settings > Safari > this site and allow notifications, then tap here"
-                : notifPerm === "granted" ? "Tap to send a test push and confirm notifications are working"
-                : "Enable push notifications for appointment alerts"
+                notifPerm === "denied" ? "Notifications blocked — open device settings to allow"
+                : pushOn ? "Notifications ON — tap to turn off"
+                : "Notifications OFF — tap to turn on"
               }
             >
-              {notifPerm === "denied" ? "🔕 Blocked" : notifPerm === "granted" ? "🔔" : "🔔 Enable"}
+              {notifPerm === "denied" ? "🔕" : pushOn ? "🔔" : "🔔"}
             </button>
           )}
           {accountEmail && (
