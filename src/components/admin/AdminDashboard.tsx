@@ -20,6 +20,7 @@ import EbookLeadsTab from "@/components/admin/EbookLeadsTab";
 import AttentionOverview, { AttentionBadge } from "@/components/admin/AttentionOverview";
 import AppointmentAttentionPanel from "@/components/admin/AppointmentAttentionPanel";
 import { computeAttentionStatus, type AttentionStatus } from "@/lib/attention/status";
+import AdminPushBell from "@/components/admin/AdminPushBell";
 
 const TOKEN_KEY = "fl_admin_token";
 const TZ = "America/Jamaica";
@@ -299,8 +300,6 @@ export default function AdminDashboard() {
   const [showPw, setShowPw] = useState(false);
   const [accountEmail, setAccountEmail] = useState<string | null>(null);
   const [showAccount, setShowAccount] = useState(false);
-  const [notifPerm, setNotifPerm] = useState<NotificationPermission | "unsupported">("default");
-  const [pushOn, setPushOn] = useState(false);
 
   const [tab, setTab] = useState<Tab>("overview");
   const [group, setGroup] = useState<TabGroup>("dashboard");
@@ -385,26 +384,6 @@ export default function AdminDashboard() {
     return () => { cancelled = true; };
   }, [token]);
 
-  // Track notification permission so the UI can show an enable button
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (!("Notification" in window)) { setNotifPerm("unsupported"); return; }
-    setNotifPerm(Notification.permission);
-  }, [token]);
-
-  // Check existing push subscription state on login (read-only — no auto-subscribe)
-  useEffect(() => {
-    if (!token) { setPushOn(false); return; }
-    if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
-    void (async () => {
-      try {
-        if (Notification.permission !== 'granted') return;
-        const reg = await navigator.serviceWorker.ready;
-        const existing = await reg.pushManager.getSubscription();
-        setPushOn(!!existing);
-      } catch { /* silent */ }
-    })();
-  }, [token]);
 
   const fetchAll = useCallback(async (tok: string) => {
     const supabase = createClient();
@@ -794,60 +773,6 @@ export default function AdminDashboard() {
     setHomePros([]); setHomeListings([]); setEmails([]); setInquiries([]);
   }, []);
 
-  const togglePushNotifications = useCallback(async () => {
-    if (!token || !("serviceWorker" in navigator) || !("Notification" in window)) return;
-    const VAPID_PUBLIC = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-    if (!VAPID_PUBLIC) return;
-
-    try {
-      const reg = await navigator.serviceWorker.ready;
-
-      if (pushOn) {
-        // --- TURN OFF ---
-        const existing = await reg.pushManager.getSubscription();
-        if (existing) {
-          await fetch("/api/admin/push-unsubscribe", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ token, endpoint: existing.endpoint }),
-          });
-          await existing.unsubscribe();
-        }
-        setPushOn(false);
-        return;
-      }
-
-      // --- TURN ON ---
-      let perm = Notification.permission;
-      if (perm === "default") perm = await Notification.requestPermission();
-      setNotifPerm(perm);
-      if (perm !== "granted") return;
-
-      function urlBase64ToUint8Array(b64: string): Uint8Array {
-        const padding = "=".repeat((4 - (b64.length % 4)) % 4);
-        const base64 = (b64 + padding).replace(/-/g, "+").replace(/_/g, "/");
-        const raw = atob(base64);
-        return new Uint8Array([...raw].map(c => c.charCodeAt(0)));
-      }
-
-      const existing = await reg.pushManager.getSubscription();
-      const sub = existing ?? await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC) as unknown as ArrayBuffer,
-      });
-
-      // .toJSON() is required — raw PushSubscription doesn't serialize keys via JSON.stringify
-      const res = await fetch("/api/push/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ subscription: sub.toJSON(), userRole: "admin", userRef: token }),
-      });
-
-      if (res.ok) setPushOn(true);
-    } catch (e) {
-      console.error("[push toggle]", e);
-    }
-  }, [token, pushOn]);
 
   // Role — Jordan sees everything; Owen gets a simplified label on his greeting
   const isJordan = accountEmail === "jordanrmorris01@icloud.com";
@@ -971,27 +896,7 @@ export default function AdminDashboard() {
             style={{ ...S.ghostBtn, ...(loading ? S.btnOff : null) }}>
             {loading ? "Refreshing…" : "Refresh"}
           </button>
-          <button
-            type="button"
-            onClick={() => void togglePushNotifications()}
-            style={{
-              ...S.ghostBtn,
-              background: pushOn ? "rgba(200,166,92,.2)" : "transparent",
-              border: pushOn ? "1.5px solid rgba(200,166,92,.8)" : "1.5px solid rgba(200,166,92,.3)",
-              color: pushOn ? "#c8a65c" : notifPerm === "denied" ? "#888" : "#c8a65c",
-              fontSize: 18,
-              padding: "4px 8px",
-              lineHeight: 1,
-            }}
-            title={
-              notifPerm === "unsupported" ? "Install this app to your home screen to enable push"
-              : notifPerm === "denied" ? "Notifications blocked — open device settings to allow"
-              : pushOn ? "Notifications ON — tap to turn off"
-              : "Notifications OFF — tap to turn on"
-            }
-          >
-            {notifPerm === "denied" ? "🔕" : pushOn ? "🔔" : "🔔"}
-          </button>
+          {token && <AdminPushBell token={token} />}
           {accountEmail && (
             <button type="button" onClick={() => setShowAccount(true)} style={S.ghostBtn}>Account</button>
           )}
