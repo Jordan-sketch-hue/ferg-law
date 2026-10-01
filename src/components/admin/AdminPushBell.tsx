@@ -32,6 +32,7 @@ export default function AdminPushBell({ token }: Props) {
   const [ready, setReady] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     if (!("serviceWorker" in navigator) || !("PushManager" in window) || !VAPID_PUBLIC) return;
@@ -65,11 +66,13 @@ export default function AdminPushBell({ token }: Props) {
 
       if (res.ok) {
         setSubscribed(true);
+        setError(false);
       } else {
         await sub.unsubscribe();
+        setError(true);
       }
     } catch {
-      // silently ignore — permission denied or SW not ready
+      setError(true);
     } finally {
       setBusy(false);
     }
@@ -113,12 +116,12 @@ export default function AdminPushBell({ token }: Props) {
         fontSize: 18,
         opacity: busy ? 0.5 : 1,
         lineHeight: 1,
-        color: subscribed ? "#C8A65C" : "rgba(255,255,255,0.5)",
+        color: error ? "#e53e3e" : subscribed ? "#C8A65C" : "rgba(255,255,255,0.5)",
         transition: "color 0.2s",
       }}
-      aria-label={subscribed ? "Notifications on" : "Notifications off"}
+      aria-label={subscribed ? "Notifications on" : error ? "Notification setup failed" : "Notifications off"}
     >
-      {subscribed ? "🔔" : "🔕"}
+      {error ? "⚠️" : subscribed ? "🔔" : "🔕"}
     </button>
   );
 }

@@ -463,46 +463,6 @@ export default function AdminDashboard() {
     return () => { cancelled = true; };
   }, [token, fetchAll]);
 
-  // Auto-subscribe admin to push notifications silently after login
-  useEffect(() => {
-    if (!token) return;
-    const VAPID_PUBLIC = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-    if (!VAPID_PUBLIC || !('Notification' in window) || !('serviceWorker' in navigator)) return;
-    if (Notification.permission === 'denied') return;
-    void (async () => {
-      try {
-        const reg = await navigator.serviceWorker.ready;
-        const existing = await reg.pushManager.getSubscription();
-        if (existing) {
-          // Already subscribed — re-register so server has latest endpoint
-          await fetch('/api/push/subscribe', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ subscription: existing, userRole: 'admin', userRef: token }),
-          }).catch(() => null);
-          return;
-        }
-        const permission = await Notification.requestPermission();
-        if (permission !== 'granted') return;
-        function urlBase64ToUint8Array(b64: string): Uint8Array {
-          const padding = '='.repeat((4 - (b64.length % 4)) % 4);
-          const base64 = (b64 + padding).replace(/-/g, '+').replace(/_/g, '/');
-          const raw = atob(base64);
-          return new Uint8Array([...raw].map(c => c.charCodeAt(0)));
-        }
-        const sub = await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC) as unknown as ArrayBuffer,
-        });
-        await fetch('/api/push/subscribe', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ subscription: sub, userRole: 'admin', userRef: token }),
-        }).catch(() => null);
-      } catch { /* ignore */ }
-    })();
-  }, [token]);
-
   // Realtime subscription — re-fetch partner/home-pro queues instantly on any change
   useEffect(() => {
     if (!token) return;
