@@ -66,12 +66,28 @@ export default function PushSubscribe({ userRole, userRef, promptText, onDone }:
     return (
       <div style={S.card}>
         <span style={S.icon}>🔔</span>
-        <span style={S.text}>You&apos;re set — we&apos;ll notify you with updates.</span>
+        <span style={S.text}>
+          Notifications enabled.{' '}
+          <a href="/directory/settings" style={{ color: '#3d4f43', textDecoration: 'underline' }}>Manage in settings</a>
+        </span>
       </div>
     );
   }
 
-  if (state === 'denied') return null;
+  if (state === 'denied') {
+    return (
+      <div style={S.card}>
+        <span style={S.icon}>🔕</span>
+        <span style={S.text}>
+          Notifications are blocked by your browser. To enable them, open your browser&apos;s site settings and allow notifications, then{' '}
+          <button onClick={() => setState('idle')} style={{ background: 'none', border: 'none', padding: 0, color: '#3d4f43', textDecoration: 'underline', cursor: 'pointer', font: 'inherit', fontSize: '0.88rem' }}>try again</button>
+          {' '}or{' '}
+          <a href="/directory/settings" style={{ color: '#3d4f43', textDecoration: 'underline' }}>manage in settings</a>.
+        </span>
+      </div>
+    );
+  }
+
   if (state === 'unsupported') return null;
 
   if (state === 'error') {
