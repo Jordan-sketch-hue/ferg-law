@@ -32,66 +32,42 @@ export default function SplashScreen() {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        background: "linear-gradient(160deg, #0D1F15 0%, #081410 60%, #040c07 100%)",
+        background: "#000000",
         opacity: leaving ? 0 : 1,
         transition: "opacity 0.35s ease",
         pointerEvents: leaving ? "none" : "all",
       }}
     >
-      {/* F-mark */}
-      <div style={{
-        width: 72,
-        height: 72,
-        borderRadius: 18,
-        background: "linear-gradient(150deg, #1B4D32, #0a2318)",
-        border: "1.5px solid rgba(200,166,92,0.45)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        marginBottom: "1.25rem",
-        animation: "fl-pop 0.55s cubic-bezier(0.34,1.56,0.64,1) both",
-        animationDelay: "0.1s",
-      }}>
-        <span style={{
-          fontFamily: "Georgia, 'Times New Roman', serif",
-          fontSize: "2rem",
-          fontWeight: 700,
-          color: "#C8A65C",
-          lineHeight: 1,
-          letterSpacing: "-0.02em",
-        }}>F</span>
-      </div>
+      {/* Real brand logo — minimum 180px to keep circle + script legible */}
+      <img
+        src="/ferguson-law-logo.jpg"
+        alt="Ferguson Law"
+        style={{
+          width: "min(50vw, 200px)",
+          height: "min(50vw, 200px)",
+          objectFit: "contain",
+          animation: "fl-pop 0.55s cubic-bezier(0.34,1.56,0.64,1) both",
+          animationDelay: "0.1s",
+        }}
+      />
 
-      {/* Wordmark */}
+      {/* Tagline beneath logo */}
       <div style={{
-        textAlign: "center",
+        marginTop: "1.5rem",
+        fontSize: "0.6rem",
+        letterSpacing: "0.22em",
+        textTransform: "uppercase",
+        color: "rgba(200,166,92,0.55)",
+        fontFamily: "system-ui, sans-serif",
         animation: "fl-fade-up 0.5s ease both",
-        animationDelay: "0.25s",
+        animationDelay: "0.3s",
       }}>
-        <div style={{
-          fontFamily: "Georgia, 'Times New Roman', serif",
-          fontSize: "1.1rem",
-          fontWeight: 700,
-          color: "#C8A65C",
-          letterSpacing: "0.1em",
-          marginBottom: "0.25rem",
-        }}>
-          Ferguson Law
-        </div>
-        <div style={{
-          fontSize: "0.6rem",
-          letterSpacing: "0.22em",
-          textTransform: "uppercase",
-          color: "rgba(200,166,92,0.45)",
-          fontFamily: "system-ui, sans-serif",
-        }}>
-          Counsel · Care · Competence
-        </div>
+        Counsel · Care · Competence
       </div>
 
       <style>{`
         @keyframes fl-pop {
-          from { opacity: 0; transform: scale(0.7); }
+          from { opacity: 0; transform: scale(0.82); }
           to   { opacity: 1; transform: scale(1); }
         }
         @keyframes fl-fade-up {
