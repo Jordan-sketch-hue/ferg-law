@@ -51,6 +51,44 @@ interface BenchmarkRow {
 
 type ParishRates = Record<string, { land: [number, number]; built: [number, number]; label: string }>;
 
+
+interface CommunityRate { community: string; land: [number, number]; built: [number, number] }
+type CommunityMap = Record<string, CommunityRate[]>; // parish → communities
+
+async function fetchCommunities(): Promise<CommunityMap> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return {};
+  try {
+    const res = await fetch(
+      `${url}/rest/v1/community_benchmarks?select=parish,community,prop_type,rate_low,rate_high&order=parish,community`,
+      { headers: { apikey: key, Authorization: `Bearer ${key}` }, cache: "no-store" },
+    );
+    if (!res.ok) return {};
+    const rows: { parish: string; community: string; prop_type: string; rate_low: number; rate_high: number }[] = await res.json();
+    const map: CommunityMap = {};
+    for (const row of rows) {
+      if (!map[row.parish]) map[row.parish] = [];
+      const existing = map[row.parish].find(c => c.community === row.community);
+      if (existing) {
+        if (row.prop_type === "land") existing.land = [row.rate_low, row.rate_high];
+        else existing.built = [row.rate_low, row.rate_high];
+      } else {
+        map[row.parish].push({
+          community: row.community,
+          land: row.prop_type === "land" ? [row.rate_low, row.rate_high] : [0, 0],
+          built: row.prop_type === "built" ? [row.rate_low, row.rate_high] : [0, 0],
+        });
+      }
+    }
+    // Sort communities alphabetically per parish
+    for (const p of Object.keys(map)) map[p].sort((a, b) => a.community.localeCompare(b.community));
+    return map;
+  } catch {
+    return {};
+  }
+}
+
 async function fetchLiveRates(): Promise<{ rates: ParishRates; lastUpdated: string | null }> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -87,6 +125,7 @@ export default function ValuationEstimatorClient() {
   const [parish, setParish]             = useState("Kingston & St. Andrew");
   const [propType, setPropType]         = useState<"house" | "land" | "apartment" | "commercial">("house");
   const [community, setCommunity]       = useState("");
+  const [communityMap, setCommunityMap] = useState<Record<string, { community: string; land: [number,number]; built: [number,number] }[]>>({});
   const [landDisplay, setLandDisplay]   = useState("");
   const [builtDisplay, setBuiltDisplay] = useState("");
   const [bedrooms, setBedrooms]         = useState("3");
@@ -126,7 +165,14 @@ export default function ValuationEstimatorClient() {
   }
 
   function calculate() {
-    const pData = parishes[parish];
+    const communityRates = communityMap[parish]?.find(c => c.community === community);
+    const pData = communityRates
+      ? {
+          land: communityRates.land[0] > 0 ? communityRates.land : (parishes[parish]?.land ?? [2000,8000]),
+          built: communityRates.built[0] > 0 ? communityRates.built : (parishes[parish]?.built ?? [8000,16000]),
+          label: parish,
+        }
+      : parishes[parish];
     if (!pData) return;
     const l = parseFloat(parseInput(landDisplay));
     const b = isLandOnly ? 0 : (parseFloat(parseInput(builtDisplay)) || 0);
@@ -239,7 +285,17 @@ export default function ValuationEstimatorClient() {
             {/* Community */}
             <div style={{ gridColumn: "1/-1" }}>
               <label style={labelStyle}>Community / Scheme <span style={{ color: "#9aaa9e", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(optional)</span></label>
-              <input type="text" placeholder="e.g. Portmore Pines, Cherry Gardens" value={community} onChange={e => setCommunity(e.target.value)} style={inputStyle} />
+              {communityMap[parish]?.length > 0 ? (
+                <select value={community} onChange={e => { setCommunity(e.target.value); setResult(null); }} style={selectStyle}>
+                  <option value="">— Select community —</option>
+                  {communityMap[parish].map(c => (
+                    <option key={c.community} value={c.community}>{c.community}</option>
+                  ))}
+                  <option value="Other / not listed">Other / not listed</option>
+                </select>
+              ) : (
+                <input type="text" placeholder="e.g. Portmore Pines, Cherry Gardens" value={community} onChange={e => { setCommunity(e.target.value); setResult(null); }} style={inputStyle} />
+              )}
             </div>
 
             {/* Property Type */}
@@ -382,7 +438,9 @@ export default function ValuationEstimatorClient() {
 
               <p style={{ margin: "0.5rem 0 0", fontSize: ".72rem" }}>
                 <span style={{ padding: "0.2rem 0.55rem", borderRadius: 20, background: dataSource === "live" ? "#e8f4ec" : "#f0ede7", color: dataSource === "live" ? "#2d7a4a" : "#7a6535", fontWeight: 700, fontSize: ".7rem", letterSpacing: ".04em" }}>
-                  {dataSource === "live" ? `LIVE DATA \xB7 ${formattedDate}` : "MARKET ESTIMATES"}
+                  {communityMap[parish]?.find(c => c.community === community) && community && community !== "Other / not listed"
+                    ? `COMMUNITY DATA \xB7 ${community}`
+                    : dataSource === "live" ? `LIVE DATA \xB7 ${formattedDate}` : "MARKET ESTIMATES"}
                 </span>
               </p>
 
