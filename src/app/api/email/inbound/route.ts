@@ -2,6 +2,30 @@
 import { createAdminClient } from "@/lib/supabase/server";
 import { pushToAdmins } from "@/lib/push";
 
+// -- Spam heuristics ----------------------------------------------------------
+const SPAM_SUBJECT_PATTERNS = [
+  /trademark/i, /copyright\s*(violation|notice|infringement)/i,
+  /dmca/i, /unauthorized\s*(brand|use|representation)/i,
+  /legal\s*(action|notice|threat)/i, /cease\s*and\s*desist/i,
+  /account\s*(suspended|terminated|disabled)/i,
+  /wire\s*transfer/i, /bitcoin/i, /crypto\s*payment/i,
+];
+
+const SPAM_DOMAIN_PATTERNS = [/sell\d*proxy/i, /\.xyz$/i, /\.pw$/i, /\.top$/i];
+
+function isLikelySpam(fromEmail: string, subject: string): boolean {
+  if (SPAM_SUBJECT_PATTERNS.some((p) => p.test(subject))) return true;
+  try {
+    const domain = fromEmail.split("@")[1] ?? "";
+    if (SPAM_DOMAIN_PATTERNS.some((p) => p.test(domain))) return true;
+    const username = fromEmail.split("@")[0] ?? "";
+    if (username.length >= 12 && /^[bcdfghjklmnpqrstvwxyz]{10,}/i.test(username)) return true;
+  } catch { /* ignore */ }
+  return false;
+}
+// -----------------------------------------------------------------------------
+
+
 type EmailAddress = { address?: string; name?: string } | string;
 
 function extractStr(obj: Record<string, unknown>, keys: string[]): string {
@@ -135,9 +159,10 @@ export async function POST(req: NextRequest) {
     // Skip if the sender is our own domain — prevents infinite loops when system emails
     // (morning digest, notification forwards) land at contact@fergusonlawja.com.
     const isInternalSender = fromEmail.toLowerCase().endsWith("@fergusonlawja.com");
-    const staffEmail = process.env.FERGUSON_STAFF_EMAIL || "owen@fergusonlawja.com";
+    const staffEmail = process.env.FERGUSON_STAFF_EMAIL || "contact@fergusonlawja.com";
     const resendKey = process.env.RESEND_API_KEY;
-    if (resendKey && !isInternalSender) {
+    const spam = isLikelySpam(fromEmail, String(payload.subject ?? ""));
+    if (resendKey && !isInternalSender && !spam) {
       const rawSubject = String(payload.subject ?? "(no subject)");
       // Strip any accumulated "New enquiry: " prefixes before adding one.
       const cleanSubject = rawSubject.replace(/^(New enquiry:\s*)+/i, "");
@@ -155,7 +180,7 @@ export async function POST(req: NextRequest) {
       }).catch((e) => console.error("inbound forward email error:", e));
     }
 
-    if (!isInternalSender) {
+    if (!isInternalSender && !spam) {
       void pushToAdmins(
         `New Email${fromName ? ` — ${fromName}` : ""}`,
         String(payload.subject ?? "(no subject)"),
