@@ -13,7 +13,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { formatInTimeZone } from "date-fns-tz";
 import { createClient } from "@/lib/supabase/client";
-import { waLink } from "@/lib/site";
+import { waLink, waLinkTo } from "@/lib/site";
 import AnalyticsTab from "@/components/admin/AnalyticsTab";
 import SiteContentTab from "@/components/admin/SiteContentTab";
 import EbookLeadsTab from "@/components/admin/EbookLeadsTab";
@@ -1161,7 +1161,7 @@ function LeadsTable({ leads, loading, token, onStatus, onDelete }: { leads: Lead
       {isMobile ? (
         <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "12px 16px" }}>
           {leads.map((l) => {
-            const wa = l.phone ? waLink("Hello " + (l.name ?? "") + ", this is Ferguson Law following up on your enquiry.") : null;
+            const wa = l.phone ? waLinkTo(l.phone, "Hello " + (l.name ?? "") + ", this is Ferguson Law following up on your enquiry.") : null;
             return (
               <div key={l.id} style={{ background: "#fff", border: "1px solid rgba(18,16,12,.1)", borderRadius: 12, padding: "14px 16px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginBottom: 6 }}>
@@ -1188,7 +1188,7 @@ function LeadsTable({ leads, loading, token, onStatus, onDelete }: { leads: Lead
           <thead><tr><Th>Date</Th><Th>Name</Th><Th>Contact</Th><Th>Service</Th><Th>Source</Th><Th>Message</Th><Th>Status</Th><Th>Actions</Th></tr></thead>
           <tbody>
             {leads.map((l) => {
-              const wa = l.phone ? waLink(`Hello ${l.name ?? ""}, this is Ferguson Law following up on your enquiry.`) : null;
+              const wa = l.phone ? waLinkTo(l.phone, `Hello ${l.name ?? ""}, this is Ferguson Law following up on your enquiry.`) : null;
               return (
                 <tr key={l.id} style={S.tr}>
                   <Td>{fmtDate(l.created_at)}</Td>
@@ -2442,13 +2442,19 @@ function BlockedDatesPanel({ token }: { token: string }) {
 
       {err && <p style={{ color: "#a23b3b", fontSize: ".82rem", marginBottom: 10 }}>{err}</p>}
 
-      <div style={{ fontWeight: 600, fontSize: ".82rem", color: MUTED, marginBottom: 10 }}>
-        Blocked slots ({blocked.length})
-      </div>
-      {blocked.length === 0
-        ? <p style={{ color: MUTED, fontSize: ".82rem" }}>None blocked.</p>
-        : <div style={{ display: "flex", flexWrap: "wrap", gap: 8, paddingBottom: 16 }}>
-            {blocked.map(b => (
+      {(() => {
+        const nowMs = Date.now();
+        const upcoming = blocked.filter(b => new Date(b.starts_at).getTime() >= nowMs);
+        const pastCount = blocked.length - upcoming.length;
+        return (
+          <>
+            <div style={{ fontWeight: 600, fontSize: ".82rem", color: MUTED, marginBottom: 10 }}>
+              Blocked slots ({upcoming.length}{pastCount > 0 ? ` · ${pastCount} past hidden` : ""})
+            </div>
+            {upcoming.length === 0
+              ? <p style={{ color: MUTED, fontSize: ".82rem" }}>None blocked.</p>
+              : <div style={{ display: "flex", flexWrap: "wrap", gap: 8, paddingBottom: 16 }}>
+                  {upcoming.map(b => (
               <div key={b.id} style={{
                 display: "flex", alignItems: "center", gap: 6,
                 padding: "5px 10px 5px 14px", borderRadius: 999,
@@ -2459,8 +2465,11 @@ function BlockedDatesPanel({ token }: { token: string }) {
                   style={{ background: "none", border: "none", cursor: "pointer", color: "#a23b3b", fontWeight: 700, fontSize: 15, lineHeight: 1, padding: 0 }}>×</button>
               </div>
             ))}
-          </div>
-      }
+                </div>
+            }
+          </>
+        );
+      })()}
     </div>
   );
 }

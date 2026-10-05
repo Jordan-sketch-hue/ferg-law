@@ -13,7 +13,7 @@
 
 import { useEffect, useState } from "react";
 
-const VAPID_PUBLIC = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "";
+const VAPID_PUBLIC = (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "").replace(/^﻿/, "").replace(/=+$/, "");
 
 function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -33,9 +33,14 @@ export default function AdminPushBell({ token }: Props) {
   const [subscribed, setSubscribed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
+  const [iosStandalone, setIosStandalone] = useState<null | "needed" | "ok">(null);
 
   useEffect(() => {
     if (!("serviceWorker" in navigator) || !("PushManager" in window) || !VAPID_PUBLIC) return;
+
+    const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const isStandalone = window.matchMedia("(display-mode: standalone)").matches || (navigator as unknown as { standalone?: boolean }).standalone === true;
+    if (isIos) setIosStandalone(isStandalone ? "ok" : "needed");
 
     navigator.serviceWorker.ready.then(async (reg) => {
       const sub = await reg.pushManager.getSubscription();
@@ -54,7 +59,7 @@ export default function AdminPushBell({ token }: Props) {
       const reg = await navigator.serviceWorker.ready;
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC.replace(/=+$/, "")),
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC),
       });
 
       const { endpoint, keys } = sub.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } };
@@ -101,6 +106,18 @@ export default function AdminPushBell({ token }: Props) {
   }
 
   if (!ready) return null;
+
+  if (iosStandalone === "needed") {
+    return (
+      <span
+        title="Add Ferguson Law to your Home Screen to enable push notifications on iOS"
+        style={{ fontSize: 18, padding: "4px 6px", opacity: 0.5, cursor: "help", lineHeight: 1 }}
+        aria-label="Add to Home Screen to enable notifications"
+      >
+        🔕
+      </span>
+    );
+  }
 
   return (
     <button

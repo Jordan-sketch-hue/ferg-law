@@ -27,3 +27,9 @@ export const waLink = (text?: string) =>
   `whatsapp://send?phone=${SITE.whatsappNumber}${
     text ? `&text=${encodeURIComponent(text)}` : ""
   }`;
+
+/** Open a WhatsApp chat to a specific phone number (for admin use — e.g. messaging a lead). */
+export const waLinkTo = (phone: string, text?: string) => {
+  const digits = phone.replace(/[^0-9]/g, "");
+  return `https://wa.me/${digits}${text ? `?text=${encodeURIComponent(text)}` : ""}`;
+};
