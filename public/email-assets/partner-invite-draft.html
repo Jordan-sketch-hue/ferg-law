@@ -343,7 +343,6 @@
     #draft-panel { top: auto; bottom: 12px; right: 12px; left: 12px; width: auto; }
   }
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
 
@@ -526,11 +525,9 @@
     input.value = '';
   }
 
-  // ─── Persist & restore edits (Supabase — shared across all visitors) ───
-  const _SB = supabase.createClient(
-    'https://ibtadbwtrxglujkzqofs.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlidGFkYnd0cnhnbHVqa3pxb2ZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2OTE2NTUsImV4cCI6MjA5NDI2NzY1NX0.ihwCJOvYU2hZL3aruKzgrN9BqA42o-fivqc-yMjm6Qw'
-  );
+  // ─── Persist & restore edits (Supabase REST — shared across all visitors) ───
+  const _SB_URL = 'https://ibtadbwtrxglujkzqofs.supabase.co/rest/v1';
+  const _SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlidGFkYnd0cnhnbHVqa3pxb2ZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2OTE2NTUsImV4cCI6MjA5NDI2NzY1NX0.ihwCJOvYU2hZL3aruKzgrN9BqA42o-fivqc-yMjm6Qw';
   const DRAFT_SLUG = 'partner-invite';
   let _saving = false;
 
@@ -545,10 +542,13 @@
 
   async function restoreEdits() {
     try {
-      const { data } = await _SB.from('fl_email_drafts')
-        .select('content').eq('slug', DRAFT_SLUG).single();
-      if (!data) return;
-      const saved = data.content || {};
+      const res = await fetch(
+        _SB_URL + '/fl_email_drafts?slug=eq.' + DRAFT_SLUG + '&select=content&limit=1',
+        { headers: { 'apikey': _SB_KEY, 'Authorization': 'Bearer ' + _SB_KEY } }
+      );
+      const rows = await res.json();
+      if (!rows || !rows[0]) return;
+      const saved = rows[0].content || {};
       document.querySelectorAll('[contenteditable]').forEach((el, i) => {
         const key = el.id || ('ce_' + i);
         if (saved[key] !== undefined) el.innerHTML = saved[key];
@@ -563,14 +563,20 @@
     badge.textContent = 'Saving...';
     try {
       const content = collectEdits();
-      await _SB.from('fl_email_drafts').upsert(
-        { slug: DRAFT_SLUG, content, updated_at: new Date().toISOString() },
-        { onConflict: 'slug' }
-      );
+      await fetch(_SB_URL + '/fl_email_drafts', {
+        method: 'POST',
+        headers: {
+          'apikey': _SB_KEY,
+          'Authorization': 'Bearer ' + _SB_KEY,
+          'Content-Type': 'application/json',
+          'Prefer': 'resolution=merge-duplicates'
+        },
+        body: JSON.stringify({ slug: DRAFT_SLUG, content, updated_at: new Date().toISOString() })
+      });
       badge.textContent = 'Saved — everyone sees this now';
       setTimeout(() => { badge.textContent = ''; }, 3000);
     } catch(e) {
-      badge.textContent = 'Save failed';
+      badge.textContent = 'Save failed — check connection';
       setTimeout(() => { badge.textContent = ''; }, 3000);
     }
     _saving = false;
