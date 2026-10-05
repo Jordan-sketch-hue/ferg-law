@@ -531,11 +531,15 @@
   const DRAFT_SLUG = 'partner-invite';
   let _saving = false;
 
+  // Assign stable keys once on load — before any DOM mutations
+  document.querySelectorAll('[contenteditable]').forEach((el, i) => {
+    if (!el.dataset.dk) el.dataset.dk = 'dk_' + i;
+  });
+
   function collectEdits() {
     const data = {};
-    document.querySelectorAll('[contenteditable]').forEach((el, i) => {
-      const key = el.id || ('ce_' + i);
-      data[key] = el.innerHTML;
+    document.querySelectorAll('[contenteditable]').forEach(el => {
+      if (el.dataset.dk) data[el.dataset.dk] = el.innerText;
     });
     return data;
   }
@@ -549,9 +553,10 @@
       const rows = await res.json();
       if (!rows || !rows[0]) return;
       const saved = rows[0].content || {};
-      document.querySelectorAll('[contenteditable]').forEach((el, i) => {
-        const key = el.id || ('ce_' + i);
-        if (saved[key] !== undefined) el.innerHTML = saved[key];
+      document.querySelectorAll('[contenteditable]').forEach(el => {
+        if (el.dataset.dk && saved[el.dataset.dk] !== undefined) {
+          el.innerText = saved[el.dataset.dk];
+        }
       });
     } catch(e) {}
   }
