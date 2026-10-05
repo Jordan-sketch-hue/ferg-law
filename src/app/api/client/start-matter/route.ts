@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated." }, { status: 401 });
 
-  const { intent } = (await req.json()) as { intent?: "property_purchase" | "property_sale" | "general" };
+  const { intent } = (await req.json()) as { intent?: "property_purchase" | "property_sale" | "lease_agreement" | "title_search" | "transfer" | "power_of_attorney" | "power_of_attorney_limited" | "lost_title" | "first_registration" | "adverse_possession" | "subdivision" | "general" };
 
   const admin = createAdminClient();
   const { data: matterId, error } = await admin.rpc("fl_open_matter", {

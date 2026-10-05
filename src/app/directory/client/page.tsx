@@ -557,7 +557,7 @@ function ClientDashboardInner() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [paymentsLoading, setPaymentsLoading] = useState(false);
 
-  const [startIntent, setStartIntent] = useState<"property_purchase" | "property_sale" | "general">("property_purchase");
+  const [startIntent, setStartIntent] = useState<"property_purchase" | "property_sale" | "lease_agreement" | "title_search" | "transfer" | "power_of_attorney" | "power_of_attorney_limited" | "lost_title" | "first_registration" | "adverse_possession" | "subdivision" | "general">("property_purchase");
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
 
@@ -795,6 +795,15 @@ function ClientDashboardInner() {
               style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid var(--line)", fontSize: 14, background: "#fff" }}>
               <option value="property_purchase">Buying a property</option>
               <option value="property_sale">Selling a property</option>
+              <option value="lease_agreement">Lease Agreement</option>
+              <option value="title_search">Title Search</option>
+              <option value="transfer">Title Transfer</option>
+              <option value="power_of_attorney">Power of Attorney (General)</option>
+              <option value="power_of_attorney_limited">Power of Attorney (Limited)</option>
+              <option value="lost_title">Lost Title</option>
+              <option value="first_registration">First Registration</option>
+              <option value="adverse_possession">Adverse Possession</option>
+              <option value="subdivision">Subdivision</option>
               <option value="general">Something else</option>
             </select>
             <button onClick={onStartMatter} disabled={starting} className="btn btn-gold" style={{ fontSize: 13 }}>

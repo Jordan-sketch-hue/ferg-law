@@ -5230,6 +5230,15 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                   style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid rgba(18,16,12,.2)", fontSize: 13, outline: "none" }}>
                   <option value="property_purchase">Property Purchase</option>
                   <option value="property_sale">Property Sale</option>
+                  <option value="lease_agreement">Lease Agreement</option>
+                  <option value="title_search">Title Search</option>
+                  <option value="transfer">Title Transfer</option>
+                  <option value="power_of_attorney">Power of Attorney (General)</option>
+                  <option value="power_of_attorney_limited">Power of Attorney (Limited)</option>
+                  <option value="lost_title">Lost Title</option>
+                  <option value="first_registration">First Registration</option>
+                  <option value="adverse_possession">Adverse Possession</option>
+                  <option value="subdivision">Subdivision</option>
                 </select>
               </label>
               <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
