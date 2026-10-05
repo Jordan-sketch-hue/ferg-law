@@ -3348,6 +3348,8 @@ function WorkflowTemplatesTab({ token }: { token: string }) {
   const [addingStep, setAddingStep] = useState<{ phaseOrder: number } | null>(null);
   const [newStepName, setNewStepName] = useState("");
   const [saving, setSaving] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editingStep, setEditingStep] = useState<{ phaseOrder: number; idx: number; value: string } | null>(null);
   const [undoStack, setUndoStack] = useState<{ phaseOrder: number; name: string; templateId: string } | null>(null);
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -3401,6 +3403,18 @@ function WorkflowTemplatesTab({ token }: { token: string }) {
     setUndoStack(null);
   }
 
+  async function renameStep(phaseOrder: number, stepIdx: number, newName: string) {
+    if (!selected || !newName.trim() || saving) return;
+    setSaving(true);
+    await supabase.rpc("fl_admin_workflow_update_step", {
+      p_token: token, p_template_id: selected,
+      p_phase_order: phaseOrder, p_step_index: stepIdx, p_new_name: newName.trim()
+    });
+    const { data } = await supabase.rpc("fl_admin_workflow_templates_get", { p_token: token });
+    setTemplates((data as WfTemplate[]) ?? []);
+    setEditingStep(null); setSaving(false);
+  }
+
   const tpl = templates.find(t => t.id === selected);
 
   if (loading) return <div style={{ padding: 24, color: MUTED }}>Loading templates…</div>;
@@ -3427,16 +3441,34 @@ function WorkflowTemplatesTab({ token }: { token: string }) {
         </div>
       )}
 
-      {/* Template picker */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
+      {/* Template picker + edit mode toggle */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap", alignItems: "center" }}>
         {templates.map(t => (
-          <button key={t.id} type="button" onClick={() => setSelected(t.id)}
+          <button key={t.id} type="button" onClick={() => { setSelected(t.id); setEditMode(false); setEditingStep(null); }}
             style={{ padding: "6px 14px", borderRadius: 8, border: `1px solid ${selected === t.id ? GREEN : "rgba(18,16,12,.2)"}`,
               background: selected === t.id ? GREEN : "#fff", color: selected === t.id ? CREAM : INK,
               fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
             {t.name}
           </button>
         ))}
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+        {!editMode ? (
+          <button type="button" onClick={() => setEditMode(true)}
+            style={{ padding: "6px 16px", borderRadius: 8, border: `1px solid ${GOLD}`,
+              background: "transparent", color: "#8a6a22", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+            ✎ Edit Template
+          </button>
+        ) : (
+          <>
+            <span style={{ fontSize: 12, color: GOLD, fontWeight: 600 }}>EDIT MODE — changes save immediately</span>
+            <button type="button" onClick={() => { setEditMode(false); setEditingStep(null); }}
+              style={{ padding: "6px 16px", borderRadius: 8, border: "none",
+                background: GREEN, color: CREAM, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+              ✓ Done Editing
+            </button>
+          </>
+        )}
       </div>
 
       {tpl && (
@@ -3445,20 +3477,50 @@ function WorkflowTemplatesTab({ token }: { token: string }) {
             <div key={phase.order} style={{ marginBottom: 20, border: "1px solid rgba(18,16,12,.1)", borderRadius: 10, overflow: "hidden" }}>
               <div style={{ padding: "10px 14px", background: "rgba(16,42,30,.06)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span style={{ fontWeight: 700, fontSize: 13, color: GREEN }}>{phase.name}</span>
-                <button type="button"
-                  onClick={() => { setAddingStep(addingStep?.phaseOrder === phase.order ? null : { phaseOrder: phase.order }); setNewStepName(""); }}
-                  style={{ fontSize: 11, padding: "3px 10px", borderRadius: 6, border: `1px solid ${GOLD}`,
-                    background: addingStep?.phaseOrder === phase.order ? GOLD : "transparent",
-                    color: addingStep?.phaseOrder === phase.order ? "#fff" : "#8a6a22", cursor: "pointer", fontWeight: 600 }}>
-                  {addingStep?.phaseOrder === phase.order ? "Cancel" : "+ Step"}
-                </button>
+                {editMode && (
+                  <button type="button"
+                    onClick={() => { setAddingStep(addingStep?.phaseOrder === phase.order ? null : { phaseOrder: phase.order }); setNewStepName(""); }}
+                    style={{ fontSize: 11, padding: "3px 10px", borderRadius: 6, border: `1px solid ${GOLD}`,
+                      background: addingStep?.phaseOrder === phase.order ? GOLD : "transparent",
+                      color: addingStep?.phaseOrder === phase.order ? "#fff" : "#8a6a22", cursor: "pointer", fontWeight: 600 }}>
+                    {addingStep?.phaseOrder === phase.order ? "Cancel" : "+ Step"}
+                  </button>
+                )}
               </div>
               <div style={{ padding: "8px 14px" }}>
                 {phase.milestones.map((ms, idx) => (
                   <div key={idx} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderBottom: "1px solid rgba(18,16,12,.05)" }}>
-                    <span style={{ fontSize: 13, flex: 1, color: INK }}>• {ms}</span>
-                    <button type="button" onClick={() => void removeStep(phase.order, idx)}
-                      title="Remove" style={{ background: "none", border: "none", cursor: "pointer", color: "#ccc", fontSize: 13, padding: "0 4px" }}>✕</button>
+                    {editMode && editingStep?.phaseOrder === phase.order && editingStep.idx === idx ? (
+                      <>
+                        <input autoFocus value={editingStep.value}
+                          onChange={e => setEditingStep({ ...editingStep, value: e.target.value })}
+                          onKeyDown={e => {
+                            if (e.key === "Enter") void renameStep(phase.order, idx, editingStep.value);
+                            if (e.key === "Escape") setEditingStep(null);
+                          }}
+                          style={{ flex: 1, fontSize: 13, padding: "4px 8px", borderRadius: 6, border: `1px solid ${GOLD}`, outline: "none" }} />
+                        <button type="button" onClick={() => void renameStep(phase.order, idx, editingStep.value)}
+                          disabled={saving || !editingStep.value.trim()}
+                          style={{ padding: "3px 10px", borderRadius: 6, border: "none", background: GREEN, color: CREAM, fontSize: 12, fontWeight: 700, cursor: "pointer", opacity: saving ? 0.5 : 1 }}>
+                          {saving ? "…" : "Save"}
+                        </button>
+                        <button type="button" onClick={() => setEditingStep(null)}
+                          style={{ background: "none", border: "none", color: MUTED, fontSize: 12, cursor: "pointer" }}>Cancel</button>
+                      </>
+                    ) : (
+                      <>
+                        <span style={{ fontSize: 13, flex: 1, color: INK }}>• {ms}</span>
+                        {editMode && (
+                          <>
+                            <button type="button"
+                              onClick={() => setEditingStep({ phaseOrder: phase.order, idx, value: ms })}
+                              title="Rename" style={{ background: "none", border: "none", cursor: "pointer", color: GOLD, fontSize: 12, padding: "0 3px" }}>✎</button>
+                            <button type="button" onClick={() => void removeStep(phase.order, idx)}
+                              title="Remove" style={{ background: "none", border: "none", cursor: "pointer", color: "#ccc", fontSize: 13, padding: "0 4px" }}>✕</button>
+                          </>
+                        )}
+                      </>
+                    )}
                   </div>
                 ))}
                 {addingStep?.phaseOrder === phase.order && (
@@ -3477,8 +3539,8 @@ function WorkflowTemplatesTab({ token }: { token: string }) {
             </div>
           ))}
 
-          {/* Add phase */}
-          <div style={{ marginTop: 12 }}>
+          {/* Add phase — only in edit mode */}
+          {editMode && <div style={{ marginTop: 12 }}>
             {!addingPhase ? (
               <button type="button" onClick={() => setAddingPhase(true)}
                 style={{ ...S.ghostBtn, border: `1px dashed ${GOLD}`, color: "#8a6a22", fontSize: 13 }}>
@@ -3498,7 +3560,7 @@ function WorkflowTemplatesTab({ token }: { token: string }) {
                   style={{ ...S.ghostBtn, fontSize: 13 }}>Cancel</button>
               </div>
             )}
-          </div>
+          </div>}
         </>
       )}
     </div>
