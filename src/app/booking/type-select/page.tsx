@@ -18,6 +18,19 @@ const MATTER_TYPES = [
     ),
   },
   {
+    id: "property_sale",
+    label: "Sell property in Jamaica",
+    desc: "Conveyancing, title transfer, capital gains, closing",
+    icon: (
+      <svg viewBox="0 0 40 40" fill="none" style={{ width: 36, height: 36 }}>
+        <rect width="40" height="40" rx="10" fill="#1B4D32" fillOpacity=".1" />
+        <path d="M8 22 L20 10 L32 22 V34 H24V26H16V34H8V22Z" fill="#1B4D32" />
+        <line x1="20" y1="18" x2="20" y2="28" stroke="#C8A65C" strokeWidth="2" strokeLinecap="round" />
+        <line x1="15" y1="23" x2="25" y2="23" stroke="#C8A65C" strokeWidth="2" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
     id: "diaspora",
     label: "Diaspora land transaction",
     desc: "For overseas buyers — we handle everything remotely",
@@ -63,6 +76,7 @@ const MATTER_TYPES = [
 
 const MATTER_LABELS: Record<string, string> = {
   property_purchase: "Property Purchase",
+  property_sale: "Property Sale",
   diaspora: "Diaspora Transaction",
   estate_will: "Estate / Will",
   general: "General",
