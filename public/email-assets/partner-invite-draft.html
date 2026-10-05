@@ -343,6 +343,7 @@
     #draft-panel { top: auto; bottom: 12px; right: 12px; left: 12px; width: auto; }
   }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
 
@@ -525,8 +526,13 @@
     input.value = '';
   }
 
-  // ─── Persist & restore edits (localStorage) ───
-  const STORE_KEY = 'fl_partner_draft_v1';
+  // ─── Persist & restore edits (Supabase — shared across all visitors) ───
+  const _SB = supabase.createClient(
+    'https://ibtadbwtrxglujkzqofs.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlidGFkYnd0cnhnbHVqa3pxb2ZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2OTE2NTUsImV4cCI6MjA5NDI2NzY1NX0.ihwCJOvYU2hZL3aruKzgrN9BqA42o-fivqc-yMjm6Qw'
+  );
+  const DRAFT_SLUG = 'partner-invite';
+  let _saving = false;
 
   function collectEdits() {
     const data = {};
@@ -537,28 +543,37 @@
     return data;
   }
 
-  function restoreEdits() {
+  async function restoreEdits() {
     try {
-      const raw = localStorage.getItem(STORE_KEY);
-      if (!raw) return;
-      const data = JSON.parse(raw);
+      const { data } = await _SB.from('fl_email_drafts')
+        .select('content').eq('slug', DRAFT_SLUG).single();
+      if (!data) return;
+      const saved = data.content || {};
       document.querySelectorAll('[contenteditable]').forEach((el, i) => {
         const key = el.id || ('ce_' + i);
-        if (data[key] !== undefined) el.innerHTML = data[key];
+        if (saved[key] !== undefined) el.innerHTML = saved[key];
       });
     } catch(e) {}
   }
 
-  function saveDraft() {
+  async function saveDraft() {
+    if (_saving) return;
+    _saving = true;
+    const badge = document.getElementById('save-badge');
+    badge.textContent = 'Saving...';
     try {
-      const data = collectEdits();
-      localStorage.setItem(STORE_KEY, JSON.stringify(data));
-      const badge = document.getElementById('save-badge');
-      badge.textContent = 'Edits saved';
-      setTimeout(() => { badge.textContent = ''; }, 2500);
+      const content = collectEdits();
+      await _SB.from('fl_email_drafts').upsert(
+        { slug: DRAFT_SLUG, content, updated_at: new Date().toISOString() },
+        { onConflict: 'slug' }
+      );
+      badge.textContent = 'Saved — everyone sees this now';
+      setTimeout(() => { badge.textContent = ''; }, 3000);
     } catch(e) {
-      alert('Could not save — localStorage may be blocked.');
+      badge.textContent = 'Save failed';
+      setTimeout(() => { badge.textContent = ''; }, 3000);
     }
+    _saving = false;
   }
 
   function copyDraftText() {
@@ -576,16 +591,6 @@
 
   // Restore on load
   restoreEdits();
-
-  // Auto-save on any edit
-  document.querySelectorAll('[contenteditable]').forEach(el => {
-    el.addEventListener('input', () => {
-      try {
-        const data = collectEdits();
-        localStorage.setItem(STORE_KEY, JSON.stringify(data));
-      } catch(e) {}
-    });
-  });
 
   // ─── AI Rewrite ───
   let _aiTarget = null;
@@ -634,7 +639,7 @@
     document.getElementById('ai-apply').style.display = 'none';
     _aiResult = '';
     // auto-save after apply
-    try { localStorage.setItem(STORE_KEY, JSON.stringify(collectEdits())); } catch(e) {}
+    saveDraft();
   }
 </script>
 </body>
