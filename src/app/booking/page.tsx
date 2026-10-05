@@ -22,7 +22,6 @@ const TESTIMONIALS = [
 
 const MATTER_TYPE_LABELS: Record<string, string> = {
   property_purchase: "Property Purchase",
-  property_sale: "Property Sale",
   diaspora: "Diaspora Transaction",
   estate_will: "Estate / Will",
   general: "General Matter",
