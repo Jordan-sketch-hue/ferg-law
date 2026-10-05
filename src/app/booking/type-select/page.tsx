@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -7,9 +7,9 @@ import { CmsText } from "@/components/cms/CmsBlock";
 
 const MATTER_TYPES = [
   {
-    id: "property_purchase",
-    label: "Buy property in Jamaica",
-    desc: "Conveyancing, title search, NHT, closing",
+    id: 'property_purchase',
+    label: 'Buy property in Jamaica',
+    desc: 'Conveyancing, title search, NHT, closing',
     icon: (
       <svg viewBox="0 0 40 40" fill="none" style={{ width: 36, height: 36 }}>
         <rect width="40" height="40" rx="10" fill="#1B4D32" fillOpacity=".1" />
@@ -18,9 +18,9 @@ const MATTER_TYPES = [
     ),
   },
   {
-    id: "diaspora",
-    label: "Diaspora land transaction",
-    desc: "For overseas buyers — we handle everything remotely",
+    id: 'diaspora',
+    label: 'Diaspora land transaction',
+    desc: 'For overseas buyers — we handle everything remotely',
     icon: (
       <svg viewBox="0 0 40 40" fill="none" style={{ width: 36, height: 36 }}>
         <rect width="40" height="40" rx="10" fill="#C8A65C" fillOpacity=".12" />
@@ -31,9 +31,102 @@ const MATTER_TYPES = [
     ),
   },
   {
-    id: "estate_will",
-    label: "Estate / Will",
-    desc: "Estate administration, probate, wills & trusts",
+    id: 'transfer',
+    label: 'Transfer / Transmission',
+    desc: 'Transfer of title — sale, gift, inheritance or court order',
+    icon: (
+      <svg viewBox="0 0 40 40" fill="none" style={{ width: 36, height: 36 }}>
+        <rect width="40" height="40" rx="10" fill="#1B4D32" fillOpacity=".08" />
+        <path d="M10 20 H30 M22 13 L30 20 L22 27" stroke="#1B4D32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
+    id: 'power_of_attorney',
+    label: 'Power of Attorney (General)',
+    desc: 'Authorise someone to act on your behalf — broad or general scope',
+    icon: (
+      <svg viewBox="0 0 40 40" fill="none" style={{ width: 36, height: 36 }}>
+        <rect width="40" height="40" rx="10" fill="#C8A65C" fillOpacity=".1" />
+        <rect x="11" y="8" width="18" height="24" rx="3" stroke="#C8A65C" strokeWidth="2" />
+        <line x1="15" y1="14" x2="25" y2="14" stroke="#C8A65C" strokeWidth="1.5" />
+        <line x1="15" y1="18" x2="25" y2="18" stroke="#C8A65C" strokeWidth="1.5" />
+        <path d="M15 24 L18 27 L25 21" stroke="#C8A65C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
+    id: 'power_of_attorney_limited',
+    label: 'Power of Attorney (Limited)',
+    desc: 'Specific scope — for one transaction, property or limited purpose',
+    icon: (
+      <svg viewBox="0 0 40 40" fill="none" style={{ width: 36, height: 36 }}>
+        <rect width="40" height="40" rx="10" fill="#C8A65C" fillOpacity=".08" />
+        <rect x="11" y="8" width="18" height="24" rx="3" stroke="#C8A65C" strokeWidth="2" />
+        <line x1="15" y1="14" x2="25" y2="14" stroke="#C8A65C" strokeWidth="1.5" />
+        <line x1="15" y1="18" x2="21" y2="18" stroke="#C8A65C" strokeWidth="1.5" />
+        <circle cx="27" cy="29" r="4" fill="#1B4D32" />
+        <text x="27" y="32" textAnchor="middle" fontSize="6" fill="#C8A65C" fontWeight="800">1</text>
+      </svg>
+    ),
+  },
+  {
+    id: 'lost_title',
+    label: 'Lost / Destroyed Title',
+    desc: 'Application for replacement title through the NLA',
+    icon: (
+      <svg viewBox="0 0 40 40" fill="none" style={{ width: 36, height: 36 }}>
+        <rect width="40" height="40" rx="10" fill="#1B4D32" fillOpacity=".08" />
+        <rect x="11" y="8" width="18" height="24" rx="3" stroke="#1B4D32" strokeWidth="2" />
+        <line x1="15" y1="15" x2="25" y2="15" stroke="#1B4D32" strokeWidth="1.5" />
+        <path d="M20 20 V26 M20 28.5 V29" stroke="#C8A65C" strokeWidth="2" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
+    id: 'first_registration',
+    label: 'First Registration',
+    desc: 'First-time registration of unregistered land with the NLA',
+    icon: (
+      <svg viewBox="0 0 40 40" fill="none" style={{ width: 36, height: 36 }}>
+        <rect width="40" height="40" rx="10" fill="#1B4D32" fillOpacity=".08" />
+        <rect x="10" y="12" width="20" height="16" rx="2" stroke="#1B4D32" strokeWidth="2" />
+        <path d="M20 8 V12 M16 8 V10 M24 8 V10" stroke="#1B4D32" strokeWidth="1.5" strokeLinecap="round" />
+        <circle cx="28" cy="28" r="5" fill="#1B4D32" />
+        <text x="28" y="31.5" textAnchor="middle" fontSize="7" fill="#C8A65C" fontWeight="800">+</text>
+      </svg>
+    ),
+  },
+  {
+    id: 'adverse_possession',
+    label: 'Adverse Possession',
+    desc: 'Claim title by long-term uncontested occupation of land',
+    icon: (
+      <svg viewBox="0 0 40 40" fill="none" style={{ width: 36, height: 36 }}>
+        <rect width="40" height="40" rx="10" fill="#1B4D32" fillOpacity=".08" />
+        <path d="M8 28 L20 14 L32 28Z" stroke="#1B4D32" strokeWidth="2" fill="none" strokeLinejoin="round" />
+        <path d="M14 28 V32 M26 28 V32" stroke="#1B4D32" strokeWidth="1.5" strokeLinecap="round" />
+        <line x1="8" y1="32" x2="32" y2="32" stroke="#1B4D32" strokeWidth="1.5" />
+      </svg>
+    ),
+  },
+  {
+    id: 'subdivision',
+    label: 'Subdivision',
+    desc: 'Legally divide a parcel of land into two or more lots',
+    icon: (
+      <svg viewBox="0 0 40 40" fill="none" style={{ width: 36, height: 36 }}>
+        <rect width="40" height="40" rx="10" fill="#1B4D32" fillOpacity=".08" />
+        <rect x="8" y="10" width="24" height="20" rx="2" stroke="#1B4D32" strokeWidth="2" />
+        <line x1="20" y1="10" x2="20" y2="30" stroke="#C8A65C" strokeWidth="2" />
+        <line x1="8" y1="20" x2="32" y2="20" stroke="#C8A65C" strokeWidth="1.5" strokeDasharray="3 2" />
+      </svg>
+    ),
+  },
+  {
+    id: 'estate_will',
+    label: 'Estate / Will',
+    desc: 'Estate administration, probate, wills & trusts',
     icon: (
       <svg viewBox="0 0 40 40" fill="none" style={{ width: 36, height: 36 }}>
         <rect width="40" height="40" rx="10" fill="#1B4D32" fillOpacity=".08" />
@@ -45,9 +138,9 @@ const MATTER_TYPES = [
     ),
   },
   {
-    id: "general",
-    label: "Other / General",
-    desc: "Corporate, family law, IP, or a question first",
+    id: 'general',
+    label: 'Other / General',
+    desc: 'Corporate, family law, IP, or a question first',
     icon: (
       <svg viewBox="0 0 40 40" fill="none" style={{ width: 36, height: 36 }}>
         <rect width="40" height="40" rx="10" fill="#1B4D32" fillOpacity=".08" />
@@ -64,6 +157,13 @@ const MATTER_TYPES = [
 const MATTER_LABELS: Record<string, string> = {
   property_purchase: "Property Purchase",
   diaspora: "Diaspora Transaction",
+  transfer: "Transfer / Transmission",
+  power_of_attorney: "Power of Attorney (General)",
+  power_of_attorney_limited: "Power of Attorney (Limited)",
+  lost_title: "Lost / Destroyed Title",
+  first_registration: "First Registration",
+  adverse_possession: "Adverse Possession",
+  subdivision: "Subdivision",
   estate_will: "Estate / Will",
   general: "General",
 };

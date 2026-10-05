@@ -23,8 +23,15 @@ const TESTIMONIALS = [
 const MATTER_TYPE_LABELS: Record<string, string> = {
   property_purchase: "Property Purchase",
   diaspora: "Diaspora Transaction",
+  transfer: "Transfer / Transmission",
+  power_of_attorney: "Power of Attorney (General)",
+  power_of_attorney_limited: "Power of Attorney (Limited)",
+  lost_title: "Lost / Destroyed Title",
+  first_registration: "First Registration",
+  adverse_possession: "Adverse Possession",
+  subdivision: "Subdivision",
   estate_will: "Estate / Will",
-  general: "General Matter",
+  general: "General",
 };
 
 function BookingContent() {

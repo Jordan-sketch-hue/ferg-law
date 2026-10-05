@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 /**
  * Appointment Attention System — booking-detail panel.
@@ -48,6 +48,20 @@ const REMINDER_TYPE_LABEL: Record<string, string> = {
   link_updated: "Meeting link update",
 };
 
+const MATTER_LABELS: Record<string, string> = {
+  property_purchase: "Property Purchase",
+  diaspora: "Diaspora Transaction",
+  transfer: "Transfer / Transmission",
+  power_of_attorney: "Power of Attorney (General)",
+  power_of_attorney_limited: "Power of Attorney (Limited)",
+  lost_title: "Lost / Destroyed Title",
+  first_registration: "First Registration",
+  adverse_possession: "Adverse Possession",
+  subdivision: "Subdivision",
+  estate_will: "Estate / Will",
+  general: "General",
+};
+
 interface Props {
   appt: AttentionAppt & { email?: string | null; phone?: string | null };
   token: string;
@@ -71,6 +85,9 @@ export default function AppointmentAttentionPanel({ appt, token, onClose, onStat
   const [followUpNotes, setFollowUpNotes] = useState("");
   const [showFollowUp, setShowFollowUp] = useState(false);
   const [clientCreated, setClientCreated] = useState(false);
+  const [createdClientId, setCreatedClientId] = useState<string | null>(null);
+  const [matterType, setMatterType] = useState<string>(""");
+  const [matterCreated, setMatterCreated] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -149,8 +166,8 @@ export default function AppointmentAttentionPanel({ appt, token, onClose, onStat
     setBusy(null);
   }
 
-  async function createClientFromAppt() {
-    if (clientCreated) return;
+  async function createClientFromAppt(): Promise<string | null> {
+    if (clientCreated) return createdClientId;
     setBusy("client"); setFeedback(null);
     try {
       const r = await createClient().rpc("fl_admin_upsert_client", {
@@ -162,8 +179,27 @@ export default function AppointmentAttentionPanel({ appt, token, onClose, onStat
         p_country: null,
         p_notes: `Created from appointment ${appt.ref} — ${appt.service || "Consultation"}`,
       });
-      if (r.error) { setFeedback(r.error.message || "Could not create client."); }
-      else { setClientCreated(true); setFeedback("Client record created."); }
+      if (r.error) { setFeedback(r.error.message || "Could not create client."); setBusy(null); return null; }
+      const cid = typeof r.data === "string" ? r.data : null;
+      setClientCreated(true); setCreatedClientId(cid); setFeedback("Client record created.");
+      setBusy(null);
+      return cid;
+    } catch { setFeedback("Network error."); setBusy(null); return null; }
+  }
+
+  async function createMatterFromAppt() {
+    if (matterCreated || !matterType) { if (!matterType) setFeedback("Select a matter type first."); return; }
+    setBusy("matter"); setFeedback(null);
+    try {
+      const cid = createdClientId ?? (await createClientFromAppt());
+      if (!cid) { setFeedback("Could not resolve client ID."); setBusy(null); return; }
+      const r = await createClient().rpc("fl_open_matter", {
+        p_client_id: cid,
+        p_workflow_type: matterType,
+        p_title: `${appt.name || "Client"} — ${MATTER_LABELS[matterType] ?? matterType}`,
+      });
+      if (r.error) { setFeedback(r.error.message || "Could not create matter."); }
+      else { setMatterCreated(true); setFeedback("Matter opened successfully."); }
     } catch { setFeedback("Network error."); }
     setBusy(null);
   }
@@ -210,7 +246,10 @@ export default function AppointmentAttentionPanel({ appt, token, onClose, onStat
             </div>
           )}
           <div style={{ marginTop: 10, display: "flex", gap: 14, fontSize: ".82rem" }}>
-            <span>{url ? "✓ Zoom link ready — use Send meeting link to share with client" : "○ No Zoom link generated yet"}</span>
+            <span>{url
+              ? `✓ ${appt.meta?.meeting_provider === "jitsi" ? "Browser video link" : appt.meta?.meeting_provider === "daily" ? "Daily video link" : "Zoom link"} ready — use Send meeting link to share with client`
+              : "○ No meeting link generated yet"
+            }</span>
           </div>
         </div>
 
@@ -239,7 +278,9 @@ export default function AppointmentAttentionPanel({ appt, token, onClose, onStat
             {url && (
               <a href={url} target="_blank" rel="noopener noreferrer"
                 style={{ padding: "9px 18px", borderRadius: 999, background: GOLD, color: "#0e2518", fontWeight: 700, textDecoration: "none", fontSize: ".85rem" }}>
-                Join Zoom
+                {appt.meta?.meeting_provider === "jitsi" || appt.meta?.meeting_provider === "daily"
+                  ? "Join video call (browser)"
+                  : "Join Zoom"}
               </a>
             )}
             {appt.status !== "cancelled" && appt.status !== "completed" && (
@@ -318,16 +359,34 @@ export default function AppointmentAttentionPanel({ appt, token, onClose, onStat
                 {clientCreated ? "✓ Client record created" : busy === "client" ? "Creating…" : "+ Create client record"}
               </button>
 
-              {/* Create matter */}
-              <button
-                type="button"
-                onClick={() => {
-                  onClose();
-                  window.location.href = "/admin?tab=matters";
-                }}
-                style={{ ...btnStyle, textAlign: "left" }}>
-                + Create matter
-              </button>
+              {/* Create matter — 1-click */}
+              <div style={{ background: "#f8f6f1", borderRadius: 10, padding: "12px 14px" }}>
+                <div style={{ fontWeight: 600, fontSize: ".85rem", color: GREEN, marginBottom: 8 }}>Open a matter</div>
+                <select
+                  value={matterType}
+                  onChange={(e) => setMatterType(e.target.value)}
+                  style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid rgba(18,16,12,.15)", fontSize: ".82rem", marginBottom: 8, background: "#fff" }}>
+                  <option value="">— Select workflow type —</option>
+                  <option value="property_purchase">Property Purchase</option>
+                  <option value="diaspora">Diaspora Transaction</option>
+                  <option value="transfer">Transfer / Transmission</option>
+                  <option value="power_of_attorney">Power of Attorney (General)</option>
+                  <option value="power_of_attorney_limited">Power of Attorney (Limited)</option>
+                  <option value="lost_title">Lost / Destroyed Title</option>
+                  <option value="first_registration">First Registration</option>
+                  <option value="adverse_possession">Adverse Possession</option>
+                  <option value="subdivision">Subdivision</option>
+                  <option value="estate_will">Estate / Will</option>
+                  <option value="general">General</option>
+                </select>
+                <button
+                  type="button"
+                  onClick={() => void createMatterFromAppt()}
+                  disabled={busy === "matter" || matterCreated}
+                  style={{ padding: "8px 18px", borderRadius: 999, border: "none", background: matterCreated ? "rgba(47,122,82,.1)" : GREEN, color: matterCreated ? "#2f7a52" : "#fff", fontWeight: 700, cursor: matterCreated ? "default" : "pointer", fontSize: ".84rem" }}>
+                  {matterCreated ? "✓ Matter opened" : busy === "matter" ? "Creating…" : "+ Open matter"}
+                </button>
+              </div>
             </div>
           </div>
         )}
