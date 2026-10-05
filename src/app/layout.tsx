@@ -1,4 +1,4 @@
-import type { Metadata, Viewport } from "next";
+﻿import type { Metadata, Viewport } from "next";
 import { Fraunces, Inter } from "next/font/google";
 import "./globals.css";
 import ChatWidget from "@/components/chat/ChatWidget";
@@ -117,7 +117,6 @@ const jsonLd = {
         "Full-service Jamaican law firm specialising in real estate conveyancing, property transactions, corporate law, family law, intellectual property and sports law.",
       url: "https://fergusonlawja.com",
       telephone: "+18763200235",
-      email: "contact@fergusonlawja.com",
       address: {
         "@type": "PostalAddress",
         streetAddress: "22B Old Hope Road",
