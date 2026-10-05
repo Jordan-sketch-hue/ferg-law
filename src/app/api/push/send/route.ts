@@ -50,6 +50,7 @@ export async function POST(req: NextRequest) {
 
   let sent = 0;
   const dead: string[] = [];
+  const errors: { endpoint: string; status?: number; msg: string }[] = [];
 
   await Promise.allSettled(
     subs.map(async (sub) => {
@@ -59,17 +60,26 @@ export async function POST(req: NextRequest) {
           payload
         );
         sent++;
+        // Track last successful delivery
+        await supabase.from('fl_push_subscriptions')
+          .update({ last_used: new Date().toISOString() })
+          .eq('endpoint', sub.endpoint);
       } catch (e: unknown) {
         const status = (e as { statusCode?: number }).statusCode;
-        if (status === 404 || status === 410) dead.push(sub.endpoint);
+        const msg = (e as { message?: string }).message ?? 'unknown';
+        console.error('[push/send] failed', { endpoint: sub.endpoint.slice(-20), status, msg });
+        errors.push({ endpoint: sub.endpoint.slice(-20), status, msg });
+        // 404/410 = revoked; 400/401 = bad keys — all dead
+        if (status === 404 || status === 410 || status === 400 || status === 401) {
+          dead.push(sub.endpoint);
+        }
       }
     })
   );
 
-  // Clean up dead subscriptions
   if (dead.length > 0) {
     await supabase.from('fl_push_subscriptions').delete().in('endpoint', dead);
   }
 
-  return Response.json({ ok: true, sent, dead: dead.length });
+  return Response.json({ ok: true, sent, dead: dead.length, errors: errors.length ? errors : undefined });
 }
