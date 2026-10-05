@@ -166,9 +166,9 @@ export default function AppointmentAttentionPanel({ appt, token, onClose, onStat
     setBusy(null);
   }
 
-  async function createClientFromAppt(): Promise<string | null> {
+  async function createClientFromAppt(silent = false): Promise<string | null> {
     if (clientCreated) return createdClientId;
-    setBusy("client"); setFeedback(null);
+    if (!silent) { setBusy("client"); setFeedback(null); }
     try {
       const r = await createClient().rpc("fl_admin_upsert_client", {
         p_token: token,
@@ -179,19 +179,19 @@ export default function AppointmentAttentionPanel({ appt, token, onClose, onStat
         p_country: null,
         p_notes: `Created from appointment ${appt.ref} — ${appt.service || "Consultation"}`,
       });
-      if (r.error) { setFeedback(r.error.message || "Could not create client."); setBusy(null); return null; }
+      if (r.error) { if (!silent) { setFeedback(r.error.message || "Could not create client."); setBusy(null); } return null; }
       const cid = typeof r.data === "string" ? r.data : null;
-      setClientCreated(true); setCreatedClientId(cid); setFeedback("Client record created.");
-      setBusy(null);
+      setClientCreated(true); setCreatedClientId(cid);
+      if (!silent) { setFeedback("Client record created."); setBusy(null); }
       return cid;
-    } catch { setFeedback("Network error."); setBusy(null); return null; }
+    } catch { if (!silent) { setFeedback("Network error."); setBusy(null); } return null; }
   }
 
   async function createMatterFromAppt() {
     if (matterCreated || !matterType) { if (!matterType) setFeedback("Select a matter type first."); return; }
     setBusy("matter"); setFeedback(null);
     try {
-      const cid = createdClientId ?? (await createClientFromAppt());
+      const cid = createdClientId ?? (await createClientFromAppt(true));
       if (!cid) { setFeedback("Could not resolve client ID."); setBusy(null); return; }
       const r = await createClient().rpc("fl_open_matter", {
         p_client_id: cid,
