@@ -86,7 +86,7 @@ export default function AppointmentAttentionPanel({ appt, token, onClose, onStat
   const [showFollowUp, setShowFollowUp] = useState(false);
   const [clientCreated, setClientCreated] = useState(false);
   const [createdClientId, setCreatedClientId] = useState<string | null>(null);
-  const [matterType, setMatterType] = useState<string>(""");
+  const [matterType, setMatterType] = useState<string>("");
   const [matterCreated, setMatterCreated] = useState(false);
 
   useEffect(() => {

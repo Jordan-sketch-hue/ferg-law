@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 /**
  * Appointment Attention System — Overview surface.
@@ -39,7 +39,7 @@ export interface AttentionAppt {
   ends_at: string | null;
   status: string | null;
   ref: string | null;
-  meta?: { meeting_url?: string | null; zoom_url?: string | null } | null;
+  meta?: { meeting_url?: string | null; zoom_url?: string | null; meeting_provider?: string | null } | null;
 }
 
 interface Props {
