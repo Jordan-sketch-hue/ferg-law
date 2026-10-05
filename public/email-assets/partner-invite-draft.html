@@ -265,123 +265,119 @@
   }
   [contenteditable]:focus { outline-style: solid; }
 
-  /* ─── Orientation notice ─── */
-  /* ─── Save Draft toolbar ─── */
-  #draft-toolbar {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    z-index: 9999;
-    background: #111;
-    border-bottom: 1px solid #2a2a2a;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 10px;
-    padding: 8px 20px;
-    font-family: 'Inter', sans-serif;
-  }
-  #draft-toolbar span {
-    font-size: 11px;
-    color: #666;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    margin-right: auto;
-  }
-  .tb-btn {
-    padding: 7px 16px;
-    border-radius: 3px;
-    font-family: 'Inter', sans-serif;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    cursor: pointer;
-    border: none;
-    transition: opacity 0.15s;
-  }
-  .tb-btn:hover { opacity: 0.8; }
-  .tb-btn-outline {
-    background: transparent;
-    border: 1px solid #444;
-    color: #aaa;
-  }
-  .tb-btn-gold {
-    background: #c8a65c;
-    color: #111;
-  }
-  body { padding-top: 44px; }
 
-  #edit-notice {
+
+    .email-footer { padding: 18px 24px; }
+    .headline { font-size: 22px; }
+    #edit-notice { bottom: 16px; right: 16px; left: 16px; width: auto; }
+  }
+
+  /* ─── Unified Draft Panel ─── */
+  body { padding-right: 0; }
+  #draft-panel {
     position: fixed;
-    bottom: 28px; right: 28px;
+    top: 28px; right: 28px;
+    width: 282px;
     background: #1a1a1a;
-    color: #fff;
-    border-radius: 6px;
-    padding: 18px 22px 16px;
-    width: 272px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    padding: 18px 18px 14px;
     z-index: 9999;
     font-family: 'Inter', sans-serif;
-    transition: opacity 0.4s, transform 0.4s;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.32);
   }
-  #edit-notice.hidden { opacity: 0; transform: translateY(12px); pointer-events: none; }
-  .notice-close {
-    position: absolute;
-    top: 10px; right: 12px;
-    background: none; border: none;
-    color: #888; font-size: 16px; cursor: pointer; line-height: 1;
-  }
-  .notice-title {
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.12em;
+  .dp-title {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
     color: #c8a65c;
     margin-bottom: 12px;
   }
-  .notice-row {
-    display: flex;
-    gap: 10px;
-    align-items: flex-start;
-    margin-bottom: 9px;
-    font-size: 12px;
-    line-height: 1.5;
-    color: #ccc;
+  .dp-row {
+    display: flex; gap: 9px; align-items: flex-start;
+    margin-bottom: 8px;
+    font-size: 12px; line-height: 1.5; color: #bbb;
   }
-  .notice-row svg { flex-shrink: 0; margin-top: 1px; opacity: 0.7; }
-  .notice-row span { color: #fff; }
-  .notice-dismiss {
-    margin-top: 14px;
-    width: 100%;
-    padding: 8px;
-    background: transparent;
-    border: 1px solid #333;
+  .dp-row svg { flex-shrink: 0; margin-top: 2px; opacity: 0.6; }
+  .dp-row strong { color: #fff; font-weight: 600; }
+  .dp-divider { height: 1px; background: #2a2a2a; margin: 12px 0; }
+  .dp-btn {
+    width: 100%; padding: 9px;
     border-radius: 3px;
-    color: #888;
     font-family: 'Inter', sans-serif;
-    font-size: 10px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    cursor: pointer;
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    cursor: pointer; border: none; margin-bottom: 7px;
+    transition: opacity 0.15s;
   }
-  .notice-dismiss:hover { border-color: #555; color: #aaa; }
+  .dp-btn:hover { opacity: 0.85; }
+  .dp-btn:last-child { margin-bottom: 0; }
+  .dp-btn-gold { background: #c8a65c; color: #111; }
+  .dp-btn-outline { background: transparent; border: 1px solid #3a3a3a; color: #888; }
 
-  @media (max-width: 600px) {
-    .email-body { padding: 28px 24px 20px; }
-    .email-footer { padding: 18px 24px; }
-    .headline { font-size: 22px; }
-    #edit-notice { bottom: 16px; right: 16px; left: 16px; width: auto; }
+  /* AI sub-section inside panel */
+  #dp-ai { display: none; }
+  #ai-prompt {
+    width: 100%; background: #111; border: 1px solid #333;
+    border-radius: 3px; color: #eee;
+    font-family: 'Inter', sans-serif; font-size: 12px;
+    line-height: 1.5; padding: 8px 10px; resize: none;
+    box-sizing: border-box; margin-bottom: 7px;
+  }
+  #ai-result {
+    display: none; margin-bottom: 7px;
+    background: #111; border: 1px solid #2a2a2a;
+    border-radius: 3px; padding: 9px;
+    font-size: 12px; color: #ddd; line-height: 1.6;
+    max-height: 110px; overflow-y: auto; white-space: pre-wrap;
+  }
+
+  .dp-saved-badge {
+    font-size: 10px; color: #c8a65c; text-align: center;
+    letter-spacing: 0.08em; margin-top: 6px;
+    min-height: 14px;
+  }
+
+  @media (max-width: 680px) {
+    #draft-panel { top: auto; bottom: 12px; right: 12px; left: 12px; width: auto; }
   }
 </style>
 </head>
 <body>
 
-<!-- Segment switcher -->
-<!-- Save Draft toolbar -->
-<div id="draft-toolbar">
-  <span>Partner Invite — Draft Editor</span>
-  <button class="tb-btn tb-btn-outline" onclick="copyDraftText()" id="copy-btn">Copy Text</button>
-  <button class="tb-btn tb-btn-gold" onclick="saveDraft()" id="save-btn">Save Draft</button>
+<!-- Unified Draft Panel -->
+<div id="draft-panel">
+  <div class="dp-title">Draft Editor</div>
+
+  <div class="dp-row">
+    <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 3l3 3-10 10H4v-3L14 3z"/></svg>
+    <div>Click <strong>any text</strong> to edit it</div>
+  </div>
+  <div class="dp-row">
+    <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="14" height="14" rx="1.5"/><circle cx="7.5" cy="7.5" r="1.5"/><path d="M17 13l-4-4-3 3-2-2-5 5"/></svg>
+    <div>Hover any <strong>image</strong> → click swap</div>
+  </div>
+  <div class="dp-row">
+    <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="6" width="16" height="12" rx="1.5"/><path d="M6 6V4a4 4 0 018 0v2"/></svg>
+    <div>Use tabs above to switch <strong>segment</strong></div>
+  </div>
+
+  <div class="dp-divider"></div>
+
+  <button class="dp-btn dp-btn-gold" onclick="saveDraft()" id="save-btn">Save Draft</button>
+  <button class="dp-btn dp-btn-outline" onclick="copyDraftText()" id="copy-btn">Copy Email Text</button>
+  <div class="dp-saved-badge" id="save-badge"></div>
+
+  <!-- AI Rewrite — appears on text focus -->
+  <div id="dp-ai">
+    <div class="dp-divider"></div>
+    <div class="dp-title" style="margin-bottom:8px;">AI Rewrite</div>
+    <textarea id="ai-prompt" rows="3" placeholder="e.g. Make this shorter. More formal. Warmer tone..."></textarea>
+    <button class="dp-btn dp-btn-gold" onclick="runAI()" id="ai-go">Generate</button>
+    <div id="ai-result"></div>
+    <button class="dp-btn dp-btn-outline" id="ai-apply" onclick="applyAI()" style="display:none;">Apply to selection</button>
+  </div>
 </div>
 
 <div class="segment-bar">
@@ -510,55 +506,100 @@
   </div>
 </div>
 
-<!-- Edit notice -->
-<div id="edit-notice">
-  <button class="notice-close" onclick="dismissNotice()">&#215;</button>
-  <div class="notice-title">This draft is yours to edit</div>
-  <div class="notice-row">
-    <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 3l3 3-10 10H4v-3L14 3z"/></svg>
-    <div><span>Click any text</span> to edit it directly</div>
-  </div>
-  <div class="notice-row">
-    <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="14" height="14" rx="1.5"/><circle cx="7.5" cy="7.5" r="1.5"/><path d="M17 13l-4-4-3 3-2-2-5 5"/></svg>
-    <div>Hover over <span>any image</span> and click the swap button to replace it</div>
-  </div>
-  <div class="notice-row">
-    <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 4v12M4 10h12" stroke-linecap="round"/></svg>
-    <div>Toggle between <span>Agents</span> and <span>Surveyors</span> using the tabs above</div>
-  </div>
-  <button class="notice-dismiss" onclick="dismissNotice()">Got it</button>
-</div>
-
-<!-- AI Rewrite Panel -->
-<div id="ai-panel" style="display:none;position:fixed;bottom:28px;left:28px;width:300px;background:#1a1a1a;border:1px solid #333;border-radius:6px;padding:16px 18px;z-index:9998;font-family:'Inter',sans-serif;box-shadow:0 8px 32px rgba(0,0,0,0.28);">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-    <span style="font-size:10px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:#c8a65c;">AI Rewrite</span>
-    <button onclick="closeAI()" style="background:none;border:none;color:#666;font-size:16px;cursor:pointer;line-height:1;">&#215;</button>
-  </div>
-  <textarea id="ai-prompt" placeholder="e.g. Make this more urgent. Shorter. More formal. Warmer tone..." rows="3" style="width:100%;background:#111;border:1px solid #333;border-radius:3px;color:#eee;font-family:'Inter',sans-serif;font-size:12px;line-height:1.5;padding:8px 10px;resize:none;box-sizing:border-box;"></textarea>
-  <button onclick="runAI()" id="ai-go" style="margin-top:8px;width:100%;padding:9px;background:#c8a65c;border:none;border-radius:2px;color:#111;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;">Generate</button>
-  <div id="ai-result" style="display:none;margin-top:10px;background:#111;border:1px solid #2a2a2a;border-radius:3px;padding:10px;font-size:12px;color:#ddd;line-height:1.6;max-height:120px;overflow-y:auto;white-space:pre-wrap;"></div>
-  <button id="ai-apply" onclick="applyAI()" style="display:none;margin-top:6px;width:100%;padding:8px;background:transparent;border:1px solid #c8a65c;border-radius:2px;color:#c8a65c;font-family:'Inter',sans-serif;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;">Apply to selection</button>
-</div>
-
 <script>
+  // ─── Segment ───
+  function setSegment(seg) {
+    document.querySelectorAll('.seg-btn').forEach((b, i) => {
+      b.classList.toggle('active', (seg === 'ab' && i === 0) || (seg === 'sv' && i === 1));
+    });
+    document.getElementById('seg-ab').style.display = seg === 'ab' ? '' : 'none';
+    document.getElementById('seg-sv').style.display = seg === 'sv' ? '' : 'none';
+  }
+
+  // ─── Image swap ───
+  function swapImage(imgId, input) {
+    if (!input.files || !input.files[0]) return;
+    const reader = new FileReader();
+    reader.onload = e => { document.getElementById(imgId).src = e.target.result; };
+    reader.readAsDataURL(input.files[0]);
+    input.value = '';
+  }
+
+  // ─── Persist & restore edits (localStorage) ───
+  const STORE_KEY = 'fl_partner_draft_v1';
+
+  function collectEdits() {
+    const data = {};
+    document.querySelectorAll('[contenteditable]').forEach((el, i) => {
+      const key = el.id || ('ce_' + i);
+      data[key] = el.innerHTML;
+    });
+    return data;
+  }
+
+  function restoreEdits() {
+    try {
+      const raw = localStorage.getItem(STORE_KEY);
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      document.querySelectorAll('[contenteditable]').forEach((el, i) => {
+        const key = el.id || ('ce_' + i);
+        if (data[key] !== undefined) el.innerHTML = data[key];
+      });
+    } catch(e) {}
+  }
+
+  function saveDraft() {
+    try {
+      const data = collectEdits();
+      localStorage.setItem(STORE_KEY, JSON.stringify(data));
+      const badge = document.getElementById('save-badge');
+      badge.textContent = 'Edits saved';
+      setTimeout(() => { badge.textContent = ''; }, 2500);
+    } catch(e) {
+      alert('Could not save — localStorage may be blocked.');
+    }
+  }
+
+  function copyDraftText() {
+    const btn = document.getElementById('copy-btn');
+    const card = document.querySelector('.email-card');
+    const text = card ? card.innerText.trim() : document.body.innerText.trim();
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'Copied!';
+      setTimeout(() => { btn.textContent = 'Copy Email Text'; }, 2200);
+    }).catch(() => {
+      btn.textContent = 'Failed';
+      setTimeout(() => { btn.textContent = 'Copy Email Text'; }, 2200);
+    });
+  }
+
+  // Restore on load
+  restoreEdits();
+
+  // Auto-save on any edit
+  document.querySelectorAll('[contenteditable]').forEach(el => {
+    el.addEventListener('input', () => {
+      try {
+        const data = collectEdits();
+        localStorage.setItem(STORE_KEY, JSON.stringify(data));
+      } catch(e) {}
+    });
+  });
+
+  // ─── AI Rewrite ───
   let _aiTarget = null;
   let _aiResult = '';
 
   document.querySelectorAll('[contenteditable]').forEach(el => {
     el.addEventListener('focus', () => {
       _aiTarget = el;
-      document.getElementById('ai-panel').style.display = 'block';
+      document.getElementById('dp-ai').style.display = 'block';
       document.getElementById('ai-result').style.display = 'none';
       document.getElementById('ai-apply').style.display = 'none';
       document.getElementById('ai-result').textContent = '';
     });
   });
-
-  function closeAI() {
-    document.getElementById('ai-panel').style.display = 'none';
-    _aiTarget = null;
-  }
 
   async function runAI() {
     if (!_aiTarget) return;
@@ -589,68 +630,11 @@
   function applyAI() {
     if (!_aiTarget || !_aiResult) return;
     _aiTarget.innerText = _aiResult;
-    document.getElementById('ai-panel').style.display = 'none';
     document.getElementById('ai-result').style.display = 'none';
     document.getElementById('ai-apply').style.display = 'none';
-    _aiTarget = null;
-  }
-
-    function setSegment(seg) {
-    document.querySelectorAll('.seg-btn').forEach((b, i) => {
-      b.classList.toggle('active', (seg === 'ab' && i === 0) || (seg === 'sv' && i === 1));
-    });
-    document.getElementById('seg-ab').style.display = seg === 'ab' ? '' : 'none';
-    document.getElementById('seg-sv').style.display = seg === 'sv' ? '' : 'none';
-  }
-
-  function swapImage(imgId, input) {
-    if (!input.files || !input.files[0]) return;
-    const reader = new FileReader();
-    reader.onload = e => { document.getElementById(imgId).src = e.target.result; };
-    reader.readAsDataURL(input.files[0]);
-    input.value = '';
-  }
-
-  function dismissNotice() {
-    document.getElementById('edit-notice').classList.add('hidden');
-    try { localStorage.setItem('fl_partner_notice_dismissed', '1'); } catch(e) {}
-  }
-
-  // Auto-dismiss if seen before
-  try {
-    if (localStorage.getItem('fl_partner_notice_dismissed') === '1') {
-      document.getElementById('edit-notice').classList.add('hidden');
-    }
-  } catch(e) {}
-
-  function saveDraft() {
-    const btn = document.getElementById('save-btn');
-    // Capture the full page HTML with current edited content
-    const html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
-    const blob = new Blob([html], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'partner-invite-draft-edited.html';
-    a.click();
-    URL.revokeObjectURL(url);
-    btn.textContent = 'Saved!';
-    setTimeout(() => { btn.textContent = 'Save Draft'; }, 2000);
-  }
-
-  function copyDraftText() {
-    const btn = document.getElementById('copy-btn');
-    // Grab all visible contenteditable text in reading order
-    const card = document.querySelector('.email-card');
-    const text = card ? card.innerText.trim() : document.body.innerText.trim();
-    navigator.clipboard.writeText(text).then(() => {
-      btn.textContent = 'Copied!';
-      setTimeout(() => { btn.textContent = 'Copy Text'; }, 2000);
-    }).catch(() => {
-      btn.textContent = 'Failed';
-      setTimeout(() => { btn.textContent = 'Copy Text'; }, 2000);
-    });
+    _aiResult = '';
+    // auto-save after apply
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(collectEdits())); } catch(e) {}
   }
 </script>
 </body>
-</html>
