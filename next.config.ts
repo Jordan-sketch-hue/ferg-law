@@ -79,6 +79,12 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        source: "/email-assets/partner-invite-draft.html",
+        headers: [
+          { key: "Cache-Control", value: "no-store, no-cache, must-revalidate" },
+        ],
+      },
+      {
         source: "/api/ebook/:path*",
         headers: [
           { key: "Access-Control-Allow-Origin", value: "*" },
