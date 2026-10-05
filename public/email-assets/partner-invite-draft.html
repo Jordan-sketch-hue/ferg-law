@@ -266,6 +266,51 @@
   [contenteditable]:focus { outline-style: solid; }
 
   /* ─── Orientation notice ─── */
+  /* ─── Save Draft toolbar ─── */
+  #draft-toolbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 9999;
+    background: #111;
+    border-bottom: 1px solid #2a2a2a;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 8px 20px;
+    font-family: 'Inter', sans-serif;
+  }
+  #draft-toolbar span {
+    font-size: 11px;
+    color: #666;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-right: auto;
+  }
+  .tb-btn {
+    padding: 7px 16px;
+    border-radius: 3px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.15s;
+  }
+  .tb-btn:hover { opacity: 0.8; }
+  .tb-btn-outline {
+    background: transparent;
+    border: 1px solid #444;
+    color: #aaa;
+  }
+  .tb-btn-gold {
+    background: #c8a65c;
+    color: #111;
+  }
+  body { padding-top: 44px; }
+
   #edit-notice {
     position: fixed;
     bottom: 28px; right: 28px;
@@ -332,6 +377,13 @@
 <body>
 
 <!-- Segment switcher -->
+<!-- Save Draft toolbar -->
+<div id="draft-toolbar">
+  <span>Partner Invite — Draft Editor</span>
+  <button class="tb-btn tb-btn-outline" onclick="copyDraftText()" id="copy-btn">Copy Text</button>
+  <button class="tb-btn tb-btn-gold" onclick="saveDraft()" id="save-btn">Save Draft</button>
+</div>
+
 <div class="segment-bar">
   <button class="seg-btn active" onclick="setSegment('ab')">Agents &amp; Brokers</button>
   <button class="seg-btn" onclick="setSegment('sv')">Surveyors &amp; Valuators</button>
@@ -570,6 +622,35 @@
       document.getElementById('edit-notice').classList.add('hidden');
     }
   } catch(e) {}
+
+  function saveDraft() {
+    const btn = document.getElementById('save-btn');
+    // Capture the full page HTML with current edited content
+    const html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'partner-invite-draft-edited.html';
+    a.click();
+    URL.revokeObjectURL(url);
+    btn.textContent = 'Saved!';
+    setTimeout(() => { btn.textContent = 'Save Draft'; }, 2000);
+  }
+
+  function copyDraftText() {
+    const btn = document.getElementById('copy-btn');
+    // Grab all visible contenteditable text in reading order
+    const card = document.querySelector('.email-card');
+    const text = card ? card.innerText.trim() : document.body.innerText.trim();
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'Copied!';
+      setTimeout(() => { btn.textContent = 'Copy Text'; }, 2000);
+    }).catch(() => {
+      btn.textContent = 'Failed';
+      setTimeout(() => { btn.textContent = 'Copy Text'; }, 2000);
+    });
+  }
 </script>
 </body>
 </html>
