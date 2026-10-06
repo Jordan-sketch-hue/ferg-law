@@ -11,7 +11,7 @@ const SPAM_SUBJECT_PATTERNS = [
   /wire\s*transfer/i, /bitcoin/i, /crypto\s*payment/i,
 ];
 
-const SPAM_DOMAIN_PATTERNS = [/sell\d*proxy/i, /\.xyz$/i, /\.pw$/i, /\.top$/i];
+const SPAM_DOMAIN_PATTERNS = [/sell\d*proxy/i, /\.xyz$/i, /\.pw$/i, /\.top$/i, /\.ksmg\.life$/i, /\.hrufhs\.org$/i];
 
 function isLikelySpam(fromEmail: string, subject: string): boolean {
   if (SPAM_SUBJECT_PATTERNS.some((p) => p.test(subject))) return true;
