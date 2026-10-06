@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 
-/** Mark all unread client messages in a matter as read. Called when staff opens the Messages tab. */
+/** Mark all unread client messages AND files in a matter as read. Called when staff opens the Messages tab. */
 export async function POST(req: NextRequest) {
   try {
     const { token, matterId } = (await req.json()) as { token: string; matterId: string };
@@ -11,12 +11,22 @@ export async function POST(req: NextRequest) {
     const { data: isAdmin } = await supabase.rpc("fl_is_admin", { p_token: token });
     if (!isAdmin) return NextResponse.json({ error: "Not authorised." }, { status: 403 });
 
-    await supabase
-      .from("fl_matter_messages")
-      .update({ read_at: new Date().toISOString() })
-      .eq("matter_id", matterId)
-      .eq("sender_type", "client")
-      .is("read_at", null);
+    const now = new Date().toISOString();
+
+    await Promise.all([
+      supabase
+        .from("fl_matter_messages")
+        .update({ read_at: now })
+        .eq("matter_id", matterId)
+        .eq("sender_type", "client")
+        .is("read_at", null),
+      supabase
+        .from("fl_matter_files")
+        .update({ read_at: now })
+        .eq("matter_id", matterId)
+        .eq("uploader_type", "client")
+        .is("read_at", null),
+    ]);
 
     return NextResponse.json({ ok: true });
   } catch (e) {

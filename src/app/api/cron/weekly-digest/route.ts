@@ -1,4 +1,4 @@
-/**
+﻿/**
  * GET /api/cron/weekly-digest
  * Runs weekly. Sends each active-matter client a single digest email
  * instead of one email per status change: their 3 most recent status
@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
   const { data: matters, error: mErr } = await admin
     .from("fl_client_matters")
     .select("id, title, matter_type, client_id")
-    .in("status", ["intake", "in_progress", "awaiting_client", "awaiting_third_party"]);
+    .in("status", ["in_progress", "awaiting_client", "awaiting_third_party"]);
 
   if (mErr) return Response.json({ ok: false, error: mErr.message }, { status: 500 });
 

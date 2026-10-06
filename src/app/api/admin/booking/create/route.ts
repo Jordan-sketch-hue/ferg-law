@@ -1,4 +1,4 @@
-/**
+﻿/**
  * POST /api/admin/booking/create
  * Owen creates a booking on behalf of a client (e.g. after a phone/WA inquiry).
  * Inserts a CONFIRMED appointment (no payment), generates a Jitsi meeting link,
@@ -12,6 +12,7 @@ import { serviceDuration, TZ } from "@/lib/booking/availability";
 import { isServiceId, serviceTitle } from "@/lib/booking/services";
 import { fullWhenLabel } from "@/lib/booking/format";
 import { logReminderEvent } from "@/lib/attention/reminderLog";
+import { pushToAdmins } from "@/lib/push";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -120,6 +121,8 @@ export async function POST(req: NextRequest) {
       }
     } catch { /* swallow — booking already saved */ }
   }
+
+  void pushToAdmins(`New Booking — ${name}`, `${title} · ${whenLabel}`, "/admin?tab=bookings", "fl-booking");
 
   return Response.json({ ok: true, ref, meetingUrl: meetingUrl ?? null, whenLabel });
 }
