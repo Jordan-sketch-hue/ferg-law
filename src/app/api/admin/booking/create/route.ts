@@ -13,6 +13,7 @@ import { isServiceId, serviceTitle } from "@/lib/booking/services";
 import { fullWhenLabel } from "@/lib/booking/format";
 import { logReminderEvent } from "@/lib/attention/reminderLog";
 import { pushToAdmins } from "@/lib/push";
+import { notifyOwenWA } from "@/lib/wa-notify";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -122,7 +123,28 @@ export async function POST(req: NextRequest) {
     } catch { /* swallow — booking already saved */ }
   }
 
-  void pushToAdmins(`New Booking — ${name}`, `${title} · ${whenLabel}`, "/admin?tab=bookings", "fl-booking");
+  // Notify staff — email + WhatsApp + push
+  const staffEmail = process.env.FERGUSON_STAFF_EMAIL || "contact@fergusonlawja.com";
+  const resendKey = process.env.RESEND_API_KEY;
+  const owenSubject = `New booking (admin) — ${name}`;
+  const owenBody = `New booking created via admin panel\n\nRef: ${ref}\nName: ${name}\nEmail: ${email}\nPhone: ${phone || "—"}\nService: ${title}\nWhen: ${whenLabel}\nNotes: ${notes || "—"}`;
+
+  if (resendKey) {
+    void fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: "Ferguson Law <contact@fergusonlawja.com>",
+        to: [staffEmail],
+        bcc: ["jordanroad631@gmail.com"],
+        subject: owenSubject,
+        text: owenBody,
+      }),
+    }).catch(() => {});
+  }
+
+  void notifyOwenWA(`New booking (admin)\n${name} - ${title}\n${whenLabel}\n${email} - ${phone || "no phone"}\nRef: ${ref}`);
+  void pushToAdmins(`New Booking - ${name}`, `${title} - ${whenLabel}`, "/admin?tab=bookings", "fl-booking");
 
   return Response.json({ ok: true, ref, meetingUrl: meetingUrl ?? null, whenLabel });
 }
