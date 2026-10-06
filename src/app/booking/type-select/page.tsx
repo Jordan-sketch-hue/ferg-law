@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -14,19 +14,6 @@ const MATTER_TYPES = [
       <svg viewBox="0 0 40 40" fill="none" style={{ width: 36, height: 36 }}>
         <rect width="40" height="40" rx="10" fill="#1B4D32" fillOpacity=".1" />
         <path d="M8 22 L20 10 L32 22 V34 H24V26H16V34H8V22Z" fill="#1B4D32" />
-      </svg>
-    ),
-  },
-  {
-    id: "diaspora",
-    label: "Diaspora land transaction",
-    desc: "For overseas buyers — we handle everything remotely",
-    icon: (
-      <svg viewBox="0 0 40 40" fill="none" style={{ width: 36, height: 36 }}>
-        <rect width="40" height="40" rx="10" fill="#C8A65C" fillOpacity=".12" />
-        <circle cx="20" cy="20" r="11" stroke="#C8A65C" strokeWidth="2" />
-        <path d="M20 9 Q25 15 25 20 Q25 25 20 31 Q15 25 15 20 Q15 15 20 9Z" stroke="#C8A65C" strokeWidth="1.5" fill="none" />
-        <line x1="9" y1="20" x2="31" y2="20" stroke="#C8A65C" strokeWidth="1.5" />
       </svg>
     ),
   },
@@ -63,12 +50,11 @@ const MATTER_TYPES = [
 
 const MATTER_LABELS: Record<string, string> = {
   property_purchase: "Property Purchase",
-  diaspora: "Diaspora Transaction",
   estate_will: "Estate / Will",
   general: "General",
 };
 
-// ── Splash ────────────────────────────────────────────────────────────────────
+// â”€â”€ Splash â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function Splash({ onDone }: { onDone: () => void }) {
   const [phase, setPhase] = useState<"in" | "hold" | "out">("in");
@@ -107,7 +93,7 @@ function Splash({ onDone }: { onDone: () => void }) {
           <CmsText page="booking-type-select" block="splash_firm_name" fallback="Ferguson Law" />
         </p>
         <p style={{ fontSize: "0.82rem", color: "rgba(255,255,255,.45)", margin: 0 }}>
-          <CmsText page="booking-type-select" block="splash_tagline" fallback="Counsel · Care · Competence" />
+          <CmsText page="booking-type-select" block="splash_tagline" fallback="Counsel Â· Care Â· Competence" />
         </p>
       </div>
       {/* Pulse ring */}
@@ -121,7 +107,7 @@ function Splash({ onDone }: { onDone: () => void }) {
   );
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
+// â”€â”€ Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function TypeSelectPage() {
   const router = useRouter();
@@ -229,7 +215,7 @@ export default function TypeSelectPage() {
       {/* Skip / live site links */}
       <div style={{ marginTop: "2rem", textAlign: "center", display: "flex", flexDirection: "column", gap: "0.6rem", alignItems: "center" }}>
         <Link href="/booking" style={{ color: "#69736d", fontSize: "0.85rem", textDecoration: "underline", textUnderlineOffset: 3 }}>
-          <CmsText page="booking-type-select" block="skip_link" fallback="Skip — go straight to booking" />
+          <CmsText page="booking-type-select" block="skip_link" fallback="Skip â€” go straight to booking" />
         </Link>
         <a
           href="https://fergusonlawja.com"
@@ -245,7 +231,7 @@ export default function TypeSelectPage() {
       </div>
 
       <p style={{ marginTop: "2rem", fontSize: "0.72rem", color: "#9a937f", letterSpacing: "0.06em" }}>
-        <CmsText page="booking-type-select" block="footer_note" fallback="20-min consultation · No obligation · Online or in-person" />
+        <CmsText page="booking-type-select" block="footer_note" fallback="20-min consultation Â· No obligation Â· Online or in-person" />
       </p>
     </div>
     </>

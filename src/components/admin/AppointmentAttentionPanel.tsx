@@ -50,7 +50,6 @@ const REMINDER_TYPE_LABEL: Record<string, string> = {
 
 const MATTER_LABELS: Record<string, string> = {
   property_purchase: "Property Purchase",
-  diaspora: "Diaspora Transaction",
   transfer: "Transfer / Transmission",
   power_of_attorney: "Power of Attorney (General)",
   power_of_attorney_limited: "Power of Attorney (Limited)",
@@ -367,9 +366,7 @@ export default function AppointmentAttentionPanel({ appt, token, onClose, onStat
                   onChange={(e) => setMatterType(e.target.value)}
                   style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid rgba(18,16,12,.15)", fontSize: ".82rem", marginBottom: 8, background: "#fff" }}>
                   <option value="">— Select workflow type —</option>
-                  <option value="property_purchase">Property Purchase</option>
-                  <option value="diaspora">Diaspora Transaction</option>
-                  <option value="transfer">Transfer / Transmission</option>
+                  <option value="property_purchase">Property Purchase</option>                  <option value="transfer">Transfer / Transmission</option>
                   <option value="power_of_attorney">Power of Attorney (General)</option>
                   <option value="power_of_attorney_limited">Power of Attorney (Limited)</option>
                   <option value="lost_title">Lost / Destroyed Title</option>
