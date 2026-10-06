@@ -1,4 +1,4 @@
-/**
+﻿/**
  * GET /api/cron/monthly-report
  * Runs on the 1st of each month at 7 AM JA time (12:00 UTC).
  * Sends Owen a performance digest for the prior month.
@@ -81,7 +81,7 @@ export async function GET(req: NextRequest) {
     const resend = new Resend(key);
     await resend.emails.send({
       from: "Ferguson Law <contact@fergusonlawja.com>",
-      to: [process.env.FERGUSON_ADMIN_EMAIL || process.env.FERGUSON_STAFF_EMAIL || "owenkferguson@hotmail.com"],
+      to: [process.env.FERGUSON_ADMIN_EMAIL || process.env.FERGUSON_STAFF_EMAIL || "contact@fergusonlawja.com"],
       subject: `Monthly Report — ${monthLabel}`,
       html,
     });
@@ -91,3 +91,4 @@ export async function GET(req: NextRequest) {
 
   return Response.json({ ok: true, month: monthLabel, stats });
 }
+

@@ -32,6 +32,21 @@ const MATTER_TYPES = [
     ),
   },
   {
+    id: "non_contentious_divorce",
+    label: "Non-Contentious Divorce",
+    desc: "Representing Petitioner or Respondent \u2014 mutual, uncontested",
+    icon: (
+      <svg viewBox="0 0 40 40" fill="none" style={{ width: 36, height: 36 }}>
+        <rect width="40" height="40" rx="10" fill="#1B4D32" fillOpacity=".08" />
+        <circle cx="13" cy="13" r="3.5" stroke="#1B4D32" strokeWidth="1.8" />
+        <circle cx="27" cy="13" r="3.5" stroke="#1B4D32" strokeWidth="1.8" />
+        <path d="M13 17 C9 17 7 21 7 24" stroke="#1B4D32" strokeWidth="1.8" strokeLinecap="round" />
+        <path d="M27 17 C31 17 33 21 33 24" stroke="#1B4D32" strokeWidth="1.8" strokeLinecap="round" />
+        <line x1="20" y1="8" x2="20" y2="30" stroke="#C8A65C" strokeWidth="1.2" strokeDasharray="2 2" />
+      </svg>
+    ),
+  },
+  {
     id: "general",
     label: "Other / General",
     desc: "Corporate, family law, IP, or a question first",
@@ -51,6 +66,7 @@ const MATTER_TYPES = [
 const MATTER_LABELS: Record<string, string> = {
   property_purchase: "Property Purchase",
   estate_will: "Estate / Will",
+  non_contentious_divorce: "Non-Contentious Divorce",
   general: "General",
 };
 

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * POST /api/booking/create
  *
  * Body: { service, startsAt, firstName, lastName, email, phone, notes?,
@@ -241,7 +241,7 @@ export async function POST(req: NextRequest) {
             headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
             body: JSON.stringify({
               from: "Ferguson Law <contact@fergusonlawja.com>",
-              to: [process.env.FERGUSON_STAFF_EMAIL || "owen@fergusonlawja.com"],
+              to: [process.env.FERGUSON_STAFF_EMAIL || "contact@fergusonlawja.com"],
               subject: owenSubject,
               text: owenBody,
             }),
@@ -253,7 +253,7 @@ export async function POST(req: NextRequest) {
         await supabase.from("fl_inbound_emails").insert({
           from_email: "contact@fergusonlawja.com",
           from_name: "Ferguson Law",
-          to_email: process.env.FERGUSON_STAFF_EMAIL || "owen@fergusonlawja.com",
+          to_email: process.env.FERGUSON_STAFF_EMAIL || "contact@fergusonlawja.com",
           subject: owenSubject,
           body_text: owenBody,
           body_html: null,
@@ -347,7 +347,7 @@ export async function POST(req: NextRequest) {
           headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
           body: JSON.stringify({
             from: "Ferguson Law <contact@fergusonlawja.com>",
-            to: ["owen@fergusonlawja.com"],
+            to: ["contact@fergusonlawja.com"],
             subject: pendingSubject,
             text: pendingBody,
           }),
@@ -358,7 +358,7 @@ export async function POST(req: NextRequest) {
       await supabase.from("fl_inbound_emails").insert({
         from_email: "contact@fergusonlawja.com",
         from_name: "Ferguson Law",
-        to_email: "owen@fergusonlawja.com",
+        to_email: "contact@fergusonlawja.com",
         subject: pendingSubject,
         body_text: pendingBody,
         body_html: null,
@@ -426,3 +426,4 @@ async function writeLead(
     /* swallow — appointment already saved */
   }
 }
+

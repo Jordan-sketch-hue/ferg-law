@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { notifyOwenWA } from "@/lib/wa-notify";
 import { pushToAdmins } from "@/lib/push";
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
   // 1. Notify Owen
   await resend.emails.send({
     from: "Ferguson Law <contact@fergusonlawja.com>",
-    to: ["owen@fergusonlawja.com", "contact@fergusonlawja.com"],
+    to: ["contact@fergusonlawja.com", "contact@fergusonlawja.com"],
     replyTo: email,
     subject: `New enquiry: ${name} — ${interestLabel}`,
     html: notifyHtml({ name, email, interestLabel }),
@@ -117,3 +117,4 @@ function ackText({ name, interestLabel }: { name: string; interestLabel: string 
     `${SITE.founder} · ${SITE.city}`,
   ].join("\n");
 }
+

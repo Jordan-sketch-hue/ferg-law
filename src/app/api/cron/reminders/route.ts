@@ -1,4 +1,4 @@
-/**
+﻿/**
  * GET /api/cron/reminders — automatic appointment reminders + attention alerts.
  *
  * Run on a schedule (Vercel Cron, every 15 min — see vercel.json). Each run:
@@ -81,7 +81,7 @@ export async function GET(req: NextRequest) {
       const appointmentId = apptRows?.[0]?.id as string | undefined;
       const meetingUrl = (apptRows?.[0]?.meta as { meeting_url?: string } | null)?.meeting_url ?? undefined;
 
-      const adminEmail = process.env.FERGUSON_ADMIN_EMAIL || process.env.FERGUSON_STAFF_EMAIL || "owenkferguson@hotmail.com";
+      const adminEmail = process.env.FERGUSON_ADMIN_EMAIL || process.env.FERGUSON_STAFF_EMAIL || "contact@fergusonlawja.com";
       const send = await sendBookingReminder({
         to: row.email,
         name: row.name || "",
@@ -181,7 +181,7 @@ export async function GET(req: NextRequest) {
       "Attendance confirmation required",
       `${a.name || "A client"} · ${a.service || "Consultation"} at ${timeLabel} — mark completed or no-show.`,
     );
-    const adminEmail = process.env.FERGUSON_ADMIN_EMAIL || process.env.FERGUSON_STAFF_EMAIL || "owenkferguson@hotmail.com";
+    const adminEmail = process.env.FERGUSON_ADMIN_EMAIL || process.env.FERGUSON_STAFF_EMAIL || "contact@fergusonlawja.com";
     if (adminEmail) {
       await sendAdminAttendanceAlert({
         to: adminEmail,
@@ -223,7 +223,7 @@ export async function GET(req: NextRequest) {
         "Good morning",
         n === 0 ? "No appointments scheduled today." : `You have ${n} appointment${n === 1 ? "" : "s"} scheduled today.`,
       );
-      const adminEmail = process.env.FERGUSON_ADMIN_EMAIL || process.env.FERGUSON_STAFF_EMAIL || "owenkferguson@hotmail.com";
+      const adminEmail = process.env.FERGUSON_ADMIN_EMAIL || process.env.FERGUSON_STAFF_EMAIL || "contact@fergusonlawja.com";
       if (adminEmail) {
         await sendAdminDigest({ to: adminEmail, count: n, dateLabel: todayKey });
       }
@@ -236,3 +236,4 @@ export async function GET(req: NextRequest) {
 
   return Response.json({ ok: true, sent: result, attendanceAlerts, digestSent });
 }
+
