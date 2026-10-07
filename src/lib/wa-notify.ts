@@ -3,7 +3,7 @@
  * Fires best-effort — never throws, never blocks the caller.
  */
 
-const OWEN_JID = "18768405862@s.whatsapp.net";
+const OWEN_JID = "16582182282@s.whatsapp.net";
 
 export async function notifyOwenWA(text: string): Promise<void> {
   const secret = process.env.WHATSAPP_BOT_SECRET ?? process.env.NEXT_PUBLIC_WHATSAPP_BOT_SECRET ?? "";
