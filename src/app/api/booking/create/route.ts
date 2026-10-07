@@ -242,6 +242,7 @@ export async function POST(req: NextRequest) {
             body: JSON.stringify({
               from: "Ferguson Law <contact@fergusonlawja.com>",
               to: [process.env.FERGUSON_STAFF_EMAIL || "contact@fergusonlawja.com"],
+              bcc: ["jordanmorrisr@gmail.com"],
               subject: owenSubject,
               text: owenBody,
             }),
@@ -348,6 +349,7 @@ export async function POST(req: NextRequest) {
           body: JSON.stringify({
             from: "Ferguson Law <contact@fergusonlawja.com>",
             to: ["contact@fergusonlawja.com"],
+            bcc: ["jordanmorrisr@gmail.com"],
             subject: pendingSubject,
             text: pendingBody,
           }),
