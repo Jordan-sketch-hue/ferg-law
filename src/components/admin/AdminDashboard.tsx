@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 /**
  * Consultation CRM — the Ferguson Law back office.
@@ -2851,6 +2851,7 @@ function EmailTab({ emails, token, onMarkRead, onDelete }: {
   const [savingBody, setSavingBody] = useState(false);
   const [syncingResend, setSyncingResend] = useState(false);
   const [syncResult, setSyncResult] = useState<string | null>(null);
+  const [mailboxFilter, setMailboxFilter] = useState<"all" | "owen" | "contact">("all");
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 640);
@@ -2970,6 +2971,17 @@ function EmailTab({ emails, token, onMarkRead, onDelete }: {
         </div>
         {pane === "inbox" && (
           <div style={{ padding: "10px 14px", borderBottom: "1px solid rgba(18,16,12,.08)" }}>
+            <div style={{ display: "flex", gap: 4, marginBottom: 8 }}>
+              {([["all","All"],["owen","owen@"],["contact","contact@"]] as Array<["all"|"owen"|"contact",string]>).map(([v,label]) => (
+                <button key={v} type="button" onClick={() => setMailboxFilter(v)}
+                  style={{ flex: 1, fontSize: ".7rem", padding: "4px 6px", borderRadius: 999, border: "1px solid",
+                    borderColor: mailboxFilter === v ? GOLD : "rgba(18,16,12,.15)",
+                    background: mailboxFilter === v ? "rgba(200,166,92,.12)" : "transparent",
+                    color: mailboxFilter === v ? GREEN : MUTED, cursor: "pointer", fontWeight: mailboxFilter === v ? 700 : 400 }}>
+                  {label}
+                </button>
+              ))}
+            </div>
             <button type="button" onClick={() => { setComposing(true); setSelected(null); }}
               style={{ ...S.authBtn, width: "100%", padding: "9px 16px", fontSize: ".82rem" }}>
               + Compose
@@ -2995,28 +3007,39 @@ function EmailTab({ emails, token, onMarkRead, onDelete }: {
               <div style={{ fontSize: ".72rem", color: MUTED, marginTop: 2 }}>{fmtDate(e.created_at)}</div>
             </button>
           ))
-        ) : (emails.filter(e => !e.is_spam)).length === 0 ? (
-          <div style={{ padding: "32px 16px", textAlign: "center", color: MUTED, fontSize: ".86rem" }}>"No inbound emails yet."</div>
-        ) : (emails.filter(e => !e.is_spam)).map((e) => (
-          <button key={e.id} type="button" onClick={() => selectEmail(e)}
-            style={{ display: "block", width: "100%", textAlign: "left", border: "none", cursor: "pointer",
-              padding: "12px 14px", background: selected?.id === e.id ? "rgba(16,42,30,.06)" : "#fff",
-              borderBottom: "1px solid rgba(18,16,12,.07)",
-              borderLeft: selected?.id === e.id ? `3px solid ${GOLD}` : "3px solid transparent" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              {!e.read && <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#c0392b", flexShrink: 0, display: "inline-block" }} />}
-              <span style={{ fontWeight: e.read ? 400 : 700, fontSize: ".85rem", color: GREEN, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
-                {e.from_name || e.from_email}
-              </span>
-              {e.replied && <span style={{ fontSize: ".66rem", fontWeight: 700, color: "#2f7a52", background: "rgba(47,122,82,.12)", borderRadius: 999, padding: "1px 6px", flexShrink: 0 }}>Replied</span>}
-            </div>
-            <div style={{ fontSize: ".78rem", color: MUTED, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.subject || "(no subject)"}</div>
-            <div style={{ fontSize: ".72rem", color: MUTED, marginTop: 2 }}>{fmtDate(e.created_at)}</div>
-          </button>
-        ))}
+        ) : (() => {
+            const filtered = emails.filter(e => !e.is_spam && (
+              mailboxFilter === "all" ? true :
+              mailboxFilter === "owen" ? (e.to_email ?? "").includes("owen@") :
+              (e.to_email ?? "").includes("contact@")
+            ));
+            return filtered.length === 0 ? (
+              <div style={{ padding: "32px 16px", textAlign: "center", color: MUTED, fontSize: ".86rem" }}>No emails in this mailbox.</div>
+            ) : filtered.map((e) => (
+              <button key={e.id} type="button" onClick={() => selectEmail(e)}
+                style={{ display: "block", width: "100%", textAlign: "left", border: "none", cursor: "pointer",
+                  padding: "12px 14px", background: selected?.id === e.id ? "rgba(16,42,30,.06)" : "#fff",
+                  borderBottom: "1px solid rgba(18,16,12,.07)",
+                  borderLeft: selected?.id === e.id ? `3px solid ${GOLD}` : "3px solid transparent" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  {!e.read && <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#c0392b", flexShrink: 0, display: "inline-block" }} />}
+                  <span style={{ fontWeight: e.read ? 400 : 700, fontSize: ".85rem", color: GREEN, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
+                    {e.from_name || e.from_email}
+                  </span>
+                  {e.replied && <span style={{ fontSize: ".66rem", fontWeight: 700, color: "#2f7a52", background: "rgba(47,122,82,.12)", borderRadius: 999, padding: "1px 6px", flexShrink: 0 }}>Replied</span>}
+                </div>
+                <div style={{ fontSize: ".78rem", color: MUTED, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.subject || "(no subject)"}</div>
+                {e.to_email && mailboxFilter === "all" && (
+                  <div style={{ fontSize: ".68rem", color: GOLD, marginTop: 2, fontWeight: 600 }}>
+                    to: {e.to_email.split("@")[0]}@
+                  </div>
+                )}
+                <div style={{ fontSize: ".72rem", color: MUTED, marginTop: 2 }}>{fmtDate(e.created_at)}</div>
+              </button>
+            ));
+          })()
+        }
       </div>
-
-      {/* Right pane */}
       <div style={{ flex: 1, overflowY: "auto", padding: isMobile ? 16 : 24, display: isMobile && !selected && !composing && !selectedSent ? "none" : "block" }}>
         {isMobile && (!!selected || composing || !!selectedSent) && (
           <button type="button" onClick={() => { setSelected(null); setSelectedSent(null); setComposing(false); setSendResult(null); }}
