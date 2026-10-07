@@ -4346,6 +4346,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [kycNotes, setKycNotes] = useState("");
+  const [kycReviewing, setKycReviewing] = useState(false);
   const [addingPayment, setAddingPayment] = useState(false);
   const [payKind, setPayKind] = useState("deposit");
   const [payAmount, setPayAmount] = useState("");
@@ -4547,10 +4548,16 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
   }
 
   async function reviewKyc(status: "approved" | "flagged") {
-    if (!kyc) return;
-    await supabase.rpc("fl_admin_cms_kyc_review", { p_token: token, p_kyc_id: kyc.id, p_status: status, p_notes: kycNotes || null });
-    setKyc(prev => prev ? { ...prev, status, reviewer_notes: kycNotes || null, reviewed_at: new Date().toISOString() } : prev);
-    if (selected) setMatters(prev => prev.map(m => m.id === selected ? { ...m, kyc_status: status } : m));
+    if (!kyc || kycReviewing) return;
+    setKycReviewing(true);
+    try {
+      const { error } = await supabase.rpc("fl_admin_cms_kyc_review", { p_token: token, p_kyc_id: kyc.id, p_status: status, p_notes: kycNotes || null });
+      if (error) { alert("KYC review failed: " + (error.message || String(error))); return; }
+      setKyc(prev => prev ? { ...prev, status, reviewer_notes: kycNotes || null, reviewed_at: new Date().toISOString() } : prev);
+      if (selected) setMatters(prev => prev.map(m => m.id === selected ? { ...m, kyc_status: status } : m));
+    } finally {
+      setKycReviewing(false);
+    }
   }
 
   async function addPayment() {
@@ -4786,7 +4793,26 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                     {activeMatter.workflow_type?.replace(/_/g, " ") || activeMatter.matter_type}
                   </div>
                   <div style={{ fontFamily: "var(--serif, Georgia, serif)", fontSize: 18, fontWeight: 700, color: GREEN }}>
-                    {activeMatter.title || activeMatter.client_name}
+                    {(() => {
+                      const wfLabel: Record<string, string> = {
+                        property_purchase:"Property Purchase",property_sale:"Property Sale",
+                        lease_agreement:"Lease Agreement",title_search:"Title Search",
+                        transfer:"Transfer",power_of_attorney:"Power of Attorney",
+                        power_of_attorney_limited:"Limited Power of Attorney",
+                        lost_title:"Lost Title Application",first_registration:"First Registration",
+                        adverse_possession:"Adverse Possession",subdivision:"Subdivision",
+                        will_drafting:"Will Drafting",probate:"Probate",
+                        letters_of_administration:"Letters of Administration",
+                        resealing:"Resealing of Probate",
+                        transmission_of_title:"Transmission of Title",
+                        non_contentious_divorce:"Non-Contentious Divorce",
+                      };
+                      const t = activeMatter.title;
+                      const isGeneric = !t || t.toLowerCase() === "general matter";
+                      return isGeneric && activeMatter.workflow_type
+                        ? (wfLabel[activeMatter.workflow_type] || activeMatter.workflow_type.replace(/_/g, " "))
+                        : (t || activeMatter.client_name);
+                    })()}
                   </div>
                   <div style={{ fontSize: 12.5, color: MUTED, marginTop: 2 }}>
                     {activeMatter.client_name} · {activeMatter.client_email}
@@ -5154,11 +5180,11 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                           style={{ ...S.fieldInput, resize: "vertical", fontFamily: "inherit" }} placeholder="Notes for the compliance file…" />
                       </div>
                       <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
-                        <button onClick={() => void reviewKyc("approved")}
+                        <button onClick={() => void reviewKyc("approved")} disabled={kycReviewing}
                           style={{ background: "#2f7a52", color: "#fff", border: "none", borderRadius: 10, padding: "10px 20px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
                           Approve
                         </button>
-                        <button onClick={() => void reviewKyc("flagged")}
+                        <button onClick={() => void reviewKyc("flagged")} disabled={kycReviewing}
                           style={{ background: "#fff", color: "#7a2020", border: "1px solid #eecaca", borderRadius: 10, padding: "10px 20px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
                           Flag for review
                         </button>
