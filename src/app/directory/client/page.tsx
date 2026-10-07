@@ -8,7 +8,6 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { waLink } from "@/lib/site";
 import NotificationBell from "@/components/client/NotificationBell";
-import { getXP, addXP, getLevel, awardBadge, XP_EVENTS } from "@/lib/gamification";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -183,8 +182,6 @@ function WelcomeOverlay({ onDismiss }: { onDismiss: () => void }) {
   const [doneIds, setDoneIds] = useState<string[]>(() => {
     try { return JSON.parse(ls("fl_checklist_done") ?? "[]") as string[]; } catch { return ["email"]; }
   });
-  const [toast, setToast] = useState<string | null>(null);
-  const sessionDone = useRef(0);
 
   const doneCount = doneIds.length;
   const totalCount = steps.length;
@@ -194,22 +191,10 @@ function WelcomeOverlay({ onDismiss }: { onDismiss: () => void }) {
     setDoneIds(prev => {
       const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
       lsSet("fl_checklist_done", JSON.stringify(next));
-      if (!prev.includes(id)) {
-        addXP(XP_EVENTS.PHASE_COMPLETE);
-        sessionDone.current += 1;
-        if (sessionDone.current >= 3) setToast("You're on a roll!");
-      }
       if (next.length === totalCount) lsSet("fl_onboarding_complete", "true");
       return next;
     });
   }
-
-  useEffect(() => {
-    if (toast) { const t = setTimeout(() => setToast(null), 3000); return () => clearTimeout(t); }
-  }, [toast]);
-
-  const isNew = awardBadge("first-login", "First Login");
-  useEffect(() => { if (isNew) addXP(XP_EVENTS.ACCOUNT_CREATED); }, [isNew]);
 
   return (
     <>
@@ -238,7 +223,6 @@ function WelcomeOverlay({ onDismiss }: { onDismiss: () => void }) {
             <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "#C8A65C" }}>
               {doneCount === totalCount ? "All steps complete!" : `${doneCount} of ${totalCount} complete`}
             </span>
-            {sessionDone.current >= 3 && <span style={{ fontSize: "0.75rem", background: "#fdf3d9", color: "#7a5800", borderRadius: 999, padding: "2px 10px", fontWeight: 600 }}>⚡ You&apos;re on a roll!</span>}
           </div>
           <div style={{ height: 6, background: "#e8e0d8", borderRadius: 6, overflow: "hidden" }}>
             <div style={{ width: `${pct}%`, height: "100%", background: "#C8A65C", borderRadius: 6, transition: "width .4s" }} />
@@ -292,39 +276,7 @@ function WelcomeOverlay({ onDismiss }: { onDismiss: () => void }) {
         </button>
       </div>
 
-      {/* Toast */}
-      {toast && (
-        <div style={{ position: "fixed", bottom: 24, right: 24, zIndex: 200, background: "#1B4D32", color: "#fbf8f1", borderRadius: 10, padding: "10px 16px", fontSize: "0.85rem", fontWeight: 600, boxShadow: "0 8px 24px -8px rgba(0,0,0,.4)" }}>
-          ⚡ {toast}
-        </div>
-      )}
     </>
-  );
-}
-
-// ── XP Bar ──────────────────────────────────────────────────────────────────
-
-function XPBar() {
-  const [xp, setXp] = useState(0);
-  useEffect(() => { setXp(getXP()); }, []);
-  const { level, title } = getLevel();
-  const levelXp = level === 1 ? 100 : level === 2 ? 150 : 100;
-  const prevThreshold = level === 1 ? 0 : level === 2 ? 100 : 250;
-  const pct = Math.min(100, Math.round(((xp - prevThreshold) / levelXp) * 100));
-
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 10, background: "#fff", border: "1px solid var(--line)", fontSize: 12 }}>
-      <span style={{ background: "#1B4D32", color: "#C8A65C", borderRadius: 6, padding: "2px 7px", fontWeight: 700, fontSize: 11 }}>Lv {level}</span>
-      <div style={{ flex: 1 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
-          <span style={{ fontWeight: 600, color: "var(--ink)" }}>{title}</span>
-          <span style={{ color: "var(--muted)" }}>{xp} XP</span>
-        </div>
-        <div style={{ height: 4, background: "#e8e0d8", borderRadius: 4, overflow: "hidden" }}>
-          <div style={{ width: `${pct}%`, height: "100%", background: "#C8A65C", borderRadius: 4 }} />
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -776,13 +728,7 @@ function ClientDashboardInner() {
         </div>
       </div>
 
-      {/* XP Bar + Passkey */}
-      {!loading && (
-        <>
-          <div style={{ marginBottom: 12 }}><XPBar /></div>
-          <PasskeyBanner />
-        </>
-      )}
+      {!loading && <PasskeyBanner />}
 
       {loading ? (
         <p style={{ color: "var(--muted)" }}>Loading your matters…</p>

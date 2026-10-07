@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 /**
  * Consultation CRM — the Ferguson Law back office.
@@ -4738,6 +4738,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                 </span>
               )}
             </div>
+            {m.title && m.client_name && <div style={{ fontSize: 11.5, color: MUTED, marginTop: 1 }}>{m.client_name}</div>}
             <div style={{ fontSize: 12, color: MUTED, marginTop: 2 }}>{m.client_email}</div>
             <div style={{ marginTop: 4, display: "flex", gap: 6 }}>
               <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, background: "rgba(18,16,12,.07)", borderRadius: 999, padding: "2px 7px" }}>{m.status}</span>
