@@ -13,14 +13,14 @@ export type SendResult =
   | { ok: true; id?: string }
   | { ok: false; error: string };
 
-function shell(lead: string, body: string, ctaLabel: string, ctaHref: string): string {
+function shell(lead: string, body: string, ctaLabel: string, ctaHref: string, subtitle = "Case update"): string {
   return `<!doctype html>
 <html><body style="margin:0;padding:0;background:#f4f1ec;font-family:Georgia,'Times New Roman',serif;color:#1c1c1c;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f1ec;padding:40px 16px;"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#fff;border-radius:14px;overflow:hidden;border:1px solid #e7e1d6;">
 <tr><td style="background:#10211c;padding:34px 40px;">
   <div style="font-size:13px;letter-spacing:3px;text-transform:uppercase;color:#c9a86a;">Ferguson Law</div>
-  <div style="font-size:13px;color:#9fb3ab;margin-top:6px;">Case update</div>
+  <div style="font-size:13px;color:#9fb3ab;margin-top:6px;">${subtitle}</div>
 </td></tr>
 <tr><td style="padding:40px 40px 8px;">
   <p style="font-size:22px;line-height:1.35;margin:0 0 18px;color:#10211c;">${lead}</p>
@@ -32,7 +32,7 @@ function shell(lead: string, body: string, ctaLabel: string, ctaHref: string): s
 <tr><td style="padding:30px 40px 40px;">
   <hr style="border:none;border-top:1px solid #ece6da;margin:0 0 18px;"/>
   <p style="font-size:13px;color:#9a9a9a;margin:0;">
-    Ferguson Law &nbsp;·&nbsp; ${SITE.whatsappDisplay} &nbsp;·&nbsp;
+    Ferguson Law &#183; ${SITE.whatsappDisplay} &#183; 
     <a href="mailto:${SITE.email}" style="color:#9a8f7a;">${SITE.email}</a>
   </p>
 </td></tr>
@@ -310,8 +310,9 @@ export function sendDataDeletionConfirmed(to: string, clientName: string, reques
     shell(
       `Hi ${escapeHtml(firstName)}, your data has been deleted.`,
       `${originLine} permanently removed your account and all associated information from Ferguson Law's systems — your login, client profile, matter records, uploaded documents, KYC information, messages, appointment history, and correspondence log. This action is irreversible and cannot be undone.<br/><br/>This deletion was carried out in accordance with the Jamaica Data Protection Act. If you did not request this, or believe this was done in error, please contact us immediately at the details below.`,
-      "Visit Ferguson Law",
+      "Visit fergusonlawja.com",
       "https://fergusonlawja.com",
+      "Data & Privacy",
     ),
     "data-deletion",
   );
