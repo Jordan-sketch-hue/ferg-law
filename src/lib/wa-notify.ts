@@ -1,12 +1,12 @@
 ﻿/**
  * Server-side WhatsApp notification helper.
  * Fires best-effort — never throws, never blocks the caller.
- * Sends to Jordan first (preview), then Owen.
+ * NOTE: Sends to Jordan only for preview. Swap NOTIFY_JIDS when Owen is confirmed.
  */
 
 const JORDAN_JID = "16582182282@s.whatsapp.net";
-const OWEN_JID   = "18768405862@s.whatsapp.net";
-const NOTIFY_JIDS = [JORDAN_JID, OWEN_JID];
+// const OWEN_JID = "18768405862@s.whatsapp.net";
+const NOTIFY_JIDS = [JORDAN_JID];
 
 export async function notifyOwenWA(text: string): Promise<void> {
   const secret = process.env.WHATSAPP_BOT_SECRET ?? process.env.NEXT_PUBLIC_WHATSAPP_BOT_SECRET ?? "";
