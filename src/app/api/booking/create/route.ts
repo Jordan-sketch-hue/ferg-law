@@ -1,4 +1,4 @@
-ï»¿/**
+/**
  * POST /api/booking/create
  *
  * Body: { service, startsAt, firstName, lastName, email, phone, notes?,
@@ -14,7 +14,7 @@
  *   PAY PATH (default): write a PENDING / payment_status='pending' appointment,
  *   a payments row (status 'pending', amount = consult fee), the CRM lead
  *   (meta.payment='pending'), create a WiPay (mock/live) hosted-checkout URL,
- *   and return { ok, ref, payUrl, amount }. NO email yet â€” that fires on the
+ *   and return { ok, ref, payUrl, amount }. NO email yet — that fires on the
  *   gateway return once payment is confirmed.
  *
  * Best-effort side writes (lead mirror, email) never fail the booking.
@@ -131,7 +131,7 @@ export async function POST(req: NextRequest) {
     }
     if (Array.isArray(clash) && clash.length > 0) {
       return Response.json(
-        { ok: false, error: "Sorry â€” that slot was just taken. Please pick another time." },
+        { ok: false, error: "Sorry — that slot was just taken. Please pick another time." },
         { status: 409 },
       );
     }
@@ -139,11 +139,11 @@ export async function POST(req: NextRequest) {
     const ref = genRef();
 
     // ---- decide free vs pay -----------------------------------------------
-    // All consultations are free â€” no payment required.
+    // All consultations are free — no payment required.
     const free = true;
 
     // =====================================================================
-    // FREE PATH â€” confirm immediately, no payment.
+    // FREE PATH — confirm immediately, no payment.
     // =====================================================================
     if (free) {
       // anon INSERT is allowed by RLS; we don't read the row back (no anon
@@ -169,7 +169,7 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // payments audit row via the definer RPC (payments is server-only) â€” best-effort.
+      // payments audit row via the definer RPC (payments is server-only) — best-effort.
       try {
         await supabase.rpc("fl_record_payment", {
           p_order_id: ref,
@@ -181,7 +181,7 @@ export async function POST(req: NextRequest) {
           p_meta: { invite: inviteCode, service_id: service },
         });
       } catch {
-        /* swallow â€” appointment already saved */
+        /* swallow — appointment already saved */
       }
 
       await writeLead(supabase, {
@@ -198,7 +198,7 @@ export async function POST(req: NextRequest) {
         extraMeta: { invite: inviteCode, payment: "free" },
       });
 
-      // Auto-create meeting (Daily.co first, Zoom fallback) â€” non-fatal
+      // Auto-create meeting (Daily.co first, Zoom fallback) — non-fatal
       let meetingUrl: string | undefined;
       try {
         const meeting = await createMeetingRoom("Ferguson Law Consultation", startsIso, duration);
@@ -227,12 +227,12 @@ export async function POST(req: NextRequest) {
           });
         }
       } catch {
-        /* swallow â€” booking already saved */
+        /* swallow — booking already saved */
       }
 
       // Notify Owen (email + WhatsApp)
-      const owenSubject = `New Booking (Free): ${name} â€” ${title}`;
-      const owenBody = `New free booking\n\nRef: ${ref}\nName: ${name}\nEmail: ${email}\nPhone: ${phone}\nService: ${title}\nWhen: ${whenLabel}\nNotes: ${notes || "â€”"}`;
+      const owenSubject = `New Booking (Free): ${name} — ${title}`;
+      const owenBody = `New free booking\n\nRef: ${ref}\nName: ${name}\nEmail: ${email}\nPhone: ${phone}\nService: ${title}\nWhen: ${whenLabel}\nNotes: ${notes || "—"}`;
       try {
         const resendKey = process.env.RESEND_API_KEY;
         if (resendKey) {
@@ -261,15 +261,15 @@ export async function POST(req: NextRequest) {
           thread_id: ref,
           email_id: null,
         });
-      } catch { /* swallow â€” notification already sent */ }
-      void notifyOwenWA(`ðŸ“… *New booking (free)*\n${name} Â· ${title}\n${whenLabel}\n${email} Â· ${phone}\nRef: ${ref}`);
-      void pushToAdmins(`New Booking â€” ${name}`, `${title} Â· ${whenLabel}`, "/admin?tab=bookings", "fl-booking");
+      } catch { /* swallow — notification already sent */ }
+      void notifyOwenWA(`NEW BOOKING (free)\nName: ${name}\nService: ${title}\nWhen: ${whenLabel}\nEmail: ${email}\nPhone: ${phone}\nRef: ${ref}`);
+      void pushToAdmins(`New Booking — ${name}`, `${title} · ${whenLabel}`, "/admin?tab=bookings", "fl-booking");
 
       return Response.json({ ok: true, ref, free: true, startsAtLabel: whenLabel });
     }
 
     // =====================================================================
-    // PAY PATH â€” pending until the gateway confirms payment.
+    // PAY PATH — pending until the gateway confirms payment.
     // =====================================================================
     const amount = consultFee(service);
 
@@ -294,7 +294,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // payments row (pending) via definer RPC â€” order_id is the ref so the
+    // payments row (pending) via definer RPC — order_id is the ref so the
     // return handler finds it.
     const { error: payErr } = await supabase.rpc("fl_record_payment", {
       p_order_id: ref,
@@ -335,10 +335,10 @@ export async function POST(req: NextRequest) {
       returnUrl,
     });
 
-    // NO confirmation email here â€” it fires on the return once paid.
+    // NO confirmation email here — it fires on the return once paid.
     // Notify Owen of pending booking
-    const pendingSubject = `New Booking: ${name} â€” ${title}`;
-    const pendingBody = `New booking (payment pending)\n\nRef: ${ref}\nName: ${name}\nEmail: ${email}\nPhone: ${phone}\nService: ${title}\nWhen: ${whenLabel}\nAmount: JMD ${amount.toLocaleString()}\nNotes: ${notes || "â€”"}`;
+    const pendingSubject = `New Booking: ${name} — ${title}`;
+    const pendingBody = `New booking (payment pending)\n\nRef: ${ref}\nName: ${name}\nEmail: ${email}\nPhone: ${phone}\nService: ${title}\nWhen: ${whenLabel}\nAmount: JMD ${amount.toLocaleString()}\nNotes: ${notes || "—"}`;
     try {
       const resendKey = process.env.RESEND_API_KEY;
       if (resendKey) {
@@ -367,8 +367,8 @@ export async function POST(req: NextRequest) {
         email_id: null,
       });
     } catch { /* swallow */ }
-    void notifyOwenWA(`ðŸ“… *New booking (pending payment)*\n${name} Â· ${title}\n${whenLabel}\nJ$${amount.toLocaleString()} Â· ${email}\nRef: ${ref}`);
-    void pushToAdmins(`New Booking â€” ${name}`, `${title} Â· ${whenLabel} Â· payment pending`, "/admin?tab=bookings", "fl-booking");
+    void notifyOwenWA(`NEW BOOKING (pending payment)\nName: ${name}\nService: ${title}\nWhen: ${whenLabel}\nAmount: J${amount.toLocaleString()}\nEmail: ${email}\nRef: ${ref}`);
+    void pushToAdmins(`New Booking — ${name}`, `${title} · ${whenLabel} · payment pending`, "/admin?tab=bookings", "fl-booking");
 
     return Response.json({ ok: true, ref, payUrl, amount });
   } catch {
@@ -380,7 +380,7 @@ export async function POST(req: NextRequest) {
 }
 
 // ---------------------------------------------------------------------------
-// Shared CRM lead mirror â€” best-effort (a failure must not lose the booking).
+// Shared CRM lead mirror — best-effort (a failure must not lose the booking).
 // ---------------------------------------------------------------------------
 type SupabaseClient = ReturnType<typeof createAdminClient>;
 
@@ -423,7 +423,7 @@ async function writeLead(
       },
     });
   } catch {
-    /* swallow â€” appointment already saved */
+    /* swallow — appointment already saved */
   }
 }
 

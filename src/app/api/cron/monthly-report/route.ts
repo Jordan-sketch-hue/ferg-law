@@ -1,4 +1,4 @@
-﻿/**
+/**
  * GET /api/cron/monthly-report
  * Runs on the 1st of each month at 7 AM JA time (12:00 UTC).
  * Sends Owen a performance digest for the prior month.
@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f1ec;padding:40px 16px;"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#fff;border-radius:14px;overflow:hidden;border:1px solid #e7e1d6;">
 <tr><td style="background:#102A1E;padding:28px 36px;">
-  <div style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#C8A65C;">Ferguson Law — Monthly Report</div>
+  <div style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#C8A65C;">Ferguson Law � Monthly Report</div>
   <div style="font-size:22px;color:#fff;margin-top:8px;font-weight:600;">${monthLabel}</div>
 </td></tr>
 <tr><td style="padding:32px 36px;">
@@ -82,12 +82,12 @@ export async function GET(req: NextRequest) {
     await resend.emails.send({
       from: "Ferguson Law <contact@fergusonlawja.com>",
       to: [process.env.FERGUSON_ADMIN_EMAIL || process.env.FERGUSON_STAFF_EMAIL || "contact@fergusonlawja.com"],
-      subject: `Monthly Report — ${monthLabel}`,
+      subject: `Monthly Report � ${monthLabel}`,
       html,
     });
   }
 
-  void notifyOwenWA(`📊 *${monthLabel} Report*\nLeads: ${stats.newLeads} · Bookings: ${stats.booked} · Conversion: ${stats.conversionRate}%\nRetained matters: ${stats.retainedMatters}\nFull report: fergusonlawja.com/admin`);
+  void notifyOwenWA(`${monthLabel} REPORT\nLeads: ${stats.newLeads}\nBookings: ${stats.booked}\nConversion: ${stats.conversionRate}%\nRetained matters: ${stats.retainedMatters}\nAdmin: fergusonlawja.com/admin`);
 
   return Response.json({ ok: true, month: monthLabel, stats });
 }

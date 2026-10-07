@@ -371,7 +371,7 @@ export async function executeTool(
 
     // Notify Owen via WhatsApp
     void notifyOwenWA(
-      `New booking via website chat.\nName: ${leadName}\nService: ${service ?? "Consultation"}\nRef: ${ref}${slotIso ? `\nSlot: ${jamaicaLabel(new Date(slotIso))} JA time` : preferred ? `\nPreferred: ${preferred}` : ""}\nContact: ${phone ?? email ?? "none provided"}`,
+      `NEW BOOKING (chat)\nName: ${leadName}\nService: ${service ?? "Consultation"}\nRef: ${ref}${slotIso ? `\nWhen: ${jamaicaLabel(new Date(slotIso))}` : preferred ? `\nPreferred: ${preferred}` : ""}\nContact: ${phone ?? email ?? "none provided"}`,
     );
 
     // Send confirmation email to client if email was provided

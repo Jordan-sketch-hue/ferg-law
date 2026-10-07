@@ -1,4 +1,4 @@
-import Anthropic from "@anthropic-ai/sdk";
+﻿import Anthropic from "@anthropic-ai/sdk";
 import { createAdminClient } from "@/lib/supabase/server";
 import { systemPrompt } from "@/lib/chat/prompt";
 import { CHAT_TOOLS, executeTool } from "@/lib/chat/tools";
@@ -104,7 +104,7 @@ export async function POST(req: Request) {
         .update({ last_message_at: new Date().toISOString(), unread_for_agent: 1 })
         .eq("id", cid);
       void notifyOwenWA(
-        `Ferguson Law Live Chat — visitor requested a human agent.\nName: ${visitor.name || "website visitor"}\nView: https://ferguson-law.vercel.app/agent`,
+        `LIVE CHAT - AGENT REQUESTED\nName: ${visitor.name || "website visitor"}\nView: fergusonlawja.com/admin`,
       );
       void pushToAdmins("Live Chat — Human Requested", visitor.name || "Website visitor", "/admin?tab=chats", "fl-chat");
       return Response.json({
@@ -140,7 +140,7 @@ export async function POST(req: Request) {
     // --- A human is handling this thread — do NOT call the model -----------
     if (isLiveChat) {
       void notifyOwenWA(
-        `Ferguson Law Live Chat — new message from visitor.\nFrom: ${visitor.name || "website visitor"}\nMessage: ${incoming.substring(0, 120)}\nView: https://ferguson-law.vercel.app/agent`,
+        `LIVE CHAT - NEW MESSAGE\nFrom: ${visitor.name || "website visitor"}\nMessage: ${incoming.substring(0, 120)}\nView: fergusonlawja.com/admin`,
       );
       void pushToAdmins("New Chat Message", `${visitor.name || "Website visitor"}: ${incoming.slice(0, 60)}`, "/admin?tab=chats", "fl-chat");
       return Response.json({ conversationId: cid, status, handledByHuman: true });

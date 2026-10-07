@@ -1,4 +1,4 @@
-ï»¿/**
+/**
  * POST /api/admin/booking/create
  * Owen creates a booking on behalf of a client (e.g. after a phone/WA inquiry).
  * Inserts a CONFIRMED appointment (no payment), generates a Jitsi meeting link,
@@ -120,14 +120,14 @@ export async function POST(req: NextRequest) {
           errorMessage: "ok" in send && !send.ok ? send.error : null,
         });
       }
-    } catch { /* swallow â€” booking already saved */ }
+    } catch { /* swallow — booking already saved */ }
   }
 
-  // Notify staff â€” email + WhatsApp + push
+  // Notify staff — email + WhatsApp + push
   const staffEmail = process.env.FERGUSON_STAFF_EMAIL || "contact@fergusonlawja.com";
   const resendKey = process.env.RESEND_API_KEY;
-  const owenSubject = `New booking (admin) â€” ${name}`;
-  const owenBody = `New booking created via admin panel\n\nRef: ${ref}\nName: ${name}\nEmail: ${email}\nPhone: ${phone || "â€”"}\nService: ${title}\nWhen: ${whenLabel}\nNotes: ${notes || "â€”"}`;
+  const owenSubject = `New booking (admin) — ${name}`;
+  const owenBody = `New booking created via admin panel\n\nRef: ${ref}\nName: ${name}\nEmail: ${email}\nPhone: ${phone || "—"}\nService: ${title}\nWhen: ${whenLabel}\nNotes: ${notes || "—"}`;
 
   if (resendKey) {
     void fetch("https://api.resend.com/emails", {
@@ -143,7 +143,7 @@ export async function POST(req: NextRequest) {
     }).catch(() => {});
   }
 
-  void notifyOwenWA(`New booking (admin)\n${name} - ${title}\n${whenLabel}\n${email} - ${phone || "no phone"}\nRef: ${ref}`);
+  void notifyOwenWA(`NEW BOOKING (admin)\nName: ${name}\nService: ${title}\nWhen: ${whenLabel}\nEmail: ${email}\nPhone: ${phone || "-"}\nRef: ${ref}`);
   void pushToAdmins(`New Booking - ${name}`, `${title} - ${whenLabel}`, "/admin?tab=bookings", "fl-booking");
 
   return Response.json({ ok: true, ref, meetingUrl: meetingUrl ?? null, whenLabel });

@@ -5,7 +5,7 @@ export async function POST(req: NextRequest) {
   try {
     const { name, kind, email } = await req.json() as { name?: string; kind?: string; email?: string };
     await notifyOwenWA(
-      `New directory signup:\n*${name || "Unknown"}* (${kind || "partner"})\n${email || ""}\n\nReview at fergusonlawja.com/admin`
+      `NEW DIRECTORY SIGNUP\nName: ${name || "Unknown"}\nType: ${kind || "partner"}\nEmail: ${email || "-"}\nReview: fergusonlawja.com/admin`
     );
   } catch { /* best-effort */ }
   return NextResponse.json({ ok: true });
