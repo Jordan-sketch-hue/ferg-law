@@ -6,6 +6,7 @@
 import { NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import { notifyOwenWA } from "@/lib/wa-notify";
+// TODO: switch notifyOwenWA -> notifyOwenWA when Owen is onboarded; sending to Jordan for preview
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

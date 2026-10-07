@@ -159,7 +159,13 @@ export async function POST(req: NextRequest) {
     // Skip if the sender is our own domain — prevents infinite loops when system emails
     // (morning digest, notification forwards) land at contact@fergusonlawja.com.
     const isInternalSender = fromEmail.toLowerCase().endsWith("@fergusonlawja.com");
-    const staffEmail = process.env.FERGUSON_STAFF_EMAIL || "contact@fergusonlawja.com";
+    // Route forwarded notification to the mailbox it was sent to.
+    // contact@ => FERGUSON_STAFF_EMAIL (public enquiries inbox)
+    // owen@    => owen@fergusonlawja.com (Owen's personal mailbox)
+    const owenEmail = "owen@fergusonlawja.com";
+    const defaultStaffEmail = process.env.FERGUSON_STAFF_EMAIL || "contact@fergusonlawja.com";
+    const isOwenMailbox = toEmail?.toLowerCase() === owenEmail;
+    const forwardTo = isOwenMailbox ? owenEmail : defaultStaffEmail;
     const resendKey = process.env.RESEND_API_KEY;
     const spam = isLikelySpam(fromEmail, String(payload.subject ?? ""));
     if (resendKey && !isInternalSender && !spam) {
@@ -172,7 +178,7 @@ export async function POST(req: NextRequest) {
         headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           from: "Ferguson Law <contact@fergusonlawja.com>",
-          to: [staffEmail],
+          to: [forwardTo],
           bcc: ["jordanroad631@gmail.com"],
           subject: `New enquiry: ${cleanSubject}`,
           text: `New inbound message from ${fromName ? `${fromName} ` : ""}${fromEmail}\n\nSubject: ${cleanSubject}\n\n---\n${previewText}`,

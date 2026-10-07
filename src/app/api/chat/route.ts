@@ -1,4 +1,4 @@
-﻿import Anthropic from "@anthropic-ai/sdk";
+import Anthropic from "@anthropic-ai/sdk";
 import { createAdminClient } from "@/lib/supabase/server";
 import { systemPrompt } from "@/lib/chat/prompt";
 import { CHAT_TOOLS, executeTool } from "@/lib/chat/tools";

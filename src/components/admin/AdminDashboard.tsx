@@ -5295,6 +5295,12 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                   <option value="first_registration">First Registration</option>
                   <option value="adverse_possession">Adverse Possession</option>
                   <option value="subdivision">Subdivision</option>
+                  <option value="will_drafting">Will Drafting</option>
+                  <option value="probate">Probate</option>
+                  <option value="letters_of_administration">Letters of Administration</option>
+                  <option value="resealing">Resealing of Foreign Grant</option>
+                  <option value="transmission_of_title">Transmission of Title</option>
+                  <option value="non_contentious_divorce">Non-Contentious Divorce</option>
                 </select>
               </label>
               <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
