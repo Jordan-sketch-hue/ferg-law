@@ -44,12 +44,12 @@ async function send(to: string, subject: string, html: string, context?: string)
   if (!key) return { skipped: true };
   try {
     const resend = new Resend(key);
-    const { data, error } = await resend.emails.send({ from: FROM, to, subject, html });
+    const text = html.replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/&middot;/g, "·").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&mdash;/g, "—").replace(/&ndash;/g, "-").replace(/\s+/g, " ").trim(); const { data, error } = await resend.emails.send({ from: FROM, to, subject, html, text });
     if (error) return { ok: false, error: error.message || String(error) };
     // Log to fl_email_log so admin Email tab shows all sent emails. Awaited —
     // fire-and-forget here can get cut off by the platform right after the
     // caller's response is returned, silently dropping the log row.
-    const bodyFull = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    const bodyFull = html.replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/&middot;/g, "·").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&mdash;/g, "—").replace(/&ndash;/g, "-").replace(/\s+/g, " ").trim();
     const admin = createAdminClient();
     await admin.from("fl_email_log").insert({
       to_email: to, subject, body_preview: bodyFull.slice(0, 300), body_full: bodyFull,
