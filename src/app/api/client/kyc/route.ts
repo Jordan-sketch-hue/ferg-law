@@ -15,11 +15,14 @@ export async function GET() {
   const admin = createAdminClient();
   const { data, error } = await admin
     .from("fl_client_kyc")
-    .select("id, full_legal_name, date_of_birth, nationality, address, trn, id_type, id_number, id_doc_url, source_of_funds, is_pep, submitted_at, status, reviewer_notes")
+    .select("id, full_legal_name, date_of_birth, nationality, address, trn, id_type, id_number, id_doc_url, source_of_funds, is_pep, aml_declared, submitted_at, status, reviewer_notes")
     .eq("client_id", user.id)
     .maybeSingle();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error("[KYC GET] db error", { userId: user.id, code: error.code, message: error.message });
+    return NextResponse.json({ error: "Unable to load your identity information. Please try again." }, { status: 500 });
+  }
   return NextResponse.json({ kyc: data ?? null });
 }
 
@@ -41,6 +44,7 @@ export async function POST(req: NextRequest) {
     id_number: string;
     source_of_funds: string;
     is_pep: boolean;
+    aml_declared: boolean;
   };
   let id_doc_url: string | null = null;
 
@@ -56,6 +60,7 @@ export async function POST(req: NextRequest) {
       id_number: fd.get("id_number") as string ?? "",
       source_of_funds: fd.get("source_of_funds") as string ?? "",
       is_pep: fd.get("is_pep") === "true",
+      aml_declared: fd.get("aml_declared") === "true",
     };
     const file = fd.get("file");
     if (file instanceof File && file.size > 0) {
@@ -64,19 +69,21 @@ export async function POST(req: NextRequest) {
       const { error: upErr } = await admin.storage
         .from("fl-matter-files")
         .upload(path, file, { upsert: true, contentType: file.type });
-      if (!upErr) {
-        const { data: signed } = await admin.storage
-          .from("fl-matter-files")
-          .createSignedUrl(path, 60 * 60 * 24 * 365); // 1-year signed URL
-        id_doc_url = signed?.signedUrl ?? null;
+      if (upErr) {
+        console.error("[KYC POST] file upload error", { userId: user.id, code: upErr.message });
+        return NextResponse.json({ error: "Your ID document could not be uploaded. Please try a smaller file (under 5 MB) or a different format, then resubmit." }, { status: 500 });
       }
+      const { data: signed } = await admin.storage
+        .from("fl-matter-files")
+        .createSignedUrl(path, 60 * 60 * 24 * 365); // 1-year signed URL
+      id_doc_url = signed?.signedUrl ?? null;
     }
   } else {
     fields = await req.json() as typeof fields;
   }
 
   if (!fields.full_legal_name?.trim() || !fields.date_of_birth || !fields.id_type || !fields.id_number?.trim()) {
-    return NextResponse.json({ error: "Missing required KYC fields." }, { status: 400 });
+    return NextResponse.json({ error: "Please fill in your full legal name, date of birth, ID type, and ID number before submitting." }, { status: 400 });
   }
 
   const { error } = await admin
@@ -93,22 +100,32 @@ export async function POST(req: NextRequest) {
       ...(id_doc_url ? { id_doc_url } : {}),
       source_of_funds: fields.source_of_funds?.trim() || null,
       is_pep: fields.is_pep ?? false,
+      aml_declared: fields.aml_declared ?? false,
       submitted_at: new Date().toISOString(),
       status: "submitted",
     }, { onConflict: "client_id" });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error("[KYC POST] upsert error", { userId: user.id, code: error.code, message: error.message, details: error.details });
+    return NextResponse.json({ error: "We couldn't save your information. Please check your details and try again. If the problem continues, contact Ferguson Law directly." }, { status: 500 });
+  }
 
   // Sync kyc_status on all matters for this client: pending → submitted
   // (approved/flagged matters are never downgraded back)
-  await admin
+  const { error: syncErr } = await admin
     .from("fl_client_matters")
     .update({ kyc_status: "submitted" })
     .eq("client_id", user.id)
     .eq("kyc_status", "pending");
 
+  if (syncErr) {
+    console.error("[KYC POST] matter sync error", { userId: user.id, code: syncErr.code, message: syncErr.message });
+  }
+
   const clientName = String(user.user_metadata?.full_name || user.email?.split("@")[0] || "Client");
-  void sendKycSubmittedToStaff(clientName, user.email!).catch(() => null);
+  void sendKycSubmittedToStaff(clientName, user.email!).catch((e) => {
+    console.error("[KYC POST] staff email failed", { userId: user.id, error: String(e) });
+  });
   void pushToAdmins(`KYC Submitted — ${clientName}`, "Review required", "/admin?tab=clients", "fl-kyc");
 
   return NextResponse.json({ ok: true });
