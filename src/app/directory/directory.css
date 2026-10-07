@@ -126,7 +126,7 @@
 
 @media (max-width: 560px) {
   .kind-choose { grid-template-columns: 1fr; }
-  .dir-wrap { overflow-x: clip; }
+  .dir-wrap { overflow-x: hidden; }
   .dir-header .row { flex-wrap: wrap; height: auto; min-height: 58px; gap: 10px 14px; padding: 9px 0; }
   .dir-brand { font-size: 17px; }
   .dir-nav { gap: 12px; }

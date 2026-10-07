@@ -784,10 +784,10 @@ function ClientDashboardInner() {
                     }}
                   >
                     <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: ".12em", color: "var(--gold-deep)", fontWeight: 700, marginBottom: 3 }}>
-                      {TYPE_LABEL[m.matter_type] ?? "Matter"}
+                      {WF_LABEL[m.workflow_type ?? ""] || TYPE_LABEL[m.matter_type] || "Matter"}
                     </div>
                     <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>
-                      {m.title || TYPE_LABEL[m.matter_type]}
+                      {m.title || WF_LABEL[m.workflow_type ?? ""] || TYPE_LABEL[m.matter_type] || "Matter"}
                     </div>
                     <div style={{ marginTop: 6, fontSize: 11.5, fontWeight: 600, color: s.color }}>{s.label}</div>
                   </button>
@@ -908,10 +908,10 @@ function MatterPane({
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
           <div>
             <div style={{ fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", color: "var(--gold-deep)", fontWeight: 700, marginBottom: 4 }}>
-              {TYPE_LABEL[matter.matter_type] ?? "Matter"}
+              {WF_LABEL[matter.workflow_type ?? ""] || TYPE_LABEL[matter.matter_type] || "Matter"}
             </div>
             <h2 style={{ fontFamily: "var(--serif)", fontSize: 22, color: "var(--ink)", margin: 0 }}>
-              {matter.title || TYPE_LABEL[matter.matter_type]}
+              {matter.title || WF_LABEL[matter.workflow_type ?? ""] || TYPE_LABEL[matter.matter_type] || "Matter"}
             </h2>
             <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 3 }}>
               Opened {fmt(matter.created_at)}
@@ -948,7 +948,7 @@ function MatterPane({
       </div>
 
       {/* Tabs */}
-      <div style={{ display: "flex", borderBottom: "1px solid var(--line)", background: "#fafaf8", overflowX: "auto" }}>
+      <div style={{ display: "flex", borderBottom: "1px solid var(--line)", background: "#fafaf8", overflowX: "auto", WebkitOverflowScrolling: "touch", scrollbarWidth: "none", msOverflowStyle: "none" }}>
         {(["timeline", "kyc", "messages", "files", "payments"] as const).map(t => (
           <button key={t} onClick={() => setTab(t)} style={{
             padding: "11px 16px", fontSize: 13, fontWeight: 600, border: "none", background: "none",
@@ -1060,7 +1060,7 @@ function MatterPane({
                           {msg.sender_label || "Ferguson Law"}
                         </div>
                       )}
-                      <div>{msg.body}</div>
+                      <div style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}>{msg.body}</div>
                       <div style={{ fontSize: 10.5, marginTop: 4, opacity: .6, textAlign: "right" }}>
                         {fmtTime(msg.created_at)}
                       </div>
