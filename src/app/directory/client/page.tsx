@@ -113,6 +113,27 @@ const TYPE_LABEL: Record<string, string> = {
   buying: "Property Purchase", selling: "Property Sale", other: "General Matter",
 };
 
+const WF_LABEL: Record<string, string> = {
+  property_purchase: "Property Purchase",
+  property_sale: "Property Sale",
+  lease_agreement: "Lease Agreement",
+  title_search: "Title Search",
+  transfer: "Title Transfer",
+  power_of_attorney: "Power of Attorney",
+  power_of_attorney_limited: "Power of Attorney (Limited)",
+  lost_title: "Lost Title",
+  first_registration: "First Registration",
+  adverse_possession: "Adverse Possession",
+  subdivision: "Subdivision",
+  non_contentious_divorce: "Non-Contentious Divorce",
+  estate_will: "Estate & Will",
+  commercial_lease: "Commercial Lease",
+  commercial_purchase: "Commercial Purchase",
+  easement: "Easement",
+  court_order: "Court Order",
+  general: "General Matter",
+};
+
 const KYC_LABEL: Record<string, { label: string; color: string }> = {
   pending:   { label: "KYC pending",   color: "#aaa" },
   submitted: { label: "KYC submitted", color: "#C8A65C" },
