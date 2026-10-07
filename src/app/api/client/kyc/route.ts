@@ -15,7 +15,7 @@ export async function GET() {
   const admin = createAdminClient();
   const { data, error } = await admin
     .from("fl_client_kyc")
-    .select("id, full_legal_name, date_of_birth, nationality, address, trn, id_type, id_number, id_doc_url, source_of_funds, is_pep, submitted_at, status, reviewer_notes")
+    .select("id, full_legal_name, date_of_birth, nationality, address, trn, id_type, id_number, id_doc_url, source_of_funds, is_pep, aml_declared, submitted_at, status, reviewer_notes")
     .eq("client_id", user.id)
     .maybeSingle();
 
@@ -41,6 +41,7 @@ export async function POST(req: NextRequest) {
     id_number: string;
     source_of_funds: string;
     is_pep: boolean;
+    aml_declared: boolean;
   };
   let id_doc_url: string | null = null;
 
@@ -56,6 +57,7 @@ export async function POST(req: NextRequest) {
       id_number: fd.get("id_number") as string ?? "",
       source_of_funds: fd.get("source_of_funds") as string ?? "",
       is_pep: fd.get("is_pep") === "true",
+      aml_declared: fd.get("aml_declared") === "true",
     };
     const file = fd.get("file");
     if (file instanceof File && file.size > 0) {
@@ -93,6 +95,7 @@ export async function POST(req: NextRequest) {
       ...(id_doc_url ? { id_doc_url } : {}),
       source_of_funds: fields.source_of_funds?.trim() || null,
       is_pep: fields.is_pep ?? false,
+      aml_declared: fields.aml_declared ?? false,
       submitted_at: new Date().toISOString(),
       status: "submitted",
     }, { onConflict: "client_id" });

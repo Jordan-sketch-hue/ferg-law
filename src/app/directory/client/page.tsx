@@ -1353,7 +1353,7 @@ function KycTab({ kyc, loading, submitting, error, submitted, onSubmit }: {
                 style={{ width: "100%", padding: "9px 10px", borderRadius: 8, border: "1px solid var(--line)", fontSize: 14, background: "#fff" }}>
                 <option value="national_id">National ID</option>
                 <option value="passport">Passport</option>
-                <option value="drivers_licence">Driver&apos;s Licence</option>
+                <option value="drivers_license">Driver&apos;s Licence</option>
               </select>
             </KycField>
             <KycField label="ID number">
