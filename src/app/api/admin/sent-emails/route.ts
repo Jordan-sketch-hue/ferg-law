@@ -56,18 +56,37 @@ export async function POST(req: NextRequest) {
       attendance_check: "Attendance check alert",
     };
 
-    const reminderRows: EmailRow[] = (reminders ?? []).map((r) => ({
-      id: `rem_${r.id}`,
-      created_at: r.created_at,
-      to_email: r.destination ?? "",
-      to_name: null,
-      subject: `${LABEL[r.reminder_type] ?? r.reminder_type} — ${r.appointment_ref}`,
-      body_preview: r.status === "failed" ? `Failed: ${r.error_message ?? "unknown"}` : null,
-      body_full: null,
-      status: r.status,
-      resend_id: r.provider_message_id ?? null,
-      context: `auto:${r.reminder_type}`,
-    }));
+    // Hydrate email bodies for reminder rows by matching resend_id -> fl_email_log
+    const resendIds = (reminders ?? [])
+      .map((r) => r.provider_message_id)
+      .filter((id): id is string => !!id);
+
+    const bodyMap: Record<string, { preview: string | null; full: string | null }> = {};
+    if (resendIds.length > 0) {
+      const { data: logBodies } = await admin
+        .from("fl_email_log")
+        .select("resend_id, body_preview, body_full")
+        .in("resend_id", resendIds);
+      for (const row of logBodies ?? []) {
+        if (row.resend_id) bodyMap[row.resend_id] = { preview: row.body_preview, full: row.body_full };
+      }
+    }
+
+    const reminderRows: EmailRow[] = (reminders ?? []).map((r) => {
+      const hydrated = r.provider_message_id ? bodyMap[r.provider_message_id] : undefined;
+      return {
+        id: `rem_${r.id}`,
+        created_at: r.created_at,
+        to_email: r.destination ?? "",
+        to_name: null,
+        subject: `${LABEL[r.reminder_type] ?? r.reminder_type} -- ${r.appointment_ref}`,
+        body_preview: hydrated?.preview ?? (r.status === "failed" ? `Failed: ${r.error_message ?? "unknown"}` : null),
+        body_full: hydrated?.full ?? null,
+        status: r.status,
+        resend_id: r.provider_message_id ?? null,
+        context: `auto:${r.reminder_type}`,
+      };
+    });
 
     // Merge and sort newest-first
     const all = [...(composed ?? []), ...reminderRows].sort(
