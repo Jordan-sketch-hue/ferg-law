@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Case Management System notification emails (Resend). Server-only.
  * Same graceful no-op behavior as email/send.ts when RESEND_API_KEY is unset.
  */
@@ -13,7 +13,7 @@ export type SendResult =
   | { ok: true; id?: string }
   | { ok: false; error: string };
 
-function shell(lead: string, body: string, ctaLabel: string, ctaHref: string, subtitle = "Case update"): string {
+function shell(lead: string, body: string, ctaLabel: string, ctaHref: string, subtitle: string): string {
   return `<!doctype html>
 <html><body style="margin:0;padding:0;background:#f4f1ec;font-family:Georgia,'Times New Roman',serif;color:#1c1c1c;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f1ec;padding:40px 16px;"><tr><td align="center">
@@ -44,12 +44,12 @@ async function send(to: string, subject: string, html: string, context?: string)
   if (!key) return { skipped: true };
   try {
     const resend = new Resend(key);
-    const text = html.replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/&middot;/g, "·").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&mdash;/g, "—").replace(/&ndash;/g, "-").replace(/\s+/g, " ").trim(); const { data, error } = await resend.emails.send({ from: FROM, to, subject, html, text });
+    const text = html.replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/&middot;/g, "·").replace(/&#183;/g, "·").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&mdash;/g, "—").replace(/&ndash;/g, "-").replace(/\s+/g, " ").trim(); const { data, error } = await resend.emails.send({ from: FROM, to, subject, html, text });
     if (error) return { ok: false, error: error.message || String(error) };
     // Log to fl_email_log so admin Email tab shows all sent emails. Awaited —
     // fire-and-forget here can get cut off by the platform right after the
     // caller's response is returned, silently dropping the log row.
-    const bodyFull = html.replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/&middot;/g, "·").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&mdash;/g, "—").replace(/&ndash;/g, "-").replace(/\s+/g, " ").trim();
+    const bodyFull = html.replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/&middot;/g, "·").replace(/&#183;/g, "·").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&mdash;/g, "—").replace(/&ndash;/g, "-").replace(/\s+/g, " ").trim();
     const admin = createAdminClient();
     await admin.from("fl_email_log").insert({
       to_email: to, subject, body_preview: bodyFull.slice(0, 300), body_full: bodyFull,
@@ -79,6 +79,7 @@ export function sendClientPortalInvite(to: string, clientName: string, matterTit
       `${matterLine}Ferguson Law has opened a matter on your behalf. Create your free account to access your portal — you can track progress, send messages, and upload documents securely.`,
       "Create my account",
       signupUrl,
+      "Client Portal",
     ),
   );
 }
@@ -92,6 +93,7 @@ export function sendWelcomeToClient(to: string, clientName: string) {
       `Your Ferguson Law client account is set up and ready. Once we open your matter you'll be able to track every step, send messages and upload documents — all from your secure portal. We'll be in touch shortly.`,
       "Go to my portal",
       PORTAL_URL,
+      "Welcome",
     ),
   );
 }
@@ -105,6 +107,7 @@ export function sendClientSignedUpToStaff(clientName: string, clientEmail: strin
       `${escapeHtml(clientName)} (${escapeHtml(clientEmail)}) has signed up and can now access their client portal. Their matter has been linked automatically. Review them in the admin.`,
       "View in admin",
       "https://fergusonlawja.com/admin",
+      "New Account",
     ),
   );
 }
@@ -118,6 +121,7 @@ export function sendKycSubmittedToStaff(clientName: string, clientEmail: string)
       `${escapeHtml(clientName)} (${escapeHtml(clientEmail)}) has submitted their identity documents and KYC information. Review it in the admin CMS.`,
       "Review KYC",
       "https://fergusonlawja.com/admin",
+      "KYC Submitted",
     ),
   );
 }
@@ -131,6 +135,7 @@ export function sendMilestoneUpdate(to: string, matterTitle: string, milestoneNa
       `<strong>${escapeHtml(milestoneName)}</strong> has been completed on your matter, <em>${escapeHtml(matterTitle)}</em>. Log in to your client portal any time to see the full timeline.`,
       "View my matter",
       PORTAL_URL,
+      "Case Update",
     ),
   );
 }
@@ -144,6 +149,7 @@ export function sendNewMessageToClient(to: string, matterTitle: string) {
       `Ferguson Law sent you an update on <em>${escapeHtml(matterTitle)}</em>. Reply directly in your client portal.`,
       "Read message",
       PORTAL_URL,
+      "New Message",
     ),
   );
 }
@@ -157,6 +163,7 @@ export function sendNewMessageToStaff(matterTitle: string, clientName: string) {
       `${escapeHtml(clientName)} sent a new message on <em>${escapeHtml(matterTitle)}</em>. Open the Case Management tab to reply.`,
       "Open admin",
       "https://fergusonlawja.com/admin",
+      "New Message",
     ),
     `cms-message:${clientName}`,
   );
@@ -171,6 +178,7 @@ export function sendFileUploadedToStaff(matterTitle: string, clientName: string,
       `${escapeHtml(clientName)} uploaded <strong>${escapeHtml(fileName)}</strong> to <em>${escapeHtml(matterTitle)}</em>.`,
       "Open admin",
       "https://fergusonlawja.com/admin",
+      "Document Received",
     ),
     `cms-file:${clientName}`,
   );
@@ -185,6 +193,7 @@ export function sendPaymentConfirmedInternal(matterTitle: string, amountJmd: num
       `A <strong>${escapeHtml(kind)}</strong> payment of <strong>JMD ${amountJmd.toLocaleString()}</strong> was confirmed on <em>${escapeHtml(matterTitle)}</em>. Issue the formal receipt from the Payments panel when ready.`,
       "Issue receipt",
       "https://fergusonlawja.com/admin",
+      "Payment Confirmed",
     ),
   );
 }
@@ -200,6 +209,7 @@ export function sendReceiptToClient(to: string, matterTitle: string, receiptNumb
       `We've confirmed your payment of <strong>JMD ${amountJmd.toLocaleString()}</strong> on <em>${escapeHtml(matterTitle)}</em>. Receipt number <strong>${escapeHtml(receiptNumber)}</strong> is on file. Reach us on WhatsApp if you'd like a PDF copy sent separately.`,
       "Message us on WhatsApp",
       wa,
+      "Payment Receipt",
     ),
   );
 }
@@ -266,6 +276,7 @@ export function sendWeeklyClientDigest(
       `${alertsHtml}${changesHtml}${awaitingHtml}${pendingHtml}${forecastHtml}${manageLink}`,
       "View my matter",
       PORTAL_URL,
+      "Weekly Update",
     ),
   );
 }
@@ -282,6 +293,7 @@ export function sendTestCompletionSummary(to: string, matterTitle: string, compl
       `All ${completedSteps.length} milestones were advanced on <em>${escapeHtml(matterTitle)}</em>. Here is the full list of steps completed:<br/><br/>${listHtml}<br/>Log into the portal to confirm the final state, then submit your feedback.`,
       "Submit feedback",
       "https://fergusonlawja.com/testing",
+      "Portal Test",
     ),
   );
 }
@@ -293,8 +305,9 @@ export function sendMilestoneToCC(to: string, ccName: string, matterTitle: strin
     shell(
       `Hi ${escapeHtml(ccName.split(" ")[0])}, a step just moved forward.`,
       `You are receiving this because a Ferguson Law client has added you as a notification contact on their matter, <em>${escapeHtml(matterTitle)}</em>.<br/><br/><strong>${escapeHtml(milestoneName)}</strong> has been completed. The client will receive a full update in their portal.`,
-      "Visit Ferguson Law",
+      "Visit fergusonlawja.com",
       "https://fergusonlawja.com",
+      "Matter Update",
     ),
   );
 }
