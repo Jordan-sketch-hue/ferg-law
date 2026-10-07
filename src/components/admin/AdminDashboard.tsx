@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 /**
  * Consultation CRM — the Ferguson Law back office.
@@ -2851,7 +2851,7 @@ function EmailTab({ emails, token, onMarkRead, onDelete }: {
   const [savingBody, setSavingBody] = useState(false);
   const [syncingResend, setSyncingResend] = useState(false);
   const [syncResult, setSyncResult] = useState<string | null>(null);
-  const [mailboxFilter, setMailboxFilter] = useState<"all" | "owen" | "contact">("all");
+  const [mailboxFilter, setMailboxFilter] = useState<"all" | "owen" | "contact">("contact");
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 640);
