@@ -120,14 +120,14 @@ export async function POST(req: NextRequest) {
           errorMessage: "ok" in send && !send.ok ? send.error : null,
         });
       }
-    } catch { /* swallow — booking already saved */ }
+    } catch { /* swallow â€” booking already saved */ }
   }
 
-  // Notify staff — email + WhatsApp + push
+  // Notify staff â€” email + WhatsApp + push
   const staffEmail = process.env.FERGUSON_STAFF_EMAIL || "contact@fergusonlawja.com";
   const resendKey = process.env.RESEND_API_KEY;
-  const owenSubject = `New booking (admin) — ${name}`;
-  const owenBody = `New booking created via admin panel\n\nRef: ${ref}\nName: ${name}\nEmail: ${email}\nPhone: ${phone || "—"}\nService: ${title}\nWhen: ${whenLabel}\nNotes: ${notes || "—"}`;
+  const owenSubject = `New booking (admin) â€” ${name}`;
+  const owenBody = `New booking created via admin panel\n\nRef: ${ref}\nName: ${name}\nEmail: ${email}\nPhone: ${phone || "â€”"}\nService: ${title}\nWhen: ${whenLabel}\nNotes: ${notes || "â€”"}`;
 
   if (resendKey) {
     void fetch("https://api.resend.com/emails", {

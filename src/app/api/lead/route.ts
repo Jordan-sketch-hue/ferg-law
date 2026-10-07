@@ -30,23 +30,23 @@ export async function POST(req: NextRequest) {
     from: "Ferguson Law <contact@fergusonlawja.com>",
     to: ["contact@fergusonlawja.com", "contact@fergusonlawja.com"],
     replyTo: email,
-    subject: `New enquiry: ${name} — ${interestLabel}`,
+    subject: `New enquiry: ${name} â€” ${interestLabel}`,
     html: notifyHtml({ name, email, interestLabel }),
     text: `New website enquiry\n\nName: ${name}\nEmail: ${email}\nInterest: ${interestLabel}`,
   });
 
-  // 2. Acknowledge to client — reply-to sends responses back to contact@
+  // 2. Acknowledge to client â€” reply-to sends responses back to contact@
   await resend.emails.send({
     from: "Ferguson Law <contact@fergusonlawja.com>",
     to: email,
     replyTo: "contact@fergusonlawja.com",
-    subject: "We received your message — Ferguson Law",
+    subject: "We received your message â€” Ferguson Law",
     html: ackHtml({ name, interestLabel }),
     text: ackText({ name, interestLabel }),
   });
 
   void notifyOwenWA(`NEW ENQUIRY\nName: ${name}\nInterest: ${interestLabel}\nEmail: ${email}`);
-  void pushToAdmins(`New Lead — ${name}`, interestLabel, "/admin?tab=leads", "fl-lead");
+  void pushToAdmins(`New Lead â€” ${name}`, interestLabel, "/admin?tab=leads", "fl-lead");
   return NextResponse.json({ ok: true });
 }
 
@@ -55,7 +55,7 @@ function notifyHtml({ name, email, interestLabel }: { name: string; email: strin
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f1ec;padding:40px 16px;"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#fff;border-radius:14px;overflow:hidden;border:1px solid #e7e1d6;">
 <tr><td style="background:#1C3A28;padding:28px 36px;">
-  <div style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#c4922a;">Ferguson Law — New Enquiry</div>
+  <div style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#c4922a;">Ferguson Law â€” New Enquiry</div>
 </td></tr>
 <tr><td style="padding:32px 36px;">
   <p style="font-size:22px;margin:0 0 20px;color:#1C3A28;">New website lead</p>
@@ -94,10 +94,10 @@ function ackHtml({ name, interestLabel }: { name: string; interestLabel: string 
 <tr><td style="padding:0 40px 40px;">
   <hr style="border:none;border-top:1px solid #ece6da;margin:0 0 22px;" />
   <p style="font-size:14px;line-height:1.7;margin:0;color:#6a6a6a;">
-    <strong style="color:#3a3a3a;">${SITE.whatsappDisplay}</strong> &nbsp;·&nbsp;
+    <strong style="color:#3a3a3a;">${SITE.whatsappDisplay}</strong> &nbsp;Â·&nbsp;
     <a href="mailto:contact@fergusonlawja.com" style="color:#8a7a52;">contact@fergusonlawja.com</a>
   </p>
-  <p style="font-size:13px;line-height:1.6;margin:14px 0 0;color:#9a9a9a;">${SITE.founder} &nbsp;·&nbsp; ${SITE.city}</p>
+  <p style="font-size:13px;line-height:1.6;margin:14px 0 0;color:#9a9a9a;">${SITE.founder} &nbsp;Â·&nbsp; ${SITE.city}</p>
 </td></tr>
 </table></td></tr></table>
 </body></html>`;
@@ -112,9 +112,9 @@ function ackText({ name, interestLabel }: { name: string; interestLabel: string 
     `A member of our team will be in touch within one business day.`,
     ``,
     `Feel free to reply to this email or reach us on WhatsApp:`,
-    `${SITE.whatsappDisplay} · contact@fergusonlawja.com`,
+    `${SITE.whatsappDisplay} Â· contact@fergusonlawja.com`,
     ``,
-    `${SITE.founder} · ${SITE.city}`,
+    `${SITE.founder} Â· ${SITE.city}`,
   ].join("\n");
 }
 

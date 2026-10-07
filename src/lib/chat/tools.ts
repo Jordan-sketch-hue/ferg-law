@@ -203,7 +203,7 @@ export async function executeTool(
   const supabase = createAdminClient();
 
   // -------------------------------------------------------------------------
-  // check_availability — public RPC, no admin token needed
+  // check_availability â€” public RPC, no admin token needed
   // -------------------------------------------------------------------------
   if (name === "check_availability") {
     const now = new Date();
@@ -272,7 +272,7 @@ export async function executeTool(
       if (Array.isArray(clash) && clash.length > 0) {
         return {
           content:
-            `Sorry — that slot (${jamaicaLabel(startsAt)} Jamaica time) was just taken. Please call check_availability again and offer the visitor another time.`,
+            `Sorry â€” that slot (${jamaicaLabel(startsAt)} Jamaica time) was just taken. Please call check_availability again and offer the visitor another time.`,
           meta: { tool: name, error: "slot_taken", slot: slotIso },
         };
       }
@@ -447,7 +447,7 @@ export async function executeTool(
     if (error) {
       return {
         content:
-          "I tried to bring in a team member but hit a snag — let the visitor know they can reach us on WhatsApp meanwhile.",
+          "I tried to bring in a team member but hit a snag â€” let the visitor know they can reach us on WhatsApp meanwhile.",
         meta: { tool: name, error: error.message },
       };
     }
@@ -461,7 +461,7 @@ export async function executeTool(
   }
 
   // -------------------------------------------------------------------------
-  // search_web — Tavily search scoped to Jamaica property / NHT topics
+  // search_web â€” Tavily search scoped to Jamaica property / NHT topics
   // -------------------------------------------------------------------------
   if (name === "search_web") {
     const query = str(input.query);
@@ -496,7 +496,7 @@ export async function executeTool(
         }
       }
     } catch {
-      // Cache miss — proceed to live search
+      // Cache miss â€” proceed to live search
     }
 
     // --- Live Tavily search --------------------------------------------------
