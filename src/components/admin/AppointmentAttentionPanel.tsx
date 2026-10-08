@@ -235,9 +235,32 @@ export default function AppointmentAttentionPanel({ appt, token, onClose, onStat
         p_client_id: cid,
         p_workflow_type: matterType,
         p_title: `${appt.name || "Client"} — ${MATTER_LABELS[matterType] ?? matterType}`,
+        p_client_name: appt.name || null,
+        p_client_email: appt.email ?? null,
       });
-      if (r.error) { setFeedback(r.error.message || "Could not create matter."); }
-      else { setMatterCreated(true); setFeedback("Matter opened successfully."); }
+      if (r.error) { setFeedback(r.error.message || "Could not create matter."); setBusy(null); return; }
+      setMatterCreated(true);
+
+      // Auto-invite client to portal if they have an email
+      if (appt.email) {
+        try {
+          await fetch("/api/admin/cms/invite-client", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "x-admin-token": token },
+            body: JSON.stringify({
+              email: appt.email,
+              clientName: appt.name || undefined,
+              matterTitle: MATTER_LABELS[matterType] ?? matterType,
+              clientId: cid,
+            }),
+          });
+          setFeedback("Matter opened + portal invite sent.");
+        } catch {
+          setFeedback("Matter opened. (Portal invite failed — retry from Clients tab.)");
+        }
+      } else {
+        setFeedback("Matter opened successfully.");
+      }
     } catch { setFeedback("Network error."); }
     setBusy(null);
   }
