@@ -760,18 +760,29 @@ function ClientDashboardInner() {
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginTop: 16 }}>
             <select value={startIntent} onChange={e => setStartIntent(e.target.value as typeof startIntent)}
               style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid var(--line)", fontSize: 14, background: "#fff" }}>
-              <option value="property_purchase">Buying a property</option>
-              <option value="property_sale">Selling a property</option>
-              <option value="lease_agreement">Lease Agreement</option>
-              <option value="title_search">Title Search</option>
-              <option value="transfer">Title Transfer</option>
-              <option value="power_of_attorney">Power of Attorney (General)</option>
-              <option value="power_of_attorney_limited">Power of Attorney (Limited)</option>
-              <option value="lost_title">Lost Title</option>
-              <option value="first_registration">First Registration</option>
-              <option value="adverse_possession">Adverse Possession</option>
-              <option value="subdivision">Subdivision</option>
-              <option value="general">Something else</option>
+              <optgroup label="Property">
+                <option value="property_purchase">Buying a property</option>
+                <option value="property_sale">Selling a property</option>
+                <option value="transfer">Title Transfer</option>
+                <option value="title_search">Title Search</option>
+                <option value="lost_title">Lost Title</option>
+                <option value="first_registration">First Registration</option>
+                <option value="adverse_possession">Adverse Possession</option>
+                <option value="subdivision">Subdivision</option>
+                <option value="transmission_of_title">Transmission of Title</option>
+              </optgroup>
+              <optgroup label="Wills &amp; Estates">
+                <option value="will_drafting">Will Drafting</option>
+                <option value="probate">Probate</option>
+                <option value="letters_of_administration">Letters of Administration</option>
+                <option value="resealing">Resealing of Probate</option>
+              </optgroup>
+              <optgroup label="Other">
+                <option value="lease_agreement">Lease Agreement</option>
+                <option value="power_of_attorney">Power of Attorney</option>
+                <option value="non_contentious_divorce">Non-Contentious Divorce</option>
+                <option value="general">Something else</option>
+              </optgroup>
             </select>
             <button onClick={onStartMatter} disabled={starting} className="btn btn-gold" style={{ fontSize: 13 }}>
               {starting ? "Starting…" : "Start now →"}
