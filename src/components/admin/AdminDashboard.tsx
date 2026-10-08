@@ -942,7 +942,7 @@ export default function AdminDashboard() {
           {tab === "cms" && token && <CmsTab token={token} onUnreadChange={setCmsUnread} />}
           {tab === "calendar" && <CalendarTab appts={appts} token={token ?? ""} onStatus={setApptStatus} onRefresh={() => { if (token) void fetchAll(token); }} />}
           {tab === "chats" && <ChatsTable convos={convos} loading={loading} />}
-          {tab === "email" && token && <EmailTab emails={emails} token={token} leads={leads} onMarkRead={(id) => setEmails(prev => prev.map(e => e.id === id ? { ...e, read: true } : e))} onDelete={(id) => setEmails(prev => prev.filter(e => e.id !== id))} onLeadContacted={(id) => { setLeads(prev => prev.map(l => l.id === id ? { ...l, status: "contacted" } : l)); void supabase.rpc("fl_admin_set_lead_status", { p_token: token, p_id: id, p_status: "contacted" }); }} />}
+          {tab === "email" && token && <EmailTab emails={emails} token={token} leads={leads} onMarkRead={(id) => setEmails(prev => prev.map(e => e.id === id ? { ...e, read: true } : e))} onDelete={(id) => setEmails(prev => prev.filter(e => e.id !== id))} onLeadContacted={(id) => { setLeads(prev => prev.map(l => l.id === id ? { ...l, status: "contacted" } : l)); void createClient().rpc("fl_admin_set_lead_status", { p_token: token, p_id: id, p_status: "contacted" }); }} />}
           {tab === "invites" && <InvitesPanel invites={invites} loading={loading} onCreate={createInvite} onDeactivate={deactivateInvite} onDelete={deleteInvite} />}
           {tab === "directory" && <ListingsPanel listings={listings} loading={loading} onStatus={setListingStatus} />}
           {tab === "availability" && <AvailabilityTab availability={availability} onSave={saveAvailability} token={token ?? ""} />}
