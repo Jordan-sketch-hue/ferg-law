@@ -13,7 +13,7 @@ import { isServiceId, serviceTitle } from "@/lib/booking/services";
 import { fullWhenLabel } from "@/lib/booking/format";
 import { logReminderEvent } from "@/lib/attention/reminderLog";
 import { pushToAdmins } from "@/lib/push";
-import { notifyOwenWA } from "@/lib/wa-notify";
+import { notifyJordanWA } from "@/lib/wa-notify";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -143,7 +143,7 @@ export async function POST(req: NextRequest) {
     }).catch(() => {});
   }
 
-  void notifyOwenWA(`NEW BOOKING (admin)\nName: ${name}\nService: ${title}\nWhen: ${whenLabel}\nEmail: ${email}\nPhone: ${phone || "-"}\nRef: ${ref}`);
+  void notifyJordanWA(`📋 Ferguson Law – New Booking (Admin)\nName: ${name}\nService: ${title}\nWhen: ${whenLabel}\nEmail: ${email}\nPhone: ${phone || "—"}\nRef: ${ref}`);
   void pushToAdmins(`New Booking - ${name}`, `${title} - ${whenLabel}`, "/admin?tab=bookings", "fl-booking");
 
   return Response.json({ ok: true, ref, meetingUrl: meetingUrl ?? null, whenLabel });

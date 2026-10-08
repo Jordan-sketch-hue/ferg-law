@@ -103,6 +103,7 @@ export async function POST(req: NextRequest) {
       body_full: bodyFull,
       resend_id: resJson.id ?? null,
       context: (req.headers.get("x-email-context") as string | null) ?? "compose",
+      from_mailbox: (req.headers.get("x-from-mailbox") as string | null) ?? "contact",
     });
     if (logErr) console.error("[send-email] fl_email_log insert failed:", logErr.message, logErr.code);
 

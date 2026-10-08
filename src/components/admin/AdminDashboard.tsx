@@ -129,6 +129,7 @@ interface Client {
   notes: string | null;
   status: string;
   meta: Record<string, unknown>;
+  portal_invited_at: string | null;
 }
 
 interface Matter {
@@ -941,7 +942,7 @@ export default function AdminDashboard() {
           {tab === "cms" && token && <CmsTab token={token} onUnreadChange={setCmsUnread} />}
           {tab === "calendar" && <CalendarTab appts={appts} token={token ?? ""} onStatus={setApptStatus} onRefresh={() => { if (token) void fetchAll(token); }} />}
           {tab === "chats" && <ChatsTable convos={convos} loading={loading} />}
-          {tab === "email" && token && <EmailTab emails={emails} token={token} onMarkRead={(id) => setEmails(prev => prev.map(e => e.id === id ? { ...e, read: true } : e))} onDelete={(id) => setEmails(prev => prev.filter(e => e.id !== id))} />}
+          {tab === "email" && token && <EmailTab emails={emails} token={token} leads={leads} onMarkRead={(id) => setEmails(prev => prev.map(e => e.id === id ? { ...e, read: true } : e))} onDelete={(id) => setEmails(prev => prev.filter(e => e.id !== id))} onLeadContacted={(id) => { setLeads(prev => prev.map(l => l.id === id ? { ...l, status: "contacted" } : l)); void supabase.rpc("fl_admin_set_lead_status", { p_token: token, p_id: id, p_status: "contacted" }); }} />}
           {tab === "invites" && <InvitesPanel invites={invites} loading={loading} onCreate={createInvite} onDeactivate={deactivateInvite} onDelete={deleteInvite} />}
           {tab === "directory" && <ListingsPanel listings={listings} loading={loading} onStatus={setListingStatus} />}
           {tab === "availability" && <AvailabilityTab availability={availability} onSave={saveAvailability} token={token ?? ""} />}
@@ -1629,7 +1630,7 @@ function ClientsTab({ clients, matters, loading, onUpsert, onDelete, token }: {
     await fetch("/api/admin/cms/invite-client", {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-admin-token": token },
-      body: JSON.stringify({ email: clientEmail, clientName }),
+      body: JSON.stringify({ email: clientEmail, clientName, clientId }),
     }).catch(() => null);
   };
 
@@ -1703,14 +1704,18 @@ function ClientsTab({ clients, matters, loading, onUpsert, onDelete, token }: {
                         </Td>
                         <Td>
                           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                            {c.email && (
-                              <button type="button"
-                                onClick={() => void sendInvite(c.email!, c.name, c.id)}
-                                disabled={inviteSent[c.id]}
-                                style={{ ...S.waBtn, background: inviteSent[c.id] ? "rgba(47,122,82,.08)" : "rgba(201,168,106,.12)", color: inviteSent[c.id] ? GREEN : "#8a6a22", border: `1px solid ${inviteSent[c.id] ? GREEN : "rgba(201,168,106,.4)"}` }}>
-                                {inviteSent[c.id] ? "Sent" : "Send Login Email"}
-                              </button>
-                            )}
+                            {c.email && (() => {
+                              const alreadySent = !!c.portal_invited_at || !!inviteSent[c.id];
+                              return (
+                                <button type="button"
+                                  onClick={() => !alreadySent && void sendInvite(c.email!, c.name, c.id)}
+                                  disabled={alreadySent}
+                                  title={c.portal_invited_at ? `Sent ${new Date(c.portal_invited_at).toLocaleDateString()}` : undefined}
+                                  style={{ ...S.waBtn, background: alreadySent ? "rgba(47,122,82,.08)" : "rgba(201,168,106,.12)", color: alreadySent ? GREEN : "#8a6a22", border: `1px solid ${alreadySent ? GREEN : "rgba(201,168,106,.4)"}`, cursor: alreadySent ? "default" : "pointer" }}>
+                                  {alreadySent ? "✓ Login Email Sent" : "Send Login Email"}
+                                </button>
+                              );
+                            })()}
                             <button type="button" onClick={() => onDelete(c.id)}
                               style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)" }}>
                               Archive
@@ -2825,10 +2830,11 @@ interface SentEmail {
   status: string;
   resend_id: string | null;
   context: string | null;
+  from_mailbox: string | null;
 }
 
-function EmailTab({ emails, token, onMarkRead, onDelete }: {
-  emails: InboundEmail[]; token: string; onMarkRead: (id: string) => void; onDelete: (id: string) => void;
+function EmailTab({ emails, token, leads, onMarkRead, onDelete, onLeadContacted }: {
+  emails: InboundEmail[]; token: string; leads: Lead[]; onMarkRead: (id: string) => void; onDelete: (id: string) => void; onLeadContacted: (leadId: string) => void;
 }) {
   const [pane, setPane] = useState<"inbox" | "sent">("inbox");
   const [sentEmails, setSentEmails] = useState<SentEmail[]>([]);
@@ -2852,6 +2858,7 @@ function EmailTab({ emails, token, onMarkRead, onDelete }: {
   const [syncingResend, setSyncingResend] = useState(false);
   const [syncResult, setSyncResult] = useState<string | null>(null);
   const [mailboxFilter, setMailboxFilter] = useState<"all" | "owen" | "contact">("contact");
+  const [sentMailboxFilter, setSentMailboxFilter] = useState<"all" | "owen" | "contact">("all");
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 640);
@@ -2927,8 +2934,13 @@ function EmailTab({ emails, token, onMarkRead, onDelete }: {
       body: JSON.stringify({ token, to, subject, body: replyBody.trim(), replyToId: selected.id }),
     });
     const json = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
-    if (json.ok) { setSendResult({ ok: true, msg: `Sent to ${to}` }); setReplyBody(""); setReplyOpen(false); }
-    else { setSendResult({ ok: false, msg: json.error ?? "Send failed" }); }
+    if (json.ok) {
+      setSendResult({ ok: true, msg: `Sent to ${to}` });
+      setReplyBody(""); setReplyOpen(false);
+      // If the email recipient matches a stale lead, mark them as contacted
+      const matchedLead = leads.find(l => l.email && l.email.toLowerCase() === to.toLowerCase() && (l.status ?? "new") === "new");
+      if (matchedLead) onLeadContacted(matchedLead.id);
+    } else { setSendResult({ ok: false, msg: json.error ?? "Send failed" }); }
     setSending(false);
   }
 
@@ -2989,11 +3001,31 @@ function EmailTab({ emails, token, onMarkRead, onDelete }: {
           </div>
         )}
         {pane === "sent" ? (
-          sentLoading ? (
-            <div style={{ padding: "32px 16px", textAlign: "center", color: MUTED, fontSize: ".86rem" }}>Loading...</div>
-          ) : sentEmails.length === 0 ? (
-            <div style={{ padding: "32px 16px", textAlign: "center", color: MUTED, fontSize: ".86rem" }}>No sent emails yet.</div>
-          ) : sentEmails.map((e) => (
+          <>
+            <div style={{ padding: "10px 14px", borderBottom: "1px solid rgba(18,16,12,.08)" }}>
+              <div style={{ display: "flex", gap: 4 }}>
+                {([["all","All"],["contact","contact@"],["owen","owen@"]] as Array<["all"|"owen"|"contact",string]>).map(([v,label]) => (
+                  <button key={v} type="button" onClick={() => setSentMailboxFilter(v)}
+                    style={{ flex: 1, fontSize: ".7rem", padding: "4px 6px", borderRadius: 999, border: "1px solid",
+                      borderColor: sentMailboxFilter === v ? GOLD : "rgba(18,16,12,.15)",
+                      background: sentMailboxFilter === v ? "rgba(200,166,92,.12)" : "transparent",
+                      color: sentMailboxFilter === v ? GREEN : MUTED, cursor: "pointer", fontWeight: sentMailboxFilter === v ? 700 : 400 }}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {sentLoading ? (
+              <div style={{ padding: "32px 16px", textAlign: "center", color: MUTED, fontSize: ".86rem" }}>Loading...</div>
+            ) : (() => {
+              const sentFiltered = sentEmails.filter(e =>
+                sentMailboxFilter === "all" ? true :
+                sentMailboxFilter === "owen" ? (e.from_mailbox ?? "contact") === "owen" :
+                (e.from_mailbox ?? "contact") === "contact"
+              );
+              return sentFiltered.length === 0 ? (
+                <div style={{ padding: "32px 16px", textAlign: "center", color: MUTED, fontSize: ".86rem" }}>No sent emails in this mailbox.</div>
+              ) : sentFiltered.map((e) => (
             <button key={e.id} type="button" onClick={() => setSelectedSent(e)}
               style={{ display: "block", width: "100%", textAlign: "left", border: "none", cursor: "pointer",
                 padding: "12px 14px", background: selectedSent?.id === e.id ? "rgba(16,42,30,.06)" : "#fff",
@@ -3006,7 +3038,9 @@ function EmailTab({ emails, token, onMarkRead, onDelete }: {
               {e.body_preview && <div style={{ fontSize: ".72rem", color: MUTED, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.body_preview}</div>}
               <div style={{ fontSize: ".72rem", color: MUTED, marginTop: 2 }}>{fmtDate(e.created_at)}</div>
             </button>
-          ))
+          ));
+            })()}
+          </>
         ) : (() => {
             const filtered = emails.filter(e => !e.is_spam && (
               mailboxFilter === "all" ? true :
@@ -3016,26 +3050,34 @@ function EmailTab({ emails, token, onMarkRead, onDelete }: {
             return filtered.length === 0 ? (
               <div style={{ padding: "32px 16px", textAlign: "center", color: MUTED, fontSize: ".86rem" }}>No emails in this mailbox.</div>
             ) : filtered.map((e) => (
-              <button key={e.id} type="button" onClick={() => selectEmail(e)}
-                style={{ display: "block", width: "100%", textAlign: "left", border: "none", cursor: "pointer",
-                  padding: "12px 14px", background: selected?.id === e.id ? "rgba(16,42,30,.06)" : "#fff",
+              <div key={e.id}
+                style={{ position: "relative", display: "flex", background: selected?.id === e.id ? "rgba(16,42,30,.06)" : "#fff",
                   borderBottom: "1px solid rgba(18,16,12,.07)",
                   borderLeft: selected?.id === e.id ? `3px solid ${GOLD}` : "3px solid transparent" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  {!e.read && <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#c0392b", flexShrink: 0, display: "inline-block" }} />}
-                  <span style={{ fontWeight: e.read ? 400 : 700, fontSize: ".85rem", color: GREEN, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
-                    {e.from_name || e.from_email}
-                  </span>
-                  {e.replied && <span style={{ fontSize: ".66rem", fontWeight: 700, color: "#2f7a52", background: "rgba(47,122,82,.12)", borderRadius: 999, padding: "1px 6px", flexShrink: 0 }}>Replied</span>}
-                </div>
-                <div style={{ fontSize: ".78rem", color: MUTED, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.subject || "(no subject)"}</div>
-                {e.to_email && mailboxFilter === "all" && (
-                  <div style={{ fontSize: ".68rem", color: GOLD, marginTop: 2, fontWeight: 600 }}>
-                    to: {e.to_email.split("@")[0]}@
+                <button type="button" onClick={() => selectEmail(e)}
+                  style={{ flex: 1, textAlign: "left", border: "none", cursor: "pointer", padding: "12px 8px 12px 11px", background: "transparent" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    {!e.read && <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#c0392b", flexShrink: 0, display: "inline-block" }} />}
+                    <span style={{ fontWeight: e.read ? 400 : 700, fontSize: ".85rem", color: GREEN, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
+                      {e.from_name || e.from_email}
+                    </span>
+                    {e.replied && <span style={{ fontSize: ".66rem", fontWeight: 700, color: "#2f7a52", background: "rgba(47,122,82,.12)", borderRadius: 999, padding: "1px 6px", flexShrink: 0 }}>Replied</span>}
                   </div>
-                )}
-                <div style={{ fontSize: ".72rem", color: MUTED, marginTop: 2 }}>{fmtDate(e.created_at)}</div>
-              </button>
+                  <div style={{ fontSize: ".78rem", color: MUTED, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.subject || "(no subject)"}</div>
+                  {e.to_email && mailboxFilter === "all" && (
+                    <div style={{ fontSize: ".68rem", color: GOLD, marginTop: 2, fontWeight: 600 }}>
+                      to: {e.to_email.split("@")[0]}@
+                    </div>
+                  )}
+                  <div style={{ fontSize: ".72rem", color: MUTED, marginTop: 2 }}>{fmtDate(e.created_at)}</div>
+                </button>
+                <button type="button" title="Delete" onClick={(ev) => { ev.stopPropagation(); void deleteEmail(e); }}
+                  style={{ border: "none", background: "transparent", cursor: "pointer", color: "#c94b4b", padding: "0 10px", fontSize: ".85rem", flexShrink: 0, opacity: 0.6 }}
+                  onMouseEnter={(ev) => { (ev.currentTarget as HTMLButtonElement).style.opacity = "1"; }}
+                  onMouseLeave={(ev) => { (ev.currentTarget as HTMLButtonElement).style.opacity = "0.6"; }}>
+                  ✕
+                </button>
+              </div>
             ));
           })()
         }
@@ -4688,14 +4730,9 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
       if (error) throw error;
       if (!data) throw new Error("No matter ID returned — check the RPC returned a value.");
 
-      // Send portal invite if client has no auth account but email was provided
-      if (!newClientId && emailParam) {
-        void fetch("/api/admin/cms/invite-client", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "x-admin-token": token },
-          body: JSON.stringify({ email: emailParam, clientName: newClientName.trim() || undefined, matterTitle: newTitle.trim() || undefined }),
-        }).catch(() => null);
-      }
+      // Do NOT send a portal invite here — if the matter was created successfully the
+      // client already has an auth account (fl_admin_cms_open_matter looks them up by
+      // email). An invite is sent only from the catch block when "client not found".
 
       const { data: refreshed } = await supabase.rpc("fl_admin_cms_matters", { p_token: token });
       setMatters((refreshed as CmsMatter[]) ?? []);

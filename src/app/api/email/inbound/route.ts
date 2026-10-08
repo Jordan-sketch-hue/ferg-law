@@ -148,6 +148,7 @@ export async function POST(req: NextRequest) {
       reply_to: replyTo,
       thread_id: threadId,
       email_id: emailId || null,
+      is_spam: spam,
     });
 
     if (error) {
