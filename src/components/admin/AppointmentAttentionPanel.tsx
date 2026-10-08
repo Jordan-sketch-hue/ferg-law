@@ -159,7 +159,7 @@ export default function AppointmentAttentionPanel({ appt, token, onClose, onStat
     const referralLine = "\n\nWe would be grateful if you would refer anyone you know who may benefit from our services. A personal recommendation is the highest compliment you can give.";
     const sign = "\n\nWarm regards,\nOwen Ferguson\nFerguson Law\n(876) 320-0235 · contact@fergusonlawja.com";
     if (type === "summary") {
-      return `Dear ${firstName},\n\nThank you for consulting with Ferguson Law today regarding ${appt.service || "your legal matter"}. Please find below a preliminary summary of our discussion.\n\nYOUR OBJECTIVE\n[Describe the client's goal]\n\nOUR RECOMMENDATION\n[Outline the recommended course of action]\n\nHOW WE WOULD ASSIST\n[Describe the firm's specific role and services]\n\nEXPECTED TIMING\n[Provide a realistic timeline]\n\nWHAT HAPPENS NEXT\n[Describe the immediate next steps]\n\n---\nThis summary is preliminary and does not constitute formal legal advice. A formal engagement agreement will follow upon our confirmation to proceed.${referralLine}${sign}`;
+      return `Dear ${firstName},\n\nThank you for consulting with Ferguson Law today regarding ${appt.service || "your legal matter"}. Please find below a preliminary summary of our discussion.\n\nYOUR OBJECTIVE\n[Describe the client's goal]\n\nOUR RECOMMENDATION\n[Outline the recommended course of action]\n\nHOW WE WOULD ASSIST\n[Describe the firm's specific role and services]\n\nEXPECTED TIMING\n[Provide a realistic timeline]\n\n---\nThis summary is preliminary and does not constitute formal legal advice. A formal engagement agreement will follow upon our confirmation to proceed.${referralLine}${sign}`;
     }
     if (type === "thankyou") {
       return `Dear ${firstName},\n\nThank you for meeting with us today. We appreciate your time and the opportunity to learn more about your matter.\n\n[Add a personalised note here]\n\nShould you have any questions in the meantime, please don't hesitate to reach out by replying to this email or via WhatsApp.${referralLine}${sign}`;
@@ -235,6 +235,8 @@ export default function AppointmentAttentionPanel({ appt, token, onClose, onStat
         p_client_id: cid,
         p_workflow_type: matterType,
         p_title: `${appt.name || "Client"} — ${MATTER_LABELS[matterType] ?? matterType}`,
+        p_client_name: appt.name || null,
+        p_client_email: appt.email || null,
       });
       if (r.error) { setFeedback(r.error.message || "Could not create matter."); }
       else { setMatterCreated(true); setFeedback("Matter opened successfully."); }
@@ -371,7 +373,7 @@ export default function AppointmentAttentionPanel({ appt, token, onClose, onStat
                     <div style={{ fontSize: ".78rem", color: MUTED, marginBottom: 10 }}>Choose a template — all are fully editable before sending:</div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                       {([
-                        ["summary", "Preliminary Summary", "Your Objective · Recommendation · How We Would Assist · Timing · Next Steps"],
+                        ["summary", "Preliminary Summary", "Your Objective · Recommendation · How We Would Assist · Timing"],
                         ["thankyou", "Generic Thank You", "Personalised thank-you with referral ask"],
                         ["decline", "Decline to Proceed", "Polite decline with referral ask"],
                       ] as const).map(([type, label, desc]) => (

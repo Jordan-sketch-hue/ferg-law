@@ -9,6 +9,9 @@ const SPAM_SUBJECT_PATTERNS = [
   /legal\s*(action|notice|threat)/i, /cease\s*and\s*desist/i,
   /account\s*(suspended|terminated|disabled)/i,
   /wire\s*transfer/i, /bitcoin/i, /crypto\s*payment/i,
+  /adsgpt/i, /campaign\s*ai/i, /ai\s*marketing/i, /seo\s*service/i,
+  /boost\s*your\s*(ranking|traffic|visibility)/i, /get\s*more\s*(leads|clients|customers)/i,
+  /digital\s*marketing/i, /link\s*building/i, /backlink/i,
 ];
 
 const SPAM_DOMAIN_PATTERNS = [/sell\d*proxy/i, /\.xyz$/i, /\.pw$/i, /\.top$/i, /\.ksmg\.life$/i, /\.hrufhs\.org$/i];
@@ -137,7 +140,8 @@ export async function POST(req: NextRequest) {
     console.log(`BODY_CHECK payload_html=${!!payloadHtml} payload_text=${!!payloadText} fetched_html=${!!fetchedHtml} fetched_text=${!!fetchedText} email_id=${emailId}`);
 
     const supabase = createAdminClient();
-    const spam = isLikelySpam(fromEmail, String(payload.subject ?? ""));
+    const isInternalSender = fromEmail.toLowerCase().endsWith("@fergusonlawja.com");
+    const spam = isInternalSender || isLikelySpam(fromEmail, String(payload.subject ?? ""));
 
     const { error } = await supabase.from("fl_inbound_emails").insert({
       from_email: fromEmail,
@@ -160,7 +164,6 @@ export async function POST(req: NextRequest) {
     // Forward notification email to Owen (and BCC Jordan) so they're alerted in their inbox.
     // Skip if the sender is our own domain — prevents infinite loops when system emails
     // (morning digest, notification forwards) land at contact@fergusonlawja.com.
-    const isInternalSender = fromEmail.toLowerCase().endsWith("@fergusonlawja.com");
     // Route forwarded notification to the mailbox it was sent to.
     // contact@ => FERGUSON_STAFF_EMAIL (public enquiries inbox)
     // owen@    => owen@fergusonlawja.com (Owen's personal mailbox)
