@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 
 const VALID_TOKENS = [
-  process.env.FL_ADMIN_TOKEN_JORDAN ?? "jst-jordan-2026",
-  process.env.FL_ADMIN_TOKEN_OWEN   ?? "ferguson-admin-2026",
-];
+  process.env.FL_ADMIN_TOKEN_JORDAN,
+  process.env.FL_ADMIN_TOKEN_OWEN,
+].filter(Boolean) as string[];
 
 const MIGRATION_SQL = `
 CREATE TABLE IF NOT EXISTS public.fl_site_pages (

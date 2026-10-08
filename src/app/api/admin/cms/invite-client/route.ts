@@ -20,8 +20,14 @@ export async function POST(req: NextRequest) {
     if (!email?.trim()) return NextResponse.json({ error: "email required" }, { status: 400 });
 
     const admin = createAdminClient();
-    const { error: authErr } = await admin.rpc("fl_is_admin", { p_token: token });
-    if (authErr) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    const { data: isAdmin, error: authErr } = await admin.rpc("fl_is_admin", { p_token: token });
+    if (authErr || !isAdmin) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
+    // Validate clientId is a UUID before interpolating into query filter
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (clientId && !UUID_RE.test(clientId)) {
+      return NextResponse.json({ error: "invalid clientId" }, { status: 400 });
+    }
 
     // Guard: only send invite if client has at least one active matter
     const emailLower = email.trim().toLowerCase();

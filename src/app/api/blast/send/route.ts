@@ -5,6 +5,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
+import { createAdminClient } from "@/lib/supabase/server";
 
 const FROM = "Ferguson Law <contact@fergusonlawja.com>";
 const REPLY_TO = "contact@fergusonlawja.com";
@@ -174,11 +175,18 @@ function wrapCustomBody(name: string, bodyHtml: string): string {
 }
 
 export async function POST(req: NextRequest) {
-  const { recipients, subject, bodyHtml } = (await req.json()) as {
+  const { token, recipients, subject, bodyHtml } = (await req.json()) as {
+    token?: string;
     recipients: { name: string; email: string }[];
     subject: string;
     bodyHtml?: string;
   };
+
+  if (!token) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
+  const admin = createAdminClient();
+  const { data: isAdmin, error: authErr } = await admin.rpc("fl_is_admin", { p_token: token });
+  if (authErr || !isAdmin) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
   if (!recipients?.length || !subject) {
     return NextResponse.json({ error: "Missing required fields." }, { status: 400 });

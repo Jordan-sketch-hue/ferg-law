@@ -9,12 +9,20 @@ export async function POST(req: NextRequest) {
   const { path } = await req.json() as { path: string };
   if (!path) return NextResponse.json({ error: "Missing path." }, { status: 400 });
 
-  // Only allow clients to get signed URLs for their own matter files
   if (!path.startsWith("matters/")) {
     return NextResponse.json({ error: "Forbidden." }, { status: 403 });
   }
 
+  // Verify this matter belongs to the authenticated user
+  const matterId = path.split("/")[1];
   const admin = createAdminClient();
+  const { data: matter } = await admin
+    .from("fl_client_matters")
+    .select("id")
+    .eq("id", matterId)
+    .eq("client_id", user.id)
+    .single();
+  if (!matter) return NextResponse.json({ error: "Forbidden." }, { status: 403 });
   const { data, error } = await admin.storage
     .from("fl-matter-files")
     .createSignedUrl(path, 60 * 60 * 24 * 365); // 1-year signed URL
