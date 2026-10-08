@@ -83,6 +83,8 @@ export default function AppointmentAttentionPanel({ appt, token, onClose, onStat
   const [rTime, setRTime] = useState("10:00");
   const [followUpNotes, setFollowUpNotes] = useState("");
   const [showFollowUp, setShowFollowUp] = useState(false);
+  const [templateChoice, setTemplateChoice] = useState<"none" | "summary" | "thankyou" | "decline">("none");
+  const [templateBody, setTemplateBody] = useState("");
   const [clientCreated, setClientCreated] = useState(false);
   const [createdClientId, setCreatedClientId] = useState<string | null>(null);
   const [matterType, setMatterType] = useState<string>("");
@@ -151,16 +153,53 @@ export default function AppointmentAttentionPanel({ appt, token, onClose, onStat
     }
   }
 
+  const firstName = (appt.name || "there").split(" ")[0];
+
+  function buildTemplate(type: "summary" | "thankyou" | "decline"): string {
+    const referralLine = "\n\nWe would be grateful if you would refer anyone you know who may benefit from our services. A personal recommendation is the highest compliment you can give.";
+    const sign = "\n\nWarm regards,\nOwen Ferguson\nFerguson Law\n(876) 320-0235 · contact@fergusonlawja.com";
+    if (type === "summary") {
+      return `Dear ${firstName},\n\nThank you for consulting with Ferguson Law today regarding ${appt.service || "your legal matter"}. Please find below a preliminary summary of our discussion.\n\nYOUR OBJECTIVE\n[Describe the client's goal]\n\nOUR RECOMMENDATION\n[Outline the recommended course of action]\n\nHOW WE WOULD ASSIST\n[Describe the firm's specific role and services]\n\nEXPECTED TIMING\n[Provide a realistic timeline]\n\nWHAT HAPPENS NEXT\n[Describe the immediate next steps]\n\n---\nThis summary is preliminary and does not constitute formal legal advice. A formal engagement agreement will follow upon our confirmation to proceed.${referralLine}${sign}`;
+    }
+    if (type === "thankyou") {
+      return `Dear ${firstName},\n\nThank you for meeting with us today. We appreciate your time and the opportunity to learn more about your matter.\n\n[Add a personalised note here]\n\nShould you have any questions in the meantime, please don't hesitate to reach out by replying to this email or via WhatsApp.${referralLine}${sign}`;
+    }
+    // decline
+    return `Dear ${firstName},\n\nThank you for consulting with Ferguson Law. We sincerely appreciate the time you took to meet with us.\n\nAfter careful consideration, we are unable to proceed with this matter at this time. [Optional: add a brief, tactful reason]\n\nWe wish you every success in resolving this matter and hope you will consider us for your future legal needs.${referralLine}${sign}`;
+  }
+
+  function selectTemplate(type: "summary" | "thankyou" | "decline") {
+    setTemplateChoice(type);
+    setTemplateBody(buildTemplate(type));
+  }
+
   async function sendFollowUp() {
     setBusy("followup"); setFeedback(null);
     try {
-      const r = await fetch("/api/admin/send-followup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-admin-token": token },
-        body: JSON.stringify({ id: appt.id, notes: followUpNotes || undefined }),
-      });
-      const d = await r.json() as { ok?: boolean; skipped?: boolean; error?: string };
-      setFeedback(d.ok ? "Follow-up email sent." : d.skipped ? "Email not configured (skipped)." : (d.error ?? "Failed."));
+      if (templateChoice !== "none" && templateBody.trim()) {
+        // Send the custom template via send-email using the appointment's email address
+        if (!appt.email) { setFeedback("No email address on this appointment."); setBusy(null); return; }
+        const subjects: Record<string, string> = {
+          summary: `Ferguson Law — Preliminary Summary: ${appt.service || "Consultation"}`,
+          thankyou: `Thank you for consulting with Ferguson Law`,
+          decline: `Re: Your recent consultation with Ferguson Law`,
+        };
+        const r = await fetch("/api/admin/send-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-email-context": "consultation-followup" },
+          body: JSON.stringify({ token, to: appt.email, subject: subjects[templateChoice], body: templateBody }),
+        });
+        const d = await r.json() as { ok?: boolean; error?: string };
+        setFeedback(d.ok ? "Email sent." : (d.error ?? "Failed."));
+      } else {
+        const r = await fetch("/api/admin/send-followup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-admin-token": token },
+          body: JSON.stringify({ id: appt.id, notes: followUpNotes || undefined }),
+        });
+        const d = await r.json() as { ok?: boolean; skipped?: boolean; error?: string };
+        setFeedback(d.ok ? "Follow-up email sent." : d.skipped ? "Email not configured (skipped)." : (d.error ?? "Failed."));
+      }
     } catch { setFeedback("Network error."); }
     setBusy(null);
   }
@@ -324,23 +363,62 @@ export default function AppointmentAttentionPanel({ appt, token, onClose, onStat
           <div style={{ borderTop: "1px solid rgba(18,16,12,.08)", paddingTop: 16, marginTop: 4 }}>
             <div style={{ fontWeight: 700, fontSize: ".7rem", textTransform: "uppercase", letterSpacing: ".07em", color: MUTED, marginBottom: 12 }}>Post-consultation actions</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {/* Follow-up email */}
+              {/* Follow-up email — template picker */}
               <div style={{ background: "#f8f6f1", borderRadius: 10, padding: "12px 14px" }}>
-                <div style={{ fontWeight: 600, fontSize: ".85rem", color: GREEN, marginBottom: 6 }}>Send follow-up email to client</div>
-                <textarea
-                  value={followUpNotes}
-                  onChange={(e) => setFollowUpNotes(e.target.value)}
-                  placeholder="Optional: add consultation notes or next steps to include in the email…"
-                  rows={3}
-                  style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid rgba(18,16,12,.15)", fontSize: ".82rem", resize: "vertical", fontFamily: "inherit", boxSizing: "border-box" }}
-                />
-                <button
-                  type="button"
-                  onClick={() => void sendFollowUp()}
-                  disabled={busy === "followup"}
-                  style={{ marginTop: 8, padding: "8px 18px", borderRadius: 999, border: "none", background: GOLD, color: "#0e2518", fontWeight: 700, cursor: "pointer", fontSize: ".84rem" }}>
-                  {busy === "followup" ? "Sending…" : "Send follow-up email"}
-                </button>
+                <div style={{ fontWeight: 600, fontSize: ".85rem", color: GREEN, marginBottom: 8 }}>Send follow-up email to client</div>
+                {templateChoice === "none" ? (
+                  <>
+                    <div style={{ fontSize: ".78rem", color: MUTED, marginBottom: 10 }}>Choose a template — all are fully editable before sending:</div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      {([
+                        ["summary", "Preliminary Summary", "Your Objective · Recommendation · How We Would Assist · Timing · Next Steps"],
+                        ["thankyou", "Generic Thank You", "Personalised thank-you with referral ask"],
+                        ["decline", "Decline to Proceed", "Polite decline with referral ask"],
+                      ] as const).map(([type, label, desc]) => (
+                        <button key={type} type="button" onClick={() => selectTemplate(type)}
+                          style={{ textAlign: "left", padding: "10px 12px", borderRadius: 8, border: "1px solid rgba(18,16,12,.15)", background: "#fff", cursor: "pointer" }}>
+                          <div style={{ fontWeight: 600, fontSize: ".84rem", color: GREEN }}>{label}</div>
+                          <div style={{ fontSize: ".72rem", color: MUTED, marginTop: 2 }}>{desc}</div>
+                        </button>
+                      ))}
+                      <button type="button" onClick={() => { setTemplateChoice("thankyou"); setTemplateBody(""); }}
+                        style={{ textAlign: "left", padding: "10px 12px", borderRadius: 8, border: "1px dashed rgba(18,16,12,.2)", background: "transparent", cursor: "pointer" }}>
+                        <div style={{ fontSize: ".84rem", color: MUTED }}>↳ Skip template — write a custom note instead</div>
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
+                      {(["summary","thankyou","decline"] as const).map((t) => (
+                        <button key={t} type="button" onClick={() => selectTemplate(t)}
+                          style={{ fontSize: ".7rem", padding: "3px 10px", borderRadius: 999, border: `1px solid ${templateChoice === t ? GOLD : "rgba(18,16,12,.15)"}`,
+                            background: templateChoice === t ? "rgba(200,166,92,.12)" : "transparent",
+                            color: templateChoice === t ? GREEN : MUTED, cursor: "pointer", fontWeight: templateChoice === t ? 700 : 400 }}>
+                          {t === "summary" ? "Summary" : t === "thankyou" ? "Thank You" : "Decline"}
+                        </button>
+                      ))}
+                      <button type="button" onClick={() => { setTemplateChoice("none"); setTemplateBody(""); }}
+                        style={{ fontSize: ".7rem", padding: "3px 10px", borderRadius: 999, border: "1px solid rgba(18,16,12,.15)", background: "transparent", color: MUTED, cursor: "pointer", marginLeft: "auto" }}>
+                        ← Back
+                      </button>
+                    </div>
+                    <textarea
+                      value={templateBody || followUpNotes}
+                      onChange={(e) => templateBody ? setTemplateBody(e.target.value) : setFollowUpNotes(e.target.value)}
+                      rows={12}
+                      style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid rgba(18,16,12,.15)", fontSize: ".8rem", resize: "vertical", fontFamily: "inherit", boxSizing: "border-box", lineHeight: 1.6 }}
+                    />
+                    <div style={{ fontSize: ".72rem", color: MUTED, margin: "6px 0 8px" }}>Edit freely before sending — brackets indicate placeholder text to replace.</div>
+                    <button
+                      type="button"
+                      onClick={() => void sendFollowUp()}
+                      disabled={busy === "followup"}
+                      style={{ padding: "8px 18px", borderRadius: 999, border: "none", background: GOLD, color: "#0e2518", fontWeight: 700, cursor: "pointer", fontSize: ".84rem" }}>
+                      {busy === "followup" ? "Sending…" : "Send email"}
+                    </button>
+                  </>
+                )}
               </div>
 
               {/* Create client */}

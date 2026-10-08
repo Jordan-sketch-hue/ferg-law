@@ -391,9 +391,6 @@ export async function sendConsultationFollowUp(
                 Thank you for your consultation with Ferguson Law regarding <strong>${escapeHtml(service)}</strong>. We value your trust and want to make sure you have everything you need to move forward.
               </p>
               ${notesHtml}
-              <p style="font-size:16px;line-height:1.75;margin:0 0 8px;color:#3a3a3a;">
-                <strong>Next steps</strong> — our team will be in touch with any follow-up documentation or actions required. If you have questions in the meantime, reply to this email or reach us on WhatsApp.
-              </p>
             </td>
           </tr>
           <tr>
@@ -422,8 +419,6 @@ export async function sendConsultationFollowUp(
     ``,
     `Thank you for your consultation regarding ${service} (${ref}).`,
     notes ? `\nNotes from your consultation:\n${notes}\n` : "",
-    `Next steps: our team will be in touch. Reply to this email or WhatsApp us with any questions.`,
-    ``,
     `Know someone who needs legal help? Refer them — ${bookingUrl}`,
     ``,
     `Ferguson Law, 22B Old Hope Road, Kingston 5, Jamaica.`,

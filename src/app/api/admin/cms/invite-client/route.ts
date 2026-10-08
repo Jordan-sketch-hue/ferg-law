@@ -10,10 +10,11 @@ export async function POST(req: NextRequest) {
   if (!token) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
   try {
-    const { email, clientName, matterTitle } = (await req.json()) as {
+    const { email, clientName, matterTitle, clientId } = (await req.json()) as {
       email: string;
       clientName?: string;
       matterTitle?: string;
+      clientId?: string;
     };
 
     if (!email?.trim()) return NextResponse.json({ error: "email required" }, { status: 400 });
@@ -23,6 +24,19 @@ export async function POST(req: NextRequest) {
     if (authErr) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
     const result = await sendClientPortalInvite(email.trim().toLowerCase(), clientName || "there", matterTitle);
+
+    // Stamp portal_invited_at so the button permanently shows "Sent" after first use
+    if (clientId) {
+      try {
+        await admin
+          .from("fl_clients")
+          .update({ portal_invited_at: new Date().toISOString() })
+          .eq("id", clientId);
+      } catch {
+        // non-critical — invite already sent
+      }
+    }
+
     return NextResponse.json(result);
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "Unknown error" }, { status: 500 });

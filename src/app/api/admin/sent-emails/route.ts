@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     // Manual compose / CMS emails
     const { data: composed, error: e1 } = await admin
       .from("fl_email_log")
-      .select("id, created_at, to_email, to_name, subject, body_preview, body_full, status, resend_id, context")
+      .select("id, created_at, to_email, to_name, subject, body_preview, body_full, status, resend_id, context, from_mailbox")
       .order("created_at", { ascending: false })
       .limit(150);
 
@@ -44,6 +44,7 @@ export async function POST(req: NextRequest) {
       status: string;
       resend_id: string | null;
       context: string;
+      from_mailbox: string;
     };
 
     const LABEL: Record<string, string> = {
@@ -85,6 +86,7 @@ export async function POST(req: NextRequest) {
         status: r.status,
         resend_id: r.provider_message_id ?? null,
         context: `auto:${r.reminder_type}`,
+      from_mailbox: "contact",
       };
     });
 

@@ -137,6 +137,7 @@ export async function POST(req: NextRequest) {
     console.log(`BODY_CHECK payload_html=${!!payloadHtml} payload_text=${!!payloadText} fetched_html=${!!fetchedHtml} fetched_text=${!!fetchedText} email_id=${emailId}`);
 
     const supabase = createAdminClient();
+    const spam = isLikelySpam(fromEmail, String(payload.subject ?? ""));
 
     const { error } = await supabase.from("fl_inbound_emails").insert({
       from_email: fromEmail,
@@ -148,6 +149,7 @@ export async function POST(req: NextRequest) {
       reply_to: replyTo,
       thread_id: threadId,
       email_id: emailId || null,
+      is_spam: spam,
     });
 
     if (error) {
@@ -167,7 +169,6 @@ export async function POST(req: NextRequest) {
     const isOwenMailbox = toEmail?.toLowerCase() === owenEmail;
     const forwardTo = isOwenMailbox ? owenEmail : defaultStaffEmail;
     const resendKey = process.env.RESEND_API_KEY;
-    const spam = isLikelySpam(fromEmail, String(payload.subject ?? ""));
     if (resendKey && !isInternalSender && !spam) {
       const rawSubject = String(payload.subject ?? "(no subject)");
       // Strip any accumulated "New enquiry: " prefixes before adding one.
