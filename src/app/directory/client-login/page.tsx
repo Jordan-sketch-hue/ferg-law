@@ -109,7 +109,7 @@ function ClientLoginForm() {
         <h1 style={{ marginBottom: 4 }}>{tab === "login" ? "Sign in" : "Create your account"}</h1>
         <p className="lede">
           {tab === "login"
-            ? "Track your property matter and connect with your professionals."
+            ? "Stay up-to-date with your matter. Your information, at your fingertips."
             : "Register to access your Ferguson Law client portal."}
         </p>
         {err && <div className="dform-err">{err}</div>}
