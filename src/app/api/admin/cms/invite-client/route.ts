@@ -27,11 +27,14 @@ export async function POST(req: NextRequest) {
 
     // Stamp portal_invited_at so the button permanently shows "Sent" after first use
     if (clientId) {
-      await admin
-        .from("fl_clients")
-        .update({ portal_invited_at: new Date().toISOString() })
-        .eq("id", clientId)
-        .catch(() => null);
+      try {
+        await admin
+          .from("fl_clients")
+          .update({ portal_invited_at: new Date().toISOString() })
+          .eq("id", clientId);
+      } catch {
+        // non-critical — invite already sent
+      }
     }
 
     return NextResponse.json(result);
