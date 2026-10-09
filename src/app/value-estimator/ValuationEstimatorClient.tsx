@@ -365,12 +365,18 @@ export default function ValuationEstimatorClient() {
     ...dbCommunityNames.filter(n => !parishCommunities.some(p => p.name === n)),
   ];
   const filteredNames = communitySearch.trim()
-    ? parishCommunities
-        .filter(c =>
-          c.name.toLowerCase().includes(communitySearch.toLowerCase()) ||
-          (c.aliases ?? []).some(a => a.toLowerCase().includes(communitySearch.toLowerCase()))
-        )
-        .map(c => c.name)
+    ? [
+        ...parishCommunities
+          .filter(c =>
+            c.name.toLowerCase().includes(communitySearch.toLowerCase()) ||
+            (c.aliases ?? []).some(a => a.toLowerCase().includes(communitySearch.toLowerCase()))
+          )
+          .map(c => c.name),
+        ...dbCommunityNames.filter(n =>
+          !parishCommunities.some(p => p.name === n) &&
+          n.toLowerCase().includes(communitySearch.toLowerCase())
+        ),
+      ]
     : allNames;
 
   function selectCommunity(name: string) {
@@ -600,7 +606,7 @@ export default function ValuationEstimatorClient() {
                   <button onClick={clearCommunity} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#9aaa9e", fontSize: "1rem", lineHeight: 1 }}>×</button>
                 )}
               </div>
-              {dropOpen && filteredNames.length > 0 && (
+              {dropOpen && (communitySearch.trim() || filteredNames.length > 0) && (
                 <ul className="comm-drop" style={{ margin: 0, padding: 0 }}>
                   {filteredNames.map(name => {
                     const info = parishCommunities.find(c => c.name === name);
@@ -863,7 +869,7 @@ export default function ValuationEstimatorClient() {
 
                 {/* Disclaimer */}
                 <p style={{ margin: ".85rem 0 0", fontSize: ".72rem", color: "#9aaa9e", lineHeight: 1.55 }}>
-                  Indicative estimate based on {dataSource === "live" ? "current market listing data" : "market benchmarks"}. This is not a formal or certified property valuation. Ferguson Law is not a valuation firm. For an official appraisal, engage a chartered valuator. Data sourced from property listing platforms — not NLA or JAMPROP databases.
+                  Indicative estimate based on {dataSource === "live" ? "current market listing data" : "market benchmarks"}. USD equivalent uses a rate of ~J$157/US$ and may vary. This is not a formal or certified property valuation. Ferguson Law is not a valuation firm. For an official appraisal, engage a chartered valuator. Data sourced from property listing platforms — not NLA or JAMPROP databases.
                 </p>
 
                 {/* Export + CTA */}
