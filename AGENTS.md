@@ -63,6 +63,7 @@ vercel alias set <deployment-url> ferguson-law.vercel.app
 |------|--------|------|-------|
 | 2026-10-09 | Created AGENTS.md — baseline documentation | `AGENTS.md` | Claude (Jordan session) |
 | 2026-10-09 | Disabled Valuation Estimator — removed nav link, page shows unavailable message | `Nav.tsx`, `value-estimator/page.tsx` | Claude (Jordan session) |
+| 2026-10-09 | Digest spam filter — added `.eq("is_spam", false)` to morning digest unread query; null-safe name fallbacks for appointments, leads, inbox; expanded inbound spam patterns to catch cold email platforms | `digest-morning/route.ts`, `email/inbound/route.ts` | Claude (Jordan session) |
 
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know

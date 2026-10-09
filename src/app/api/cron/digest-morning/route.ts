@@ -71,8 +71,9 @@ export async function GET(req: NextRequest) {
       .limit(10),
     admin
       .from("fl_inbound_emails")
-      .select("from_name, subject")
+      .select("from_name, from_email, subject")
       .eq("read", false)
+      .eq("is_spam", false)
       .order("created_at", { ascending: false })
       .limit(5),
   ]);
@@ -93,7 +94,7 @@ export async function GET(req: NextRequest) {
     for (const a of appts) {
       const meta = a.meta as Record<string, unknown> | null;
       const meetingUrl = (meta?.meeting_url as string | null) ?? null;
-      lines.push(`  ${jaTime(a.starts_at)} — ${a.name} | ${a.service}`);
+      lines.push(`  ${jaTime(a.starts_at)} — ${a.name || "Unknown"} | ${a.service}`);
       if (a.email) lines.push(`    ${a.email}${a.phone ? " | " + a.phone : ""}`);
       if (meetingUrl) lines.push(`    Meeting: ${meetingUrl}`);
       else lines.push(`    Ref: ${a.ref}`);
@@ -106,12 +107,12 @@ export async function GET(req: NextRequest) {
     lines.push("New leads: None.");
   } else {
     lines.push(`New leads (${leads.length}):`);
-    for (const l of leads) lines.push(`  ${l.name} — ${l.service || "General Inquiry"}`);
+    for (const l of leads) lines.push(`  ${l.name || "Unknown"} — ${l.service || "General Inquiry"}`);
   }
 
   if (unread.length > 0) {
     lines.push("", `Unread messages (${unread.length}):`);
-    for (const m of unread) lines.push(`  ${m.from_name} — ${m.subject}`);
+    for (const m of unread) lines.push(`  ${m.from_name || m.from_email || "Unknown sender"} — ${m.subject}`);
   }
 
   lines.push("", "Admin: https://ferguson-law.vercel.app/admin", "— J Supreme Tech");

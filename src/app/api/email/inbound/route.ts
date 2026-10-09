@@ -11,7 +11,15 @@ const SPAM_SUBJECT_PATTERNS = [
   /wire\s*transfer/i, /bitcoin/i, /crypto\s*payment/i,
 ];
 
-const SPAM_DOMAIN_PATTERNS = [/sell\d*proxy/i, /\.xyz$/i, /\.pw$/i, /\.top$/i, /\.ksmg\.life$/i, /\.hrufhs\.org$/i];
+const SPAM_DOMAIN_PATTERNS = [
+  /sell\d*proxy/i, /\.xyz$/i, /\.pw$/i, /\.top$/i, /\.ksmg\.life$/i, /\.hrufhs\.org$/i,
+  // known cold-email platform sending domains
+  /adsgpt\.com$/i, /mailshake\.com$/i, /lemlist\.com$/i, /outreach\.io$/i,
+  /apollo\.io$/i, /salesloft\.com$/i, /yesware\.com$/i, /mixmax\.com$/i,
+  /woodpecker\.co$/i, /reply\.io$/i, /klenty\.com$/i, /hunter\.io$/i,
+  // generic bulk-sending subdomains that real law clients never use
+  /^(email|em|mail|send|bulk|blast|campaign)\d*\./i,
+];
 
 function isLikelySpam(fromEmail: string, subject: string): boolean {
   if (SPAM_SUBJECT_PATTERNS.some((p) => p.test(subject))) return true;
