@@ -41,10 +41,11 @@ src/
     analytics.ts                ← track() helper
 ```
 
-## Value Estimator — DISABLED
-The Valuation Estimator tool is **disabled** as of 2026-10-09 pending a fix.
-- Nav link removed from `RESOURCE_LINKS` in `Nav.tsx`
-- `/value-estimator` page shows a "temporarily unavailable" message
+## Value Estimator — ACTIVE
+The Valuation Estimator tool is live at `/value-estimator`.
+- Bug fixed 2026-10-09: `fetchCommunities()` was never called in `useEffect`, so community-level rates never loaded
+- Nav link restored in `RESOURCE_LINKS` in `Nav.tsx`
+- Queries `valuation_benchmarks` (parish rates) and `community_benchmarks` (scheme-level rates) from Supabase; falls back to hardcoded rates if tables are empty
 
 ## Critical deployment rules
 1. ALWAYS `git pull origin main` before editing or deploying — local can be commits behind
@@ -64,6 +65,7 @@ vercel alias set <deployment-url> ferguson-law.vercel.app
 | 2026-10-09 | Created AGENTS.md — baseline documentation | `AGENTS.md` | Claude (Jordan session) |
 | 2026-10-09 | Disabled Valuation Estimator — removed nav link, page shows unavailable message | `Nav.tsx`, `value-estimator/page.tsx` | Claude (Jordan session) |
 | 2026-10-09 | Digest spam filter — added `.eq("is_spam", false)` to morning digest unread query; null-safe name fallbacks for appointments, leads, inbox; expanded inbound spam patterns to catch cold email platforms | `digest-morning/route.ts`, `email/inbound/route.ts` | Claude (Jordan session) |
+| 2026-10-09 | Re-enabled Valuation Estimator — fixed missing `fetchCommunities()` call in useEffect (community rates never loaded); restored nav link and page | `ValuationEstimatorClient.tsx`, `Nav.tsx`, `value-estimator/page.tsx` | Claude (Jordan session) |
 
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know

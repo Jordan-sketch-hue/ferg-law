@@ -149,6 +149,7 @@ export default function ValuationEstimatorClient() {
       setLastUpdated(lu);
       setDataSource(lu ? "live" : "fallback");
     });
+    fetchCommunities().then(setCommunityMap);
   }, []);
 
   function handleNumInput(val: string, setter: (v: string) => void) {

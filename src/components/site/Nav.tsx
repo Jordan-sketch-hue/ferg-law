@@ -26,8 +26,9 @@ const HOME_LINK = { href: SITE.homeApp, label: "H.O.M.E. by Ferguson Law", exter
 const RESOURCE_LINKS = [
   { href: "/buyers-guide", label: "Buyer's Guide" },
   { href: "/explainers", label: "Explainers" },
-  { href: "/cost-estimator",   label: "Cost Estimator®" },
-{ href: "/glossary", label: "Glossary" },
+  { href: "/cost-estimator", label: "Cost Estimator®" },
+  { href: "/value-estimator", label: "Valuation Estimator" },
+  { href: "/glossary", label: "Glossary" },
   { href: "/faq", label: "FAQ" },
 ] as const;
 
