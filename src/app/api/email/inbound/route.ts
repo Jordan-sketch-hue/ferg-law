@@ -204,6 +204,55 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Create ops_ticket and send ACK for non-spam external emails.
+    if (!isInternalSender && !spam && fromEmail) {
+      const { createHash } = await import("crypto");
+      const ticketSourceKey = `email:${emailId || (fromEmail + ":" + Date.now())}`;
+      const ticketId = "t_" + createHash("sha256").update(ticketSourceKey).digest("hex").slice(0, 16);
+      const slaHours = 24;
+      const ticketRow = {
+        id: ticketId,
+        source: "email",
+        source_key: ticketSourceKey,
+        client_name: fromName || fromEmail,
+        contact: fromEmail,
+        channel: "email",
+        category: "inquiry",
+        priority: "normal",
+        summary: String(payload.subject ?? "(no subject)").slice(0, 200),
+        body_text: (bodyText || bodyHtml.replace(/<[^>]+>/g, "")).slice(0, 4000),
+        action_needed: null,
+        sla_hours: slaHours,
+        due_at: new Date(Date.now() + slaHours * 3600_000).toISOString(),
+        gate: "approval",
+        is_scam: false,
+        state: "triaged",
+        updated_at: new Date().toISOString(),
+      };
+      const { error: ticketErr } = await supabase
+        .from("ops_tickets")
+        .upsert(ticketRow, { onConflict: "source_key", ignoreDuplicates: true });
+      if (ticketErr) {
+        console.error("[inbound] ops_ticket insert error:", ticketErr.message);
+      } else {
+        console.log(`[inbound] ops_ticket created ${ticketId} from ${fromEmail}`);
+        // ACK email back to sender
+        if (resendKey) {
+          const senderFirst = (fromName || "").split(/[\s—-]+/).filter(Boolean)[0] || "there";
+          fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              from: "Ferguson Law <contact@fergusonlawja.com>",
+              to: [fromEmail],
+              subject: `Re: ${String(payload.subject ?? "Your enquiry")}`,
+              text: `Hi ${senderFirst},\n\nThank you for reaching out to Ferguson Law. We have received your message and will respond within 24 hours.\n\nReference: ${ticketId}\n\nKind regards,\nFerguson Law\n(658) 218-2282`,
+            }),
+          }).catch((e) => console.error("[inbound] ack email error:", e));
+        }
+      }
+    }
+
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error("inbound email webhook error:", e);
