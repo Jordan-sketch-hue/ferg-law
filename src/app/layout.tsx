@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Inter } from "next/font/google";
+import { Fraunces } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import ChatWidget from "@/components/chat/ChatWidget";
 import ContentApply from "@/components/editor/ContentApply";
