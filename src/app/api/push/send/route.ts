@@ -69,8 +69,8 @@ export async function POST(req: NextRequest) {
         const msg = (e as { message?: string }).message ?? 'unknown';
         console.error('[push/send] failed', { endpoint: sub.endpoint.slice(-20), status, msg });
         errors.push({ endpoint: sub.endpoint.slice(-20), status, msg });
-        // 404/410 = revoked; 400/401 = bad keys — all dead
-        if (status === 404 || status === 410 || status === 400 || status === 401) {
+        // 404/410 = revoked; 400/401/403 = VAPID key mismatch — all permanently dead
+        if (status === 404 || status === 410 || status === 400 || status === 401 || status === 403) {
           dead.push(sub.endpoint);
         }
       }
