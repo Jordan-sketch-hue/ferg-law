@@ -84,7 +84,7 @@ export async function sendBookingConfirmation(
 }
 
 export type SendBookingReminderArgs = SendBookingConfirmationArgs & {
-  kind: "24h" | "2h" | "1h" | "15m";
+  kind: "24h" | "2h" | "1h" | "30m" | "15m";
   adminBcc?: string;
 };
 
