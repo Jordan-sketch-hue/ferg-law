@@ -45,7 +45,7 @@ type ApptRow = {
   status: string | null;
 };
 
-const REMINDER_KINDS = ["24h", "2h", "1h", "15m"] as const;
+const REMINDER_KINDS = ["24h", "2h", "1h", "30m", "15m"] as const;
 
 export async function GET(req: NextRequest) {
   const secret = process.env.CRON_SECRET;
@@ -121,7 +121,7 @@ export async function GET(req: NextRequest) {
         result[kind] += 1;
 
         // Push admin notification + WhatsApp alert for every reminder that fires
-        const kindLabel: Record<string, string> = { "24h": "tomorrow", "2h": "in 2 hours", "1h": "in 1 hour", "15m": "in 15 min" };
+        const kindLabel: Record<string, string> = { "24h": "tomorrow", "2h": "in 2 hours", "1h": "in 1 hour", "30m": "in 30 min", "15m": "in 15 min" };
         await pushToAdmins(
           `Reminder sent — ${row.name || "Client"}`,
           `${row.service || "Consultation"} ${kindLabel[kind] ?? kind} · ${fullWhenLabel(row.starts_at)}`,
