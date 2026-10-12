@@ -47,6 +47,7 @@ export async function createClient() {
  */
 export function createAdminClient() {
   const rawKey = process.env.SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_KEY;
+  if (!rawKey) throw new Error("[supabase] missing SUPABASE_SERVICE_ROLE_KEY and NEXT_PUBLIC_SUPABASE_ANON_KEY — check env vars");
   const key = rawKey.replace(/^﻿/, "");
   return createRawClient(SUPABASE_URL, key, {
     auth: { persistSession: false },
