@@ -13,12 +13,14 @@ import { sendDataDeletionConfirmed } from "@/lib/email/cms";
  */
 export async function POST(req: NextRequest) {
   try {
-    const { token, clientId, clientEmail, clientName, confirm } = (await req.json()) as {
+    const { token, clientId, clientEmail, clientName, confirm, requestedBy, customBody } = (await req.json()) as {
       token: string;
       clientId?: string | null;
       clientEmail: string;
       clientName?: string;
       confirm: boolean;
+      requestedBy?: "client" | "admin" | "firm_decision";
+      customBody?: string;
     };
 
     if (!token || !clientEmail || !confirm) {
@@ -33,7 +35,7 @@ export async function POST(req: NextRequest) {
     await logDataDeletion(summary, "admin");
     // Awaited deliberately — a fire-and-forget send here can get cut off when
     // the serverless function freezes right after the response is returned.
-    const emailResult = await sendDataDeletionConfirmed(clientEmail, clientName || clientEmail, "admin").catch(
+    const emailResult = await sendDataDeletionConfirmed(clientEmail, clientName || clientEmail, requestedBy ?? "admin", customBody).catch(
       (e) => ({ ok: false as const, error: e instanceof Error ? e.message : String(e) }),
     );
 

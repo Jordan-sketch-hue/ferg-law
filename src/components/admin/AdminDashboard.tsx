@@ -1139,10 +1139,100 @@ function EmailComposeModal({ to, toName, defaultSubject, context, service, token
 }
 
 // ---------------------------------------------------------------------------
+// PurgeModal â€” shared deletion modal with editable message + reason selector
+// ---------------------------------------------------------------------------
+interface PurgeTarget { email: string; name: string | null; clientId?: string | null; }
+function PurgeModal({ target, token, onDone, onClose }: { target: PurgeTarget; token: string; onDone: () => void; onClose: () => void }) {
+  const defaultClientBody = `Following your request to our team, we have permanently removed your account and all associated information from Ferguson Law's systems â€” your login, client profile, matter records, uploaded documents, KYC information, messages, appointment history, and correspondence log. This action is irreversible and cannot be undone.\n\nThis deletion was carried out in accordance with the Jamaica Data Protection Act. If you did not request this, or believe this was done in error, please contact us immediately at the details below.`;
+  const defaultFirmBody = `Your records have been permanently removed from Ferguson Law's systems â€” your login, client profile, matter records, uploaded documents, KYC information, messages, appointment history, and correspondence log. This action is irreversible and cannot be undone.\n\nThis was carried out in accordance with the Jamaica Data Protection Act. If you believe this was done in error, please contact us immediately at the details below.`;
+  const [reason, setReason] = React.useState<"admin" | "firm_decision">("admin");
+  const [body, setBody] = React.useState(defaultClientBody);
+  const [busy, setBusy] = React.useState(false);
+  const [err, setErr] = React.useState<string | null>(null);
+  const [confirmed, setConfirmed] = React.useState("");
+
+  React.useEffect(() => {
+    setBody(reason === "firm_decision" ? defaultFirmBody : defaultClientBody);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reason]);
+
+  async function doPurge() {
+    if (confirmed.trim().toLowerCase() !== (target.email || "").toLowerCase()) {
+      setErr("Email confirmation doesn't match."); return;
+    }
+    setBusy(true); setErr(null);
+    try {
+      const res = await fetch("/api/admin/cms/purge-client", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token,
+          clientId: target.clientId ?? null,
+          clientEmail: target.email,
+          clientName: target.name || target.email,
+          confirm: true,
+          requestedBy: reason,
+          customBody: body.trim() || undefined,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) { setErr(json.error || "Deletion failed."); setBusy(false); return; }
+      onDone();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Network error"); setBusy(false);
+    }
+  }
+
+  const overlay: React.CSSProperties = { position: "fixed", inset: 0, background: "rgba(0,0,0,.45)", zIndex: 9000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 };
+  const modal: React.CSSProperties = { background: "#fff", borderRadius: 14, padding: "28px 28px 24px", maxWidth: 520, width: "100%", boxShadow: "0 8px 40px rgba(0,0,0,.22)" };
+
+  return (
+    <div style={overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div style={modal}>
+        <div style={{ fontWeight: 700, fontSize: "1rem", color: "#c0392b", marginBottom: 4 }}>Delete Record</div>
+        <div style={{ fontSize: ".82rem", color: "#555", marginBottom: 16 }}>
+          {target.name && <strong>{target.name}</strong>} {target.email && <span style={{ color: "#888" }}>({target.email})</span>}
+        </div>
+
+        <label style={{ fontSize: ".78rem", fontWeight: 600, color: "#333", display: "block", marginBottom: 4 }}>Reason for deletion</label>
+        <select value={reason} onChange={(e) => setReason(e.target.value as "admin" | "firm_decision")}
+          style={{ width: "100%", padding: "7px 10px", borderRadius: 8, border: "1px solid #ccc", fontSize: ".82rem", marginBottom: 14 }}>
+          <option value="admin">Client requested deletion</option>
+          <option value="firm_decision">Firm decision â€” we are not proceeding</option>
+        </select>
+
+        <label style={{ fontSize: ".78rem", fontWeight: 600, color: "#333", display: "block", marginBottom: 4 }}>Email message to client</label>
+        <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={7}
+          style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #ccc", fontSize: ".78rem", lineHeight: 1.5, resize: "vertical", boxSizing: "border-box", marginBottom: 14 }} />
+
+        <label style={{ fontSize: ".78rem", fontWeight: 600, color: "#333", display: "block", marginBottom: 4 }}>
+          Type <em>{target.email}</em> to confirm
+        </label>
+        <input value={confirmed} onChange={(e) => setConfirmed(e.target.value)} placeholder={target.email || ""}
+          style={{ width: "100%", padding: "7px 10px", borderRadius: 8, border: "1px solid #ccc", fontSize: ".82rem", marginBottom: 14, boxSizing: "border-box" }} />
+
+        {err && <div style={{ fontSize: ".78rem", color: "#c0392b", marginBottom: 10 }}>{err}</div>}
+
+        <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+          <button type="button" onClick={onClose} disabled={busy}
+            style={{ padding: "8px 18px", borderRadius: 8, border: "1px solid #ccc", background: "#f5f5f5", fontSize: ".82rem", cursor: "pointer" }}>
+            Cancel
+          </button>
+          <button type="button" onClick={doPurge} disabled={busy}
+            style={{ padding: "8px 18px", borderRadius: 8, border: "none", background: "#c0392b", color: "#fff", fontSize: ".82rem", fontWeight: 700, cursor: busy ? "default" : "pointer", opacity: busy ? 0.7 : 1 }}>
+            {busy ? "Deletingâ€¦" : "Delete permanently"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+// ---------------------------------------------------------------------------
 // Leads
 // ---------------------------------------------------------------------------
 function LeadsTable({ leads, loading, token, onStatus, onDelete }: { leads: Lead[]; loading: boolean; token: string; onStatus: (id: string, s: string) => void; onDelete: (id: string) => void }) {
   const [composing, setComposing] = useState<Lead | null>(null);
+  const [purgeTarget, setPurgeTarget] = useState<PurgeTarget | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 640);
@@ -1178,6 +1268,7 @@ function LeadsTable({ leads, loading, token, onStatus, onDelete }: { leads: Lead
                   {wa && <a href={wa} target="_blank" rel="noopener noreferrer" style={S.waBtn}>WhatsApp</a>}
                   {l.status === "new" && <button type="button" onClick={() => onStatus(l.id, "contacted")} style={{ ...S.waBtn, background: "rgba(47,122,82,.12)", color: "#2f7a52", border: "1px solid rgba(47,122,82,.25)" }}>Contacted</button>}
                   <button type="button" onClick={() => onDelete(l.id)} style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)" }}>Archive</button>
+                  {l.email && <button type="button" onClick={() => setPurgeTarget({ email: l.email!, name: l.name, clientId: null })} style={{ ...S.waBtn, background: "#c0392b", color: "#fff", border: "none" }}>Delete Record</button>}
                 </div>
               </div>
             );
@@ -1219,6 +1310,7 @@ function LeadsTable({ leads, loading, token, onStatus, onDelete }: { leads: Lead
                         style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)" }}>
                         Archive
                       </button>
+                      {l.email && <button type="button" onClick={() => setPurgeTarget({ email: l.email!, name: l.name, clientId: null })} style={{ ...S.waBtn, background: "#c0392b", color: "#fff", border: "none", fontWeight: 700 }}>Delete Record</button>}
                     </div>
                   </Td>
                 </tr>
@@ -1397,6 +1489,7 @@ type BookingSort = "soonest" | "latest" | "client" | "status";
 
 function BookingsTable({ appts, loading, token, onStatus, onCancel, onRefresh }: { appts: Appointment[]; loading: boolean; token: string; onStatus: (id: string, s: string) => void; onCancel: (id: string) => void; onRefresh: () => void }) {
   const [composing, setComposing] = useState<Appointment | null>(null);
+  const [purgeTarget, setPurgeTarget] = useState<PurgeTarget | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 640);
@@ -1504,6 +1597,7 @@ function BookingsTable({ appts, loading, token, onStatus, onCancel, onRefresh }:
                     {a.email && <button type="button" onClick={() => setComposing(a)} style={{ ...S.waBtn, background: "#c9a86a", color: "#10211c" }}>Email</button>}
                     {a.email && a.status === "confirmed" && <button type="button" onClick={() => void sendMeetingLink(a)} disabled={linkSending === a.id} style={{ ...S.waBtn, background: "rgba(16,42,30,.1)", color: GREEN, opacity: linkSending === a.id ? 0.6 : 1 }}>{linkSending === a.id ? "Sending…" : "Meeting link"}</button>}
                     {(a.status === "pending" || a.status === "confirmed") && new Date(a.starts_at) > new Date() && <button type="button" onClick={() => onCancel(a.id)} style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)" }}>Cancel</button>}
+                    {a.email && <button type="button" onClick={() => setPurgeTarget({ email: a.email!, name: a.name, clientId: null })} style={{ ...S.waBtn, background: "#c0392b", color: "#fff", border: "none" }}>Delete Record</button>}
                     {linkResult[a.id] && <span style={{ fontSize: ".72rem", color: linkResult[a.id].ok ? "#2f7a52" : "#a23b3b" }}>{linkResult[a.id].msg}</span>}
                   </div>
                 </div>
@@ -1579,6 +1673,7 @@ function BookingsTable({ appts, loading, token, onStatus, onCancel, onRefresh }:
           onClose={() => setComposing(null)}
         />
       )}
+      {purgeTarget && <PurgeModal target={purgeTarget} token={token} onDone={() => { setPurgeTarget(null); }} onClose={() => setPurgeTarget(null)} />}
       {newBooking && (
         <NewBookingModal
           token={token}
@@ -4407,6 +4502,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
   const [loading, setLoading] = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
   const [purging, setPurging] = useState(false);
+  const [purgeModalTarget, setPurgeModalTarget] = useState<PurgeTarget | null>(null);
   const [msgText, setMsgText] = useState("");
   const [sending, setSending] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -4933,7 +5029,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                     >View →</a>
                   )}
                   <button
-                    onClick={() => deleteClientData(activeMatter)}
+                    onClick={() => deleteClientData(activeMatter!)}
                     disabled={purging}
                     title="Permanently delete this client's login, profile, matters, files, and messages — everywhere"
                     style={{ fontSize: 12, padding: "5px 10px", borderRadius: 8, border: "1px solid #d33", background: "#fff", color: "#d33", cursor: purging ? "default" : "pointer", fontWeight: 600 }}
@@ -5459,6 +5555,18 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
             </div>
           </div>
         </div>
+      )}
+      {purgeModalTarget && (
+        <PurgeModal
+          target={purgeModalTarget}
+          token={token}
+          onDone={() => {
+            setMatters(prev => prev.filter(x => x.client_email !== purgeModalTarget!.email));
+            setSelected(null);
+            setPurgeModalTarget(null);
+          }}
+          onClose={() => setPurgeModalTarget(null)}
+        />
       )}
       {summaryModal && (
         <div onClick={() => setSummaryModal(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.55)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>

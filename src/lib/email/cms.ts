@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Case Management System notification emails (Resend). Server-only.
  * Same graceful no-op behavior as email/send.ts when RESEND_API_KEY is unset.
  */
