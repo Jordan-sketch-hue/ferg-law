@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -33,7 +33,7 @@ const MATTER_TYPES = [
   },
   {
     id: "non_contentious_divorce",
-    label: "Non-Contentious Divorce",
+    label: "Divorce",
     desc: "Representing Petitioner or Respondent \u2014 mutual, uncontested",
     icon: (
       <svg viewBox="0 0 40 40" fill="none" style={{ width: 36, height: 36 }}>
@@ -66,7 +66,7 @@ const MATTER_TYPES = [
 const MATTER_LABELS: Record<string, string> = {
   property_purchase: "Property Purchase",
   estate_will: "Estate / Will",
-  non_contentious_divorce: "Non-Contentious Divorce",
+  non_contentious_divorce: "Divorce",
   general: "General",
 };
 

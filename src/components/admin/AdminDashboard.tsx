@@ -4890,7 +4890,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                         letters_of_administration:"Letters of Administration",
                         resealing:"Resealing of Probate",
                         transmission_of_title:"Transmission of Title",
-                        non_contentious_divorce:"Non-Contentious Divorce",
+                        non_contentious_divorce:"Divorce",
                       };
                       const t = activeMatter.title;
                       const isGeneric = !t || t.toLowerCase() === "general matter";
@@ -5432,7 +5432,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                   <option value="letters_of_administration">Letters of Administration</option>
                   <option value="resealing">Resealing of Foreign Grant</option>
                   <option value="transmission_of_title">Transmission of Title</option>
-                  <option value="non_contentious_divorce">Non-Contentious Divorce</option>
+                  <option value="non_contentious_divorce">Divorce</option>
                 </select>
               </label>
               <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>

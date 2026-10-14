@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BookingProvider, useBooking } from "@/components/site/BookingProvider";
@@ -23,7 +23,7 @@ const TESTIMONIALS = [
 const MATTER_TYPE_LABELS: Record<string, string> = {
   property_purchase: "Property Purchase",
   estate_will: "Estate / Will",
-  non_contentious_divorce: "Non-Contentious Divorce",
+  non_contentious_divorce: "Divorce",
   general: "General Matter",
 };
 

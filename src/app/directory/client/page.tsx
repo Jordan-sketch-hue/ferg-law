@@ -125,7 +125,7 @@ const WF_LABEL: Record<string, string> = {
   first_registration: "First Registration",
   adverse_possession: "Adverse Possession",
   subdivision: "Subdivision",
-  non_contentious_divorce: "Non-Contentious Divorce",
+  non_contentious_divorce: "Divorce",
   estate_will: "Estate & Will",
   commercial_lease: "Commercial Lease",
   commercial_purchase: "Commercial Purchase",
@@ -780,7 +780,7 @@ function ClientDashboardInner() {
               <optgroup label="Other">
                 <option value="lease_agreement">Lease Agreement</option>
                 <option value="power_of_attorney">Power of Attorney</option>
-                <option value="non_contentious_divorce">Non-Contentious Divorce</option>
+                <option value="non_contentious_divorce">Divorce</option>
                 <option value="general">Something else</option>
               </optgroup>
             </select>
