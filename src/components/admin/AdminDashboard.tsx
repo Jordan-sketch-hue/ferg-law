@@ -1145,13 +1145,13 @@ interface PurgeTarget { email: string; name: string | null; clientId?: string | 
 function PurgeModal({ target, token, onDone, onClose }: { target: PurgeTarget; token: string; onDone: () => void; onClose: () => void }) {
   const defaultClientBody = `Following your request to our team, we have permanently removed your account and all associated information from Ferguson Law's systems â€” your login, client profile, matter records, uploaded documents, KYC information, messages, appointment history, and correspondence log. This action is irreversible and cannot be undone.\n\nThis deletion was carried out in accordance with the Jamaica Data Protection Act. If you did not request this, or believe this was done in error, please contact us immediately at the details below.`;
   const defaultFirmBody = `Your records have been permanently removed from Ferguson Law's systems â€” your login, client profile, matter records, uploaded documents, KYC information, messages, appointment history, and correspondence log. This action is irreversible and cannot be undone.\n\nThis was carried out in accordance with the Jamaica Data Protection Act. If you believe this was done in error, please contact us immediately at the details below.`;
-  const [reason, setReason] = React.useState<"admin" | "firm_decision">("admin");
-  const [body, setBody] = React.useState(defaultClientBody);
-  const [busy, setBusy] = React.useState(false);
-  const [err, setErr] = React.useState<string | null>(null);
-  const [confirmed, setConfirmed] = React.useState("");
+  const [reason, setReason] = useState<"admin" | "firm_decision">("admin");
+  const [body, setBody] = useState(defaultClientBody);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [confirmed, setConfirmed] = useState("");
 
-  React.useEffect(() => {
+  useEffect(() => {
     setBody(reason === "firm_decision" ? defaultFirmBody : defaultClientBody);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reason]);
