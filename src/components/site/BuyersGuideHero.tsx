@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { track } from "@/lib/analytics";
@@ -185,9 +185,6 @@ export default function BuyersGuideHero() {
                     <option>J$20M – J$40M</option>
                     <option>J$40M – J$80M</option>
                     <option>Over J$80M</option>
-                    <option>USD – under US$100K</option>
-                    <option>USD – US$100K–US$300K</option>
-                    <option>USD – over US$300K</option>
                   </select>
                 </div>
               </div>

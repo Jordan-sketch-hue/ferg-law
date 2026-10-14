@@ -20,7 +20,7 @@ function ClientLoginForm() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [intent, setIntent] = useState<"property_purchase" | "property_sale" | "lease_agreement" | "title_search" | "transfer" | "power_of_attorney" | "power_of_attorney_limited" | "lost_title" | "first_registration" | "adverse_possession" | "subdivision" | "general">("property_purchase");
+  const [intent, setIntent] = useState<"property_purchase" | "property_sale" | "lease_agreement" | "power_of_attorney" | "lost_title" | "first_registration" | "adverse_possession" | "subdivision" | "general">("property_purchase");
   const [showPassword, setShowPassword] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -133,10 +133,7 @@ function ClientLoginForm() {
                   <option value="property_purchase">Buying a property</option>
                   <option value="property_sale">Selling a property</option>
                   <option value="lease_agreement">Lease Agreement</option>
-                  <option value="title_search">Title Search</option>
-                  <option value="transfer">Title Transfer</option>
-                  <option value="power_of_attorney">Power of Attorney (General)</option>
-                  <option value="power_of_attorney_limited">Power of Attorney (Limited)</option>
+                  <option value="power_of_attorney">Power of Attorney</option>
                   <option value="lost_title">Lost Title</option>
                   <option value="first_registration">First Registration</option>
                   <option value="adverse_possession">Adverse Possession</option>

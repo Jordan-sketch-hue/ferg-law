@@ -534,10 +534,6 @@ function AuthPageInner() {
                 ) : (
                   <>Already have an account? <button className="atoggle" onClick={() => switchMode("signin")}>Sign in</button></>
                 )}
-                <br />
-                <Link href="/admin" style={{ color: "var(--muted,#69736d)", textDecoration: "underline", textUnderlineOffset: 3 }}>
-                  Back office
-                </Link>
               </div>
             </div>
           )}

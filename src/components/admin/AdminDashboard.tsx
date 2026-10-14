@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 /**
  * Consultation CRM — the Ferguson Law back office.
@@ -4813,16 +4813,16 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                 <span
                   title={
                     m.kyc_status === "pending"
-                      ? "Client has not yet submitted their KYC/AML form. This is separate from matter milestones."
+                      ? "Client has not yet submitted their Client Intake Form (CIF). This is separate from matter milestones."
                       : m.kyc_status === "submitted"
-                      ? "Client submitted KYC — go to the KYC tab to review and approve."
+                      ? "Client submitted their CIF — go to the Client Intake Form tab to review and approve."
                       : m.kyc_status === "flagged"
-                      ? "KYC flagged for review. Check the KYC tab."
+                      ? "CIF flagged for review. Check the Client Intake Form tab."
                       : ""
                   }
                   style={{ fontSize: 11, fontWeight: 600, color: "#8a6a22", background: "rgba(200,166,92,.2)", borderRadius: 999, padding: "2px 7px", cursor: "help" }}
                 >
-                  KYC {m.kyc_status}
+                  CIF {m.kyc_status}
                 </span>
               )}
             </div>
@@ -4928,7 +4928,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                 }}>
                   {t === "messages" ? `Messages${unreadClientMsgs > 0 ? ` (${unreadClientMsgs})` : ""}`
                     : t === "files" ? `Files (${files.length})`
-                    : t === "kyc" ? `KYC/AML${kyc && kyc.status !== "approved" ? " •" : ""}`
+                    : t === "kyc" ? `Client Intake Form (CIF)${kyc && kyc.status !== "approved" ? " •" : ""}`
                     : t === "payments" ? `Payments (${payments.length})`
                     : "Timeline"}
                 </button>
@@ -5174,19 +5174,19 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                 </div>
               )}
 
-              {/* KYC / AML */}
+              {/* Client Intake Form (CIF) */}
               {tab === "kyc" && (
                 <div style={{ maxWidth: 560 }}>
                   {!kyc ? (
                     <div>
                       <p style={{ color: MUTED, fontSize: 13.5, marginBottom: 14 }}>
-                        No KYC/AML submission on file yet. The client has not completed the identity form.
+                        No Client Intake Form (CIF) on file yet. The client has not completed the identity form.
                         If you have verified this client through other means, you can approve KYC manually.
                       </p>
                       {activeMatter && activeMatter.kyc_status !== "approved" && (
                         <button
                           onClick={async () => {
-                            if (!confirm("Mark KYC as approved for this client? Only do this if you have verified their identity through other means.")) return;
+                            if (!confirm("Mark CIF as approved for this client? Only do this if you have verified their identity through other means.")) return;
                             const { error } = await supabase.rpc("fl_admin_cms_kyc_admin_override", {
                               p_token: token, p_matter_id: activeMatter.id, p_status: "approved",
                             });
@@ -5196,11 +5196,11 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                           }}
                           style={{ background: "#2f7a52", color: "#fff", border: "none", borderRadius: 10, padding: "10px 20px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
                         >
-                          Admin-approve KYC
+                          Admin-approve CIF
                         </button>
                       )}
                       {activeMatter && activeMatter.kyc_status === "approved" && (
-                        <span style={{ fontSize: 13, color: "#2f7a52", fontWeight: 700 }}>KYC approved (admin override)</span>
+                        <span style={{ fontSize: 13, color: "#2f7a52", fontWeight: 700 }}>CIF approved (admin override)</span>
                       )}
                     </div>
                   ) : (
