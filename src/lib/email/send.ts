@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Booking confirmation email (Resend). Server-only.
  *
  * No-ops gracefully when RESEND_API_KEY is unset so local/dev bookings still
@@ -92,6 +92,7 @@ const REMINDER_SOON_LABEL: Record<SendBookingReminderArgs["kind"], string> = {
   "24h": "tomorrow",
   "2h": "in about 2 hours",
   "1h": "in about an hour",
+  "30m": "in about 30 minutes",
   "15m": "in about 15 minutes",
 };
 
