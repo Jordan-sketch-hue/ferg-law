@@ -5604,14 +5604,20 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                 onClick={async () => {
                   if (!selected) return;
                   setSummaryBusy(true);
-                  const res = await fetch("/api/admin/cms/preliminary-summary", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json", "x-admin-token": token },
-                    body: JSON.stringify({ matterId: selected, summary: summaryFields }),
-                  });
-                  const j = await res.json() as { ok: boolean; summary?: { objective: string; recommendation: string; how_we_assist: string; expected_timing: string; what_happens_next: string; created_at: string } };
-                  if (j.ok && j.summary) { setActiveSummary(j.summary); setSummaryModal(false); }
-                  setSummaryBusy(false);
+                  try {
+                    const res = await fetch("/api/admin/cms/preliminary-summary", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json", "x-admin-token": token },
+                      body: JSON.stringify({ matterId: selected, summary: summaryFields }),
+                    });
+                    const j = await res.json() as { ok: boolean; summary?: { objective: string; recommendation: string; how_we_assist: string; expected_timing: string; what_happens_next: string; created_at: string }; error?: string };
+                    if (j.ok && j.summary) { setActiveSummary(j.summary); setSummaryModal(false); }
+                    else if (j.error) alert("Save failed: " + j.error);
+                  } catch (e) {
+                    alert("Save failed: " + (e instanceof Error ? e.message : "Unknown error"));
+                  } finally {
+                    setSummaryBusy(false);
+                  }
                 }}
                 style={{ padding: "10px 28px", borderRadius: 10, border: "none", background: GREEN, color: CREAM, fontSize: 13.5, cursor: summaryBusy ? "default" : "pointer", fontWeight: 700, opacity: summaryBusy ? 0.7 : 1 }}
               >
