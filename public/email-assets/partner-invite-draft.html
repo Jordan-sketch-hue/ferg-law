@@ -1,11 +1,11 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ferguson Law — Partner Invite Draft</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@300;400;500&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -74,15 +74,26 @@
     position: absolute; inset: 0;
     background: linear-gradient(to bottom, transparent 40%, rgba(10,10,10,0.55) 100%);
   }
-  .hero-logo {
+  .hero-logo-bar {
     position: absolute;
-    bottom: 20px; left: 28px;
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 13px;
-    font-weight: 500;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: #c8a65c;
+    bottom: 0; right: 0;
+    background: #000;
+    padding: 10px 18px 10px 16px;
+  }
+  .hero-logo-img {
+    height: 28px;
+    object-fit: contain;
+    display: block;
+  }
+  .sig-wrap {
+    padding: 4px 0 20px 40px;
+  }
+  .sig-owen {
+    font-family: 'Dancing Script', cursive;
+    font-size: 54px;
+    font-weight: 700;
+    color: #1a1a1a;
+    line-height: 1.1;
   }
 
   /* Image swap overlay */
@@ -392,7 +403,7 @@
   <div class="hero-wrap">
     <img class="hero-img" id="hero-img" src="/email-assets/hero-couple.png" alt="Homebuyers">
     <div class="hero-overlay"></div>
-    <div class="hero-logo">Ferguson Law</div>
+    <div class="hero-logo-bar"><img class="hero-logo-img" src="/img/logo-ferguson.webp" alt="Ferguson Law"></div>
     <button class="img-swap-btn" onclick="document.getElementById('hero-file').click()" title="Swap image">
       <svg viewBox="0 0 20 20" fill="none" stroke="#333" stroke-width="1.6">
         <rect x="3" y="3" width="14" height="14" rx="1.5"/>
@@ -412,7 +423,7 @@
     <div id="seg-ab">
       <h1 class="headline" contenteditable="true">Your clients deserve faster results — and so do you.</h1>
       <div class="divider"></div>
-      <p class="body-text" contenteditable="true">Dear Agent / Broker,</p>
+      <p class="body-text" contenteditable="true">Dear [First name],</p>
       <p class="body-text" contenteditable="true">We see what slows you down. Long waits for commission disbursements. Attorneys who go quiet once a file is handed over. Transactions that drag on — not because of complexity, but because of poor communication.</p>
 
       <div class="pain-block">
@@ -446,7 +457,7 @@
     <div id="seg-sv" style="display:none">
       <h1 class="headline" contenteditable="true">Professional services deserve prompt payment — full stop.</h1>
       <div class="divider"></div>
-      <p class="body-text" contenteditable="true">Dear Surveyor / Valuator,</p>
+      <p class="body-text" contenteditable="true">Dear [First name],</p>
       <p class="body-text" contenteditable="true">Your reports close transactions. Your work is load-bearing. And yet, in too many cases, you're the last to be paid — chasing firms that hold disbursements long after the deal is done.</p>
 
       <div class="pain-block">
@@ -490,11 +501,15 @@
     </div>
 
     <!-- Shared closing -->
-    <p class="body-text" contenteditable="true">We are inviting a select group of professionals to establish a formal referral arrangement with Ferguson Law. This is not a mass sign-up — it is a curated partnership built on mutual trust and professional respect.</p>
-    <p class="body-text" contenteditable="true">If you would like to learn more about how this arrangement works, we would welcome a brief conversation at your convenience.</p>
+    <p class="body-text" contenteditable="true">We are inviting you to be part of a select group of professionals to entrust your clients to Ferguson Law. This is not a mass sign up, it is a curated partnership built on mutual trust and professional respect.</p>
+    <p class="body-text" contenteditable="true">Log onto our Platform today at <a href="https://fergusonlawja.com" style="color:#1a1a1a;font-weight:600;" target="_blank" rel="noopener">fergusonlawja.com</a> and experience a new way of delivering service to clients and partners.</p>
+    <p class="body-text" contenteditable="true">And if you have questions, call me and let&rsquo;s discuss.</p>
+    <div class="sig-wrap">
+      <span class="sig-owen">Owen</span>
+    </div>
 
     <div class="cta-wrap">
-      <a class="cta-btn" href="#" contenteditable="false">Get in Touch</a>
+      <a class="cta-btn" href="https://fergusonlawja.com" target="_blank" rel="noopener">Get in Touch</a>
       <p class="cta-sub" contenteditable="true">Reply to this email or call us directly to arrange a conversation.</p>
     </div>
   </div>
@@ -502,7 +517,7 @@
   <!-- Footer -->
   <div class="email-footer">
     <p class="footer-name" contenteditable="true">Ferguson Law</p>
-    <p class="footer-addr" contenteditable="true">Kingston, Jamaica &nbsp;|&nbsp; (876) 123-4567 &nbsp;|&nbsp; info@fergusonlaw.com</p>
+    <p class="footer-addr" contenteditable="true">Kingston, Jamaica &nbsp;|&nbsp; (876) 320-0235 &nbsp;|&nbsp; contact@fergusonlaw.com</p>
   </div>
 </div>
 

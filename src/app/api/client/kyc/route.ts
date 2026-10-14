@@ -1,4 +1,4 @@
-/**
+﻿/**
  * POST /api/client/kyc  — submit KYC information for the authenticated client.
  * GET  /api/client/kyc  — fetch the client's current KYC status.
  */
@@ -126,7 +126,7 @@ export async function POST(req: NextRequest) {
   void sendKycSubmittedToStaff(clientName, user.email!).catch((e) => {
     console.error("[KYC POST] staff email failed", { userId: user.id, error: String(e) });
   });
-  void pushToAdmins(`KYC Submitted — ${clientName}`, "Review required", "/admin?tab=clients", "fl-kyc");
+  void pushToAdmins(`Client Intake Form (CIF) received — ${clientName}`, "Review required", "/admin?tab=clients", "fl-kyc");
 
   return NextResponse.json({ ok: true });
 }

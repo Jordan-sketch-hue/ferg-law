@@ -76,7 +76,8 @@ export function sendClientPortalInvite(to: string, clientName: string, matterTit
     "Your Ferguson Law client portal is ready",
     shell(
       `Hi ${escapeHtml(firstName)}, your matter is ready to view.`,
-      `${matterLine}Ferguson Law has opened a matter on your behalf. Create your free account to access your portal — you can track progress, send messages, and upload documents securely.`,
+      `${matterLine}Ferguson Law has opened a matter on your behalf. Create your free account to access your portal — you can track progress, send messages, and upload documents securely.
+      Once logged in, please complete the Client Intake Form (CIF) so your matter can proceed.`,
       "Create my account",
       signupUrl,
       "Client Portal",
@@ -117,11 +118,11 @@ export function sendKycSubmittedToStaff(clientName: string, clientEmail: string)
     process.env.FERGUSON_STAFF_EMAIL || "contact@fergusonlawja.com",
     `KYC submitted — ${clientName}`,
     shell(
-      "A client just submitted their KYC.",
-      `${escapeHtml(clientName)} (${escapeHtml(clientEmail)}) has submitted their identity documents and KYC information. Review it in the admin CMS.`,
-      "Review KYC",
+      "A client just submitted their Client Intake Form (CIF).",
+      `${escapeHtml(clientName)} (${escapeHtml(clientEmail)}) has submitted their Client Intake Form (CIF). Review it in the admin CMS.`,
+      "Review CIF",
       "https://fergusonlawja.com/admin",
-      "KYC Submitted",
+      "Client Intake Form (CIF) Received",
     ),
   );
 }

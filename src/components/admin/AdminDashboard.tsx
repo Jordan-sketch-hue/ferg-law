@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 /**
  * Consultation CRM — the Ferguson Law back office.
@@ -2500,6 +2500,7 @@ function ChatsTable({ convos, loading }: { convos: Conversation[]; loading: bool
   const [waText, setWaText] = useState("");
   const [waSending, setWaSending] = useState(false);
   const [waResult, setWaResult] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [repliedIds, setRepliedIds] = useState<Set<string>>(new Set());
   const msgEndRef = useRef<HTMLDivElement>(null);
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
@@ -2543,6 +2544,7 @@ function ChatsTable({ convos, loading }: { convos: Conversation[]; loading: bool
           created_at: new Date().toISOString(), role: "agent", body: waText.trim(), meta: {},
         };
         setMessages((prev) => [...prev, agentMsg]);
+        setRepliedIds((prev) => new Set([...prev, selected.id]));
         setWaText("");
         setTimeout(() => msgEndRef.current?.scrollIntoView({ behavior: "smooth" }), 80);
       } else { setWaResult({ ok: false, msg: `Failed (${res.status})` }); }
@@ -2575,7 +2577,12 @@ function ChatsTable({ convos, loading }: { convos: Conversation[]; loading: bool
               borderLeft: selected?.id === c.id ? `3px solid ${GOLD}` : "3px solid transparent" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span style={{ fontWeight: 600, fontSize: ".85rem", color: GREEN }}>{c.visitor_name || "Website visitor"}</span>
-              <StatusBadge status={c.status} />
+              <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                {repliedIds.has(c.id) && (
+                  <span style={{ fontSize: ".65rem", fontWeight: 700, background: "#e6f4ec", color: "#1a6b3a", borderRadius: 999, padding: "2px 7px", letterSpacing: ".04em" }}>Replied</span>
+                )}
+                <StatusBadge status={c.status} />
+              </div>
             </div>
             <div style={{ fontSize: ".78rem", color: MUTED, marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.last_message || "No messages"}</div>
             <div style={{ fontSize: ".72rem", color: MUTED, marginTop: 2 }}>{fmtDate(c.last_message_at)}</div>
@@ -4289,6 +4296,10 @@ interface CmsMatter {
   kyc_status: string;
   title: string | null;
   notes: string | null;
+  preliminary_summary: {
+    objective: string; recommendation: string; how_we_assist: string;
+    expected_timing: string; what_happens_next: string; created_at: string;
+  } | null;
   created_at: string;
 }
 
@@ -4412,6 +4423,15 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
   const [createError, setCreateError] = useState<string | null>(null);
   const [kycNotes, setKycNotes] = useState("");
   const [kycReviewing, setKycReviewing] = useState(false);
+  const [summaryModal, setSummaryModal] = useState(false);
+  const [summaryBusy, setSummaryBusy] = useState(false);
+  const [activeSummary, setActiveSummary] = useState<{
+    objective: string; recommendation: string; how_we_assist: string;
+    expected_timing: string; what_happens_next: string; created_at: string;
+  } | null>(null);
+  const [summaryFields, setSummaryFields] = useState({
+    objective: "", recommendation: "", how_we_assist: "", expected_timing: "", what_happens_next: "",
+  });
   const [addingPayment, setAddingPayment] = useState(false);
   const [payKind, setPayKind] = useState("deposit");
   const [payAmount, setPayAmount] = useState("");
@@ -4479,6 +4499,11 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
       onUnreadChange?.(newTotal);
       return next;
     });
+    try {
+      const sr = await fetch("/api/admin/cms/preliminary-summary?token=" + encodeURIComponent(token) + "&matterId=" + id);
+      const sj = await sr.json() as { ok: boolean; summary?: { objective: string; recommendation: string; how_we_assist: string; expected_timing: string; what_happens_next: string; created_at: string } };
+      setActiveSummary(sj.ok && sj.summary ? sj.summary : null);
+    } catch { setActiveSummary(null); }
   }
 
   async function notifyClient(matterId: string, kind: "milestone" | "message", milestoneName?: string) {
@@ -4886,6 +4911,27 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                   >
                     {MATTER_STATUS_OPTS.map(o => <option key={o} value={o}>{o.replace(/_/g, " ")}</option>)}
                   </select>
+                  <button
+                    onClick={() => {
+                      const wf = (activeMatter.workflow_type || activeMatter.matter_type || "acquire/transfer").replace(/_/g, " ");
+                      setSummaryFields({
+                        objective: "Client seeks to " + wf + ".",
+                        recommendation: "Based on the information provided, we recommend proceeding with " + wf + ".",
+                        how_we_assist: "Ferguson Law will guide you through each step of the process, including document preparation, title verification, and registration.",
+                        expected_timing: "The matter is expected to take 4 to 8 weeks depending on the complexity and responsiveness of all parties.",
+                        what_happens_next: "Upon receipt of the required documents and deposit payment, we will formally open your file and commence work.",
+                      });
+                      setSummaryModal(true);
+                    }}
+                    style={{ fontSize: 12, padding: "5px 10px", borderRadius: 8, border: "1px solid " + (activeSummary ? "#16823c" : "rgba(18,16,12,.3)"), background: activeSummary ? "#f0fdf4" : "#fff", color: activeSummary ? "#16823c" : INK, cursor: "pointer", fontWeight: 600 }}
+                  >
+                    {activeSummary ? "✓ Preliminary Summary" : "Generate Preliminary Summary"}
+                  </button>
+                  {activeSummary && selected && (
+                    <a href={"/preliminary-summary/" + selected + "?token=" + encodeURIComponent(token)} target="_blank" rel="noopener noreferrer"
+                      style={{ fontSize: 12, padding: "5px 10px", borderRadius: 8, border: "1px solid #16823c", background: "#16823c", color: "#fff", textDecoration: "none", fontWeight: 600 }}
+                    >View →</a>
+                  )}
                   <button
                     onClick={() => deleteClientData(activeMatter)}
                     disabled={purging}
@@ -5409,6 +5455,59 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
               <button onClick={() => { setOpenMatter(false); setCreateError(null); }}
                 style={{ padding: "12px 20px", border: "1px solid rgba(18,16,12,.2)", borderRadius: 10, background: "#fff", fontSize: 13, cursor: "pointer" }}>
                 Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {summaryModal && (
+        <div onClick={() => setSummaryModal(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.55)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 18, width: "100%", maxWidth: 640, maxHeight: "90vh", overflowY: "auto", boxShadow: "0 24px 64px rgba(0,0,0,.3)" }}>
+            <div style={{ padding: "22px 28px", borderBottom: "1px solid rgba(18,16,12,.1)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <div style={{ fontFamily: "var(--serif, Georgia, serif)", fontSize: 18, fontWeight: 700, color: GREEN }}>Generate Preliminary Summary</div>
+                <div style={{ fontSize: 12.5, color: MUTED, marginTop: 3 }}>Edit the pre-filled content, then save to generate the document.</div>
+              </div>
+              <button onClick={() => setSummaryModal(false)} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: MUTED, lineHeight: 1 }}>✕</button>
+            </div>
+            <div style={{ padding: "22px 28px", display: "flex", flexDirection: "column", gap: 18 }}>
+              {([
+                { key: "objective", label: "Your Objective" },
+                { key: "recommendation", label: "Our Recommendation" },
+                { key: "how_we_assist", label: "How We Would Assist" },
+                { key: "expected_timing", label: "Expected Timing" },
+                { key: "what_happens_next", label: "What Happens Next" },
+              ] as const).map(({ key, label }) => (
+                <div key={key}>
+                  <label style={{ display: "block", fontSize: 11, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: "#8a6a22", marginBottom: 6 }}>{label}</label>
+                  <textarea
+                    value={summaryFields[key]}
+                    onChange={e => setSummaryFields(prev => ({ ...prev, [key]: e.target.value }))}
+                    rows={3}
+                    style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1.5px solid rgba(18,16,12,.18)", fontSize: 13.5, lineHeight: 1.6, resize: "vertical", outline: "none", fontFamily: "inherit", boxSizing: "border-box" }}
+                  />
+                </div>
+              ))}
+            </div>
+            <div style={{ padding: "16px 28px 24px", display: "flex", gap: 10, justifyContent: "flex-end" }}>
+              <button onClick={() => setSummaryModal(false)} style={{ padding: "10px 22px", borderRadius: 10, border: "1px solid rgba(18,16,12,.2)", background: "#fff", fontSize: 13.5, cursor: "pointer", fontWeight: 600 }}>Cancel</button>
+              <button
+                disabled={summaryBusy}
+                onClick={async () => {
+                  if (!selected) return;
+                  setSummaryBusy(true);
+                  const res = await fetch("/api/admin/cms/preliminary-summary", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "x-admin-token": token },
+                    body: JSON.stringify({ matterId: selected, summary: summaryFields }),
+                  });
+                  const j = await res.json() as { ok: boolean; summary?: { objective: string; recommendation: string; how_we_assist: string; expected_timing: string; what_happens_next: string; created_at: string } };
+                  if (j.ok && j.summary) { setActiveSummary(j.summary); setSummaryModal(false); }
+                  setSummaryBusy(false);
+                }}
+                style={{ padding: "10px 28px", borderRadius: 10, border: "none", background: GREEN, color: CREAM, fontSize: 13.5, cursor: summaryBusy ? "default" : "pointer", fontWeight: 700, opacity: summaryBusy ? 0.7 : 1 }}
+              >
+                {summaryBusy ? "Saving…" : "Save & Generate"}
               </button>
             </div>
           </div>
