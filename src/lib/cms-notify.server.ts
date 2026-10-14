@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Dispatches Case Management notifications to a client and any CC contacts
  * they have configured (realtor, family member, etc.). All sends are
  * best-effort — failures never block the underlying action.
@@ -38,10 +38,11 @@ async function loadMatterContext(matterId: string): Promise<MatterContext | null
   const supabase = createAdminClient();
   const { data: matter } = await supabase
     .from("fl_client_matters")
-    .select("title, matter_type, client_id")
+    .select("title, matter_type, client_id, status")
     .eq("id", matterId)
     .single();
   if (!matter) return null;
+  if (matter.status === "archived" || matter.status === "closed") return null;
 
   const { data: userRes } = await supabase.auth.admin.getUserById(matter.client_id as string);
   const user = userRes?.user;
