@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Dispatches Case Management notifications to a client and any CC contacts
  * they have configured (realtor, family member, etc.). All sends are
  * best-effort — failures never block the underlying action.
@@ -33,6 +33,9 @@ interface MatterContext {
   phone: string | null;
   ccContacts: CcContact[];
 }
+
+const WA_FOOTER =
+  "\n\n━━━━━━━━━━━━━━━━━\n_On behalf of Ferguson Law Firm_\n_Powered by J Supreme Tech_";
 
 async function loadMatterContext(matterId: string): Promise<MatterContext | null> {
   const supabase = createAdminClient();
@@ -75,7 +78,11 @@ async function getUserIdForMatter(matterId: string, supabase: ReturnType<typeof 
 
 async function notifyCcContacts(contacts: CcContact[], matterTitle: string, milestoneName: string) {
   for (const cc of contacts) {
-    const msg = `Ferguson Law update: "${milestoneName}" is now complete on ${matterTitle}. You are receiving this because a client has added you as a notification contact.`;
+    const msg =
+      `*Ferguson Law* — Matter Update\n\n` +
+      `*"${milestoneName}"* is now complete on *${matterTitle}*.\n\n` +
+      `You are receiving this as a notification contact for this matter.` +
+      WA_FOOTER;
     if (cc.whatsapp) {
       await sendWhatsAppText(cc.whatsapp, msg).catch(() => null);
     }
@@ -104,7 +111,8 @@ export async function notifyMilestoneDone(matterId: string, milestoneName: strin
   if (ctx.notifyWhatsapp && ctx.phone) {
     await sendWhatsAppText(
       ctx.phone,
-      `Ferguson Law update on ${ctx.title}: "${milestoneName}" is now complete. Log in to your client portal for the full timeline.`,
+      `*Ferguson Law* — Case Update\n\n*"${milestoneName}"* has been completed on your matter *${ctx.title}*.\n\nLog in to your client portal to view the full timeline and next steps.` +
+      WA_FOOTER,
     ).catch(() => null);
   }
 
@@ -118,7 +126,11 @@ export async function notifyNewMessageToClient(matterId: string) {
   if (!ctx) return;
   if (ctx.notifyEmail) await sendNewMessageToClient(ctx.clientEmail, ctx.title).catch(() => null);
   if (ctx.notifyWhatsapp && ctx.phone) {
-    await sendWhatsAppText(ctx.phone, `Ferguson Law sent you a new message on ${ctx.title}. Check your client portal.`).catch(() => null);
+    await sendWhatsAppText(
+      ctx.phone,
+      `*Ferguson Law* — New Message\n\nYou have a new message regarding *${ctx.title}*.\n\nLog in to your client portal to read and reply.` +
+      WA_FOOTER,
+    ).catch(() => null);
   }
   const supabase = createAdminClient();
   const userId = await getUserIdForMatter(matterId, supabase);
