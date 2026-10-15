@@ -1901,7 +1901,7 @@ function MattersTab({ matters, loading, token, onStage, onPayment, onDelete }: {
           <table style={S.table}>
             <thead><tr><Th>​</Th><Th>Ref</Th><Th>Client</Th><Th>Type</Th><Th>Stage</Th><Th>Priority</Th><Th>Payment</Th><Th>Description</Th><Th>Date</Th><Th>&#160;</Th></tr></thead>
             <tbody>
-              {matters.map((m) => (
+              {matters.filter((m) => m.stage !== "archived").map((m) => (
                 <>
                   <tr key={m.id} style={{ ...S.tr, cursor: "pointer" }} onClick={() => toggleExpand(m.id)}>
                     <Td><span style={{ color: GOLD, fontWeight: 700, fontSize: ".8rem" }}>{expandedId === m.id ? "▼" : "▶"}</span></Td>
@@ -2783,7 +2783,7 @@ function OverviewPanel({ leads, appts, convos, matters, homePros, emails, inquir
     const t = new Date(a.starts_at).getTime();
     return t >= now && t <= sevenDaysAhead && a.status !== "cancelled";
   }).length;
-  const activeMatters = matters.filter((m) => m.stage !== "closed").length;
+  const activeMatters = matters.filter((m) => m.stage !== "closed" && m.stage !== "archived").length;
   const openChats = convos.filter((c) => c.status === "waiting_agent" || c.status === "agent").length;
   const pendingProApprovals = homePros.length;
   const unreadEmails = emails.filter((e) => !e.read).length;
@@ -4905,10 +4905,10 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
             padding: "5px 12px", fontSize: 12, fontWeight: 700, cursor: "pointer",
           }}>+ New</button>
         </div>
-        {matters.length === 0 && (
+        {matters.filter(m => m.status !== "archived").length === 0 && (
           <p style={{ fontSize: 13, color: MUTED }}>No workflow matters yet. Click + New to open one.</p>
         )}
-        {matters.map(m => (
+        {matters.filter(m => m.status !== "archived").map(m => (
           <button key={m.id} onClick={() => loadDetail(m.id)} style={{
             display: "block", width: "100%", textAlign: "left", border: "none", cursor: "pointer",
             padding: "10px 12px", borderRadius: 10, marginBottom: 6,
@@ -5027,6 +5027,29 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                     <a href={"/preliminary-summary/" + selected + "?token=" + encodeURIComponent(token)} target="_blank" rel="noopener noreferrer"
                       style={{ fontSize: 12, padding: "5px 10px", borderRadius: 8, border: "1px solid #16823c", background: "#16823c", color: "#fff", textDecoration: "none", fontWeight: 600 }}
                     >View →</a>
+                  )}
+                  {activeMatter.status !== "archived" ? (
+                    <button
+                      onClick={async () => {
+                        if (!selected || !confirm("Archive this matter? It will be hidden from the active list but not deleted.")) return;
+                        await updateMatterStatus(selected, "archived");
+                      }}
+                      title="Hide this matter from the active list — reversible"
+                      style={{ fontSize: 12, padding: "5px 10px", borderRadius: 8, border: "1px solid rgba(162,59,59,.35)", background: "rgba(162,59,59,.07)", color: "#a23b3b", cursor: "pointer", fontWeight: 600 }}
+                    >
+                      Archive matter
+                    </button>
+                  ) : (
+                    <button
+                      onClick={async () => {
+                        if (!selected) return;
+                        await updateMatterStatus(selected, "intake");
+                      }}
+                      title="Restore this matter to active"
+                      style={{ fontSize: 12, padding: "5px 10px", borderRadius: 8, border: "1px solid #16823c", background: "rgba(22,130,60,.07)", color: "#16823c", cursor: "pointer", fontWeight: 600 }}
+                    >
+                      Restore matter
+                    </button>
                   )}
                   <button
                     onClick={() => deleteClientData(activeMatter!)}
@@ -5604,18 +5627,23 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                 onClick={async () => {
                   if (!selected) return;
                   setSummaryBusy(true);
+                  const ctrl = new AbortController();
+                  const timeout = setTimeout(() => ctrl.abort(), 12000);
                   try {
                     const res = await fetch("/api/admin/cms/preliminary-summary", {
                       method: "POST",
                       headers: { "Content-Type": "application/json", "x-admin-token": token },
                       body: JSON.stringify({ matterId: selected, summary: summaryFields }),
+                      signal: ctrl.signal,
                     });
                     const j = await res.json() as { ok: boolean; summary?: { objective: string; recommendation: string; how_we_assist: string; expected_timing: string; what_happens_next: string; created_at: string }; error?: string };
                     if (j.ok && j.summary) { setActiveSummary(j.summary); setSummaryModal(false); }
                     else if (j.error) alert("Save failed: " + j.error);
                   } catch (e) {
-                    alert("Save failed: " + (e instanceof Error ? e.message : "Unknown error"));
+                    const msg = e instanceof Error ? e.message : "Unknown error";
+                    alert(msg.includes("abort") ? "Save timed out — please try again" : "Save failed: " + msg);
                   } finally {
+                    clearTimeout(timeout);
                     setSummaryBusy(false);
                   }
                 }}

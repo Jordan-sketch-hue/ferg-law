@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import { pushToAdmins } from "@/lib/push";
+import { notifyOwenWA } from "@/lib/wa-notify";
 
 // -- Spam heuristics ----------------------------------------------------------
 const SPAM_SUBJECT_PATTERNS = [
@@ -144,7 +145,41 @@ export async function POST(req: NextRequest) {
     const bodyText = fetchedText;
     console.log(`BODY_CHECK payload_html=${!!payloadHtml} payload_text=${!!payloadText} fetched_html=${!!fetchedHtml} fetched_text=${!!fetchedText} email_id=${emailId}`);
 
+    // Parse attachments — Resend sends [{filename, content_type, content (base64), size}]
+    type ResendAttachment = { filename?: string; content_type?: string; content?: string; size?: number };
+    const rawAttachments = Array.isArray(payload.attachments)
+      ? (payload.attachments as ResendAttachment[])
+      : [];
+
+    // Upload each attachment to Supabase Storage and collect public URLs
     const supabase = createAdminClient();
+    type StoredAttachment = { filename: string; content_type: string; size: number; url: string };
+    const storedAttachments: StoredAttachment[] = [];
+    for (const att of rawAttachments) {
+      if (!att.content || !att.filename) continue;
+      try {
+        const buf = Buffer.from(att.content, "base64");
+        const safeName = att.filename.replace(/[^\w.\- ]/g, "_");
+        const storagePath = `inbound-attachments/${Date.now()}-${safeName}`;
+        const { error: upErr } = await supabase.storage
+          .from("fl-matter-files")
+          .upload(storagePath, buf, { contentType: att.content_type ?? "application/octet-stream" });
+        if (!upErr) {
+          const { data: { publicUrl } } = supabase.storage.from("fl-matter-files").getPublicUrl(storagePath);
+          storedAttachments.push({
+            filename: att.filename,
+            content_type: att.content_type ?? "application/octet-stream",
+            size: att.size ?? buf.length,
+            url: publicUrl,
+          });
+        } else {
+          console.error("[inbound] attachment upload error:", upErr.message);
+        }
+      } catch (e) {
+        console.error("[inbound] attachment parse error:", e);
+      }
+    }
+
     const spam = isLikelySpam(fromEmail, String(payload.subject ?? ""));
 
     const { error } = await supabase.from("fl_inbound_emails").insert({
@@ -158,6 +193,7 @@ export async function POST(req: NextRequest) {
       thread_id: threadId,
       email_id: emailId || null,
       is_spam: spam,
+      attachments: storedAttachments.length > 0 ? storedAttachments : null,
     });
 
     if (error) {
@@ -182,6 +218,9 @@ export async function POST(req: NextRequest) {
       // Strip any accumulated "New enquiry: " prefixes before adding one.
       const cleanSubject = rawSubject.replace(/^(New enquiry:\s*)+/i, "");
       const previewText = (bodyText || bodyHtml.replace(/<[^>]+>/g, "")).slice(0, 300) || "(no body)";
+      const attLines = storedAttachments.length > 0
+        ? `\n\nAttachments (${storedAttachments.length}):\n` + storedAttachments.map((a) => `  • ${a.filename} — ${a.url}`).join("\n")
+        : "";
       fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
@@ -189,10 +228,18 @@ export async function POST(req: NextRequest) {
           from: "Ferguson Law <contact@fergusonlawja.com>",
           to: [forwardTo],
           bcc: ["jordanroad631@gmail.com"],
-          subject: `New enquiry: ${cleanSubject}`,
-          text: `New inbound message from ${fromName ? `${fromName} ` : ""}${fromEmail}\n\nSubject: ${cleanSubject}\n\n---\n${previewText}`,
+          subject: storedAttachments.length > 0 ? `New enquiry (+${storedAttachments.length} attachment${storedAttachments.length > 1 ? "s" : ""}): ${cleanSubject}` : `New enquiry: ${cleanSubject}`,
+          text: `New inbound message from ${fromName ? `${fromName} ` : ""}${fromEmail}\n\nSubject: ${cleanSubject}\n\n---\n${previewText}${attLines}`,
         }),
       }).catch((e) => console.error("inbound forward email error:", e));
+
+      // WA alert to Owen+Jordan for every real inbound email
+      const attNote = storedAttachments.length > 0
+        ? ` (${storedAttachments.length} attachment${storedAttachments.length > 1 ? "s" : ""} attached — check admin inbox)`
+        : "";
+      void notifyOwenWA(
+        `Ferguson Law — new email from ${fromName ? `${fromName} <${fromEmail}>` : fromEmail}\nSubject: ${cleanSubject}${attNote}\n\nAdmin inbox: https://ferguson-law.vercel.app/admin?tab=email`,
+      );
     }
 
     if (!isInternalSender && !spam) {
