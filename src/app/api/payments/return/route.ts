@@ -20,6 +20,8 @@ import { sendBookingConfirmation } from "@/lib/email/send";
 import { logReminderEvent } from "@/lib/attention/reminderLog";
 
 import { createMeetingRoom } from "@/lib/meetings/create";
+import { sendWhatsAppText } from "@/lib/whatsapp.server";
+import { notifyOwenWA } from "@/lib/wa-notify";
 
 function normaliseOrderId(value: string | undefined): string | null {
   const raw = (value || "").trim();
@@ -130,6 +132,19 @@ export async function GET(req: NextRequest) {
     } catch {
       /* swallow — payment already settled */
     }
+
+    // WA confirmation to client (paid booking)
+    const { data: apptPhone } = await supabase.from("appointments").select("phone").eq("ref", ref).maybeSingle();
+    const clientPhone = (apptPhone?.phone as string | null) ?? null;
+    if (clientPhone) {
+      const whenLabel = row.r_starts ? fullWhenLabel(row.r_starts) : "";
+      const waConf =
+        `*Ferguson Law* — Booking Confirmed\n\nHi ${row.r_name || "there"}, your *${row.r_service || "consultation"}* is confirmed.\n\n${whenLabel}` +
+        (meetingUrl ? `\nZoom: ${meetingUrl}` : ``) +
+        `\n\nRef: ${ref}\n\n━━━━━━━━━━━━━━━━━\n_On behalf of Ferguson Law Firm_\n_Powered by J Supreme Tech_`;
+      void sendWhatsAppText(clientPhone, waConf);
+    }
+    void notifyOwenWA(`PAID BOOKING\nName: ${row.r_name || "—"}\nService: ${row.r_service || "—"}\nRef: ${ref}`);
   }
 
   return redirect(req, ref, "paid");
