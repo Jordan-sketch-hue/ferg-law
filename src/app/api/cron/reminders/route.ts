@@ -21,6 +21,7 @@ import { sendBookingReminder, sendAdminDigest, sendAdminAttendanceAlert } from "
 import { fullWhenLabel } from "@/lib/booking/format";
 import { TZ } from "@/lib/booking/availability";
 import { notifyOwenWA } from "@/lib/wa-notify";
+import { sendWhatsAppText } from "@/lib/whatsapp.server";
 import { pushToAdmins } from "@/lib/push";
 
 export const runtime = "nodejs";
@@ -134,6 +135,23 @@ export async function GET(req: NextRequest) {
           ...(meetingUrl ? [`Zoom: ${meetingUrl}`] : []),
         ];
         void notifyOwenWA(waLines.join("\n"));
+
+        // WA reminder to client
+        if (row.email) {
+          const { data: clientRow } = await supabase
+            .from("fl_clients")
+            .select("phone")
+            .eq("email", row.email)
+            .maybeSingle();
+          const clientPhone = (clientRow?.phone as string | null) ?? null;
+          if (clientPhone) {
+            const waReminder =
+              `*Ferguson Law* — Appointment Reminder\n\nHi ${row.name || "there"}, your *${row.service || "consultation"}* is ${kindLabel[kind] ?? kind}.\n\n${fullWhenLabel(row.starts_at ?? "")}` +
+              (meetingUrl ? `\nZoom: ${meetingUrl}` : ``) +
+              `\n\n━━━━━━━━━━━━━━━━━\n_On behalf of Ferguson Law Firm_\n_Powered by J Supreme Tech_`;
+            void sendWhatsAppText(clientPhone, waReminder);
+          }
+        }
       }
     }
   }

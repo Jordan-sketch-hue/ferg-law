@@ -27,6 +27,7 @@ import { fullWhenLabel, dateChipLabel, slotTimeLabel } from "@/lib/booking/forma
 import { sendBookingConfirmation } from "@/lib/email/send";
 import { logReminderEvent } from "@/lib/attention/reminderLog";
 import { notifyOwenWA } from "@/lib/wa-notify";
+import { sendWhatsAppText } from "@/lib/whatsapp.server";
 import { pushToAdmins } from "@/lib/push";
 import { consultFee } from "@/lib/payments/fees";
 import { createPayment } from "@/lib/payments/wipay";
@@ -230,6 +231,15 @@ export async function POST(req: NextRequest) {
         /* swallow — booking already saved */
       }
 
+
+      // WA confirmation to client
+      if (phone) {
+        const waConf =
+          `*Ferguson Law* — Booking Confirmed\n\nHi ${name}, your *${title}* consultation is confirmed.\n\n${whenLabel}` +
+          (meetingUrl ? `\nZoom: ${meetingUrl}` : ``) +
+          `\n\nRef: ${ref}\n\n━━━━━━━━━━━━━━━━━\n_On behalf of Ferguson Law Firm_\n_Powered by J Supreme Tech_`;
+        void sendWhatsAppText(phone, waConf);
+      }
       // Notify Owen (email + WhatsApp)
       const owenSubject = `New Booking (Free): ${name} — ${title}`;
       const owenBody = `New free booking\n\nRef: ${ref}\nName: ${name}\nEmail: ${email}\nPhone: ${phone}\nService: ${title}\nWhen: ${whenLabel}\nNotes: ${notes || "—"}`;
