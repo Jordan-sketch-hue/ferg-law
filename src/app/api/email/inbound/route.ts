@@ -238,7 +238,7 @@ export async function POST(req: NextRequest) {
         ? ` (${storedAttachments.length} attachment${storedAttachments.length > 1 ? "s" : ""} attached — check admin inbox)`
         : "";
       void notifyOwenWA(
-        `Ferguson Law — new email from ${fromName ? `${fromName} <${fromEmail}>` : fromEmail}\nSubject: ${cleanSubject}${attNote}\n\nAdmin inbox: https://ferguson-law.vercel.app/admin?tab=email`,
+        `Ferguson Law — new email from ${fromName ? `${fromName} <${fromEmail}>` : fromEmail}\nSubject: ${cleanSubject}${attNote}\n\nAdmin inbox: https://ferguson-law.com/admin?tab=email`,
       );
     }
 
