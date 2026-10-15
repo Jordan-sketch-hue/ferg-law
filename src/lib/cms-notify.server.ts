@@ -65,7 +65,7 @@ async function loadMatterContext(matterId: string): Promise<MatterContext | null
     clientEmail: user.email,
     clientName: (user.user_metadata?.full_name as string) || user.email.split("@")[0],
     notifyEmail: prefs.milestone_updates !== false,
-    notifyWhatsapp: prefs.whatsapp_updates === true,
+    notifyWhatsapp: prefs.whatsapp_updates !== false,
     phone: (client?.phone as string) ?? null,
     ccContacts,
   };
