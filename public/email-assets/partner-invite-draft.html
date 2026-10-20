@@ -278,13 +278,13 @@
 
 
 
+  @media (max-width: 640px) {
     .email-footer { padding: 18px 24px; }
     .headline { font-size: 22px; }
-    #edit-notice { bottom: 16px; right: 16px; left: 16px; width: auto; }
+    .email-body { padding: 28px 24px 20px; }
   }
 
   /* ─── Unified Draft Panel ─── */
-  body { padding-right: 0; }
   #draft-panel {
     position: fixed;
     top: 28px; right: 28px;
@@ -352,6 +352,7 @@
 
   @media (max-width: 680px) {
     #draft-panel { top: auto; bottom: 12px; right: 12px; left: 12px; width: auto; }
+    body { padding-bottom: 320px; }
   }
 </style>
 </head>
@@ -604,7 +605,7 @@
 
   function copyDraftText() {
     const btn = document.getElementById('copy-btn');
-    const card = document.querySelector('.email-card');
+    const card = document.querySelector('.email-wrap');
     const text = card ? card.innerText.trim() : document.body.innerText.trim();
     navigator.clipboard.writeText(text).then(() => {
       btn.textContent = 'Copied!';
