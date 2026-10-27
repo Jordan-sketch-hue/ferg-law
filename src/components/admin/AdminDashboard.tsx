@@ -248,6 +248,7 @@ interface InboundEmail {
   read: boolean;
   replied: boolean;
   is_spam: boolean;
+  attachments?: { filename: string; content_type: string; size: number; url: string; error?: string }[] | null;
 }
 
 interface HomeInquiry {
@@ -2953,6 +2954,7 @@ function EmailTab({ emails, token, leads, onMarkRead, onDelete, onLeadContacted 
   const [newBody, setNewBody] = useState("");
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [suggesting, setSuggesting] = useState(false);
+  const [suggestError, setSuggestError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [editingBody, setEditingBody] = useState(false);
   const [bodyDraft, setBodyDraft] = useState("");
@@ -2985,14 +2987,25 @@ function EmailTab({ emails, token, leads, onMarkRead, onDelete, onLeadContacted 
   async function suggestReply() {
     if (!selected || suggesting) return;
     setSuggesting(true);
-    const res = await fetch("/api/admin/suggest-reply", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token, subject: selected.subject, body: selected.body_text }),
-    });
-    const json = (await res.json().catch(() => ({}))) as { ok?: boolean; suggestion?: string };
-    if (json.ok && json.suggestion) { setReplyBody(json.suggestion); setReplyOpen(true); }
-    setSuggesting(false);
+    setSuggestError(null);
+    try {
+      const res = await fetch("/api/admin/suggest-reply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, subject: selected.subject, body: selected.body_text }),
+      });
+      const json = (await res.json().catch(() => ({}))) as { ok?: boolean; suggestion?: string; error?: string };
+      if (!res.ok || !json.ok || !json.suggestion) {
+        setSuggestError(json.error || "Could not generate an AI draft. Please try again.");
+        return;
+      }
+      setReplyBody(json.suggestion);
+      setReplyOpen(true);
+    } catch {
+      setSuggestError("Could not reach the AI drafting service. Check your connection and try again.");
+    } finally {
+      setSuggesting(false);
+    }
   }
 
   async function deleteEmail(e: InboundEmail) {
@@ -3012,6 +3025,7 @@ function EmailTab({ emails, token, leads, onMarkRead, onDelete, onLeadContacted 
     setSelected(e);
     setReplyOpen(false);
     setReplyBody("");
+    setSuggestError(null);
     setSendResult(null);
     setEditingBody(false);
     setBodyDraft("");
@@ -3326,6 +3340,26 @@ function EmailTab({ emails, token, leads, onMarkRead, onDelete, onLeadContacted 
                 </div>
               )}
             </div>
+            {selected.attachments && selected.attachments.length > 0 && (
+              <div style={{ marginBottom: 20, padding: "14px 16px", border: "1px solid rgba(18,16,12,.1)", borderRadius: 10, background: "#fff" }}>
+                <div style={{ fontSize: ".8rem", fontWeight: 700, color: GREEN, marginBottom: 8 }}>
+                  Attachments ({selected.attachments.length})
+                </div>
+                {selected.attachments.map((attachment) => (
+                  attachment.url ? (
+                    <a key={`${attachment.filename}-${attachment.url}`} href={attachment.url} target="_blank" rel="noopener noreferrer"
+                      style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "7px 0", color: "#8a6a22", fontSize: ".85rem", textDecoration: "none" }}>
+                      <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>📎 {attachment.filename}</span>
+                      <span style={{ flexShrink: 0 }}>{(attachment.size / 1024).toFixed(1)} KB ↗</span>
+                    </a>
+                  ) : (
+                    <div key={`${attachment.filename}-unavailable`} role="alert" style={{ padding: "7px 0", color: "#a23b3b", fontSize: ".82rem" }}>
+                      📎 {attachment.filename} — unavailable: {attachment.error || "file could not be retrieved"}
+                    </div>
+                  )
+                ))}
+              </div>
+            )}
             {!replyOpen ? (
               <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
                 <button type="button" onClick={() => setReplyOpen(true)}
@@ -3336,6 +3370,7 @@ function EmailTab({ emails, token, leads, onMarkRead, onDelete, onLeadContacted 
                   style={{ padding: "9px 18px", borderRadius: 999, border: `1px solid ${GOLD}`, background: "rgba(200,166,92,.08)", color: "#8a6a22", fontWeight: 600, fontSize: ".82rem", cursor: "pointer", ...(suggesting ? S.btnOff : null) }}>
                   {suggesting ? "Thinking…" : "✦ AI draft"}
                 </button>
+                {suggestError && <p role="alert" style={{ width: "100%", margin: 0, color: "#a23b3b", fontSize: ".82rem" }}>{suggestError}</p>}
                 <button type="button" onClick={() => void deleteEmail(selected)} disabled={deleting}
                   style={{ padding: "9px 16px", borderRadius: 999, border: "1px solid rgba(160,40,40,.3)", background: "rgba(180,50,50,.06)", color: "#a02828", fontWeight: 600, fontSize: ".82rem", cursor: "pointer", marginLeft: "auto", ...(deleting ? S.btnOff : null) }}>
                   {deleting ? "Deleting…" : "Delete"}
@@ -5342,6 +5377,13 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
               {/* Client Intake Form (CIF) */}
               {tab === "kyc" && (
                 <div style={{ maxWidth: 560 }}>
+                  <a href="/api/cif/pdf" style={{
+                    display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 18,
+                    padding: "10px 16px", borderRadius: 999, background: GREEN, color: CREAM,
+                    fontSize: 13, fontWeight: 700, textDecoration: "none",
+                  }}>
+                    ↓ Download fillable CIF PDF
+                  </a>
                   {!kyc ? (
                     <div>
                       <p style={{ color: MUTED, fontSize: 13.5, marginBottom: 14 }}>
@@ -6019,4 +6061,3 @@ function TesterFeedbackTab({ token }: { token: string }) {
     </div>
   );
 }
-

@@ -3,8 +3,24 @@ import { createClient, createAdminClient } from "@/lib/supabase/server";
 
 const RESEND_KEY = process.env.RESEND_API_KEY;
 const FROM = process.env.FERGUSON_FROM_EMAIL || "Ferguson Law <contact@fergusonlawja.com>";
+const SIGNATURE = "Warm regards,\nOwen K. Ferguson, JP\nFerguson Law\n(876) 320-0235";
+
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  })[char] ?? char);
+}
 
 function buildHtml(body: string): string {
+  const paragraphs = body.split(/\n{2,}/).map((paragraph) =>
+    paragraph.trim()
+      ? `<p style="font-size:15px;line-height:1.75;margin:0 0 16px;color:#1c1c1c;">${escapeHtml(paragraph).replace(/\n/g, "<br/>")}</p>`
+      : "",
+  ).join("");
   return `<!doctype html><html><body style="margin:0;background:#f4f1ec;font-family:Georgia,'Times New Roman',serif;color:#1c1c1c;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f1ec;padding:40px 16px;">
 <tr><td align="center">
@@ -14,7 +30,7 @@ function buildHtml(body: string): string {
   <div style="font-size:12px;color:#9fb3ab;margin-top:5px;">Your trusted legal partner</div>
 </td></tr>
 <tr><td style="padding:36px 36px 12px;">
-  ${body.split("\n").map((p) => p.trim() ? `<p style="font-size:15px;line-height:1.75;margin:0 0 16px;color:#1c1c1c;">${p}</p>` : "<br/>").join("")}
+  ${paragraphs}
 </td></tr>
 <tr><td style="padding:12px 36px 36px;">
   <hr style="border:none;border-top:1px solid #ece6da;margin:0 0 18px;"/>
@@ -33,7 +49,7 @@ function buildHtml(body: string): string {
 export async function POST(req: NextRequest) {
   try {
     const contentType = req.headers.get("content-type") ?? "";
-    let token: string, to: string, subject: string, body: string, replyTo: string | undefined;
+    let token: string, to: string, subject: string, body: string, replyTo: string | undefined, replyToId: string | undefined;
     const attachments: { filename: string; path: string }[] = [];
 
     const admin = createAdminClient();
@@ -45,6 +61,7 @@ export async function POST(req: NextRequest) {
       subject = (form.get("subject") as string) ?? "";
       body = (form.get("body") as string) ?? "";
       replyTo = (form.get("replyTo") as string) || undefined;
+      replyToId = (form.get("replyToId") as string) || undefined;
 
       const files = form.getAll("files").filter((f): f is File => f instanceof File);
       for (const file of files) {
@@ -56,8 +73,8 @@ export async function POST(req: NextRequest) {
         attachments.push({ filename: file.name, path: publicUrl });
       }
     } else {
-      const json = (await req.json()) as { token: string; to: string; subject: string; body: string; replyTo?: string };
-      ({ token, to, subject, body, replyTo } = json);
+      const json = (await req.json()) as { token: string; to: string; subject: string; body: string; replyTo?: string; replyToId?: string };
+      ({ token, to, subject, body, replyTo, replyToId } = json);
     }
 
     if (!token || !to || !subject || !body) {
@@ -74,8 +91,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Email service not configured." }, { status: 503 });
     }
 
-    const html = buildHtml(body);
+    const bodyForEmail = replyToId && !/Owen K\. Ferguson\b/i.test(body)
+      ? `${body.trim()}\n\n${SIGNATURE}`
+      : body.trim();
+    const html = buildHtml(bodyForEmail);
     const payload: Record<string, unknown> = { from: FROM, to: [to], subject, html };
+    payload.text = bodyForEmail;
     if (replyTo) payload.reply_to = replyTo;
     if (attachments.length > 0) payload.attachments = attachments;
 
@@ -93,8 +114,8 @@ export async function POST(req: NextRequest) {
     const resJson = (await res.json().catch(() => ({}))) as { id?: string };
 
     const bodyFull = attachments.length > 0
-      ? `${body}\n\nAttachments: ${attachments.map(a => a.filename).join(", ")}`
-      : body;
+      ? `${bodyForEmail}\n\nAttachments: ${attachments.map(a => a.filename).join(", ")}`
+      : bodyForEmail;
 
     const { error: logErr } = await admin.from("fl_email_log").insert({
       to_email: to,
@@ -106,6 +127,11 @@ export async function POST(req: NextRequest) {
       from_mailbox: (req.headers.get("x-from-mailbox") as string | null) ?? "contact",
     });
     if (logErr) console.error("[send-email] fl_email_log insert failed:", logErr.message, logErr.code);
+
+    if (replyToId) {
+      const { error: repliedErr } = await admin.from("fl_inbound_emails").update({ replied: true }).eq("id", replyToId);
+      if (repliedErr) console.error("[send-email] Could not mark source email as replied:", repliedErr.message);
+    }
 
     return NextResponse.json({ ok: true, id: resJson.id });
   } catch (e) {

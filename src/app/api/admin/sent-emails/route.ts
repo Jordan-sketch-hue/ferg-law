@@ -73,7 +73,12 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const reminderRows: EmailRow[] = (reminders ?? []).map((r) => {
+    const loggedMessageIds = new Set(
+      (composed ?? []).map((email) => email.resend_id).filter((id): id is string => !!id),
+    );
+    const reminderRows: EmailRow[] = (reminders ?? [])
+      .filter((r) => !r.provider_message_id || !loggedMessageIds.has(r.provider_message_id))
+      .map((r) => {
       const hydrated = r.provider_message_id ? bodyMap[r.provider_message_id] : undefined;
       return {
         id: `rem_${r.id}`,
@@ -88,7 +93,7 @@ export async function POST(req: NextRequest) {
         context: `auto:${r.reminder_type}`,
       from_mailbox: "contact",
       };
-    });
+      });
 
     // Merge and sort newest-first
     const all = [...(composed ?? []), ...reminderRows].sort(

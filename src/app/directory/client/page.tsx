@@ -26,6 +26,7 @@ interface KycRecord {
   id_doc_url: string | null;
   source_of_funds: string | null;
   is_pep: boolean;
+  pep_details: string | null;
   aml_declared: boolean;
   submitted_at: string | null;
   status: string;
@@ -1252,6 +1253,7 @@ function KycTab({ kyc, loading, submitting, error, submitted, onSubmit }: {
     id_number: kyc?.id_number ?? "",
     source_of_funds: kyc?.source_of_funds ?? "",
     is_pep: kyc?.is_pep ?? false,
+    pep_details: kyc?.pep_details ?? "",
     aml_declared: kyc?.aml_declared ?? false,
   });
 
@@ -1266,6 +1268,7 @@ function KycTab({ kyc, loading, submitting, error, submitted, onSubmit }: {
       id_number: kyc.id_number ?? "",
       source_of_funds: kyc.source_of_funds ?? "",
       is_pep: kyc.is_pep ?? false,
+      pep_details: kyc.pep_details ?? "",
       aml_declared: kyc.aml_declared ?? false,
     });
   }, [kyc]);
@@ -1357,6 +1360,13 @@ function KycTab({ kyc, loading, submitting, error, submitted, onSubmit }: {
                 I am or have been a Politically Exposed Person (PEP) — a senior government official, politician, judge, or close associate of one.
               </span>
             </label>
+            {form.is_pep && (
+              <KycField label="PEP details">
+                <textarea rows={3} value={form.pep_details} onChange={e => set("pep_details", e.target.value)}
+                  required placeholder="Please describe the relevant public role or relationship."
+                  style={{ resize: "vertical", fontFamily: "inherit", fontSize: 14, padding: "8px 10px", borderRadius: 8, border: "1px solid var(--line)", width: "100%", boxSizing: "border-box" }} />
+              </KycField>
+            )}
           </div>
             <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", marginTop: 8 }}>
               <input type="checkbox" required checked={form.aml_declared} onChange={e => set("aml_declared", e.target.checked)}

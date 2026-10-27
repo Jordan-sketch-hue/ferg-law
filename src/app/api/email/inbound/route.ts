@@ -37,14 +37,6 @@ function isLikelySpam(fromEmail: string, subject: string): boolean {
 
 type EmailAddress = { address?: string; name?: string } | string;
 
-function extractStr(obj: Record<string, unknown>, keys: string[]): string {
-  for (const k of keys) {
-    const v = obj[k];
-    if (v && typeof v === "string" && v.trim()) return v;
-  }
-  return "";
-}
-
 function resolveAddress(val: EmailAddress): { email: string; name: string | null } {
   if (!val) return { email: "", name: null };
   if (typeof val === "string") {
@@ -58,9 +50,22 @@ function firstOf<T>(v: T | T[]): T {
   return Array.isArray(v) ? v[0] : v;
 }
 
-async function fetchResendEmailBody(emailId: string): Promise<{ html: string; text: string }> {
+type ResendAttachment = {
+  id?: string;
+  filename?: string;
+  content_type?: string;
+  content?: string;
+  download_url?: string;
+  size?: number;
+};
+
+async function fetchResendEmailBody(emailId: string): Promise<{
+  html: string;
+  text: string;
+  attachments: ResendAttachment[];
+}> {
   const key = process.env.RESEND_API_KEY;
-  if (!key || !emailId) return { html: "", text: "" };
+  if (!key || !emailId) return { html: "", text: "", attachments: [] };
   // Received mail lives at /emails/receiving/{id}; /emails/{id} is sent-mail only (404s here).
   // Retry briefly — the webhook can fire a moment before the body is queryable.
   for (let attempt = 0; attempt < 3; attempt++) {
@@ -71,17 +76,71 @@ async function fetchResendEmailBody(emailId: string): Promise<{ html: string; te
       const raw = await r.text();
       console.log(`RESEND_RECEIVING status=${r.status} emailId=${emailId} attempt=${attempt} preview=${raw.slice(0, 200)}`);
       if (r.ok) {
-        const d = JSON.parse(raw) as Record<string, unknown>;
+        const response = JSON.parse(raw) as Record<string, unknown>;
+        const d = (response.data && typeof response.data === "object"
+          ? response.data
+          : response) as Record<string, unknown>;
         const html = typeof d.html === "string" ? d.html : "";
         const text = typeof d.text === "string" ? d.text : "";
-        if (html || text) return { html, text };
+        const attachments = Array.isArray(d.attachments)
+          ? d.attachments as ResendAttachment[]
+          : [];
+        if (html || text || attachments.length > 0) return { html, text, attachments };
       }
     } catch (e) {
       console.error("fetchResendEmailBody error:", e);
     }
     await new Promise((res) => setTimeout(res, 1500));
   }
-  return { html: "", text: "" };
+  return { html: "", text: "", attachments: [] };
+}
+
+async function downloadAttachment(
+  emailId: string,
+  attachment: ResendAttachment,
+  apiKey: string,
+): Promise<Buffer> {
+  if (attachment.content) {
+    const base64 = attachment.content.replace(/^data:[^,]+;base64,/, "");
+    const bytes = Buffer.from(base64, "base64");
+    if (bytes.length > 25 * 1024 * 1024) throw new Error("Attachment exceeds the 25 MB limit");
+    return bytes;
+  }
+
+  if (!emailId || !attachment.id) {
+    throw new Error("Resend did not provide an attachment ID for secure retrieval");
+  }
+  const detailResponse = await fetch(
+    `https://api.resend.com/emails/receiving/${encodeURIComponent(emailId)}/attachments/${encodeURIComponent(attachment.id)}`,
+    { headers: { Authorization: `Bearer ${apiKey}` } },
+  );
+  if (!detailResponse.ok) {
+    throw new Error(`Resend attachment lookup failed (${detailResponse.status})`);
+  }
+  const response = await detailResponse.json() as Record<string, unknown>;
+  const detail = (response.data && typeof response.data === "object"
+    ? response.data
+    : response) as Record<string, unknown>;
+  if (typeof detail.content === "string") {
+    const bytes = Buffer.from(detail.content.replace(/^data:[^,]+;base64,/, ""), "base64");
+    if (bytes.length > 25 * 1024 * 1024) throw new Error("Attachment exceeds the 25 MB limit");
+    return bytes;
+  }
+
+  const downloadUrl = typeof detail.download_url === "string" ? detail.download_url : "";
+  if (!downloadUrl) throw new Error("Resend did not provide attachment content or a download URL");
+  const parsedUrl = new URL(downloadUrl);
+  if (parsedUrl.protocol !== "https:") throw new Error("Attachment download URL must use HTTPS");
+
+  const downloadResponse = await fetch(parsedUrl);
+  if (!downloadResponse.ok) {
+    throw new Error(`Resend attachment download failed (${downloadResponse.status})`);
+  }
+  const contentLength = Number(downloadResponse.headers.get("content-length") ?? 0);
+  if (contentLength > 25 * 1024 * 1024) throw new Error("Attachment exceeds the 25 MB limit");
+  const bytes = Buffer.from(await downloadResponse.arrayBuffer());
+  if (bytes.length > 25 * 1024 * 1024) throw new Error("Attachment exceeds the 25 MB limit");
+  return bytes;
 }
 
 export async function POST(req: NextRequest) {
@@ -137,33 +196,62 @@ export async function POST(req: NextRequest) {
 
     // Fall back to Resend API fetch using email_id if payload has no body
     const emailId = typeof payload.email_id === "string" ? payload.email_id : "";
-    const { html: fetchedHtml, text: fetchedText } = (payloadHtml || payloadText)
-      ? { html: payloadHtml, text: payloadText }
-      : await fetchResendEmailBody(emailId);
+    const webhookAttachments = Array.isArray(payload.attachments)
+      ? payload.attachments as ResendAttachment[]
+      : [];
+    const needsAttachmentMetadata = webhookAttachments.some((attachment) =>
+      !attachment.content,
+    );
+    const fetchedEmail = (!payloadHtml && !payloadText) || needsAttachmentMetadata
+      ? await fetchResendEmailBody(emailId)
+      : { html: "", text: "", attachments: [] };
+    const fetchedHtml = fetchedEmail.html;
+    const fetchedText = fetchedEmail.text;
 
-    const bodyHtml = fetchedHtml;
-    const bodyText = fetchedText;
+    const bodyHtml = fetchedHtml || payloadHtml;
+    const bodyText = fetchedText || payloadText;
     console.log(`BODY_CHECK payload_html=${!!payloadHtml} payload_text=${!!payloadText} fetched_html=${!!fetchedHtml} fetched_text=${!!fetchedText} email_id=${emailId}`);
 
-    // Parse attachments — Resend sends [{filename, content_type, content (base64), size}]
-    type ResendAttachment = { filename?: string; content_type?: string; content?: string; size?: number };
-    const rawAttachments = Array.isArray(payload.attachments)
-      ? (payload.attachments as ResendAttachment[])
-      : [];
+    const rawAttachments = [...webhookAttachments];
+    for (const attachment of fetchedEmail.attachments) {
+      if (!rawAttachments.some((item) =>
+        (item.id && item.id === attachment.id) ||
+        (!item.id && !attachment.id && item.filename && item.filename === attachment.filename),
+      )) {
+        rawAttachments.push(attachment);
+      }
+    }
 
-    // Upload each attachment to Supabase Storage and collect public URLs
+    // Resend's receiving webhook often contains attachment metadata only; fetch
+    // the file before storing it so the admin inbox can provide a stable link.
     const supabase = createAdminClient();
-    type StoredAttachment = { filename: string; content_type: string; size: number; url: string };
+    type StoredAttachment = {
+      filename: string;
+      content_type: string;
+      size: number;
+      url: string;
+      error?: string;
+    };
     const storedAttachments: StoredAttachment[] = [];
-    for (const att of rawAttachments) {
-      if (!att.content || !att.filename) continue;
+    const resendKey = process.env.RESEND_API_KEY;
+    for (const [index, att] of rawAttachments.entries()) {
+      if (!att.filename) continue;
       try {
-        const buf = Buffer.from(att.content, "base64");
+        if (!resendKey) throw new Error("RESEND_API_KEY is not configured");
+        if (!emailId && !att.content && !att.download_url) {
+          throw new Error("The inbound message has no Resend email ID for retrieving this file");
+        }
+        const buf = await downloadAttachment(emailId, att, resendKey);
+        if (buf.length > 25 * 1024 * 1024) throw new Error("Attachment exceeds the 25 MB limit");
         const safeName = att.filename.replace(/[^\w.\- ]/g, "_");
-        const storagePath = `inbound-attachments/${Date.now()}-${safeName}`;
+        const safeEmailId = (emailId || `webhook-${Date.now()}`).replace(/[^\w.-]/g, "_");
+        const storagePath = `inbound-attachments/${safeEmailId}-${index}-${safeName}`;
         const { error: upErr } = await supabase.storage
           .from("fl-matter-files")
-          .upload(storagePath, buf, { contentType: att.content_type ?? "application/octet-stream" });
+          .upload(storagePath, buf, {
+            contentType: att.content_type ?? "application/octet-stream",
+            upsert: true,
+          });
         if (!upErr) {
           const { data: { publicUrl } } = supabase.storage.from("fl-matter-files").getPublicUrl(storagePath);
           storedAttachments.push({
@@ -173,10 +261,18 @@ export async function POST(req: NextRequest) {
             url: publicUrl,
           });
         } else {
-          console.error("[inbound] attachment upload error:", upErr.message);
+          throw new Error(`Storage upload failed: ${upErr.message}`);
         }
       } catch (e) {
-        console.error("[inbound] attachment parse error:", e);
+        const message = e instanceof Error ? e.message : String(e);
+        console.error("[inbound] attachment retrieval failed:", { filename: att.filename, emailId, error: message });
+        storedAttachments.push({
+          filename: att.filename,
+          content_type: att.content_type ?? "application/octet-stream",
+          size: att.size ?? 0,
+          url: "",
+          error: message,
+        });
       }
     }
 
@@ -212,7 +308,6 @@ export async function POST(req: NextRequest) {
     const defaultStaffEmail = process.env.FERGUSON_STAFF_EMAIL || "contact@fergusonlawja.com";
     const isOwenMailbox = toEmail?.toLowerCase() === owenEmail;
     const forwardTo = isOwenMailbox ? owenEmail : defaultStaffEmail;
-    const resendKey = process.env.RESEND_API_KEY;
     if (resendKey && !isInternalSender && !spam) {
       const rawSubject = String(payload.subject ?? "(no subject)");
       // Strip any accumulated "New enquiry: " prefixes before adding one.
