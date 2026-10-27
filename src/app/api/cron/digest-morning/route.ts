@@ -27,9 +27,12 @@ function jaTime(iso: string) {
 
 async function sendEmail(subject: string, text: string) {
   const key = process.env.RESEND_API_KEY;
-  if (!key) return;
+  if (!key) {
+    console.error("[digest-morning] Email delivery skipped: RESEND_API_KEY is not configured.");
+    return false;
+  }
   const owenEmail = process.env.OWEN_EMAIL || "contact@fergusonlawja.com";
-  await fetch("https://api.resend.com/emails", {
+  const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -39,7 +42,18 @@ async function sendEmail(subject: string, text: string) {
       subject,
       text,
     }),
-  }).catch(() => {});
+  }).catch((error: unknown) => {
+    console.error("[digest-morning] Email request failed.", {
+      error: error instanceof Error ? error.message : "Unknown network error",
+    });
+    return null;
+  });
+  if (!response) return false;
+  if (!response.ok) {
+    console.error("[digest-morning] Email delivery failed.", { status: response.status });
+    return false;
+  }
+  return true;
 }
 
 export async function GET(req: NextRequest) {
@@ -78,6 +92,15 @@ export async function GET(req: NextRequest) {
       .limit(5),
   ]);
 
+  const queryErrors = [apptRes.error, leadsRes.error, unreadRes.error]
+    .filter((error) => error !== null);
+  if (queryErrors.length > 0) {
+    console.error("[digest-morning] Could not load digest data.", {
+      errors: queryErrors.map((error) => ({ code: error.code, message: error.message })),
+    });
+    return Response.json({ ok: false, error: "Could not load digest data." }, { status: 500 });
+  }
+
   const appts = apptRes.data ?? [];
   const leads = leadsRes.data ?? [];
   const unread = unreadRes.data ?? [];
@@ -115,14 +138,21 @@ export async function GET(req: NextRequest) {
     for (const m of unread) lines.push(`  ${m.from_name || m.from_email || "Unknown sender"} — ${m.subject}`);
   }
 
-  lines.push("", "Admin: https://ferguson-law.vercel.app/admin", "— J Supreme Tech");
+  lines.push("", "Admin: https://ferguson-law.com/admin", "— J Supreme Tech");
 
   const msg = lines.join("\n");
 
-  await Promise.all([
+  const [whatsapp, emailSent] = await Promise.all([
     notifyOwenWA(msg),
     sendEmail(`Ferguson Law — ${dateLabel}`, msg),
   ]);
 
-  return Response.json({ ok: true, bookings: appts.length, leads: leads.length, unread: unread.length });
+  const ok = whatsapp.failed === 0 && emailSent;
+  return Response.json({
+    ok,
+    bookings: appts.length,
+    leads: leads.length,
+    unread: unread.length,
+    delivery: { whatsapp, email: emailSent },
+  }, { status: ok ? 200 : 502 });
 }
