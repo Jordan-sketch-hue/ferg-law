@@ -335,7 +335,6 @@ export default function AdminDashboard() {
       if (stored) {
         const supabase = createClient();
         const { data, error } = await supabase.rpc("fl_is_admin", { p_token: stored });
-        console.log("[admin-auth] fl_is_admin result:", { data, error, stored });
         if (cancelled) return;
         if (!error && !!data) { setToken(stored); }
         else { try { localStorage.removeItem(TOKEN_KEY); } catch { /* ignore */ } }
@@ -354,7 +353,6 @@ export default function AdminDashboard() {
     setVerifying(true); setAuthError(null);
     const supabase = createClient();
     const { data, error } = await supabase.rpc("fl_is_admin", { p_token: candidate });
-    console.log("[admin-auth] submitCode result:", { data, error, candidate });
     if (!error && !!data) {
       try { localStorage.setItem(TOKEN_KEY, candidate); } catch { /* ignore */ }
       setToken(candidate); setCodeInput("");

@@ -38,9 +38,9 @@ export default function Home() {
         <div className="hero-scrim" aria-hidden="true"></div>
         <div className="hero-full-inner reveal in">
           <p className="hero-firm" data-edit="hero.firm"><CmsText page="home" block="hero_firm" fallback="Ferguson Law" /></p>
-          <span className="eyebrow" data-edit="hero.eyebrow" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+          <span className="eyebrow" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
             <img src="/img/flags/jm.png" alt="" aria-hidden="true" width="20" height="15" style={{ borderRadius: 2 }} />
-            <CmsText page="home" block="hero_eyebrow" fallback="Kingston, Jamaica" />
+            <span data-edit="hero.eyebrow"><CmsText page="home" block="hero_eyebrow" fallback="Kingston, Jamaica" /></span>
           </span>
           <h1>
             <CmsText page="home" block="hero_h1_line1" fallback="Buying or Selling Property in Jamaica?" />{" "}

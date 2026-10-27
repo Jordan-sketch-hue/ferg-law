@@ -43,6 +43,7 @@ Services: online booking + WiPay payment → consultation confirmation, AI chatb
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Anon key (browser client) |
 | `SUPABASE_SERVICE_ROLE_KEY` | Service role key (server-only API routes) |
 | `RESEND_API_KEY` | Email delivery + inbound webhook |
+| `RESEND_WEBHOOK_SECRET` | Verify signed Resend inbound webhooks |
 | `GROQ_API_KEY` | Chat LLM (primary — recommended) |
 | `GEMINI_API_KEY` | Chat LLM fallback |
 | `OPENROUTER_API_KEY` | Chat LLM fallback |

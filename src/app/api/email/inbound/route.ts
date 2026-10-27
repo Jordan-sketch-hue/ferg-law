@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import { pushToAdmins } from "@/lib/push";
 import { notifyOwenWA } from "@/lib/wa-notify";
+import { Resend } from "resend";
 
 // -- Spam heuristics ----------------------------------------------------------
 const SPAM_SUBJECT_PATTERNS = [
@@ -74,7 +75,7 @@ async function fetchResendEmailBody(emailId: string): Promise<{
         headers: { Authorization: `Bearer ${key}` },
       });
       const raw = await r.text();
-      console.log(`RESEND_RECEIVING status=${r.status} emailId=${emailId} attempt=${attempt} preview=${raw.slice(0, 200)}`);
+      console.log(`[inbound] Resend body lookup status=${r.status} attempt=${attempt}`);
       if (r.ok) {
         const response = JSON.parse(raw) as Record<string, unknown>;
         const d = (response.data && typeof response.data === "object"
@@ -88,7 +89,7 @@ async function fetchResendEmailBody(emailId: string): Promise<{
         if (html || text || attachments.length > 0) return { html, text, attachments };
       }
     } catch (e) {
-      console.error("fetchResendEmailBody error:", e);
+      console.error("[inbound] Resend body lookup failed:", e instanceof Error ? e.message : "Unknown error");
     }
     await new Promise((res) => setTimeout(res, 1500));
   }
@@ -145,11 +146,51 @@ async function downloadAttachment(
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json() as Record<string, unknown>;
+    const rawPayload = await req.text();
+    const webhookSecret = process.env.RESEND_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+      console.error("[inbound] RESEND_WEBHOOK_SECRET is not configured");
+      return NextResponse.json({ error: "Webhook verification is not configured." }, { status: 503 });
+    }
+    const resendApiKey = process.env.RESEND_API_KEY;
+    if (!resendApiKey) {
+      console.error("[inbound] RESEND_API_KEY is not configured");
+      return NextResponse.json({ error: "Email service is not configured." }, { status: 503 });
+    }
 
-    // Log the full raw payload so we can debug Resend's format
-    console.log(`INBOUND_RAW type=${body.type ?? "none"} keys=${Object.keys(body).join(",")} data_keys=${body.data ? Object.keys(body.data as object).join(",") : "none"}`);
-    console.log(`INBOUND_PAYLOAD_SAMPLE ${JSON.stringify(body).slice(0, 2000)}`);
+    const webhookHeaders = {
+      id: req.headers.get("svix-id") ?? "",
+      timestamp: req.headers.get("svix-timestamp") ?? "",
+      signature: req.headers.get("svix-signature") ?? "",
+    };
+    if (!webhookHeaders.id || !webhookHeaders.timestamp || !webhookHeaders.signature) {
+      return NextResponse.json({ error: "Invalid webhook signature." }, { status: 401 });
+    }
+
+    try {
+      new Resend(resendApiKey).webhooks.verify({
+        payload: rawPayload,
+        headers: webhookHeaders,
+        webhookSecret,
+      });
+    } catch {
+      console.warn("[inbound] Rejected webhook with invalid signature");
+      return NextResponse.json({ error: "Invalid webhook signature." }, { status: 401 });
+    }
+
+    let parsedBody: unknown;
+    try {
+      parsedBody = JSON.parse(rawPayload);
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON payload." }, { status: 400 });
+    }
+    if (!parsedBody || typeof parsedBody !== "object" || Array.isArray(parsedBody)) {
+      return NextResponse.json({ error: "Invalid webhook payload." }, { status: 400 });
+    }
+    const body = parsedBody as Record<string, unknown>;
+    if (body.type !== "email.received") {
+      return NextResponse.json({ ok: true, ignored: true });
+    }
 
     // Resend inbound payload: { type: "email.received", data: { from, to, subject, email_id, html, text, ... } }
     // Always prefer body.data when it exists — do NOT gate on typeof from === "string"
@@ -210,7 +251,7 @@ export async function POST(req: NextRequest) {
 
     const bodyHtml = fetchedHtml || payloadHtml;
     const bodyText = fetchedText || payloadText;
-    console.log(`BODY_CHECK payload_html=${!!payloadHtml} payload_text=${!!payloadText} fetched_html=${!!fetchedHtml} fetched_text=${!!fetchedText} email_id=${emailId}`);
+    console.log(`[inbound] body availability payload_html=${!!payloadHtml} payload_text=${!!payloadText} fetched_html=${!!fetchedHtml} fetched_text=${!!fetchedText}`);
 
     const rawAttachments = [...webhookAttachments];
     for (const attachment of fetchedEmail.attachments) {
@@ -265,7 +306,7 @@ export async function POST(req: NextRequest) {
         }
       } catch (e) {
         const message = e instanceof Error ? e.message : String(e);
-        console.error("[inbound] attachment retrieval failed:", { filename: att.filename, emailId, error: message });
+        console.error("[inbound] attachment retrieval failed:", { attachmentIndex: index, error: message });
         storedAttachments.push({
           filename: att.filename,
           content_type: att.content_type ?? "application/octet-stream",
@@ -377,7 +418,7 @@ export async function POST(req: NextRequest) {
       if (ticketErr) {
         console.error("[inbound] ops_ticket insert error:", ticketErr.message);
       } else {
-        console.log(`[inbound] ops_ticket created ${ticketId} from ${fromEmail}`);
+        console.log(`[inbound] ops_ticket created ${ticketId}`);
         // ACK email back to sender
         if (resendKey) {
           const senderFirst = (fromName || "").split(/[\s—-]+/).filter(Boolean)[0] || "there";
@@ -397,7 +438,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true });
   } catch (e) {
-    console.error("inbound email webhook error:", e);
+    console.error("[inbound] webhook processing failed:", e instanceof Error ? e.message : "Unknown error");
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
