@@ -6,7 +6,7 @@
  */
 import { NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
-import { notifyJordanWA } from "@/lib/wa-notify";
+import { notifyJordanWA, notifyOwenBusinessWA } from "@/lib/wa-notify";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -106,7 +106,7 @@ export async function GET(req: NextRequest) {
   const dateLabel = jaDate(now);
   const lines: string[] = [];
 
-  lines.push(`Good morning, Owen. Ferguson Law update for ${dateLabel}.`, "");
+  lines.push(`Good morning, Jordan. Ferguson Law operator update for ${dateLabel}.`, "");
 
   if (appts.length === 0) {
     lines.push("Appointments today: None.");
@@ -139,18 +139,37 @@ export async function GET(req: NextRequest) {
   lines.push("", "Admin: https://ferguson-law.com/admin", "— J Supreme Tech");
 
   const msg = lines.join("\n");
+  const owenBookingLines = [
+    `Good morning, Owen. Ferguson Law bookings for ${dateLabel}.`,
+    "",
+    ...(appts.length === 0
+      ? ["Appointments today: None."]
+      : [
+          `Appointments today (${appts.length}):`,
+          ...appts.flatMap((appointment) => [
+            `  ${jaTime(appointment.starts_at)} — ${appointment.name || "Unknown"} | ${appointment.service}`,
+            ...(appointment.email ? [`    ${appointment.email}${appointment.phone ? ` | ${appointment.phone}` : ""}`] : []),
+            ...((appointment.meta as Record<string, unknown> | null)?.meeting_url
+              ? [`    Meeting: ${(appointment.meta as Record<string, unknown>).meeting_url}`]
+              : [`    Ref: ${appointment.ref}`]),
+          ]),
+        ]),
+    "",
+    "Admin: https://ferguson-law.com/admin",
+  ].join("\n");
 
-  const [whatsapp, emailSent] = await Promise.all([
+  const [whatsapp, emailSent, owenWhatsapp] = await Promise.all([
     notifyJordanWA(msg),
     sendEmail(`Ferguson Law — ${dateLabel}`, msg),
+    notifyOwenBusinessWA(owenBookingLines),
   ]);
 
-  const ok = whatsapp.failed === 0 && emailSent;
+  const ok = whatsapp.failed === 0 && emailSent && owenWhatsapp.failed === 0;
   return Response.json({
     ok,
     bookings: appts.length,
     leads: leads.length,
     unread: unread.length,
-    delivery: { whatsapp, email: emailSent },
+    delivery: { jordanWhatsapp: whatsapp, jordanEmail: emailSent, owenBookingWhatsapp: owenWhatsapp },
   }, { status: ok ? 200 : 502 });
 }

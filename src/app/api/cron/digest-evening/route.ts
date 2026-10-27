@@ -5,7 +5,7 @@
  */
 import { NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
-import { notifyJordanWA } from "@/lib/wa-notify";
+import { notifyJordanWA, notifyOwenBusinessWA } from "@/lib/wa-notify";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -72,6 +72,14 @@ export async function GET(req: NextRequest) {
   lines.push("fergusonlawja.com/admin");
 
   void notifyJordanWA(lines.join("\n"));
+  const owenBookingSummary = [
+    `BOOKINGS TODAY — ${jaDateShort(now)}`,
+    `Total: ${appts.length}`,
+    `Confirmed: ${confirmed}`,
+    `Pending payment: ${pending}`,
+    "fergusonlawja.com/admin",
+  ].join("\n");
+  void notifyOwenBusinessWA(owenBookingSummary);
 
   return Response.json({ ok: true, bookings: appts.length, leads: leads.length, reminders: reminders.length });
 }

@@ -20,7 +20,7 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { sendBookingReminder, sendAdminDigest, sendAdminAttendanceAlert } from "@/lib/email/send";
 import { fullWhenLabel } from "@/lib/booking/format";
 import { TZ } from "@/lib/booking/availability";
-import { notifyJordanWA } from "@/lib/wa-notify";
+import { notifyOwenBusinessWA } from "@/lib/wa-notify";
 import { sendWhatsAppText } from "@/lib/whatsapp.server";
 import { pushToAdmins } from "@/lib/push";
 
@@ -134,7 +134,7 @@ export async function GET(req: NextRequest) {
           fullWhenLabel(row.starts_at),
           ...(meetingUrl ? [`Zoom: ${meetingUrl}`] : []),
         ];
-        void notifyJordanWA(waLines.join("\n"));
+        void notifyOwenBusinessWA(waLines.join("\n"));
 
         // WA reminder to client
         if (row.email) {
@@ -209,7 +209,7 @@ export async function GET(req: NextRequest) {
         ref: a.ref,
       });
     }
-    void notifyJordanWA(
+    void notifyOwenBusinessWA(
       `ACTION REQUIRED\nName: ${a.name || "A client"}\nService: ${a.service || "Consultation"}\nTime: ${timeLabel}\nMark outcome: fergusonlawja.com/admin`
     );
   }
@@ -248,7 +248,7 @@ export async function GET(req: NextRequest) {
       const digestMsg = n === 0
         ? `GOOD MORNING\nNo appointments today (${todayKey}).\nfergusonlawja.com/admin`
         : `GOOD MORNING\n${n} appointment${n === 1 ? "" : "s"} today (${todayKey}).\nfergusonlawja.com/admin`;
-      void notifyJordanWA(digestMsg);
+      void notifyOwenBusinessWA(digestMsg);
     }
   }
 

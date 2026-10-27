@@ -4,6 +4,7 @@
  */
 
 const JORDAN_JID = "16582182282@s.whatsapp.net";
+const OWEN_JID = "18768405862@s.whatsapp.net";
 
 type WhatsAppDelivery = { sent: number; failed: number };
 
@@ -51,7 +52,12 @@ async function sendWA(jids: string[], text: string): Promise<WhatsAppDelivery> {
   return { sent, failed };
 }
 
-/** Operator alerts go only to Jordan; never mirror client or personal data to Owen. */
+/** General operator alerts go only to Jordan. */
 export async function notifyJordanWA(text: string): Promise<WhatsAppDelivery> {
   return sendWA([JORDAN_JID], text);
+}
+
+/** Booking and Owen-mailbox alerts go only to Owen. */
+export async function notifyOwenBusinessWA(text: string): Promise<WhatsAppDelivery> {
+  return sendWA([OWEN_JID], text);
 }

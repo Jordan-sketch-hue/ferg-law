@@ -26,7 +26,7 @@ import { isServiceId, serviceTitle } from "@/lib/booking/services";
 import { fullWhenLabel, dateChipLabel, slotTimeLabel } from "@/lib/booking/format";
 import { sendBookingConfirmation } from "@/lib/email/send";
 import { logReminderEvent } from "@/lib/attention/reminderLog";
-import { notifyJordanWA } from "@/lib/wa-notify";
+import { notifyOwenBusinessWA } from "@/lib/wa-notify";
 import { sendWhatsAppText } from "@/lib/whatsapp.server";
 import { pushToAdmins } from "@/lib/push";
 import { consultFee } from "@/lib/payments/fees";
@@ -273,7 +273,7 @@ export async function POST(req: NextRequest) {
           email_id: null,
         });
       } catch { /* swallow — notification already sent */ }
-      void notifyJordanWA(`NEW BOOKING (free)\nName: ${name}\nService: ${title}\nWhen: ${whenLabel}\nEmail: ${email}\nPhone: ${phone}\nRef: ${ref}`);
+      void notifyOwenBusinessWA(`NEW BOOKING (free)\nName: ${name}\nService: ${title}\nWhen: ${whenLabel}\nEmail: ${email}\nPhone: ${phone}\nRef: ${ref}`);
       void pushToAdmins(`New Booking — ${name}`, `${title} · ${whenLabel}`, "/admin?tab=bookings", "fl-booking");
 
       return Response.json({ ok: true, ref, free: true, startsAtLabel: whenLabel });
@@ -379,7 +379,7 @@ export async function POST(req: NextRequest) {
         email_id: null,
       });
     } catch { /* swallow */ }
-    void notifyJordanWA(`NEW BOOKING (pending payment)\nName: ${name}\nService: ${title}\nWhen: ${whenLabel}\nAmount: J${amount.toLocaleString()}\nEmail: ${email}\nRef: ${ref}`);
+    void notifyOwenBusinessWA(`NEW BOOKING (pending payment)\nName: ${name}\nService: ${title}\nWhen: ${whenLabel}\nAmount: J${amount.toLocaleString()}\nEmail: ${email}\nRef: ${ref}`);
     void pushToAdmins(`New Booking — ${name}`, `${title} · ${whenLabel} · payment pending`, "/admin?tab=bookings", "fl-booking");
 
     return Response.json({ ok: true, ref, payUrl, amount });
