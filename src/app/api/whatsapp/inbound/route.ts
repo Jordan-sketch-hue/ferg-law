@@ -5,7 +5,6 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const OWEN_JID = "18768405862@s.whatsapp.net";
-const JORDAN_JID = "16582182282@s.whatsapp.net";
 
 const ACK_MESSAGE =
   "Message received. Jordan will get back to you shortly. â€” Ferguson Law / J Supreme Tech";
@@ -74,11 +73,7 @@ export async function POST(req: NextRequest) {
       body.name ??
       jid.replace("@s.whatsapp.net", "");
 
-    const isKnown =
-      jid === OWEN_JID ||
-      jid === JORDAN_JID ||
-      jid.includes("18768405862") ||
-      jid.includes("16582182282");
+    const isKnown = jid === OWEN_JID;
 
     if (!isKnown) {
       return NextResponse.json({ ok: true, skipped: true });

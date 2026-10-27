@@ -1,12 +1,11 @@
 /**
  * GET /api/cron/digest-evening
  * Runs daily at 6:00 PM JA time (23:00 UTC).
- * Sends Owen an end-of-day summary: bookings created, leads captured, reminders sent.
+ * Sends Jordan an end-of-day operator summary: bookings, leads, reminders sent.
  */
 import { NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
-import { notifyOwenWA } from "@/lib/wa-notify";
-// TODO: switch notifyOwenWA -> notifyOwenWA when Owen is onboarded; sending to Jordan for preview
+import { notifyJordanWA } from "@/lib/wa-notify";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -72,7 +71,7 @@ export async function GET(req: NextRequest) {
   lines.push("");
   lines.push("fergusonlawja.com/admin");
 
-  void notifyOwenWA(lines.join("\n"));
+  void notifyJordanWA(lines.join("\n"));
 
   return Response.json({ ok: true, bookings: appts.length, leads: leads.length, reminders: reminders.length });
 }

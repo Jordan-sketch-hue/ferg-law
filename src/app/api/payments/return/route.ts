@@ -21,7 +21,7 @@ import { logReminderEvent } from "@/lib/attention/reminderLog";
 
 import { createMeetingRoom } from "@/lib/meetings/create";
 import { sendWhatsAppText } from "@/lib/whatsapp.server";
-import { notifyOwenWA } from "@/lib/wa-notify";
+import { notifyJordanWA } from "@/lib/wa-notify";
 
 function normaliseOrderId(value: string | undefined): string | null {
   const raw = (value || "").trim();
@@ -144,7 +144,7 @@ export async function GET(req: NextRequest) {
         `\n\nRef: ${ref}\n\n━━━━━━━━━━━━━━━━━\n_On behalf of Ferguson Law Firm_\n_Powered by J Supreme Tech_`;
       void sendWhatsAppText(clientPhone, waConf);
     }
-    void notifyOwenWA(`PAID BOOKING\nName: ${row.r_name || "—"}\nService: ${row.r_service || "—"}\nRef: ${ref}`);
+    void notifyJordanWA(`PAID BOOKING\nName: ${row.r_name || "—"}\nService: ${row.r_service || "—"}\nRef: ${ref}`);
   }
 
   return redirect(req, ref, "paid");

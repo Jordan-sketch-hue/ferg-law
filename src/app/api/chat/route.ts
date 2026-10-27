@@ -4,7 +4,7 @@ import { systemPrompt } from "@/lib/chat/prompt";
 import { CHAT_TOOLS, executeTool } from "@/lib/chat/tools";
 import { generateReply, hasAnyLLMKey, type ChatMsg } from "@/lib/chat/llm";
 import { SITE } from "@/lib/site";
-import { notifyOwenWA } from "@/lib/wa-notify";
+import { notifyJordanWA } from "@/lib/wa-notify";
 import { pushToAdmins } from "@/lib/push";
 
 export const runtime = "nodejs";
@@ -103,7 +103,7 @@ export async function POST(req: Request) {
         .from("chat_conversations")
         .update({ last_message_at: new Date().toISOString(), unread_for_agent: 1 })
         .eq("id", cid);
-      void notifyOwenWA(
+      void notifyJordanWA(
         `LIVE CHAT - AGENT REQUESTED\nName: ${visitor.name || "website visitor"}\nView: fergusonlawja.com/admin`,
       );
       void pushToAdmins("Live Chat — Human Requested", visitor.name || "Website visitor", "/admin?tab=chats", "fl-chat");
@@ -139,7 +139,7 @@ export async function POST(req: Request) {
 
     // --- A human is handling this thread — do NOT call the model -----------
     if (isLiveChat) {
-      void notifyOwenWA(
+      void notifyJordanWA(
         `LIVE CHAT - NEW MESSAGE\nFrom: ${visitor.name || "website visitor"}\nMessage: ${incoming.substring(0, 120)}\nView: fergusonlawja.com/admin`,
       );
       void pushToAdmins("New Chat Message", `${visitor.name || "Website visitor"}: ${incoming.slice(0, 60)}`, "/admin?tab=chats", "fl-chat");

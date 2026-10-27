@@ -1,12 +1,12 @@
 /**
  * GET /api/cron/digest-morning
  * Runs daily at 8:00 AM JA time (13:00 UTC).
- * Sends Owen + Jordan a morning briefing: today's confirmed bookings,
+ * Sends the operator's morning briefing to Jordan only: confirmed bookings,
  * new leads, and unread inbox messages.
  */
 import { NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
-import { notifyOwenWA } from "@/lib/wa-notify";
+import { notifyJordanWA } from "@/lib/wa-notify";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -31,14 +31,12 @@ async function sendEmail(subject: string, text: string) {
     console.error("[digest-morning] Email delivery skipped: RESEND_API_KEY is not configured.");
     return false;
   }
-  const owenEmail = process.env.OWEN_EMAIL || "contact@fergusonlawja.com";
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       from: "Ferguson Law <contact@fergusonlawja.com>",
-      to: [owenEmail],
-      bcc: ["jordanrmorris01@icloud.com", "jordanmorrisr@gmail.com"],
+      to: ["jordanrmorris01@icloud.com", "jordanmorrisr@gmail.com"],
       subject,
       text,
     }),
@@ -143,7 +141,7 @@ export async function GET(req: NextRequest) {
   const msg = lines.join("\n");
 
   const [whatsapp, emailSent] = await Promise.all([
-    notifyOwenWA(msg),
+    notifyJordanWA(msg),
     sendEmail(`Ferguson Law — ${dateLabel}`, msg),
   ]);
 

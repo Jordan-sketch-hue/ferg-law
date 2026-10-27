@@ -6,7 +6,7 @@
 import { NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import { Resend } from "resend";
-import { notifyOwenWA } from "@/lib/wa-notify";
+import { notifyJordanWA } from "@/lib/wa-notify";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -87,8 +87,7 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  void notifyOwenWA(`${monthLabel} REPORT\nLeads: ${stats.newLeads}\nBookings: ${stats.booked}\nConversion: ${stats.conversionRate}%\nRetained matters: ${stats.retainedMatters}\nAdmin: fergusonlawja.com/admin`);
+  void notifyJordanWA(`${monthLabel} REPORT\nLeads: ${stats.newLeads}\nBookings: ${stats.booked}\nConversion: ${stats.conversionRate}%\nRetained matters: ${stats.retainedMatters}\nAdmin: fergusonlawja.com/admin`);
 
   return Response.json({ ok: true, month: monthLabel, stats });
 }
-

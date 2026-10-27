@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
-import { notifyOwenWA } from "@/lib/wa-notify";
+import { notifyJordanWA } from "@/lib/wa-notify";
 import { pushToAdmins } from "@/lib/push";
 import { SITE } from "@/lib/site";
 
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     text: ackText({ name, interestLabel }),
   });
 
-  void notifyOwenWA(`NEW ENQUIRY\nName: ${name}\nInterest: ${interestLabel}\nEmail: ${email}`);
+  void notifyJordanWA(`NEW ENQUIRY\nName: ${name}\nInterest: ${interestLabel}\nEmail: ${email}`);
   void pushToAdmins(`New Lead — ${name}`, interestLabel, "/admin?tab=leads", "fl-lead");
   return NextResponse.json({ ok: true });
 }
@@ -117,4 +117,3 @@ function ackText({ name, interestLabel }: { name: string; interestLabel: string 
     `${SITE.founder} · ${SITE.city}`,
   ].join("\n");
 }
-

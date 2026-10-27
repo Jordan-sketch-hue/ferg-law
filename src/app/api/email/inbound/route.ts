@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import { pushToAdmins } from "@/lib/push";
-import { notifyOwenWA } from "@/lib/wa-notify";
+import { notifyJordanWA } from "@/lib/wa-notify";
 import { Resend } from "resend";
 
 // -- Spam heuristics ----------------------------------------------------------
@@ -369,11 +369,11 @@ export async function POST(req: NextRequest) {
         }),
       }).catch((e) => console.error("inbound forward email error:", e));
 
-      // WA alert to Owen+Jordan for every real inbound email
+      // Alert Jordan only; inbound sender details are private to the operator.
       const attNote = storedAttachments.length > 0
         ? ` (${storedAttachments.length} attachment${storedAttachments.length > 1 ? "s" : ""} attached — check admin inbox)`
         : "";
-      void notifyOwenWA(
+      void notifyJordanWA(
         `Ferguson Law — new email from ${fromName ? `${fromName} <${fromEmail}>` : fromEmail}\nSubject: ${cleanSubject}${attNote}\n\nAdmin inbox: https://ferguson-law.com/admin?tab=email`,
       );
     }

@@ -1,7 +1,7 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { createAdminClient } from "@/lib/supabase/server";
 import { createClient } from "@/lib/supabase/client";
-import { notifyOwenWA } from "@/lib/wa-notify";
+import { notifyJordanWA } from "@/lib/wa-notify";
 import { sendBookingConfirmation } from "@/lib/email/send";
 
 /**
@@ -369,8 +369,8 @@ export async function executeTool(
       ? ` at ${jamaicaLabel(new Date(slotIso))} Jamaica time`
       : "";
 
-    // Notify Owen via WhatsApp
-    void notifyOwenWA(
+    // Keep booking details in Jordan's operator alerts.
+    void notifyJordanWA(
       `NEW BOOKING (chat)\nName: ${leadName}\nService: ${service ?? "Consultation"}\nRef: ${ref}${slotIso ? `\nWhen: ${jamaicaLabel(new Date(slotIso))}` : preferred ? `\nPreferred: ${preferred}` : ""}\nContact: ${phone ?? email ?? "none provided"}`,
     );
 
