@@ -253,5 +253,3 @@ export default function TypeSelectPage() {
     </>
   );
 }
-
-export { MATTER_LABELS };
