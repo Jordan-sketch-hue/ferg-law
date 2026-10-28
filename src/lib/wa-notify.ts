@@ -8,14 +8,23 @@ const OWEN_JID = "18768405862@s.whatsapp.net";
 
 type WhatsAppDelivery = { sent: number; failed: number };
 
-async function sendWA(jids: string[], text: string): Promise<WhatsAppDelivery> {
-  const secret = process.env.WHATSAPP_BOT_SECRET ?? process.env.NEXT_PUBLIC_WHATSAPP_BOT_SECRET ?? "";
-  const botUrl = process.env.WHATSAPP_BOT_URL?.trim().replace(/\/+$/, "");
+type BotConfig = {
+  url: string | undefined;
+  secret: string | undefined;
+  urlVariable: string;
+  secretVariable: string;
+  recipient: string;
+};
+
+async function sendWA(jids: string[], text: string, config: BotConfig): Promise<WhatsAppDelivery> {
+  const secret = config.secret?.trim();
+  const botUrl = config.url?.trim().replace(/\/+$/, "");
   if (!secret || !botUrl) {
-    console.error("[whatsapp] Notification skipped: missing configuration.", {
+    console.error("[whatsapp] Notification skipped: sender configuration is incomplete.", {
+      recipient: config.recipient,
       missing: [
-        ...(!secret ? ["WHATSAPP_BOT_SECRET"] : []),
-        ...(!botUrl ? ["WHATSAPP_BOT_URL"] : []),
+        ...(!botUrl ? [config.urlVariable] : []),
+        ...(!secret ? [config.secretVariable] : []),
       ],
     });
     return { sent: 0, failed: jids.length };
@@ -25,7 +34,7 @@ async function sendWA(jids: string[], text: string): Promise<WhatsAppDelivery> {
   let sent = 0;
   let failed = 0;
   for (const [index, jid] of jids.entries()) {
-    const recipient = jid === JORDAN_JID ? "Jordan" : `recipient ${index + 1}`;
+    const recipient = jids.length === 1 ? config.recipient : `recipient ${index + 1}`;
     try {
       const response = await fetch(sendUrl, {
         method: "POST",
@@ -54,10 +63,22 @@ async function sendWA(jids: string[], text: string): Promise<WhatsAppDelivery> {
 
 /** General operator alerts go only to Jordan. */
 export async function notifyJordanWA(text: string): Promise<WhatsAppDelivery> {
-  return sendWA([JORDAN_JID], text);
+  return sendWA([JORDAN_JID], text, {
+    url: process.env.WHATSAPP_BOT_URL,
+    secret: process.env.WHATSAPP_BOT_SECRET ?? process.env.NEXT_PUBLIC_WHATSAPP_BOT_SECRET,
+    urlVariable: "WHATSAPP_BOT_URL",
+    secretVariable: "WHATSAPP_BOT_SECRET",
+    recipient: "Jordan",
+  });
 }
 
 /** Booking and Owen-mailbox alerts go only to Owen. */
 export async function notifyOwenBusinessWA(text: string): Promise<WhatsAppDelivery> {
-  return sendWA([OWEN_JID], text);
+  return sendWA([OWEN_JID], text, {
+    url: process.env.WHATSAPP_BOT_URL,
+    secret: process.env.WHATSAPP_BOT_SECRET ?? process.env.NEXT_PUBLIC_WHATSAPP_BOT_SECRET,
+    urlVariable: "WHATSAPP_BOT_URL",
+    secretVariable: "WHATSAPP_BOT_SECRET",
+    recipient: "Owen",
+  });
 }

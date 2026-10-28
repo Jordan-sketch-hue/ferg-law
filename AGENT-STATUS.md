@@ -1,26 +1,50 @@
 # Ferguson Law — Agent Status & Change Log
 
-> Last updated: 2026-10-05
-> Supabase project: **ibtadbwtrxglujkzqofs** (J Supreme Conglomerate — ONLY correct DB, NEVER ciggiwpztuxkmbaccrlp)
-> Production URL: ferguson-law.vercel.app (MUST alias after every deploy)
+> **Current status verified 2026-10-27; this header supersedes the older historical
+> status sections below.** See [WhatsApp alert operations](docs/WHATSAPP-ALERTS-OPERATIONS.md)
+> for the evidence, routing map, privacy boundary, and open verification limits.
+> Supabase project: **ibtadbwtrxglujkzqofs** (ONLY correct DB; NEVER
+> `ciggiwpztuxkmbaccrlp`). Primary domain: `https://ferguson-law.com`.
+
+## Latest production deployment
+
+- Deployment `dpl_AuiE9m6qCGcD6vMEGWj6BPFjDt5C` was **Ready** for production.
+- The required project alias was applied and Vercel inspection confirmed the
+  alias pointed to that deployment.
+- The primary custom-domain DNS check failed from the workstation; domain
+  resolution is not confirmed by this record.
+- The deploy used local source changes not present in the `main` commit
+  (`bb79a7d`) at deploy time. Those tracked changes remained uncommitted in the
+  worktree. Check `git status` before pulling or editing; do not discard them.
+- TypeScript, Webpack production build, focused server/API lint, and mocked
+  alert-recipient checks passed. No live WhatsApp test message was sent.
+- Owen's firm-record alerts and Jordan's operator alerts use the same linked
+  sender but separate one-recipient JIDs. Personal WhatsApp conversation text
+  is not an input to Owen's business alert functions.
+- Reader safeguards and dated operating settings are documented in the linked
+  operations record. The production sender URL and per-matter Owen assignment
+  are not independently verified.
 
 ---
 
-## PUSH STATUS
+## Historical status (2026-10-05 snapshot; superseded)
 
-**NOT pushed to production as of 2026-10-05. Jordan must explicitly approve before any deploy.**
+The entries below describe the repository state on 2026-10-05, not current
+production. Do not use their `NOT pushed` labels or test checklist as today's
+deployment status. Confirm current production status using Vercel and the
+operations record above.
 
 Deploy sequence:
 ```
 cd "C:\Users\jader\J Supreme Tech\ferguson-law"
 git pull origin main
 vercel deploy --prod --scope team_OvCeLYYttwt9SMpreFi8Fns5
-vercel alias set <deployment-url> ferguson-law.vercel.app
+# Apply the required project alias as specified in AGENTS.md.
 ```
 
 ---
 
-## COMMITS READY FOR PRODUCTION (not pushed)
+## Historical commit list (2026-10-05 snapshot; not current deployment status)
 
 | Commit | Description |
 |--------|-------------|
@@ -179,7 +203,7 @@ AUTH: Admin token validated via fl_is_admin(p_token). Token from localStorage ke
 ## ALWAYS-ON RULES (every agent working on this repo must follow)
 
 - Supabase: ALWAYS ibtadbwtrxglujkzqofs, NEVER ciggiwpztuxkmbaccrlp
-- After every deploy: vercel alias set <url> ferguson-law.vercel.app + --scope team_OvCeLYYttwt9SMpreFi8Fns5
+- After every deploy: apply the required Ferguson Law project alias per `AGENTS.md`
 - Before editing or deploying: git pull origin main first
 - Do NOT push to production without Jordan's explicit approval
 - Do NOT add JamProp/NLA integration

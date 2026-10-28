@@ -2641,7 +2641,13 @@ function ChatsTable({ convos, loading }: { convos: Conversation[]; loading: bool
         setRepliedIds((prev) => new Set([...prev, selected.id]));
         setWaText("");
         setTimeout(() => msgEndRef.current?.scrollIntoView({ behavior: "smooth" }), 80);
-      } else { setWaResult({ ok: false, msg: `Failed (${res.status})` }); }
+      } else {
+        const result = await res.json().catch(() => null);
+        setWaResult({
+          ok: false,
+          msg: typeof result?.error === "string" ? result.error : `Failed (${res.status})`,
+        });
+      }
     } catch (e) {
       setWaResult({ ok: false, msg: e instanceof Error ? e.message : "Send failed" });
     }

@@ -1,7 +1,10 @@
-# Client update — Owen K. Ferguson (DRAFT for Jordan to verify & send)
+# Client update — Ferguson Law (historical draft)
 
-> Jordan: review, then send via WhatsApp (and/or email). Live link is in.
-> Owen's number: +1 876 840 5862 · owenkferguson@hotmail.com
+> **Do not send this draft unchanged.** It was written before later platform
+> changes and contains stale feature/roadmap claims. Use only the approved
+> custom domain `https://ferguson-law.com` after confirming it resolves. For
+> current deployment and WhatsApp status, see
+> [WhatsApp alert operations](WHATSAPP-ALERTS-OPERATIONS.md).
 
 ---
 
@@ -10,7 +13,7 @@
 > Hi Owen — Jordan here with a big update on the Ferguson Law platform. 🚀
 >
 > We've rebuilt the site into a proper system (not just a page). Live to preview now:
-> 👉 https://ferguson-law.vercel.app
+> 👉 https://ferguson-law.com
 >
 > What's already working:
 > • The full firm website — refreshed, faster, mobile-perfect
@@ -19,10 +22,9 @@
 >   consults even after hours — with one tap to a real person or WhatsApp
 > • Every enquiry now lands in one place so nothing slips through
 >
-> Have a click around the booking and the chat bubble (bottom-right). Then I'd love
-> 15 mins to show you the back-office (your client list / leads) and the next pieces:
-> online payments, the H.O.M.E. e-book, email marketing, and self-managed profiles
-> for the realtors/valuators/surveyors you work with.
+> Have a look at the booking flow and the chat bubble (bottom-right). The admin,
+> client-portal, and H.O.M.E. workflows have since expanded; confirm the current
+> production state and payment configuration before describing availability.
 >
 > A few things I'd recommend we add for a firm like yours are below 👇
 
@@ -37,7 +39,7 @@ Hi Owen,
 Quick but exciting update. We've taken the Ferguson Law site and rebuilt it into a
 real client platform. Here's the live preview — have a click around:
 
-**https://ferguson-law.vercel.app**
+**https://ferguson-law.com**
 
 **What's working today**
 - The complete firm website, refreshed and faster, flawless on mobile.
@@ -51,10 +53,9 @@ real client platform. Here's the live preview — have a click around:
 - **One pipeline** — every enquiry from the form, the booking and the chatbot lands
   in a single list, so no lead is ever lost.
 
-**What's next (in build / ready to wire)**
-Online payments (consult deposits/retainers), a secure client portal, the H.O.M.E.
-e-book as a lead magnet, branded email + simple email marketing, and self-managed
-profile pages for the professionals you refer to.
+**Before sending:** confirm the current payment mode, custom-domain reachability,
+and which admin/client portal features Owen should be shown. Do not describe live
+payment processing unless production has been separately verified.
 
 Could we grab **15 minutes** this week? I'll walk you through the back-office and we
 can lock the few details I need from you (your fee schedule, office address, and
@@ -62,7 +63,7 @@ whether you have a card-payment account set up).
 
 Warmly,
 Jordan
-J Supreme Tech · +1 876 840 5862
+J Supreme Tech
 
 ---
 

@@ -15,13 +15,24 @@
 Full-stack law firm platform for Owen Ferguson (Ferguson Law, Jamaica).
 Services: online booking + WiPay payment → consultation confirmation, AI chatbot, admin CMS, inbound email triage, H.O.M.E. property portal sub-brand, client portal with KYC + matter files + Zoom, push notifications, blast emails.
 
+## Current WhatsApp deployment handoff
+
+The latest verified WhatsApp alert deployment and privacy boundaries are recorded
+in [docs/WHATSAPP-ALERTS-OPERATIONS.md](docs/WHATSAPP-ALERTS-OPERATIONS.md).
+Read it before changing alert routing, reader settings, or deployment state. It
+records a Ready production deployment from 2026-10-27, the source delta that was
+deployed but not committed to `main`, the shared linked-device transport with
+separate recipient JIDs, and the still-unverified production sender URL and
+matter-assignment scope. Do not claim live delivery or Owen-only matter
+assignment beyond the evidence in that operations record.
+
 ---
 
 ## Tech Stack
 
 | Layer | Choice |
 |-------|--------|
-| Framework | Next.js 15 (App Router) / TypeScript |
+| Framework | Next.js 16 (App Router) / TypeScript |
 | Styling | Tailwind 4 + custom CSS variables (see design system) |
 | Database | Supabase `ibtadbwtrxglujkzqofs` (fl_* tables) |
 | Auth | Supabase Auth (admin) + custom passkey/WebAuthn (admin) + access-code login (clients) |
@@ -58,6 +69,8 @@ Services: online booking + WiPay payment → consultation confirmation, AI chatb
 | `VAPID_PRIVATE_KEY` | Web push VAPID private key |
 | `VAPID_SUBJECT` | mailto: URI for VAPID |
 | `CRON_SECRET` | Bearer token for cron route auth |
+| `WHATSAPP_BOT_URL` | Existing linked WhatsApp sender used for routed Ferguson Law messages |
+| `WHATSAPP_BOT_SECRET` | Server-only secret for the linked WhatsApp sender |
 | `NEXT_PUBLIC_SITE_URL` | `https://ferguson-law.com` |
 | `CHAT_PROVIDER_ORDER` | `groq,gemini,openrouter` (optional override) |
 
@@ -311,7 +324,15 @@ Server routes use `createClient` from `@supabase/ssr` with service role key dire
 
 ### `src/lib/whatsapp.server.ts`
 - Server-only WhatsApp message sending
-- Used by booking confirmation flow
+- Used by client booking confirmations, reminders, admin sends, and matter updates
+- Uses the existing linked WhatsApp sender; business workflows decide the recipient and approved message content
+
+### WhatsApp sender separation
+- `notifyJordanWA()` sends operator alerts only to Jordan's JID.
+- `notifyOwenBusinessWA()` sends firm-record alerts only to Owen's JID through the same linked sender.
+- These alert helpers are called by firm booking, reminder, digest, and Owen-mailbox workflows; never pass personal WhatsApp chat contents to them.
+- Keep sender credentials server-side. Do not configure or rely on a `NEXT_PUBLIC_` secret.
+- Live transport and privacy verification details are in [docs/WHATSAPP-ALERTS-OPERATIONS.md](docs/WHATSAPP-ALERTS-OPERATIONS.md).
 
 ### `src/lib/analytics.ts`
 - Event tracking helpers
