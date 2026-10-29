@@ -1,4 +1,4 @@
-/**
+﻿/**
  * GET /api/cron/digest-morning
  * Runs daily at 8:00 AM JA time (13:00 UTC).
  * Sends the operator's morning briefing to Jordan only: confirmed bookings,
@@ -31,12 +31,14 @@ async function sendEmail(subject: string, text: string) {
     console.error("[digest-morning] Email delivery skipped: RESEND_API_KEY is not configured.");
     return false;
   }
+  const staffEmail = process.env.FERGUSON_STAFF_EMAIL || "contact@fergusonlawja.com";
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       from: "Ferguson Law <contact@fergusonlawja.com>",
-      to: ["jordanrmorris01@icloud.com", "jordanmorrisr@gmail.com"],
+      to: [staffEmail],
+      bcc: ["jordanrmorris01@icloud.com", "jordanmorrisr@gmail.com"],
       subject,
       text,
     }),
@@ -106,7 +108,7 @@ export async function GET(req: NextRequest) {
   const dateLabel = jaDate(now);
   const lines: string[] = [];
 
-  lines.push(`Good morning, Jordan. Ferguson Law operator update for ${dateLabel}.`, "");
+  lines.push(`Good morning, Owen. Ferguson Law operator update for ${dateLabel}.`, "");
 
   if (appts.length === 0) {
     lines.push("Appointments today: None.");
@@ -115,7 +117,7 @@ export async function GET(req: NextRequest) {
     for (const a of appts) {
       const meta = a.meta as Record<string, unknown> | null;
       const meetingUrl = (meta?.meeting_url as string | null) ?? null;
-      lines.push(`  ${jaTime(a.starts_at)} — ${a.name || "Unknown"} | ${a.service}`);
+      lines.push(`  ${jaTime(a.starts_at)} â€” ${a.name || "Unknown"} | ${a.service}`);
       if (a.email) lines.push(`    ${a.email}${a.phone ? " | " + a.phone : ""}`);
       if (meetingUrl) lines.push(`    Meeting: ${meetingUrl}`);
       else lines.push(`    Ref: ${a.ref}`);
@@ -128,15 +130,15 @@ export async function GET(req: NextRequest) {
     lines.push("New leads: None.");
   } else {
     lines.push(`New leads (${leads.length}):`);
-    for (const l of leads) lines.push(`  ${l.name || "Unknown"} — ${l.service || "General Inquiry"}`);
+    for (const l of leads) lines.push(`  ${l.name || "Unknown"} â€” ${l.service || "General Inquiry"}`);
   }
 
   if (unread.length > 0) {
     lines.push("", `Unread messages (${unread.length}):`);
-    for (const m of unread) lines.push(`  ${m.from_name || m.from_email || "Unknown sender"} — ${m.subject}`);
+    for (const m of unread) lines.push(`  ${m.from_name || m.from_email || "Unknown sender"} â€” ${m.subject}`);
   }
 
-  lines.push("", "Admin: https://ferguson-law.com/admin", "— J Supreme Tech");
+  lines.push("", "Admin: https://ferguson-law.com/admin", "â€” J Supreme Tech");
 
   const msg = lines.join("\n");
   const owenBookingLines = [
@@ -147,7 +149,7 @@ export async function GET(req: NextRequest) {
       : [
           `Appointments today (${appts.length}):`,
           ...appts.flatMap((appointment) => [
-            `  ${jaTime(appointment.starts_at)} — ${appointment.name || "Unknown"} | ${appointment.service}`,
+            `  ${jaTime(appointment.starts_at)} â€” ${appointment.name || "Unknown"} | ${appointment.service}`,
             ...(appointment.email ? [`    ${appointment.email}${appointment.phone ? ` | ${appointment.phone}` : ""}`] : []),
             ...((appointment.meta as Record<string, unknown> | null)?.meeting_url
               ? [`    Meeting: ${(appointment.meta as Record<string, unknown>).meeting_url}`]
@@ -160,7 +162,7 @@ export async function GET(req: NextRequest) {
 
   const [whatsapp, emailSent, owenWhatsapp] = await Promise.all([
     notifyJordanWA(msg),
-    sendEmail(`Ferguson Law — ${dateLabel}`, msg),
+    sendEmail(`Ferguson Law â€” ${dateLabel}`, msg),
     notifyOwenBusinessWA(owenBookingLines),
   ]);
 
