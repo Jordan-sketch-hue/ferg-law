@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
   }
 
   const msg = await client.messages.create({
-    model: "claude-haiku-4-5",
+    model: "claude-haiku-5-5",
     max_tokens: 400,
     messages: [
       {
@@ -30,4 +30,3 @@ Return ONLY the rewritten text. No explanation, no quotes, no preamble.`,
   const result = msg.content[0].type === "text" ? msg.content[0].text.trim() : "";
   return NextResponse.json({ result });
 }
-
