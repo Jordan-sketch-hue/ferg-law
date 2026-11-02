@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 export const dynamic = "force-dynamic";
 
@@ -87,6 +87,7 @@ interface Matter {
   professional_name: string | null;
   professional_whatsapp: string | null;
   professional_phone: string | null;
+  preliminary_summary: { objective?: string; recommendation?: string; how_we_assist?: string; expected_timing?: string; what_happens_next?: string; created_at?: string } | null;
   milestones: Milestone[];
   messages: Message[];
   files: MatterFile[];
@@ -552,7 +553,7 @@ function ClientDashboardInner() {
       const { data: mattersRaw } = await supabase()
         .from("fl_client_matters")
         .select(`
-          id, matter_type, workflow_type, current_phase, status, kyc_status, title, notes, created_at,
+          id, matter_type, workflow_type, current_phase, status, kyc_status, title, notes, preliminary_summary, created_at,
           fl_partners!professional_id (business_name, phone, whatsapp)
         `)
         .eq("client_id", user.id)
@@ -579,6 +580,7 @@ function ClientDashboardInner() {
           title: m.title as string | null,
           notes: m.notes as string | null,
           created_at: m.created_at as string,
+          preliminary_summary: (m.preliminary_summary as Matter["preliminary_summary"]) ?? null,
           professional_name: p?.business_name ?? null,
           professional_phone: p?.phone ?? null,
           professional_whatsapp: p?.whatsapp ?? null,
@@ -1001,6 +1003,44 @@ function MatterPane({
         {/* TIMELINE */}
         {tab === "timeline" && (
           <div>
+            {matter.preliminary_summary && (
+              <div style={{ background: "#fdf9ef", border: "1px solid #e8d9a0", borderRadius: 10, padding: "18px 20px", marginBottom: 24 }}>
+                <div style={{ fontWeight: 700, fontSize: 13, color: "#8a6a22", marginBottom: 12, letterSpacing: "0.04em", textTransform: "uppercase" }}>Preliminary Summary</div>
+                {matter.preliminary_summary.objective && (
+                  <div style={{ marginBottom: 10 }}>
+                    <div style={{ fontWeight: 600, fontSize: 13, color: "var(--ink)", marginBottom: 3 }}>Objective</div>
+                    <div style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.6 }}>{matter.preliminary_summary.objective}</div>
+                  </div>
+                )}
+                {matter.preliminary_summary.recommendation && (
+                  <div style={{ marginBottom: 10 }}>
+                    <div style={{ fontWeight: 600, fontSize: 13, color: "var(--ink)", marginBottom: 3 }}>Recommendation</div>
+                    <div style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.6 }}>{matter.preliminary_summary.recommendation}</div>
+                  </div>
+                )}
+                {matter.preliminary_summary.how_we_assist && (
+                  <div style={{ marginBottom: 10 }}>
+                    <div style={{ fontWeight: 600, fontSize: 13, color: "var(--ink)", marginBottom: 3 }}>How We Assist</div>
+                    <div style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.6 }}>{matter.preliminary_summary.how_we_assist}</div>
+                  </div>
+                )}
+                {matter.preliminary_summary.expected_timing && (
+                  <div style={{ marginBottom: 10 }}>
+                    <div style={{ fontWeight: 600, fontSize: 13, color: "var(--ink)", marginBottom: 3 }}>Expected Timing</div>
+                    <div style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.6 }}>{matter.preliminary_summary.expected_timing}</div>
+                  </div>
+                )}
+                {matter.preliminary_summary.what_happens_next && (
+                  <div style={{ marginBottom: 10 }}>
+                    <div style={{ fontWeight: 600, fontSize: 13, color: "var(--ink)", marginBottom: 3 }}>What Happens Next</div>
+                    <div style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.6 }}>{matter.preliminary_summary.what_happens_next}</div>
+                  </div>
+                )}
+                {matter.preliminary_summary.created_at && (
+                  <div style={{ fontSize: 11, color: "#bbb", marginTop: 8 }}>Issued {new Date(matter.preliminary_summary.created_at).toLocaleDateString("en-JM", { year: "numeric", month: "long", day: "numeric" })}</div>
+                )}
+              </div>
+            )}
             <PhaseStepper currentPhase={matter.current_phase} />
             {phases.length === 0 ? (
               <p style={{ color: "var(--muted)", fontSize: 14 }}>No milestones set up yet.</p>
@@ -1392,3 +1432,4 @@ function KycField({ label, children }: { label: string; children: React.ReactNod
     </div>
   );
 }
+
