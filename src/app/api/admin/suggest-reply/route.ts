@@ -50,7 +50,7 @@ Write a professional, warm, and concise reply. Rules:
     try {
       const client = new Anthropic({ apiKey });
       const msg = await client.messages.create({
-        model: "claude-haiku-4-5-20251001",
+        model: "claude-haiku-4-5",
         max_tokens: 350,
         messages: [{ role: "user", content: prompt }],
       });
@@ -82,3 +82,4 @@ Write a professional, warm, and concise reply. Rules:
       : "AI drafting is not configured. Contact the site administrator.",
   }, { status: hasAnyLLMKey() ? 502 : 503 });
 }
+

@@ -1,4 +1,4 @@
-import Anthropic from "@anthropic-ai/sdk";
+﻿import Anthropic from "@anthropic-ai/sdk";
 import { createAdminClient } from "@/lib/supabase/server";
 import { systemPrompt } from "@/lib/chat/prompt";
 import { CHAT_TOOLS, executeTool } from "@/lib/chat/tools";
@@ -10,7 +10,7 @@ import { pushToAdmins } from "@/lib/push";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const MODEL = process.env.CHAT_MODEL || "claude-haiku-4-5-20251001";
+const MODEL = process.env.CHAT_MODEL || "claude-haiku-4-5";
 const MAX_TOOL_LOOPS = 4;
 const HISTORY_LIMIT = 20;
 
@@ -24,8 +24,8 @@ interface DbMessage {
 function cannedReply(): string {
   return `Thanks for reaching out to ${SITE.name}. Our live assistant isn't connected right now, but I can still help you get moving:
 
-• Book a consultation and the team will confirm a time.
-• Or message us on WhatsApp at ${SITE.whatsappDisplay}.
+â€¢ Book a consultation and the team will confirm a time.
+â€¢ Or message us on WhatsApp at ${SITE.whatsappDisplay}.
 
 How would you like to continue?`;
 }
@@ -57,7 +57,7 @@ export async function POST(req: Request) {
       if (data) {
         status = data.status as string;
       } else {
-        conversationId = undefined; // stale id — start fresh
+        conversationId = undefined; // stale id â€” start fresh
       }
     }
 
@@ -80,7 +80,7 @@ export async function POST(req: Request) {
         return Response.json(
           {
             reply:
-              "Sorry — I couldn't start the chat just now. Please try WhatsApp: " +
+              "Sorry â€” I couldn't start the chat just now. Please try WhatsApp: " +
               SITE.whatsappDisplay,
             status: "bot",
           },
@@ -106,7 +106,7 @@ export async function POST(req: Request) {
       void notifyJordanWA(
         `LIVE CHAT - AGENT REQUESTED\nName: ${visitor.name || "website visitor"}\nView: fergusonlawja.com/admin`,
       );
-      void pushToAdmins("Live Chat — Human Requested", visitor.name || "Website visitor", "/admin?tab=chats", "fl-chat");
+      void pushToAdmins("Live Chat â€” Human Requested", visitor.name || "Website visitor", "/admin?tab=chats", "fl-chat");
       return Response.json({
         conversationId: cid,
         status: "waiting_agent",
@@ -137,7 +137,7 @@ export async function POST(req: Request) {
       .update(convUpdate)
       .eq("id", cid);
 
-    // --- A human is handling this thread — do NOT call the model -----------
+    // --- A human is handling this thread â€” do NOT call the model -----------
     if (isLiveChat) {
       void notifyJordanWA(
         `LIVE CHAT - NEW MESSAGE\nFrom: ${visitor.name || "website visitor"}\nMessage: ${incoming.substring(0, 120)}\nView: fergusonlawja.com/admin`,
@@ -173,8 +173,8 @@ export async function POST(req: Request) {
     let requestedHuman = false;
     const sideEffects: Record<string, unknown>[] = [];
 
-    // Strip BOM (﻿) that Windows/Vercel env occasionally prepends
-    const anthropicKey = process.env.ANTHROPIC_API_KEY?.replace(/^﻿/, "");
+    // Strip BOM (ï»¿) that Windows/Vercel env occasionally prepends
+    const anthropicKey = process.env.ANTHROPIC_API_KEY?.replace(/^ï»¿/, "");
 
     let anthropicFailed = false;
     if (anthropicKey) {
@@ -224,11 +224,11 @@ export async function POST(req: Request) {
         console.warn("[chat] Anthropic unavailable, falling back to free LLM:", anthropicErr instanceof Error ? anthropicErr.message : String(anthropicErr));
         anthropicFailed = true;
       }
-      if (!finalText && !anthropicFailed) finalText = `I'd be happy to help with that. For your specific situation, I'd recommend speaking directly with our team — you can book a consultation here:\n${SITE.bookingUrl}\nOr reach us on WhatsApp at ${SITE.whatsappDisplay}.`;
+      if (!finalText && !anthropicFailed) finalText = `I'd be happy to help with that. For your specific situation, I'd recommend speaking directly with our team â€” you can book a consultation here:\n${SITE.bookingUrl}\nOr reach us on WhatsApp at ${SITE.whatsappDisplay}.`;
     }
     if (!finalText && (anthropicFailed || !anthropicKey)) {
       if (hasAnyLLMKey()) {
-        // --- Free-LLM path: Groq → Gemini → OpenRouter (text-only) -----------
+        // --- Free-LLM path: Groq â†’ Gemini â†’ OpenRouter (text-only) -----------
         const res = await generateReply({ system, messages });
         finalText = res.ok ? res.text : cannedReply();
         if (res.ok) sideEffects.push({ provider: res.provider });
@@ -256,7 +256,8 @@ export async function POST(req: Request) {
     });
   } catch (err) {
     console.error("[chat] error", err);
-    const reply = `Sorry — something went wrong on our side. You can reach ${SITE.name} on WhatsApp at ${SITE.whatsappDisplay}, and a team member will help right away.`;
+    const reply = `Sorry â€” something went wrong on our side. You can reach ${SITE.name} on WhatsApp at ${SITE.whatsappDisplay}, and a team member will help right away.`;
     return Response.json({ reply, status: "bot" }, { status: 200 });
   }
 }
+
