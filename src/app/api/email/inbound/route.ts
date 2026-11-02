@@ -341,6 +341,7 @@ export async function POST(req: NextRequest) {
     // Forward notification email to Owen (and BCC Jordan) so they're alerted in their inbox.
     // Skip if the sender is our own domain â€” prevents infinite loops when system emails
     // (morning digest, notification forwards) land at contact@fergusonlawja.com.
+    const isInternalSender = fromEmail.toLowerCase().endsWith("@fergusonlawja.com");
     // ALL domain mailboxes forward to FERGUSON_STAFF_EMAIL (Owen's hotmail) so he
     // never misses an inbound email regardless of which address it was sent to.
     // contact@ => FERGUSON_STAFF_EMAIL (public enquiries inbox)
