@@ -115,7 +115,6 @@ export async function POST(req: NextRequest) {
     .select("id, email_id, from_email, subject, body_text, created_at")
     .not("email_id", "is", null)
     .is("attachments", null)
-    .ilike("body_text", "%attach%")
     .order("created_at", { ascending: false })
     .limit(50);
 
