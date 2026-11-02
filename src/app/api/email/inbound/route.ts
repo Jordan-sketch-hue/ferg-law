@@ -341,6 +341,13 @@ export async function POST(req: NextRequest) {
 
     const spam = isLikelySpam(fromEmail, String(payload.subject ?? ""));
 
+    // Hard-drop service/operational emails — never persist to DB, never forward, never alert.
+    // Higgsfield, TikTok, noreply@, Railway, Vercel etc. must not appear in the admin inbox.
+    if (isServiceNotification(fromEmail)) {
+      console.log("[inbound] Service email silently dropped (not saved):", fromEmail);
+      return NextResponse.json({ ok: true, dropped: "service" });
+    }
+
     const { error } = await supabase.from("fl_inbound_emails").insert({
       from_email: fromEmail,
       from_name: fromName,
@@ -372,8 +379,7 @@ export async function POST(req: NextRequest) {
     const defaultStaffEmail = process.env.FERGUSON_STAFF_EMAIL || "contact@fergusonlawja.com";
     const isOwenMailbox = toEmail?.toLowerCase() === owenEmail;
     const forwardTo = defaultStaffEmail;
-    const isServiceEmail = isServiceNotification(fromEmail);
-    if (resendKey && !isInternalSender && !spam && !isServiceEmail) {
+    if (resendKey && !isInternalSender && !spam) {
       const rawSubject = String(payload.subject ?? "(no subject)");
       // Strip any accumulated "New enquiry: " prefixes before adding one.
       const cleanSubject = rawSubject.replace(/^(New enquiry:\s*)+/i, "");
@@ -403,7 +409,7 @@ export async function POST(req: NextRequest) {
       else void notifyJordanWA(emailAlert);
     }
 
-    if (!isInternalSender && !spam && !isServiceEmail) {
+    if (!isInternalSender && !spam) {
       void pushToAdmins(
         `New Email${fromName ? ` â€” ${fromName}` : ""}`,
         String(payload.subject ?? "(no subject)"),
@@ -413,7 +419,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Create ops_ticket and send ACK for non-spam external emails.
-    if (!isInternalSender && !spam && !isServiceEmail && fromEmail) {
+    if (!isInternalSender && !spam && fromEmail) {
       const { createHash } = await import("crypto");
       const ticketSourceKey = `email:${emailId || (fromEmail + ":" + Date.now())}`;
       const ticketId = "t_" + createHash("sha256").update(ticketSourceKey).digest("hex").slice(0, 16);
