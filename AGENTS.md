@@ -1,19 +1,19 @@
-# Ferguson Law — Agent Handoff Document
+﻿# Ferguson Law â€” Agent Handoff Document
 
-> **CRITICAL RULES — READ FIRST**
-> - DB is ALWAYS Supabase `ibtadbwtrxglujkzqofs` — NEVER `ciggiwpztuxkmbaccrlp`
-> - Custom domain is ALWAYS `ferguson-law.com` — NEVER `*.vercel.app` in any reference, QA registry, or link
+> **CRITICAL RULES â€” READ FIRST**
+> - DB is ALWAYS Supabase `ibtadbwtrxglujkzqofs` â€” NEVER `ciggiwpztuxkmbaccrlp`
+> - Custom domain is ALWAYS `ferguson-law.com` â€” NEVER `*.vercel.app` in any reference, QA registry, or link
 > - H.O.M.E. subdomain: `home.fergusonlaw.com`
 > - NEVER delete: `fl_clients`, `fl_bookings`, `fl_matters`, `fl_inbound_emails`, `fl_matter_files`
 > - After every deploy: `vercel alias set <deployment-url> ferguson-law.vercel.app`
-> - ALWAYS `git pull origin main` before editing or deploying — local can be 30+ commits behind
+> - ALWAYS `git pull origin main` before editing or deploying â€” local can be 30+ commits behind
 
 ---
 
 ## What this is
 
 Full-stack law firm platform for Owen Ferguson (Ferguson Law, Jamaica).
-Services: online booking + WiPay payment → consultation confirmation, AI chatbot, admin CMS, inbound email triage, H.O.M.E. property portal sub-brand, client portal with KYC + matter files + Zoom, push notifications, blast emails.
+Services: online booking + WiPay payment â†’ consultation confirmation, AI chatbot, admin CMS, inbound email triage, H.O.M.E. property portal sub-brand, client portal with KYC + matter files + Zoom, push notifications, blast emails.
 
 ## Current WhatsApp deployment handoff
 
@@ -36,10 +36,10 @@ assignment beyond the evidence in that operations record.
 | Styling | Tailwind 4 + custom CSS variables (see design system) |
 | Database | Supabase `ibtadbwtrxglujkzqofs` (fl_* tables) |
 | Auth | Supabase Auth (admin) + custom passkey/WebAuthn (admin) + access-code login (clients) |
-| Payments | WiPay Jamaica — mock mode by default; flip to live via env only |
-| Email | Resend — outbound + inbound webhook |
-| Chat | Groq (llama-3.3-70b) → Gemini (2.0-flash) → OpenRouter fallback |
-| Video | Zoom — meeting creation via API |
+| Payments | WiPay Jamaica â€” mock mode by default; flip to live via env only |
+| Email | Resend â€” outbound + inbound webhook |
+| Chat | Groq (llama-3.3-70b) â†’ Gemini (2.0-flash) â†’ OpenRouter fallback |
+| Video | Zoom â€” meeting creation via API |
 | Push | Web Push API (VAPID) |
 | WhatsApp | Twilio or internal Cloud API |
 | Fonts | Fraunces (serif) + Inter (sans) via next/font |
@@ -55,7 +55,7 @@ assignment beyond the evidence in that operations record.
 | `SUPABASE_SERVICE_ROLE_KEY` | Service role key (server-only API routes) |
 | `RESEND_API_KEY` | Email delivery + inbound webhook |
 | `RESEND_WEBHOOK_SECRET` | Verify signed Resend inbound webhooks |
-| `GROQ_API_KEY` | Chat LLM (primary — recommended) |
+| `GROQ_API_KEY` | Chat LLM (primary â€” recommended) |
 | `GEMINI_API_KEY` | Chat LLM fallback |
 | `OPENROUTER_API_KEY` | Chat LLM fallback |
 | `WIPAY_ENV` | `mock` (default) or `live` |
@@ -73,6 +73,7 @@ assignment beyond the evidence in that operations record.
 | `WHATSAPP_BOT_SECRET` | Server-only secret for the linked WhatsApp sender |
 | `NEXT_PUBLIC_SITE_URL` | `https://ferguson-law.com` |
 | `CHAT_PROVIDER_ORDER` | `groq,gemini,openrouter` (optional override) |
+| `ANTHROPIC_API_KEY` | AI draft reply in admin (`/api/admin/suggest-reply`) + email copy rewrite (`/api/email-draft-ai`) — uses `claude-haiku-5-5`; without this key both routes fall back to configured LLM providers, but the AI Draft button shows an error if all providers are missing |
 
 ---
 
@@ -81,7 +82,7 @@ assignment beyond the evidence in that operations record.
 ### Public / Marketing
 | Route | Purpose |
 |-------|---------|
-| `/` | Homepage — firm overview, services, CTA to booking |
+| `/` | Homepage â€” firm overview, services, CTA to booking |
 | `/faq` | FAQ accordion |
 | `/glossary` | Legal terms glossary |
 | `/get-started` | Lead capture / onboarding entry point |
@@ -91,7 +92,7 @@ assignment beyond the evidence in that operations record.
 ### Booking Flow
 | Route | Purpose |
 |-------|---------|
-| `/booking` | Booking modal entry — service selection + slot picker |
+| `/booking` | Booking modal entry â€” service selection + slot picker |
 | `/booking/type-select` | Select consultation type |
 | `/booking/complete` | Booking confirmation / success screen |
 | `/receipt` | WiPay payment receipt page |
@@ -130,7 +131,7 @@ assignment beyond the evidence in that operations record.
 ### Admin (password-protected)
 | Route | Purpose |
 |-------|---------|
-| `/admin` | Admin dashboard — bookings, CMS, analytics |
+| `/admin` | Admin dashboard â€” bookings, CMS, analytics |
 | `/admin/*` | Sub-sections: ebook leads, email, analytics, push, zoom, blast |
 
 ### Payments / Utility
@@ -165,7 +166,7 @@ assignment beyond the evidence in that operations record.
 ### Chat
 | Route | Method | Purpose |
 |-------|--------|---------|
-| `/api/chat` | POST | AI chatbot — streams reply via Groq/Gemini/OpenRouter |
+| `/api/chat` | POST | AI chatbot â€” streams reply via Groq/Gemini/OpenRouter |
 
 ### Admin CMS
 | Route | Method | Purpose |
@@ -182,7 +183,7 @@ assignment beyond the evidence in that operations record.
 | Route | Method | Purpose |
 |-------|--------|---------|
 | `/api/email/send` | POST | Transactional email send via Resend |
-| `/api/email/inbound` | POST | Resend inbound webhook → fl_inbound_emails |
+| `/api/email/inbound` | POST | Resend inbound webhook â†’ fl_inbound_emails |
 | `/api/admin/send-email` | POST | Admin compose + send email to client |
 | `/api/admin/sent-emails` | GET | List sent emails for a client |
 | `/api/admin/suggest-reply` | POST | AI-assisted reply drafting |
@@ -272,11 +273,11 @@ assignment beyond the evidence in that operations record.
 ### `src/lib/booking/services.ts`
 | Export | Signature | Purpose |
 |--------|-----------|---------|
-| `SERVICE_META` | `Record<ServiceId, ServiceMeta>` | Canonical service catalog — id, title, durationMin for all 6 services |
+| `SERVICE_META` | `Record<ServiceId, ServiceMeta>` | Canonical service catalog â€” id, title, durationMin for all 6 services |
 | `isServiceId(v)` | `(v: unknown) => v is ServiceId` | Type guard for service IDs |
 | `serviceTitle(id)` | `(id: string) => string` | Resolve service display name from ID |
 
-Services: `corporate`, `realestate`, `family`, `divorce`, `ip`, `sports` — all 20 min, all J$8,000.
+Services: `corporate`, `realestate`, `family`, `divorce`, `ip`, `sports` â€” all 20 min, all J$8,000.
 
 ### `src/lib/booking/fees.ts`
 | Export | Signature | Purpose |
@@ -294,23 +295,23 @@ Services: `corporate`, `realestate`, `family`, `divorce`, `ip`, `sports` — all
 | Export | Signature | Purpose |
 |--------|-----------|---------|
 | `hasAnyLLMKey()` | `() => boolean` | True if at least one LLM provider key is set |
-| `generateReply(opts)` | `({system, messages, maxTokens?}) => Promise<LLMResult>` | Try providers in order (Groq → Gemini → OpenRouter); returns first success |
+| `generateReply(opts)` | `({system, messages, maxTokens?}) => Promise<LLMResult>` | Try providers in order (Groq â†’ Gemini â†’ OpenRouter); returns first success |
 | `ChatMsg` | type | `{role: "user"\|"assistant", content: string}` |
 | `LLMResult` | type | `{ok: true, text, provider}` or `{ok: false, error}` |
 
-Provider order controlled by `CHAT_PROVIDER_ORDER` env var. Default: `groq,gemini,openrouter`. Text-only — no tool calling.
+Provider order controlled by `CHAT_PROVIDER_ORDER` env var. Default: `groq,gemini,openrouter`. Text-only â€” no tool calling.
 
 ### `src/lib/payments/wipay.ts`
 | Export | Signature | Purpose |
 |--------|-----------|---------|
 | `isLive()` | `() => boolean` | True only when WIPAY_ENV=live + WIPAY_ACCOUNT_NUMBER + WIPAY_API_KEY all set |
 | `createPayment(args)` | `(CreatePaymentArgs) => Promise<CreatePaymentResult>` | Create WiPay hosted checkout URL (or mock URL) |
-| `parseReturn(query)` | `(Record<string, string|undefined>) => ParsedReturn` | Normalize WiPay return params → `{orderId, status, txn}` |
+| `parseReturn(query)` | `(Record<string, string|undefined>) => ParsedReturn` | Normalize WiPay return params â†’ `{orderId, status, txn}` |
 | `CreatePaymentArgs` | type | `{amount, orderId, customer, returnUrl}` |
 | `CreatePaymentResult` | type | `{payUrl, mode: "mock"\|"live"}` |
 | `ParsedReturn` | type | `{orderId, status: "paid"\|"failed", txn}` |
 
-Mock mode is default — no env change needed. Live mode requires three env vars. Falls back to mock if live call fails.
+Mock mode is default â€” no env change needed. Live mode requires three env vars. Falls back to mock if live call fails.
 
 ### `src/lib/payments/fees.ts`
 See booking services section above.
@@ -318,7 +319,7 @@ See booking services section above.
 ### `src/lib/supabase/client.ts`
 | Export | Signature | Purpose |
 |--------|-----------|---------|
-| `createClient()` | `() => SupabaseClient` | Browser Supabase client (anon key) — CLIENT COMPONENTS ONLY |
+| `createClient()` | `() => SupabaseClient` | Browser Supabase client (anon key) â€” CLIENT COMPONENTS ONLY |
 
 Server routes use `createClient` from `@supabase/ssr` with service role key directly.
 
@@ -352,7 +353,7 @@ Server routes use `createClient` from `@supabase/ssr` with service role key dire
 
 | File | Purpose |
 |------|---------|
-| `src/components/chat/ChatWidget.tsx` | Floating AI chat widget — appears on all public pages |
+| `src/components/chat/ChatWidget.tsx` | Floating AI chat widget â€” appears on all public pages |
 | `src/components/pwa/BiometricLogin.tsx` | WebAuthn passkey login for PWA |
 | `src/components/pwa/BookingPushPrompt.tsx` | Push notification opt-in after booking |
 | `src/components/pwa/InstallPrompt.tsx` | PWA install banner |
@@ -363,7 +364,7 @@ Server routes use `createClient` from `@supabase/ssr` with service role key dire
 
 ---
 
-## Supabase Tables (ibtadbwtrxglujkzqofs — fl_* namespace)
+## Supabase Tables (ibtadbwtrxglujkzqofs â€” fl_* namespace)
 
 | Table | Purpose |
 |-------|---------|
@@ -386,12 +387,12 @@ Server routes use `createClient` from `@supabase/ssr` with service role key dire
 
 ### 1. Booking + Payment Workflow
 ```
-Visitor → /booking → select service → pick slot (/api/booking/slots)
-  → enter details → /api/booking/create
-  → createPayment() → mock URL (/pay/mock) or WiPay hosted URL
-  → WiPay return → /api/payments/return → parseReturn()
-  → if paid: confirm booking, send email (Resend), WhatsApp notify, Zoom meeting (optional)
-  → redirect → /booking/complete
+Visitor â†’ /booking â†’ select service â†’ pick slot (/api/booking/slots)
+  â†’ enter details â†’ /api/booking/create
+  â†’ createPayment() â†’ mock URL (/pay/mock) or WiPay hosted URL
+  â†’ WiPay return â†’ /api/payments/return â†’ parseReturn()
+  â†’ if paid: confirm booking, send email (Resend), WhatsApp notify, Zoom meeting (optional)
+  â†’ redirect â†’ /booking/complete
 ```
 - All 6 services: J$8,000, 20 min
 - Mock mode default until WIPAY_ENV=live + creds set
@@ -399,53 +400,53 @@ Visitor → /booking → select service → pick slot (/api/booking/slots)
 
 ### 2. Auth Workflow (Admin)
 ```
-/auth → email + password → Supabase Auth
-  → OR passkey → /api/auth/passkey-verify → WebAuthn challenge
-  → JWT cookie → protected /admin routes
+/auth â†’ email + password â†’ Supabase Auth
+  â†’ OR passkey â†’ /api/auth/passkey-verify â†’ WebAuthn challenge
+  â†’ JWT cookie â†’ protected /admin routes
 ```
 
 ### 3. Auth Workflow (Client Portal)
 ```
-/directory/client-login → enter access code
-  → /api/auth/client-signup (new) or lookup existing
-  → session cookie → /directory/client dashboard
-  → can view matters, upload KYC, download files, update notification prefs
+/directory/client-login â†’ enter access code
+  â†’ /api/auth/client-signup (new) or lookup existing
+  â†’ session cookie â†’ /directory/client dashboard
+  â†’ can view matters, upload KYC, download files, update notification prefs
 ```
 
 ### 4. Inbound Email Workflow
 ```
-Email arrives → Resend inbound route (MX = Resend)
-  → webhook POST → /api/email/inbound
-  → insert into fl_inbound_emails
-  → admin sees in /admin CMS email tab
-  → admin replies via /api/admin/send-email
-  → AI reply assist via /api/admin/suggest-reply
+Email arrives â†’ Resend inbound route (MX = Resend)
+  â†’ webhook POST â†’ /api/email/inbound
+  â†’ insert into fl_inbound_emails
+  â†’ admin sees in /admin CMS email tab
+  â†’ admin replies via /api/admin/send-email
+  â†’ AI reply assist via /api/admin/suggest-reply
 ```
 
 ### 5. Chat Workflow
 ```
-Visitor → ChatWidget → POST /api/chat → generateReply()
-  → tries Groq → Gemini → OpenRouter
-  → returns text reply
-  → explicit booking → UI triggers booking modal (NOT the LLM)
-  → explicit human handoff → admin notified
+Visitor â†’ ChatWidget â†’ POST /api/chat â†’ generateReply()
+  â†’ tries Groq â†’ Gemini â†’ OpenRouter
+  â†’ returns text reply
+  â†’ explicit booking â†’ UI triggers booking modal (NOT the LLM)
+  â†’ explicit human handoff â†’ admin notified
 ```
 
-### 6. WiPay Mock → Live Flip
+### 6. WiPay Mock â†’ Live Flip
 ```
-Current: WIPAY_ENV=mock (default) — /pay/mock simulator
-  → set WIPAY_ENV=live + WIPAY_ACCOUNT_NUMBER + WIPAY_API_KEY + WIPAY_DEVELOPER_ID
-  → wipay.ts isLive() = true → real WiPay API calls
-  → TODO(WiPay-approval): confirm endpoint param names against merchant dashboard
+Current: WIPAY_ENV=mock (default) â€” /pay/mock simulator
+  â†’ set WIPAY_ENV=live + WIPAY_ACCOUNT_NUMBER + WIPAY_API_KEY + WIPAY_DEVELOPER_ID
+  â†’ wipay.ts isLive() = true â†’ real WiPay API calls
+  â†’ TODO(WiPay-approval): confirm endpoint param names against merchant dashboard
 ```
 
 ### 7. Push Notification Workflow
 ```
-User opts in → /api/push/subscribe → fl_push_subscriptions
-Admin sends → /api/push/send → Web Push API (VAPID)
-  → OR /api/admin/push-test (dev)
-  → sw.js handles `push` event → notification displayed
-  → /api/pwa/analytics tracks install/engagement
+User opts in â†’ /api/push/subscribe â†’ fl_push_subscriptions
+Admin sends â†’ /api/push/send â†’ Web Push API (VAPID)
+  â†’ OR /api/admin/push-test (dev)
+  â†’ sw.js handles `push` event â†’ notification displayed
+  â†’ /api/pwa/analytics tracks install/engagement
 ```
 
 ---
@@ -459,8 +460,8 @@ Admin sends → /api/push/send → Web Push API (VAPID)
 | `--ink-2` | `#2A2620` | Warm charcoal accents |
 | `--paper` | `#F6F2EA` | Page background (warm cream) |
 | `--paper-2` | `#FBF8F1` | Slightly lighter surfaces |
-| `--gold` | `#C8A65C` | Brand gold — CTAs, eyebrows, accents |
-| `--gold-deep` | `#A8853E` | Darker gold — eyebrow text, hover states |
+| `--gold` | `#C8A65C` | Brand gold â€” CTAs, eyebrows, accents |
+| `--gold-deep` | `#A8853E` | Darker gold â€” eyebrow text, hover states |
 | `--sage` | `#9C7C3C` | Muted gold accent |
 | `--text` | `#24211B` | Body copy |
 | `--muted` | `#69736D` | Secondary/lead text |
@@ -471,7 +472,7 @@ Admin sends → /api/push/send → Web Push API (VAPID)
 ### Typography
 | Token | Font | Use |
 |-------|------|-----|
-| `--serif` | Fraunces | All headings (h1–h4) |
+| `--serif` | Fraunces | All headings (h1â€“h4) |
 | `--sans` | Inter | Body, buttons, labels |
 
 Injected via `next/font` in `layout.tsx` as CSS vars `--font-fraunces` and `--font-inter`.
@@ -493,9 +494,9 @@ Injected via `next/font` in `layout.tsx` as CSS vars `--font-fraunces` and `--fo
 ## UI/UX Rules
 - All CTAs gold (`.btn-gold`) for primary actions; ink (`.btn-primary`) for secondary
 - Headings always Fraunces serif
-- Warm cream `--paper` background — not white
+- Warm cream `--paper` background â€” not white
 - Gold eyebrow labels precede every section heading
-- Mobile-first — `.wrap` padding ensures 24px gutters on all widths
+- Mobile-first â€” `.wrap` padding ensures 24px gutters on all widths
 - Chat widget floats bottom-right on all public pages
 - Push opt-in appears AFTER booking completion (not before)
 
@@ -506,26 +507,26 @@ Injected via `next/font` in `layout.tsx` as CSS vars `--font-fraunces` and `--fo
 ### Critical Paths (must pass every deploy)
 - [ ] `/` loads without JS errors
 - [ ] Booking modal opens, service selection works, slots load from `/api/booking/slots`
-- [ ] Mock payment flow: book → `/pay/mock` → click "Pay" → `/booking/complete` confirmation
+- [ ] Mock payment flow: book â†’ `/pay/mock` â†’ click "Pay" â†’ `/booking/complete` confirmation
 - [ ] Chat widget opens and receives reply (Groq live key required)
 - [ ] Admin login at `/auth` succeeds (Supabase + passkey)
 - [ ] `/admin` dashboard loads bookings, emails, analytics tabs
-- [ ] Inbound email → `fl_inbound_emails` insert (test via Resend webhook)
+- [ ] Inbound email â†’ `fl_inbound_emails` insert (test via Resend webhook)
 - [ ] Client portal login at `/directory/client-login` with valid access code
 - [ ] Push subscription saves to `fl_push_subscriptions`
 
 ### Secondary Checks
 - [ ] `/cost-estimator` form calculates without errors
-- [ ] `/ebook/access` gated behind purchase (unauthenticated → redirect)
+- [ ] `/ebook/access` gated behind purchase (unauthenticated â†’ redirect)
 - [ ] `/buyers-guide/payment` WiPay flow completes
 - [ ] Cron routes return 200 with CRON_SECRET header
 - [ ] All API routes return JSON (no HTML error pages leaking)
-- [ ] `npx tsc --noEmit` → zero errors
+- [ ] `npx tsc --noEmit` â†’ zero errors
 - [ ] No references to `ciggiwpztuxkmbaccrlp` anywhere in codebase
 
 ### After Every Deploy
 - [ ] `vercel alias set <new-deployment-url> ferguson-law.vercel.app`
-- [ ] Visit `https://ferguson-law.com` — confirm DNS resolves correctly
+- [ ] Visit `https://ferguson-law.com` â€” confirm DNS resolves correctly
 - [ ] Check `/api/booking/slots` returns valid JSON
 
 ---
@@ -548,15 +549,15 @@ Injected via `next/font` in `layout.tsx` as CSS vars `--font-fraunces` and `--fo
 
 4. **LLM fallback chain:** Chat requires at least ONE of `GROQ_API_KEY`, `GEMINI_API_KEY`, `OPENROUTER_API_KEY`. If none set, chat returns "no provider configured".
 
-5. **Inbound email = Resend ONLY:** MX records point to Resend. NEVER add forwardemail.net or any other MX. Webhook → `/api/email/inbound` → `fl_inbound_emails`.
+5. **Inbound email = Resend ONLY:** MX records point to Resend. NEVER add forwardemail.net or any other MX. Webhook â†’ `/api/email/inbound` â†’ `fl_inbound_emails`.
 
 6. **Client auth = access codes:** Clients do NOT use Supabase Auth. They use access codes stored in `fl_clients`. Admin uses Supabase Auth + WebAuthn passkey.
 
 7. **DB project:** All fl_* tables live in `ibtadbwtrxglujkzqofs`. The dead project `ciggiwpztuxkmbaccrlp` must NEVER be written to. Grep for it if you suspect stale imports.
 
-8. **Supabase client split:** `src/lib/supabase/client.ts` exports browser client (anon key). Server routes MUST import `createServerClient` from `@supabase/ssr` with service role key — never use the browser client in API routes.
+8. **Supabase client split:** `src/lib/supabase/client.ts` exports browser client (anon key). Server routes MUST import `createServerClient` from `@supabase/ssr` with service role key â€” never use the browser client in API routes.
 
-9. **WiPay live TODOs:** `wipay.ts` has multiple `TODO(WiPay-approval)` comments — confirm endpoint path, param names, and return-hash verification against the merchant dashboard before going live.
+9. **WiPay live TODOs:** `wipay.ts` has multiple `TODO(WiPay-approval)` comments â€” confirm endpoint path, param names, and return-hash verification against the merchant dashboard before going live.
 
 10. **H.O.M.E. = separate brand:** Home/property content is a sub-brand under `home.fergusonlaw.com`. Do not fold H.O.M.E. pages into the Ferguson Law main nav.
 
@@ -567,9 +568,10 @@ Injected via `next/font` in `layout.tsx` as CSS vars `--font-fraunces` and `--fo
 1. `git pull origin main` in `C:\Users\jader\projects\ferg-law`
 2. Basis pre-check: `POST https://reality-encoder.vercel.app/api/encode`
 3. Make changes
-4. `npx tsc --noEmit` — must be zero errors
+4. `npx tsc --noEmit` â€” must be zero errors
 5. `vercel deploy --prod`
 6. `vercel alias set <deployment-url> ferguson-law.vercel.app`
 7. Verify `https://ferguson-law.com` live
 8. Run QA checklist critical paths
 9. Basis post-encode: `POST https://reality-encoder.vercel.app/api/encode`
+
