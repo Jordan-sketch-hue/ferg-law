@@ -23,6 +23,28 @@ const SPAM_DOMAIN_PATTERNS = [
   /^(email|em|mail|send|bulk|blast|campaign)\d*\./i,
 ];
 
+// Operational / service notification senders — emails from these are saved for Jordan
+// but must NEVER be forwarded to Owen, never trigger WA alerts, never create ops_tickets.
+const SERVICE_SENDER_PATTERNS: RegExp[] = [
+  // Social / content platforms Jordan uses operationally
+  /tiktok\.com$/i, /business\.tiktok\.com$/i, /bytedance\.com$/i,
+  // AI tools / creative platforms
+  /higgsfield\.ai$/i, /ideogram\.ai$/i,
+  // Generic automated senders that are never client emails
+  /noreply@/i, /no-reply@/i, /donotreply@/i,
+  /notifications?@/i, /alerts?@/i, /support@/i,
+  /mailer-daemon/i, /postmaster@/i,
+  // Known SaaS notification senders
+  /vercel\.com$/i, /railway\.app$/i, /resend\.com$/i,
+  /github\.com$/i, /supabase\.io$/i, /supabase\.co$/i,
+  /anthropic\.com$/i,
+];
+
+function isServiceNotification(fromEmail: string): boolean {
+  const lower = fromEmail.toLowerCase();
+  return SERVICE_SENDER_PATTERNS.some((p) => p.test(lower));
+}
+
 function isLikelySpam(fromEmail: string, subject: string): boolean {
   if (SPAM_SUBJECT_PATTERNS.some((p) => p.test(subject))) return true;
   try {
@@ -350,7 +372,8 @@ export async function POST(req: NextRequest) {
     const defaultStaffEmail = process.env.FERGUSON_STAFF_EMAIL || "contact@fergusonlawja.com";
     const isOwenMailbox = toEmail?.toLowerCase() === owenEmail;
     const forwardTo = defaultStaffEmail;
-    if (resendKey && !isInternalSender && !spam) {
+    const isServiceEmail = isServiceNotification(fromEmail);
+    if (resendKey && !isInternalSender && !spam && !isServiceEmail) {
       const rawSubject = String(payload.subject ?? "(no subject)");
       // Strip any accumulated "New enquiry: " prefixes before adding one.
       const cleanSubject = rawSubject.replace(/^(New enquiry:\s*)+/i, "");
@@ -380,7 +403,7 @@ export async function POST(req: NextRequest) {
       else void notifyJordanWA(emailAlert);
     }
 
-    if (!isInternalSender && !spam) {
+    if (!isInternalSender && !spam && !isServiceEmail) {
       void pushToAdmins(
         `New Email${fromName ? ` â€” ${fromName}` : ""}`,
         String(payload.subject ?? "(no subject)"),
@@ -390,7 +413,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Create ops_ticket and send ACK for non-spam external emails.
-    if (!isInternalSender && !spam && fromEmail) {
+    if (!isInternalSender && !spam && !isServiceEmail && fromEmail) {
       const { createHash } = await import("crypto");
       const ticketSourceKey = `email:${emailId || (fromEmail + ":" + Date.now())}`;
       const ticketId = "t_" + createHash("sha256").update(ticketSourceKey).digest("hex").slice(0, 16);

@@ -1,12 +1,13 @@
 ﻿/**
  * GET /api/cron/digest-morning
  * Runs daily at 8:00 AM JA time (13:00 UTC).
- * Sends the operator's morning briefing to Jordan only: confirmed bookings,
- * new leads, and unread inbox messages.
+ * Jordan receives: full operational digest (bookings + leads + unread inbox).
+ * Owen receives:   bookings-only digest (his personal schedule).
+ * Neither send leaks the other's content.
  */
 import { NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
-import { notifyJordanWA, notifyOwenBusinessWA } from "@/lib/wa-notify";
+import { notifyJordanWA, notifyOwenBusinessWA, checkWASession } from "@/lib/wa-notify";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,20 +26,19 @@ function jaTime(iso: string) {
   });
 }
 
-async function sendEmail(subject: string, text: string) {
+async function sendEmail(to: string[], bcc: string[], subject: string, text: string) {
   const key = process.env.RESEND_API_KEY;
   if (!key) {
-    console.error("[digest-morning] Email delivery skipped: RESEND_API_KEY is not configured.");
+    console.error("[digest-morning] Email delivery skipped: RESEND_API_KEY not configured.");
     return false;
   }
-  const staffEmail = process.env.FERGUSON_STAFF_EMAIL || "contact@fergusonlawja.com";
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       from: "Ferguson Law <contact@fergusonlawja.com>",
-      to: [staffEmail],
-      bcc: ["jordanrmorris01@icloud.com", "jordanmorrisr@gmail.com"],
+      to,
+      ...(bcc.length > 0 ? { bcc } : {}),
       subject,
       text,
     }),
@@ -104,74 +104,107 @@ export async function GET(req: NextRequest) {
   const appts = apptRes.data ?? [];
   const leads = leadsRes.data ?? [];
   const unread = unreadRes.data ?? [];
-
   const dateLabel = jaDate(now);
-  const lines: string[] = [];
 
-  lines.push(`Good morning, Owen. Ferguson Law operator update for ${dateLabel}.`, "");
+  // --- Jordan's full operational digest ---
+  const jordanLines: string[] = [];
+  jordanLines.push(`Good morning. Ferguson Law operator update for ${dateLabel}.`, "");
 
   if (appts.length === 0) {
-    lines.push("Appointments today: None.");
+    jordanLines.push("Appointments today: None.");
   } else {
-    lines.push(`Appointments today (${appts.length}):`);
+    jordanLines.push(`Appointments today (${appts.length}):`);
     for (const a of appts) {
       const meta = a.meta as Record<string, unknown> | null;
       const meetingUrl = (meta?.meeting_url as string | null) ?? null;
-      lines.push(`  ${jaTime(a.starts_at)} â€” ${a.name || "Unknown"} | ${a.service}`);
-      if (a.email) lines.push(`    ${a.email}${a.phone ? " | " + a.phone : ""}`);
-      if (meetingUrl) lines.push(`    Meeting: ${meetingUrl}`);
-      else lines.push(`    Ref: ${a.ref}`);
+      jordanLines.push(`  ${jaTime(a.starts_at)} - ${a.name || "Unknown"} | ${a.service}`);
+      if (a.email) jordanLines.push(`    ${a.email}${a.phone ? " | " + a.phone : ""}`);
+      if (meetingUrl) jordanLines.push(`    Meeting: ${meetingUrl}`);
+      else jordanLines.push(`    Ref: ${a.ref}`);
     }
   }
 
-  lines.push("");
+  jordanLines.push("");
 
   if (leads.length === 0) {
-    lines.push("New leads: None.");
+    jordanLines.push("New leads: None.");
   } else {
-    lines.push(`New leads (${leads.length}):`);
-    for (const l of leads) lines.push(`  ${l.name || "Unknown"} â€” ${l.service || "General Inquiry"}`);
+    jordanLines.push(`New leads (${leads.length}):`);
+    for (const l of leads) jordanLines.push(`  ${l.name || "Unknown"} - ${l.service || "General Inquiry"}`);
   }
 
   if (unread.length > 0) {
-    lines.push("", `Unread messages (${unread.length}):`);
-    for (const m of unread) lines.push(`  ${m.from_name || m.from_email || "Unknown sender"} â€” ${m.subject}`);
+    jordanLines.push("", `Unread messages (${unread.length}):`);
+    for (const m of unread) jordanLines.push(`  ${m.from_name || m.from_email || "Unknown sender"} - ${m.subject}`);
   }
 
-  lines.push("", "Admin: https://ferguson-law.com/admin", "â€” J Supreme Tech");
+  jordanLines.push("", "Admin: https://ferguson-law.com/admin", "- J Supreme Tech");
+  const jordanMsg = jordanLines.join("\n");
 
-  const msg = lines.join("\n");
-  const owenBookingLines = [
+  // --- Owen's bookings-only digest (his schedule, nothing from Jordan's inbox) ---
+  const owenLines: string[] = [
     `Good morning, Owen. Ferguson Law bookings for ${dateLabel}.`,
     "",
-    ...(appts.length === 0
-      ? ["Appointments today: None."]
-      : [
-          `Appointments today (${appts.length}):`,
-          ...appts.flatMap((appointment) => [
-            `  ${jaTime(appointment.starts_at)} â€” ${appointment.name || "Unknown"} | ${appointment.service}`,
-            ...(appointment.email ? [`    ${appointment.email}${appointment.phone ? ` | ${appointment.phone}` : ""}`] : []),
-            ...((appointment.meta as Record<string, unknown> | null)?.meeting_url
-              ? [`    Meeting: ${(appointment.meta as Record<string, unknown>).meeting_url}`]
-              : [`    Ref: ${appointment.ref}`]),
-          ]),
-        ]),
-    "",
-    "Admin: https://ferguson-law.com/admin",
-  ].join("\n");
+  ];
+  if (appts.length === 0) {
+    owenLines.push("Appointments today: None.");
+  } else {
+    owenLines.push(`Appointments today (${appts.length}):`);
+    for (const a of appts) {
+      const meta = a.meta as Record<string, unknown> | null;
+      const meetingUrl = (meta?.meeting_url as string | null) ?? null;
+      owenLines.push(`  ${jaTime(a.starts_at)} - ${a.name || "Unknown"} | ${a.service}`);
+      if (a.email) owenLines.push(`    ${a.email}${a.phone ? ` | ${a.phone}` : ""}`);
+      if (meetingUrl) owenLines.push(`    Meeting: ${meetingUrl}`);
+      else owenLines.push(`    Ref: ${a.ref}`);
+    }
+  }
+  owenLines.push("", "Admin: https://ferguson-law.com/admin");
+  const owenMsg = owenLines.join("\n");
 
-  const [whatsapp, emailSent, owenWhatsapp] = await Promise.all([
-    notifyJordanWA(msg),
-    sendEmail(`Ferguson Law â€” ${dateLabel}`, msg),
-    notifyOwenBusinessWA(owenBookingLines),
+  const staffEmail = process.env.FERGUSON_STAFF_EMAIL || "contact@fergusonlawja.com";
+
+  // Verify Railway WA session is live before sending.
+  // "waiting to be received" on Owen/Jordan's device = session dropped between sends.
+  // If session is dead, skip WA gracefully and log — email still goes out.
+  const waSession = await checkWASession();
+  if (!waSession.live) {
+    console.warn("[digest-morning] WA session is not live — skipping WA sends.", { detail: waSession.detail });
+  }
+
+  const [jordanWA, jordanEmail, owenWA, owenEmail] = await Promise.all([
+    // Jordan: full digest via WA (skipped if session dead)
+    waSession.live ? notifyJordanWA(jordanMsg) : Promise.resolve({ sent: 0, failed: 0 }),
+    // Jordan: full digest directly to his own emails (NOT via Owen's email as BCC)
+    sendEmail(
+      ["jordanrmorris01@icloud.com"],
+      ["jordanmorrisr@gmail.com"],
+      `Ferguson Law (Full) - ${dateLabel}`,
+      jordanMsg,
+    ),
+    // Owen: bookings only via WA (skipped if session dead)
+    waSession.live ? notifyOwenBusinessWA(owenMsg) : Promise.resolve({ sent: 0, failed: 0 }),
+    // Owen: bookings only via email (no leads, no unread inbox)
+    sendEmail(
+      [staffEmail],
+      [],
+      `Ferguson Law Bookings - ${dateLabel}`,
+      owenMsg,
+    ),
   ]);
 
-  const ok = whatsapp.failed === 0 && emailSent && owenWhatsapp.failed === 0;
+  const ok = jordanWA.failed === 0 && jordanEmail && owenWA.failed === 0 && owenEmail;
   return Response.json({
     ok,
     bookings: appts.length,
     leads: leads.length,
     unread: unread.length,
-    delivery: { jordanWhatsapp: whatsapp, jordanEmail: emailSent, owenBookingWhatsapp: owenWhatsapp },
+    waSessionLive: waSession.live,
+    delivery: {
+      jordanWA,
+      jordanEmail,
+      owenWA,
+      owenEmail,
+    },
   }, { status: ok ? 200 : 502 });
 }

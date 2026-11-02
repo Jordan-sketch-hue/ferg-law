@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Server-side WhatsApp notification helper.
  * Fires best-effort — never throws, never blocks the caller.
  */
@@ -15,6 +15,27 @@ type BotConfig = {
   secretVariable: string;
   recipient: string;
 };
+
+/** Ping the Railway bot to verify the WA session is live before sending. */
+export async function checkWASession(): Promise<{ live: boolean; detail?: string }> {
+  const botUrl = process.env.WHATSAPP_BOT_URL?.trim().replace(/\/+$/, "");
+  const secret = (process.env.WHATSAPP_BOT_SECRET ?? process.env.NEXT_PUBLIC_WHATSAPP_BOT_SECRET)?.trim();
+  if (!botUrl || !secret) return { live: false, detail: "Bot URL or secret not configured" };
+  try {
+    const r = await fetch(`${botUrl}/health`, {
+      headers: { "x-send-secret": secret },
+      signal: AbortSignal.timeout(5000),
+    });
+    if (r.ok) {
+      const data = await r.json().catch(() => ({})) as Record<string, unknown>;
+      const live = data.connected === true || data.live === true || data.status === "connected";
+      return { live, detail: JSON.stringify(data) };
+    }
+    return { live: false, detail: `health endpoint returned ${r.status}` };
+  } catch (e) {
+    return { live: false, detail: e instanceof Error ? e.message : "health check failed" };
+  }
+}
 
 async function sendWA(jids: string[], text: string, config: BotConfig): Promise<WhatsAppDelivery> {
   const secret = config.secret?.trim();
