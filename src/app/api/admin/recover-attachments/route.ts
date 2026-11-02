@@ -1,17 +1,9 @@
-﻿/**
+/**
  * POST /api/admin/recover-attachments
  * Retroactively fetches attachments from Resend for emails that arrived
  * before the attachment-save code was deployed (pre Oct 29 2026).
  *
- * Only processes rows where:
- *   - email_id IS NOT NULL (needed to query Resend)
- *   - attachments IS NULL (not yet recovered)
- *   - body_text mentions "attach" (likely had a real attachment)
- *
- * Saves files to Supabase storage at inbound-attachments/{emailId}-{i}-{name}
- * and updates the fl_inbound_emails row with the attachment metadata.
- *
- * Safe to run multiple times - skips rows that already have attachments.
+ * Auth: CRON_SECRET Bearer token OR FL admin token in body.token
  * Test mode: pass { "test": true } in body to log without writing to DB.
  */
 import { NextRequest, NextResponse } from "next/server";
@@ -98,17 +90,20 @@ async function downloadAttachment(
 export async function POST(req: NextRequest) {
   const secret = process.env.CRON_SECRET;
   const auth = req.headers.get("authorization");
-  if (!secret || auth !== `Bearer ${secret}`) {
+  const body = await req.json().catch(() => ({})) as { test?: boolean; token?: string };
+  const testMode = body.test === true;
+
+  const supabase = createAdminClient();
+  const { data: isAdmin } = body.token
+    ? await supabase.rpc("fl_is_admin", { p_token: body.token })
+    : { data: false };
+
+  if (!isAdmin && (!secret || auth !== `Bearer ${secret}`)) {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
 
-  const body = await req.json().catch(() => ({})) as { test?: boolean };
-  const testMode = body.test === true;
-
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) return NextResponse.json({ ok: false, error: "RESEND_API_KEY not set" }, { status: 500 });
-
-  const supabase = createAdminClient();
 
   const { data: rows, error: fetchErr } = await supabase
     .from("fl_inbound_emails")
@@ -141,12 +136,12 @@ export async function POST(req: NextRequest) {
     }
 
     if (!resendData) {
-      results.push({ id: row.id, email_id: emailId, subject: row.subject, status: "expired", detail: "Resend 404 - data purged" });
+      results.push({ id: row.id, email_id: emailId, subject: row.subject, status: "expired", detail: "Resend 404 - email not found" });
       continue;
     }
 
     if (resendData.attachments.length === 0) {
-      results.push({ id: row.id, email_id: emailId, subject: row.subject, status: "no_attachments", detail: "Resend confirms no attachments on this email" });
+      results.push({ id: row.id, email_id: emailId, subject: row.subject, status: "no_attachments" });
       continue;
     }
 
