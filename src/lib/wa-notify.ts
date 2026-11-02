@@ -22,13 +22,13 @@ export async function checkWASession(): Promise<{ live: boolean; detail?: string
   const secret = (process.env.WHATSAPP_BOT_SECRET ?? process.env.NEXT_PUBLIC_WHATSAPP_BOT_SECRET)?.trim();
   if (!botUrl || !secret) return { live: false, detail: "Bot URL or secret not configured" };
   try {
-    const r = await fetch(`${botUrl}/health`, {
+    const r = await fetch(`${botUrl}/healthz`, {
       headers: { "x-send-secret": secret },
       signal: AbortSignal.timeout(5000),
     });
     if (r.ok) {
       const data = await r.json().catch(() => ({})) as Record<string, unknown>;
-      const live = data.connected === true || data.live === true || data.status === "connected";
+      const live = data.linked === true;
       return { live, detail: JSON.stringify(data) };
     }
     return { live: false, detail: `health endpoint returned ${r.status}` };
