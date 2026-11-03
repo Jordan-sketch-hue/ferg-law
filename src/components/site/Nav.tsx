@@ -26,7 +26,7 @@ const HOME_LINK = { href: SITE.homeApp, label: "H.O.M.E. by Ferguson Law", exter
 const RESOURCE_LINKS = [
   { href: "/buyers-guide", label: "Buyer's Guide" },
   { href: "/explainers", label: "Explainers" },
-  { href: "/cost-estimator", label: "Cost EstimatorÂ®" },
+  { href: "/cost-estimator", label: "Cost Estimator®" },
   { href: "/value-estimator", label: "Valuation Estimator" },
   { href: "/glossary", label: "Glossary" },
   { href: "/faq", label: "FAQ" },
@@ -111,14 +111,14 @@ export default function Nav() {
                 onClick={() => setResourcesOpen((v) => !v)}
                 aria-expanded={resourcesOpen}
               >
-                <span data-edit="nav.resources">Resources</span> <span className="nav-caret" aria-hidden="true">â–¾</span>
+                <span data-edit="nav.resources">Resources</span> <span className="nav-caret" aria-hidden="true">▾</span>
               </button>
               {resourcesOpen && (
                 <div className="nav-resources-dropdown">
                   {RESOURCE_LINKS.map((l) => (
                     <a key={l.href} href={l.href} onClick={() => setResourcesOpen(false)}>
-                      {l.label.includes("Â®")
-                        ? <><span data-edit={`nav.resource.${l.href.replace("/","")}`}>{l.label.replace("Â®", "")}</span><sup style={{fontSize:"0.55em",verticalAlign:"super",lineHeight:0}}>Â®</sup></>
+                      {l.label.includes("®")
+                        ? <><span data-edit={`nav.resource.${l.href.replace("/","")}`}>{l.label.replace("®", "")}</span><sup style={{fontSize:"0.55em",verticalAlign:"super",lineHeight:0}}>®</sup></>
                         : <span data-edit={`nav.resource.${l.href.replace("/","")}`}>{l.label}</span>}
                     </a>
                   ))}
@@ -134,7 +134,7 @@ export default function Nav() {
               href={HOME_LINK.href}
               className="nav-home-inline"
             >
-              <span data-edit="nav.homeLink">H.O.M.E. by Ferguson Law</span><sup style={{fontSize:"0.55em",verticalAlign:"super",lineHeight:0}}>Â®</sup>
+              <span data-edit="nav.homeLink">H.O.M.E. by Ferguson Law</span><sup style={{fontSize:"0.55em",verticalAlign:"super",lineHeight:0}}>®</sup>
             </a>
           </nav>
 
@@ -156,7 +156,7 @@ export default function Nav() {
                 onClick={() => setLoginOpen((v) => !v)}
                 aria-expanded={loginOpen}
               >
-                Log in <span className="nav-caret" aria-hidden="true">â–¾</span>
+                Log in <span className="nav-caret" aria-hidden="true">▾</span>
               </button>
               {loginOpen && (
                 <div className="nav-resources-dropdown nav-login-dropdown">
@@ -232,7 +232,7 @@ export default function Nav() {
             <a key={l.href} href={l.href} onClick={closeMenu} className="drawer-sub-link">{l.label}</a>
           ))}
           <a href={HOME_LINK.href} onClick={closeMenu} className="drawer-sub-link drawer-home-pill">
-            <span>H.O.M.E. by Ferguson Law<sup style={{fontSize:"0.55em",verticalAlign:"super",lineHeight:0}}>Â®</sup></span>
+            <span>H.O.M.E. by Ferguson Law<sup style={{fontSize:"0.55em",verticalAlign:"super",lineHeight:0}}>®</sup></span>
           </a>
 
           {/* Resources */}
@@ -240,8 +240,8 @@ export default function Nav() {
           {RESOURCE_LINKS.map((l) => (
             <a key={l.href} href={l.href} onClick={closeMenu}
               className={`drawer-sub-link${l.href === "/cost-estimator" ? " drawer-featured-link" : ""}`}>
-              {l.label.includes("Â®")
-                ? <span>{l.label.replace("Â®", "")}<sup style={{fontSize:"0.55em",verticalAlign:"super",lineHeight:0}}>Â®</sup></span>
+              {l.label.includes("®")
+                ? <span>{l.label.replace("®", "")}<sup style={{fontSize:"0.55em",verticalAlign:"super",lineHeight:0}}>®</sup></span>
                 : l.label}
               {l.href === "/cost-estimator" && <span className="drawer-badge">Tool</span>}
             </a>
