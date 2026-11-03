@@ -4556,6 +4556,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
   const [sending, setSending] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [openMatter, setOpenMatter] = useState(false);
+  const [receiptPreview, setReceiptPreview] = useState<CmsPayment | null>(null);
   const [clientQuery, setClientQuery] = useState("");
   const [clientHits, setClientHits] = useState<CmsClientHit[]>([]);
   const [newClientId, setNewClientId] = useState("");
