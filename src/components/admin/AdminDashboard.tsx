@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 /**
  * Consultation CRM — the Ferguson Law back office.
@@ -4138,7 +4138,7 @@ function KanbanView({ matters, onStage, onExpand }: {
   return (
     <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "20px", alignItems: "flex-start" }}>
       {KANBAN_COLS.map(col => {
-        const cards = matters.filter(m => m.stage === col.key);
+        const cards = matters.filter(m => (m.stage ?? "intake") === col.key);
         return (
           <div key={col.key} style={{ minWidth: 180, flex: "0 0 180px" }}>
             <div style={{ fontSize: ".68rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".08em", color: MUTED, marginBottom: 10, padding: "0 2px" }}>
