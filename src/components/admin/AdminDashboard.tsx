@@ -545,6 +545,14 @@ export default function AdminDashboard() {
     await supabase.rpc("fl_admin_set_lead_status", { p_token: token, p_id: id, p_status: status });
   }, [token]);
 
+  const convertLeadToClient = useCallback(async (id: string) => {
+    if (!token) return;
+    const supabase = createClient();
+    const { error } = await supabase.rpc("fl_admin_convert_lead_to_client", { p_token: token, p_lead_id: id });
+    if (!error) setLeads((prev) => prev.filter((l) => l.id !== id));
+    else alert("Could not convert lead: " + error.message);
+  }, [token]);
+
   const setApptStatus = useCallback(async (id: string, status: string) => {
     if (!token) return;
     setAppts((prev) => prev.map((a) => a.id === id ? { ...a, status } : a));
@@ -934,14 +942,14 @@ export default function AdminDashboard() {
               onRefresh={() => { if (token) void fetchAll(token); }}
             />
           )}
-          {tab === "leads" && <LeadsTable leads={leads} loading={loading} token={token} onStatus={setLeadStatus} onDelete={deleteLead} />}
+          {tab === "leads" && <LeadsTable leads={leads} loading={loading} token={token} onStatus={setLeadStatus} onDelete={deleteLead} onConvert={convertLeadToClient} />}
           {tab === "bookings" && <BookingsTable appts={appts} loading={loading} token={token ?? ""} onStatus={setApptStatus} onCancel={cancelBooking} onRefresh={() => { if (token) void fetchAll(token); }} />}
           {tab === "clients" && <ClientsTab clients={clients} matters={matters} loading={loading} token={token ?? ""} onUpsert={upsertClient} onDelete={deleteClient} />}
           {tab === "matters" && <MattersTab matters={matters} loading={loading} token={token ?? ""} onStage={setMatterStage} onPayment={setMatterPayment} onDelete={deleteMatter} />}
           {tab === "cms" && token && <CmsTab token={token} onUnreadChange={setCmsUnread} />}
           {tab === "calendar" && <CalendarTab appts={appts} token={token ?? ""} onStatus={setApptStatus} onRefresh={() => { if (token) void fetchAll(token); }} />}
           {tab === "chats" && <ChatsTable convos={convos} loading={loading} />}
-          {tab === "email" && token && <EmailTab emails={emails} token={token} leads={leads} onMarkRead={(id) => setEmails(prev => prev.map(e => e.id === id ? { ...e, read: true } : e))} onDelete={(id) => setEmails(prev => prev.filter(e => e.id !== id))} onLeadContacted={(id) => { setLeads(prev => prev.map(l => l.id === id ? { ...l, status: "contacted" } : l)); void createClient().rpc("fl_admin_set_lead_status", { p_token: token, p_id: id, p_status: "contacted" }); }} />}
+          {tab === "email" && token && <EmailTab emails={emails} token={token} leads={leads} onMarkRead={(id) => setEmails(prev => prev.map(e => e.id === id ? { ...e, read: true } : e))} onMarkAllRead={() => setEmails(prev => prev.map(e => ({ ...e, read: true })))} onDelete={(id) => setEmails(prev => prev.filter(e => e.id !== id))} onLeadContacted={(id) => { setLeads(prev => prev.map(l => l.id === id ? { ...l, status: "contacted" } : l)); void createClient().rpc("fl_admin_set_lead_status", { p_token: token, p_id: id, p_status: "contacted" }); }} />}
           {tab === "invites" && <InvitesPanel invites={invites} loading={loading} onCreate={createInvite} onDeactivate={deactivateInvite} onDelete={deleteInvite} />}
           {tab === "directory" && <ListingsPanel listings={listings} loading={loading} onStatus={setListingStatus} />}
           {tab === "availability" && <AvailabilityTab availability={availability} onSave={saveAvailability} token={token ?? ""} />}
@@ -1229,7 +1237,7 @@ function PurgeModal({ target, token, onDone, onClose }: { target: PurgeTarget; t
 // ---------------------------------------------------------------------------
 // Leads
 // ---------------------------------------------------------------------------
-function LeadsTable({ leads, loading, token, onStatus, onDelete }: { leads: Lead[]; loading: boolean; token: string; onStatus: (id: string, s: string) => void; onDelete: (id: string) => void }) {
+function LeadsTable({ leads, loading, token, onStatus, onDelete, onConvert }: { leads: Lead[]; loading: boolean; token: string; onStatus: (id: string, s: string) => void; onDelete: (id: string) => void; onConvert: (id: string) => void }) {
   const [composing, setComposing] = useState<Lead | null>(null);
   const [purgeTarget, setPurgeTarget] = useState<PurgeTarget | null>(null);
   const [isMobile, setIsMobile] = useState(false);
@@ -2940,8 +2948,8 @@ interface SentEmail {
   from_mailbox: string | null;
 }
 
-function EmailTab({ emails, token, leads, onMarkRead, onDelete, onLeadContacted }: {
-  emails: InboundEmail[]; token: string; leads: Lead[]; onMarkRead: (id: string) => void; onDelete: (id: string) => void; onLeadContacted: (leadId: string) => void;
+function EmailTab({ emails, token, leads, onMarkRead, onMarkAllRead, onDelete, onLeadContacted }: {
+  emails: InboundEmail[]; token: string; leads: Lead[]; onMarkRead: (id: string) => void; onMarkAllRead: () => void; onDelete: (id: string) => void; onLeadContacted: (leadId: string) => void;
 }) {
   const [pane, setPane] = useState<"inbox" | "sent">("inbox");
   const [sentEmails, setSentEmails] = useState<SentEmail[]>([]);
@@ -3299,7 +3307,7 @@ function EmailTab({ emails, token, leads, onMarkRead, onDelete, onLeadContacted 
               {selected.body_html ? (
                 <iframe
                   srcDoc={selected.body_html}
-                  sandbox="allow-same-origin"
+                  sandbox="allow-popups allow-same-origin"
                   style={{ width: "100%", minHeight: 400, border: "none", display: "block" }}
                   title="Email body"
                   onLoad={(e) => {

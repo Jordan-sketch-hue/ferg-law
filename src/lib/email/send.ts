@@ -683,6 +683,8 @@ export async function sendAdminAttendanceAlert(args: {
     `Reference: ${ref}`,
     ``,
     `Please mark this appointment as completed or no-show in the admin panel.`,
+    ``,
+    `https://home.fergusonlaw.com/admin?booking=${encodeURIComponent(ref)}`,
   ].join("\n");
 
   try {

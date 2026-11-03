@@ -1,4 +1,4 @@
-import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+﻿import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -109,7 +109,7 @@ function drawPageHeading(
 
 export async function GET() {
   const pdf = await PDFDocument.create();
-  pdf.setTitle("Client Intake Form (CIF) — Ferguson Law");
+  pdf.setTitle("Client Intake Form (CIF) â€” Ferguson Law");
   pdf.setAuthor("Ferguson Law, Jamaica");
   pdf.setSubject("Fillable client identity and source-of-funds intake form");
 
@@ -123,7 +123,7 @@ export async function GET() {
     regularFont,
     boldFont,
     "Client Intake Form (CIF)",
-    "Confidential client information — complete both pages and sign the declaration.",
+    "Confidential client information â€” complete both pages and sign the declaration.",
   );
   pageOne.drawText(
     "Please complete this form accurately. Submit it to Ferguson Law through an approved secure channel.",
@@ -150,7 +150,7 @@ export async function GET() {
     font: boldFont,
     color: INK,
   });
-  pageOne.drawText("ID type — select one", {
+  pageOne.drawText("ID type â€” select one", {
     x: LEFT,
     y: PAGE_HEIGHT - 407,
     size: 9,
@@ -195,7 +195,7 @@ export async function GET() {
     color: INK,
   });
   pageTwo.drawText(
-    "Are you, or have you been, a senior government official, politician, judge, or close associate of one?",
+    "Are you, or have you been, a senior government official, politician, judge, or close family member or associate of one?",
     { x: LEFT, y: PAGE_HEIGHT - 244, size: 9, font: regularFont, color: MUTED },
   );
   drawCheckbox(form, pageTwo, regularFont, "pep_yes", "Yes", LEFT, 258);
@@ -239,14 +239,14 @@ export async function GET() {
     thickness: 0.6,
     color: BORDER,
   });
-  pageTwo.drawText("Ferguson Law  ·  Jamaica  ·  contact@fergusonlawja.com", {
+  pageTwo.drawText("Ferguson Law  Â·  Jamaica  Â·  contact@fergusonlawja.com", {
     x: LEFT,
     y: 64,
     size: 8,
     font: regularFont,
     color: MUTED,
   });
-  pageTwo.drawText("Confidential — handle this completed form securely.", {
+  pageTwo.drawText("Confidential â€” handle this completed form securely.", {
     x: LEFT,
     y: 50,
     size: 8,

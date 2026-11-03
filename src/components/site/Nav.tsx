@@ -1,4 +1,4 @@
-/* eslint-disable @next/next/no-img-element */
+﻿/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -26,7 +26,7 @@ const HOME_LINK = { href: SITE.homeApp, label: "H.O.M.E. by Ferguson Law", exter
 const RESOURCE_LINKS = [
   { href: "/buyers-guide", label: "Buyer's Guide" },
   { href: "/explainers", label: "Explainers" },
-  { href: "/cost-estimator", label: "Cost Estimator®" },
+  { href: "/cost-estimator", label: "Cost EstimatorÂ®" },
   { href: "/value-estimator", label: "Valuation Estimator" },
   { href: "/glossary", label: "Glossary" },
   { href: "/faq", label: "FAQ" },
@@ -111,14 +111,14 @@ export default function Nav() {
                 onClick={() => setResourcesOpen((v) => !v)}
                 aria-expanded={resourcesOpen}
               >
-                <span data-edit="nav.resources">Resources</span> <span className="nav-caret" aria-hidden="true">▾</span>
+                <span data-edit="nav.resources">Resources</span> <span className="nav-caret" aria-hidden="true">â–¾</span>
               </button>
               {resourcesOpen && (
                 <div className="nav-resources-dropdown">
                   {RESOURCE_LINKS.map((l) => (
                     <a key={l.href} href={l.href} onClick={() => setResourcesOpen(false)}>
-                      {l.label.includes("®")
-                        ? <><span data-edit={`nav.resource.${l.href.replace("/","")}`}>{l.label.replace("®", "")}</span><sup style={{fontSize:"0.55em",verticalAlign:"super",lineHeight:0}}>®</sup></>
+                      {l.label.includes("Â®")
+                        ? <><span data-edit={`nav.resource.${l.href.replace("/","")}`}>{l.label.replace("Â®", "")}</span><sup style={{fontSize:"0.55em",verticalAlign:"super",lineHeight:0}}>Â®</sup></>
                         : <span data-edit={`nav.resource.${l.href.replace("/","")}`}>{l.label}</span>}
                     </a>
                   ))}
@@ -126,16 +126,20 @@ export default function Nav() {
               )}
             </div>
             <span className="nav-divider" aria-hidden="true" />
+            <span className="nav-jam-badge" aria-label="Jamaica" title="Ferguson Law — Jamaica">
+              <span role="img" aria-hidden="true">🇯🇲</span>
+              <span className="nav-jam-label">JAM</span>
+            </span>
             <a
               href={HOME_LINK.href}
               className="nav-home-inline"
             >
-              <span data-edit="nav.homeLink">H.O.M.E. by Ferguson Law</span><sup style={{fontSize:"0.55em",verticalAlign:"super",lineHeight:0}}>®</sup>
+              <span data-edit="nav.homeLink">H.O.M.E. by Ferguson Law</span><sup style={{fontSize:"0.55em",verticalAlign:"super",lineHeight:0}}>Â®</sup>
             </a>
           </nav>
 
           <div className="nav-right">
-            {/* Utility — search first */}
+            {/* Utility â€” search first */}
             <button
               className="nav-search-btn nav-search-desktop"
               aria-label="Search"
@@ -152,7 +156,7 @@ export default function Nav() {
                 onClick={() => setLoginOpen((v) => !v)}
                 aria-expanded={loginOpen}
               >
-                Log in <span className="nav-caret" aria-hidden="true">▾</span>
+                Log in <span className="nav-caret" aria-hidden="true">â–¾</span>
               </button>
               {loginOpen && (
                 <div className="nav-resources-dropdown nav-login-dropdown">
@@ -162,7 +166,7 @@ export default function Nav() {
                 </div>
               )}
             </div>
-            {/* Book here — desktop */}
+            {/* Book here â€” desktop */}
             <a
               href="/booking"
               className="btn btn-gold nav-consult-btn"
@@ -170,7 +174,7 @@ export default function Nav() {
             >
               <CalIcon /><span className="btn-label" data-edit="nav.bookHere">Book here</span>
             </a>
-            {/* Book here — mobile only */}
+            {/* Book here â€” mobile only */}
             <a
               href="/booking"
               className="btn btn-gold nav-consult-mobile"
@@ -197,7 +201,7 @@ export default function Nav() {
         </div>
       </header>
 
-      {/* Mobile drawer + overlay — wrapper clips fixed drawer to viewport so iOS doesn't zoom */}
+      {/* Mobile drawer + overlay â€” wrapper clips fixed drawer to viewport so iOS doesn't zoom */}
       <div className={`nav-drawer-clip${menuOpen ? " active" : ""}`} aria-hidden="true">
         <div
           className={`nav-overlay${menuOpen ? " show" : ""}`}
@@ -228,7 +232,7 @@ export default function Nav() {
             <a key={l.href} href={l.href} onClick={closeMenu} className="drawer-sub-link">{l.label}</a>
           ))}
           <a href={HOME_LINK.href} onClick={closeMenu} className="drawer-sub-link drawer-home-pill">
-            <span>H.O.M.E. by Ferguson Law<sup style={{fontSize:"0.55em",verticalAlign:"super",lineHeight:0}}>®</sup></span>
+            <span>H.O.M.E. by Ferguson Law<sup style={{fontSize:"0.55em",verticalAlign:"super",lineHeight:0}}>Â®</sup></span>
           </a>
 
           {/* Resources */}
@@ -236,8 +240,8 @@ export default function Nav() {
           {RESOURCE_LINKS.map((l) => (
             <a key={l.href} href={l.href} onClick={closeMenu}
               className={`drawer-sub-link${l.href === "/cost-estimator" ? " drawer-featured-link" : ""}`}>
-              {l.label.includes("®")
-                ? <span>{l.label.replace("®", "")}<sup style={{fontSize:"0.55em",verticalAlign:"super",lineHeight:0}}>®</sup></span>
+              {l.label.includes("Â®")
+                ? <span>{l.label.replace("Â®", "")}<sup style={{fontSize:"0.55em",verticalAlign:"super",lineHeight:0}}>Â®</sup></span>
                 : l.label}
               {l.href === "/cost-estimator" && <span className="drawer-badge">Tool</span>}
             </a>
@@ -261,7 +265,7 @@ export default function Nav() {
       </div>
 
       <style>{`
-        /* Drawer clip wrapper — position:fixed; overflow:hidden clips drawer to viewport
+        /* Drawer clip wrapper â€” position:fixed; overflow:hidden clips drawer to viewport
            so iOS Safari doesn't detect off-screen translateX and zoom out the page */
         .nav-drawer-clip{
           position:fixed; inset:0; pointer-events:none;
@@ -276,6 +280,12 @@ export default function Nav() {
           display:inline-block; width:1px; height:14px;
           background:var(--line); margin:0 .1rem; vertical-align:middle; opacity:.6;
         }
+        .nav-jam-badge{
+          display:inline-flex; align-items:center; gap:3px;
+          font-size:.68rem; font-weight:700; color:var(--gold-deep);
+          letter-spacing:.04em; opacity:.75; vertical-align:middle;
+        }
+        .nav-jam-label{ font-family:var(--sans, sans-serif); font-size:.65rem; }
         a.nav-home-inline{
           font-size:.78rem; font-weight:600;
           color:var(--gold-deep) !important;
@@ -284,14 +294,14 @@ export default function Nav() {
         }
         a.nav-home-inline:hover{ opacity:.72; }
 
-        /* Drawer section label — sits between links, no extra border */
+        /* Drawer section label â€” sits between links, no extra border */
         .drawer-section-label{
           font-size:.65rem; font-weight:700; letter-spacing:.13em; text-transform:uppercase;
           color:var(--gold-deep,#8a6d1f); padding:14px 28px 6px;
           background:rgba(201,168,106,.06);
         }
 
-        /* Sub-links inherit .nav-drawer a border — just tweak padding + size */
+        /* Sub-links inherit .nav-drawer a border â€” just tweak padding + size */
         .nav-drawer a.drawer-sub-link{
           font-size:.9rem; padding:13px 28px; display:flex;
           align-items:center; justify-content:space-between;
@@ -300,7 +310,7 @@ export default function Nav() {
         /* H.O.M.E. gold tint */
         .nav-drawer a.drawer-home-pill{ color:var(--gold-deep,#8a6d1f) !important; font-weight:600 !important; }
 
-        /* Cost Estimator — slightly bolder */
+        /* Cost Estimator â€” slightly bolder */
         .nav-drawer a.drawer-featured-link{ font-weight:700 !important; }
 
         /* "Tool" badge */
@@ -350,7 +360,7 @@ export default function Nav() {
         .nav-right{ display:flex; align-items:center; gap:12px; flex-shrink:0; margin-left:1rem; }
         .nav-get-started{ display:inline-flex; align-items:center; gap:6px; font-size:.85rem; padding:.45rem 1.1rem; white-space:nowrap; }
 
-        /* Log in — prominent, beside Get started (Owen's ask) */
+        /* Log in â€” prominent, beside Get started (Owen's ask) */
         .nav-login-wrap{ position:relative; }
         .nav-login-btn{
           background:none; cursor:pointer; font:inherit;
@@ -379,7 +389,7 @@ export default function Nav() {
         }
         .drawer-search-btn:hover{ color:var(--gold-deep); }
 
-        /* Consultation button — desktop nav-right */
+        /* Consultation button â€” desktop nav-right */
         .nav-consult-btn{
           font-size:.82rem; padding:.42rem 1rem; white-space:nowrap;
           display:inline-flex; align-items:center; gap:6px;
@@ -394,7 +404,7 @@ export default function Nav() {
             font-size:.85rem; padding:.45rem 1.1rem; white-space:nowrap;
           }
         }
-        /* Mobile: compact text pills — labels visible, just tighter sizing */
+        /* Mobile: compact text pills â€” labels visible, just tighter sizing */
         @media(max-width:760px){
           .nav-consult-mobile, .nav-get-started{
             font-size:.76rem !important; padding:.35rem .7rem !important;

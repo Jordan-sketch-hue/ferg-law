@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 
 const RESEND_KEY = process.env.RESEND_API_KEY;
@@ -15,13 +15,25 @@ function escapeHtml(value: string): string {
   })[char] ?? char);
 }
 
+/** Escape text and auto-link https?:// URLs so they are clickable in email clients. */
+function linkifyAndEscape(text: string): string {
+  const urlRegex = /(https?:\/\/[^\s<>"']+)/g;
+  return text.split(urlRegex).map((part, i) => {
+    if (i % 2 === 1) {
+      const escaped = escapeHtml(part);
+      return `<a href="${escaped}" style="color:#8a6a22;word-break:break-all;" target="_blank" rel="noopener noreferrer">${escaped}</a>`;
+    }
+    return escapeHtml(part);
+  }).join('');
+}
+
 function buildHtml(body: string): string {
   const paragraphs = body.split(/\n{2,}/).map((paragraph) =>
     paragraph.trim()
-      ? `<p style="font-size:15px;line-height:1.75;margin:0 0 16px;color:#1c1c1c;">${escapeHtml(paragraph).replace(/\n/g, "<br/>")}</p>`
+      ? `<p style="font-size:15px;line-height:1.75;margin:0 0 16px;color:#1c1c1c;">${linkifyAndEscape(paragraph).replace(/\n/g, "<br/>")}</p>`
       : "",
   ).join("");
-  return `<!doctype html><html><body style="margin:0;background:#f4f1ec;font-family:Georgia,'Times New Roman',serif;color:#1c1c1c;">
+  return `<!doctype html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;background:#f4f1ec;font-family:Georgia,'Times New Roman',serif;color:#1c1c1c;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f1ec;padding:40px 16px;">
 <tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#fff;border-radius:14px;overflow:hidden;border:1px solid #e7e1d6;">

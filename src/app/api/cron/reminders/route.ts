@@ -1,14 +1,14 @@
-/**
- * GET /api/cron/reminders — automatic appointment reminders + attention alerts.
+﻿/**
+ * GET /api/cron/reminders â€” automatic appointment reminders + attention alerts.
  *
- * Run on a schedule (Vercel Cron, every 15 min — see vercel.json). Each run:
+ * Run on a schedule (Vercel Cron, every 15 min â€” see vercel.json). Each run:
  *  1. Finds confirmed bookings entering the 24h/2h/1h/15m windows, emails a
  *     branded reminder, marks each so it fires exactly once, and logs every
  *     attempt (sent/failed/skipped) to fl_appointment_reminder_log for the
  *     admin-facing reminder-history panel.
  *  2. Pushes an admin alert for any confirmed appointment whose end time has
  *     passed without being marked completed/no-show ("attendance confirmation
- *     required") — once per appointment, via the same log table as a guard.
+ *     required") â€” once per appointment, via the same log table as a guard.
  *  3. Pushes a once-daily "good morning" digest around 7am Jamaica time.
  *
  * Auth: when CRON_SECRET is set, Vercel sends `Authorization: Bearer <secret>`;
@@ -46,7 +46,8 @@ type ApptRow = {
   status: string | null;
 };
 
-const REMINDER_KINDS = ["24h", "2h", "1h", "30m", "15m"] as const;
+// Owen: 2-hour and 15-minute reminders only
+const REMINDER_KINDS = ["2h", "15m"] as const;
 
 export async function GET(req: NextRequest) {
   const secret = process.env.CRON_SECRET;
@@ -60,7 +61,7 @@ export async function GET(req: NextRequest) {
 
   const token = process.env.FL_ADMIN_TOKEN || "";
   const supabase = createAdminClient();
-  const result: Record<string, number> = { "24h": 0, "2h": 0, "1h": 0, "15m": 0 };
+  const result: Record<string, number> = { "2h": 0, "15m": 0 };
 
   // 1. Client reminders (all tiers), each attempt logged for the audit panel.
   for (const kind of REMINDER_KINDS) {
@@ -111,7 +112,7 @@ export async function GET(req: NextRequest) {
       }
 
       // Mark only when we actually attempted a send (ok or hard error). When
-      // Resend isn't configured the send is "skipped" — leave it unmarked so it
+      // Resend isn't configured the send is "skipped" â€” leave it unmarked so it
       // can still fire once email is turned on (and it's still in-window).
       if (!("skipped" in send)) {
         await supabase.rpc("fl_mark_reminded", {
@@ -124,13 +125,13 @@ export async function GET(req: NextRequest) {
         // Push admin notification + WhatsApp alert for every reminder that fires
         const kindLabel: Record<string, string> = { "24h": "tomorrow", "2h": "in 2 hours", "1h": "in 1 hour", "30m": "in 30 min", "15m": "in 15 min" };
         await pushToAdmins(
-          `Reminder sent — ${row.name || "Client"}`,
-          `${row.service || "Consultation"} ${kindLabel[kind] ?? kind} · ${fullWhenLabel(row.starts_at)}`,
+          `Reminder sent â€” ${row.name || "Client"}`,
+          `${row.service || "Consultation"} ${kindLabel[kind] ?? kind} Â· ${fullWhenLabel(row.starts_at)}`,
           "/admin?tab=bookings",
         );
         const waLines = [
           `REMINDER SENT - ${row.name || "Client"}`,
-          `${row.service || "Consultation"} · ${kindLabel[kind] ?? kind}`,
+          `${row.service || "Consultation"} Â· ${kindLabel[kind] ?? kind}`,
           fullWhenLabel(row.starts_at),
           ...(meetingUrl ? [`Zoom: ${meetingUrl}`] : []),
         ];
@@ -146,17 +147,32 @@ export async function GET(req: NextRequest) {
           const clientPhone = (clientRow?.phone as string | null) ?? null;
           if (clientPhone) {
             const waReminder =
-              `*Ferguson Law* — Appointment Reminder\n\nHi ${row.name || "there"}, your *${row.service || "consultation"}* is ${kindLabel[kind] ?? kind}.\n\n${fullWhenLabel(row.starts_at ?? "")}` +
+              `*Ferguson Law* â€” Appointment Reminder\n\nHi ${row.name || "there"}, your *${row.service || "consultation"}* is ${kindLabel[kind] ?? kind}.\n\n${fullWhenLabel(row.starts_at ?? "")}` +
               (meetingUrl ? `\nZoom: ${meetingUrl}` : ``) +
-              `\n\n━━━━━━━━━━━━━━━━━\n_On behalf of Ferguson Law Firm_\n_Powered by J Supreme Tech_`;
-            void sendWhatsAppText(clientPhone, waReminder);
+              `\n\nâ”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n_On behalf of Ferguson Law Firm_\n_Powered by J Supreme Tech_`;
+            const waSend = await sendWhatsAppText(clientPhone, waReminder);
+            if (appointmentId) {
+              const waStatus = "skipped" in waSend ? "skipped" : waSend.ok ? "sent" : "failed";
+              await supabase.rpc("fl_admin_log_reminder", {
+                p_token: token,
+                p_appointment_id: appointmentId,
+                p_appointment_ref: row.ref,
+                p_reminder_type: kind,
+                p_channel: "whatsapp",
+                p_destination: clientPhone,
+                p_status: waStatus,
+                p_for_starts_at: row.starts_at,
+                p_provider_message_id: null,
+                p_error_message: "ok" in waSend && !waSend.ok ? waSend.error : null,
+              });
+            }
           }
         }
       }
     }
   }
 
-  // 2. Attendance-confirmation alerts — confirmed appointments whose end time
+  // 2. Attendance-confirmation alerts â€” confirmed appointments whose end time
   // has passed with no completed/no-show outcome. Bounded to the last 24h so a
   // long-neglected old booking doesn't re-alert forever.
   const nowIso = new Date().toISOString();
@@ -170,7 +186,7 @@ export async function GET(req: NextRequest) {
 
   let attendanceAlerts = 0;
   for (const a of (overdue ?? []) as ApptRow[]) {
-    // Check existence BEFORE writing — the upsert always "succeeds" (that's
+    // Check existence BEFORE writing â€” the upsert always "succeeds" (that's
     // the point of ON CONFLICT), so its return value can't tell first-write
     // from re-log. An explicit pre-check is what actually gates the push.
     const { data: alreadyLogged } = await supabase.rpc("fl_admin_reminder_log_exists", {
@@ -197,7 +213,7 @@ export async function GET(req: NextRequest) {
     const timeLabel = formatInTimeZone(new Date(a.starts_at), TZ, "h:mm a");
     await pushToAdmins(
       "Attendance confirmation required",
-      `${a.name || "A client"} · ${a.service || "Consultation"} at ${timeLabel} — mark completed or no-show.`,
+      `${a.name || "A client"} Â· ${a.service || "Consultation"} at ${timeLabel} â€” mark completed or no-show.`,
     );
     const adminEmail = process.env.FERGUSON_ADMIN_EMAIL || process.env.FERGUSON_STAFF_EMAIL || "contact@fergusonlawja.com";
     if (adminEmail) {
@@ -215,7 +231,7 @@ export async function GET(req: NextRequest) {
   }
 
   // 3. Once-daily morning digest. Window is a full hour (7:00-7:59 Jamaica) so
-  // one missed/delayed cron tick doesn't skip the whole day's digest — the
+  // one missed/delayed cron tick doesn't skip the whole day's digest â€” the
   // fl_daily_digest_log unique constraint still guarantees exactly one send.
   const jaHour = Number(formatInTimeZone(new Date(), TZ, "H"));
   let digestSent = false;
@@ -225,7 +241,7 @@ export async function GET(req: NextRequest) {
       .from("fl_daily_digest_log")
       .insert({ digest_date: todayKey });
     if (!digestErr) {
-      // Insert succeeded — first time today, unique constraint would have
+      // Insert succeeded â€” first time today, unique constraint would have
       // rejected a duplicate. Safe to send exactly once.
       const dayStart = new Date(`${todayKey}T00:00:00-05:00`).toISOString();
       const dayEnd = new Date(`${todayKey}T23:59:59-05:00`).toISOString();

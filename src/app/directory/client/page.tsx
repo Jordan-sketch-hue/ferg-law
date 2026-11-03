@@ -1397,7 +1397,7 @@ function KycTab({ kyc, loading, submitting, error, submitted, onSubmit }: {
               <input type="checkbox" checked={form.is_pep} onChange={e => set("is_pep", e.target.checked)}
                 style={{ marginTop: 3, flexShrink: 0, accentColor: "var(--gold)", width: 16, height: 16 }} />
               <span style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.5 }}>
-                I am or have been a Politically Exposed Person (PEP) — a senior government official, politician, judge, or close associate of one.
+                I am or have been a Politically Exposed Person (PEP) — a senior government official, politician, judge, or close family member or associate of one.
               </span>
             </label>
             {form.is_pep && (
