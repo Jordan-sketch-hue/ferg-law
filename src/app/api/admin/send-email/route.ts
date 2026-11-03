@@ -1,9 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 
 const RESEND_KEY = process.env.RESEND_API_KEY;
 const FROM = process.env.FERGUSON_FROM_EMAIL || "Ferguson Law <contact@fergusonlawja.com>";
-const SIGNATURE = "Warm regards,\nOwen K. Ferguson, JP\nFerguson Law\n(876) 320-0235";
+const SIG_MARKER = "Warm regards,";
+const SIGNATURE = `Warm regards,\nOwen K. Ferguson, JP\nFerguson Law\n(876) 320-0235`;
 
 function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (char) => ({
@@ -15,7 +16,6 @@ function escapeHtml(value: string): string {
   })[char] ?? char);
 }
 
-/** Escape text and auto-link https?:// URLs so they are clickable in email clients. */
 function linkifyAndEscape(text: string): string {
   const urlRegex = /(https?:\/\/[^\s<>"']+)/g;
   return text.split(urlRegex).map((part, i) => {
@@ -28,12 +28,35 @@ function linkifyAndEscape(text: string): string {
 }
 
 function buildHtml(body: string): string {
-  const paragraphs = body.split(/\n{2,}/).map((paragraph) =>
+  const sigIdx = body.indexOf(SIG_MARKER);
+  const mainBody = sigIdx !== -1 ? body.slice(0, sigIdx).trim() : body;
+  const sigBlock = sigIdx !== -1 ? body.slice(sigIdx).trim() : "";
+
+  const paragraphs = mainBody.split(/\n{2,}/).map((paragraph) =>
     paragraph.trim()
       ? `<p style="font-size:15px;line-height:1.75;margin:0 0 16px;color:#1c1c1c;">${linkifyAndEscape(paragraph).replace(/\n/g, "<br/>")}</p>`
       : "",
   ).join("");
-  return `<!doctype html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;background:#f4f1ec;font-family:Georgia,'Times New Roman',serif;color:#1c1c1c;">
+
+  let sigHtml = "";
+  if (sigBlock) {
+    const sigLines = sigBlock.split("\n").map((l) => l.trim()).filter(Boolean);
+    const warmRegards = sigLines[0] ?? "";
+    const signerName = sigLines[1] ?? "";
+    const firmLine = sigLines[2] ?? "";
+    const phoneLine = sigLines[3] ?? "";
+    sigHtml = `
+<div style="margin-top:8px;">
+  <p style="font-size:14px;color:#4a4a4a;margin:0 0 2px;font-family:Georgia,serif;">${escapeHtml(warmRegards)}</p>
+  <p style="font-family:'Great Vibes',cursive;font-size:52px;line-height:1.1;color:#10211c;margin:4px 0 6px;font-weight:400;">${escapeHtml(signerName)}</p>
+  <p style="font-size:12px;color:#6a6a6a;margin:0;font-family:Georgia,serif;">${escapeHtml(firmLine)}<br/>${escapeHtml(phoneLine)}</p>
+</div>`;
+  }
+
+  return `<!doctype html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+<style>@import url('https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap');</style>
+</head><body style="margin:0;background:#f4f1ec;font-family:Georgia,'Times New Roman',serif;color:#1c1c1c;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f1ec;padding:40px 16px;">
 <tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#fff;border-radius:14px;overflow:hidden;border:1px solid #e7e1d6;">
@@ -44,11 +67,14 @@ function buildHtml(body: string): string {
 <tr><td style="padding:36px 36px 12px;">
   ${paragraphs}
 </td></tr>
-<tr><td style="padding:12px 36px 36px;">
+<tr><td style="padding:12px 36px 20px;">
   <hr style="border:none;border-top:1px solid #ece6da;margin:0 0 18px;"/>
+  ${sigHtml}
+</td></tr>
+<tr><td style="padding:8px 36px 36px;">
   <p style="font-size:13px;color:#9a9a9a;margin:0;">
-    Ferguson Law &nbsp;·&nbsp; Jamaica<br/>
-    <a href="tel:+18763200235" style="color:#9a8f7a;">(876) 320-0235</a> &nbsp;·&nbsp;
+    Ferguson Law &nbsp;&#183;&nbsp; Jamaica<br/>
+    <a href="tel:+18763200235" style="color:#9a8f7a;">(876) 320-0235</a> &nbsp;&#183;&nbsp;
     <a href="mailto:contact@fergusonlawja.com" style="color:#9a8f7a;">contact@fergusonlawja.com</a>
   </p>
 </td></tr>
