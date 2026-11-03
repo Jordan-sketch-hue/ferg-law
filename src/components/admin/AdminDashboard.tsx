@@ -21,6 +21,7 @@ import AttentionOverview, { AttentionBadge } from "@/components/admin/AttentionO
 import AppointmentAttentionPanel from "@/components/admin/AppointmentAttentionPanel";
 import { computeAttentionStatus, type AttentionStatus } from "@/lib/attention/status";
 import AdminPushBell from "@/components/admin/AdminPushBell";
+import { splitFergusonSignature } from "@/lib/email/signature";
 
 const TOKEN_KEY = "fl_admin_token";
 const TZ = "America/Jamaica";
@@ -2950,6 +2951,29 @@ interface SentEmail {
   from_mailbox: string | null;
 }
 
+function SentEmailBody({ body }: { body: string }) {
+  const { content, signature } = splitFergusonSignature(body);
+
+  return (
+    <div style={{ background: "#faf8f2", borderRadius: 10, padding: 20, fontSize: ".9rem", lineHeight: 1.7, color: INK, minHeight: 100 }}>
+      {content.split(/\n{2,}/).filter(Boolean).map((paragraph, index) => (
+        <p key={index} style={{ margin: "0 0 16px", whiteSpace: "pre-line" }}>{paragraph}</p>
+      ))}
+      {signature ? (
+        <div style={{ marginTop: 8 }}>
+          <p style={{ margin: "0 0 2px" }}>{signature.signOff}</p>
+          <p style={{ fontFamily: "'Allura', 'Segoe Script', 'Brush Script MT', cursive", fontSize: "2.75rem", lineHeight: 1.1, margin: "0 0 2px", color: GREEN }}>
+            {signature.fullName.split(/[,\s]/)[0]}
+          </p>
+          <p style={{ margin: 0, fontSize: ".82rem", color: MUTED }}>
+            {signature.fullName}<br />{signature.firm}<br />{signature.phone}
+          </p>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function EmailTab({ emails, token, leads, onMarkRead, onMarkAllRead, onDelete, onLeadContacted }: {
   emails: InboundEmail[]; token: string; leads: Lead[]; onMarkRead: (id: string) => void; onMarkAllRead: () => void; onDelete: (id: string) => void; onLeadContacted: (leadId: string) => void;
 }) {
@@ -3230,9 +3254,7 @@ function EmailTab({ emails, token, leads, onMarkRead, onMarkAllRead, onDelete, o
               {selectedSent.context && <div style={{ fontSize: ".78rem", color: MUTED, marginTop: 4 }}>Context: {selectedSent.context}</div>}
               <div style={{ display: "inline-block", marginTop: 6, fontSize: ".72rem", background: "rgba(47,122,82,.1)", color: GREEN, borderRadius: 999, padding: "2px 10px" }}>{selectedSent.status}</div>
             </div>
-            <div style={{ background: "#faf8f2", borderRadius: 10, padding: 20, fontSize: ".9rem", lineHeight: 1.7, color: INK, whiteSpace: "pre-wrap", minHeight: 100 }}>
-              {selectedSent.body_full || selectedSent.body_preview || "(no content available)"}
-            </div>
+            <SentEmailBody body={selectedSent.body_full || selectedSent.body_preview || "(no content available)"} />
             {!selectedSent.body_full && selectedSent.body_preview && (
               <div style={{ fontSize: ".76rem", color: MUTED, marginTop: 8 }}>
                 Sent before full-body logging was added — only the first 300 characters were saved for this one.
