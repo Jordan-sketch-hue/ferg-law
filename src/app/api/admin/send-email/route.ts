@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 
 const RESEND_KEY = process.env.RESEND_API_KEY;
 const FROM = process.env.FERGUSON_FROM_EMAIL || "Ferguson Law <contact@fergusonlawja.com>";
-const SIG_MARKER = "Warm regards,";
-const SIGNATURE = `Warm regards,\nOwen K. Ferguson, JP\nFerguson Law\n(876) 320-0235`;
+const SIG_MARKER = "Owen K. Ferguson, JP";
+const SIGNATURE = `Owen K. Ferguson, JP\nFerguson Law\n(876) 320-0235`;
 
 function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (char) => ({
@@ -41,14 +41,14 @@ function buildHtml(body: string): string {
   let sigHtml = "";
   if (sigBlock) {
     const sigLines = sigBlock.split("\n").map((l) => l.trim()).filter(Boolean);
-    const warmRegards = sigLines[0] ?? "";
-    const signerName = sigLines[1] ?? "";
-    const firmLine = sigLines[2] ?? "";
-    const phoneLine = sigLines[3] ?? "";
+    const fullName = sigLines[0] ?? "Owen K. Ferguson, JP";
+    const firstName = fullName.split(/[\s,]/)[0] ?? "Owen";
+    const firmLine = sigLines[1] ?? "Ferguson Law";
+    const phoneLine = sigLines[2] ?? "(876) 320-0235";
     sigHtml = `
 <div style="margin-top:8px;">
-  <p style="font-size:14px;color:#4a4a4a;margin:0 0 2px;font-family:Georgia,serif;">${escapeHtml(warmRegards)}</p>
-  <p style="font-family:'Great Vibes',cursive;font-size:52px;line-height:1.1;color:#10211c;margin:4px 0 6px;font-weight:400;">${escapeHtml(signerName)}</p>
+  <p style="font-family:'Great Vibes',cursive;font-size:52px;line-height:1.1;color:#10211c;margin:0 0 2px;font-weight:400;">${escapeHtml(firstName)}</p>
+  <p style="font-size:13px;color:#10211c;margin:0 0 2px;font-family:Georgia,serif;font-weight:600;">${escapeHtml(fullName)}</p>
   <p style="font-size:12px;color:#6a6a6a;margin:0;font-family:Georgia,serif;">${escapeHtml(firmLine)}<br/>${escapeHtml(phoneLine)}</p>
 </div>`;
   }
