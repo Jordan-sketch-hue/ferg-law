@@ -127,7 +127,7 @@ export default function Nav() {
             </div>
             <span className="nav-divider" aria-hidden="true" />
             <span className="nav-jam-badge" aria-label="Jamaica" title="Ferguson Law — Jamaica">
-              <span role="img" aria-hidden="true">🇯🇲</span>
+              <img src="https://flagcdn.com/w20/jm.png" width="18" height="13" alt="Jamaica" style="display:inline-block;vertical-align:middle;border-radius:2px;flex-shrink:0;" />
               <span className="nav-jam-label">JAM</span>
             </span>
             <a
