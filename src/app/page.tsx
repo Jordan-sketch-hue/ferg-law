@@ -1,4 +1,4 @@
-/* eslint-disable @next/next/no-img-element */
+﻿/* eslint-disable @next/next/no-img-element */
 import { waLink, SITE } from "@/lib/site";
 import { BookingProvider, BookButton } from "@/components/site/BookingProvider";
 import Nav from "@/components/site/Nav";
@@ -45,7 +45,7 @@ export default function Home() {
             padding: "6px 16px", fontSize: 13, fontWeight: 600, color: "#fff",
             letterSpacing: 0.3, lineHeight: 1.4,
           }}>
-            <span role="img" aria-label="Jamaica">🇯🇲</span>
+            <img src="https://flagcdn.com/w20/jm.png" width="20" height="14" alt="Jamaica" style={{display:"inline-block",verticalAlign:"middle",borderRadius:2,flexShrink:0}} />
             Jamaica-based · Serving clients at home and abroad
           </span>
           <h1>
