@@ -38,9 +38,15 @@ export default function Home() {
         <div className="hero-scrim" aria-hidden="true"></div>
         <div className="hero-full-inner reveal in">
           <p className="hero-firm" data-edit="hero.firm"><CmsText page="home" block="hero_firm" fallback="Ferguson Law" /></p>
-          <span className="eyebrow" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-            <img src="/img/flags/jm.png" alt="" aria-hidden="true" width="20" height="15" style={{ borderRadius: 2 }} />
-            <span data-edit="hero.eyebrow"><CmsText page="home" block="hero_eyebrow" fallback="Kingston, Jamaica" /></span>
+          <span style={{
+            display: "inline-flex", alignItems: "center", gap: 8,
+            background: "rgba(16,33,28,.78)", backdropFilter: "blur(6px)",
+            border: "1px solid rgba(201,168,106,.28)", borderRadius: 999,
+            padding: "6px 16px", fontSize: 13, fontWeight: 600, color: "#fff",
+            letterSpacing: 0.3, lineHeight: 1.4,
+          }}>
+            <span role="img" aria-label="Jamaica">\ud83c\uddef\ud83c\uddf2</span>
+            Jamaica-based \u00b7 Serving clients at home and abroad
           </span>
           <h1>
             <CmsText page="home" block="hero_h1_line1" fallback="Buying or Selling Property in Jamaica?" />{" "}
