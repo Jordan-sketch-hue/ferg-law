@@ -20,6 +20,10 @@ export type LLMResult =
 
 const UA = "ferguson-law-bot/1.0";
 
+function apiKey(name: string): string {
+  return (process.env[name] ?? "").replace(/^(?:\uFEFF|ï»¿)+/, "").trim();
+}
+
 function toOpenAI(system: string, messages: ChatMsg[]) {
   return [{ role: "system", content: system }, ...messages];
 }
@@ -29,7 +33,7 @@ async function callGroq(
   messages: ChatMsg[],
   maxTokens: number,
 ): Promise<LLMResult> {
-  const key = process.env.GROQ_API_KEY;
+  const key = apiKey("GROQ_API_KEY");
   if (!key) return { ok: false, error: "GROQ_API_KEY not set" };
   const model = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
   try {
@@ -64,9 +68,9 @@ async function callGemini(
   messages: ChatMsg[],
   maxTokens: number,
 ): Promise<LLMResult> {
-  const key = process.env.GEMINI_API_KEY;
+  const key = apiKey("GEMINI_API_KEY");
   if (!key) return { ok: false, error: "GEMINI_API_KEY not set" };
-  const model = process.env.GEMINI_MODEL || "gemini-2.0-flash-001";
+  const model = process.env.GEMINI_MODEL || "gemini-3.8-flash";
   const contents = messages.map((m) => ({
     role: m.role === "assistant" ? "model" : "user",
     parts: [{ text: m.content }],
@@ -104,7 +108,7 @@ async function callOpenRouter(
   messages: ChatMsg[],
   maxTokens: number,
 ): Promise<LLMResult> {
-  const key = process.env.OPENROUTER_API_KEY;
+  const key = apiKey("OPENROUTER_API_KEY");
   if (!key) return { ok: false, error: "OPENROUTER_API_KEY not set" };
   const model = process.env.OPENROUTER_MODEL || "meta-llama/llama-3.3-70b-instruct:free";
   try {
@@ -147,9 +151,9 @@ const PROVIDERS: Record<
 /** True if at least one free-LLM provider key is configured. */
 export function hasAnyLLMKey(): boolean {
   return Boolean(
-    process.env.GROQ_API_KEY ||
-      process.env.GEMINI_API_KEY ||
-      process.env.OPENROUTER_API_KEY,
+    apiKey("GROQ_API_KEY") ||
+      apiKey("GEMINI_API_KEY") ||
+      apiKey("OPENROUTER_API_KEY"),
   );
 }
 

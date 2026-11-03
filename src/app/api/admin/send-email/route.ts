@@ -47,15 +47,14 @@ function buildHtml(body: string): string {
     const phoneLine = sigLines[2] ?? "(876) 320-0235";
     sigHtml = `
 <div style="margin-top:8px;">
-  <p style="font-family:'Great Vibes',cursive;font-size:52px;line-height:1.1;color:#10211c;margin:0 0 2px;font-weight:400;">${escapeHtml(firstName)}</p>
+  <p style="font-family:'Allura','Brush Script MT','Segoe Script',cursive;font-size:56px;line-height:1.1;color:#10211c;margin:0 0 2px;font-weight:400;">${escapeHtml(firstName)}</p>
   <p style="font-size:13px;color:#10211c;margin:0 0 2px;font-family:Georgia,serif;font-weight:600;">${escapeHtml(fullName)}</p>
   <p style="font-size:12px;color:#6a6a6a;margin:0;font-family:Georgia,serif;">${escapeHtml(firmLine)}<br/>${escapeHtml(phoneLine)}</p>
 </div>`;
   }
 
   return `<!doctype html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
-<style>@import url('https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap');</style>
+<link href="https://fonts.googleapis.com/css2?family=Allura&display=swap" rel="stylesheet">
 </head><body style="margin:0;background:#f4f1ec;font-family:Georgia,'Times New Roman',serif;color:#1c1c1c;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f1ec;padding:40px 16px;">
 <tr><td align="center">

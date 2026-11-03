@@ -27,7 +27,9 @@ export async function POST(req: NextRequest) {
   const { data: isAdmin, error: authError } = await supabase.rpc("fl_is_admin", { p_token: token });
   if (authError || !isAdmin) return Response.json({ ok: false, error: "Unauthorized" }, { status: 401 });
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = (process.env.ANTHROPIC_API_KEY ?? "")
+    .replace(/^(?:\uFEFF|ï»¿)+/, "")
+    .trim();
   const prompt = `You are drafting a professional email reply on behalf of Ferguson Law, a Jamaican law firm specialising in property conveyancing, estate law, and family law. The attorney is Owen K. Ferguson JP.
 
 The firm received this inbound email:
@@ -51,13 +53,19 @@ Write a professional, warm, and concise reply. Rules:
       const client = new Anthropic({ apiKey });
       const msg = await client.messages.create({
         model: "claude-haiku-5-5",
-        max_tokens: 350,
+        max_tokens: 1200,
+        output_config: { effort: "low" },
         messages: [{ role: "user", content: prompt }],
       });
 
-      const suggestion = msg.content.find((block) => block.type === "text")?.text.trim();
+      const suggestion = msg.content
+        .flatMap((block) => block.type === "text" ? [block.text] : [])
+        .join("")
+        .trim();
       if (suggestion) return Response.json({ ok: true, suggestion, provider: "anthropic" });
-      console.error("[suggest-reply] Anthropic returned an empty response");
+      console.error(
+        `[suggest-reply] Anthropic returned no text (stop_reason=${msg.stop_reason}; blocks=${msg.content.map((block) => block.type).join(",") || "none"})`,
+      );
     } catch (err) {
       console.error("[suggest-reply] Anthropic failed; trying configured fallback:", err);
     }

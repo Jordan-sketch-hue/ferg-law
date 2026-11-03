@@ -38,7 +38,7 @@ assignment beyond the evidence in that operations record.
 | Auth | Supabase Auth (admin) + custom passkey/WebAuthn (admin) + access-code login (clients) |
 | Payments | WiPay Jamaica â€” mock mode by default; flip to live via env only |
 | Email | Resend â€” outbound + inbound webhook |
-| Chat | Groq (llama-3.3-70b) â†’ Gemini (2.0-flash) â†’ OpenRouter fallback |
+| Chat | Groq (llama-3.3-70b) â†’ Gemini (3.8-flash) â†’ OpenRouter fallback |
 | Video | Zoom â€” meeting creation via API |
 | Push | Web Push API (VAPID) |
 | WhatsApp | Twilio or internal Cloud API |
