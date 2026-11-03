@@ -5526,7 +5526,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                         </button>
                       )}
                       {p.status === "confirmed" && !p.receipt_issued && (
-                        <button onClick={() => void issueReceipt(p.id)}
+                        <button onClick={() => setReceiptPreview(p)}
                           style={{ background: GOLD, color: GREEN, border: "none", borderRadius: 8, padding: "7px 14px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
                           Issue receipt
                         </button>
@@ -5539,6 +5539,52 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
           </>
         ) : null}
       </div>
+
+      {/* Receipt preview modal */}
+      {receiptPreview && (
+        <div onClick={() => setReceiptPreview(null)}
+          style={{ position: "fixed", inset: 0, background: "rgba(16,33,28,.55)", display: "grid", placeItems: "center", padding: 16, zIndex: 70 }}>
+          <div onClick={e => e.stopPropagation()}
+            style={{ background: "#fff", borderRadius: 18, padding: 28, width: "100%", maxWidth: 380 }}>
+            <div style={{ fontFamily: "var(--serif, Georgia, serif)", fontWeight: 700, fontSize: 18, color: "#10211c", marginBottom: 16 }}>Issue Receipt</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
+                <span style={{ color: "#7a7a6a" }}>Amount</span>
+                <span style={{ fontWeight: 700, color: "#10211c" }}>J${receiptPreview.amount_jmd.toLocaleString()}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
+                <span style={{ color: "#7a7a6a" }}>Type</span>
+                <span style={{ fontWeight: 600, color: "#10211c", textTransform: "capitalize" }}>{receiptPreview.kind}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
+                <span style={{ color: "#7a7a6a" }}>Method</span>
+                <span style={{ fontWeight: 600, color: "#10211c", textTransform: "capitalize" }}>{receiptPreview.method}</span>
+              </div>
+              {receiptPreview.reference && (
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
+                  <span style={{ color: "#7a7a6a" }}>Ref</span>
+                  <span style={{ fontWeight: 600, color: "#10211c" }}>{receiptPreview.reference}</span>
+                </div>
+              )}
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
+                <span style={{ color: "#7a7a6a" }}>Date confirmed</span>
+                <span style={{ color: "#10211c" }}>{receiptPreview.confirmed_at ? new Date(receiptPreview.confirmed_at).toLocaleDateString("en-JM") : "—"}</span>
+              </div>
+            </div>
+            <p style={{ fontSize: 12, color: "#9a9a8a", marginBottom: 18 }}>A receipt will be emailed to the client. This cannot be undone.</p>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={() => setReceiptPreview(null)}
+                style={{ flex: 1, padding: "10px 0", borderRadius: 10, border: "1px solid rgba(18,16,12,.2)", background: "none", fontSize: 13, fontWeight: 600, cursor: "pointer", color: "#555" }}>
+                Cancel
+              </button>
+              <button onClick={() => { void issueReceipt(receiptPreview.id); setReceiptPreview(null); }}
+                style={{ flex: 1, padding: "10px 0", borderRadius: 10, border: "none", background: "#c9a86a", color: "#10211c", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+                Confirm & Issue Receipt
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* New matter modal */}
       {openMatter && (
