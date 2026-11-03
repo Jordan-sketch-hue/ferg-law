@@ -3398,6 +3398,9 @@ function EmailTab({ emails, token, leads, onMarkRead, onMarkAllRead, onDelete, o
                 <textarea value={replyBody} onChange={(e) => setReplyBody(e.target.value)} rows={5}
                   placeholder="Your reply…"
                   style={{ width: "100%", resize: "vertical", borderRadius: 10, border: "1px solid rgba(18,16,12,.2)", padding: "10px 12px", fontSize: ".9rem", fontFamily: "inherit", outline: "none", boxSizing: "border-box", marginBottom: 10 }} />
+                <p style={{ margin: "-4px 0 10px", color: MUTED, fontSize: ".78rem" }}>
+                  The sent email automatically includes Owen’s handwritten-style signature.
+                </p>
                 {sendResult && <p style={{ fontSize: ".82rem", color: sendResult.ok ? "#2e7d4f" : "#a23b3b", marginBottom: 8 }}>{sendResult.msg}</p>}
                 <div style={{ display: "flex", gap: 10 }}>
                   <button type="button" onClick={() => void sendReply()} disabled={sending || !replyBody.trim()}

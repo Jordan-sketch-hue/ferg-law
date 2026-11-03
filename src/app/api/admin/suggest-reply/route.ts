@@ -8,6 +8,7 @@ import { NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { generateReply, hasAnyLLMKey } from "@/lib/chat/llm";
+import { withFergusonSignature } from "@/lib/email/signature";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -45,7 +46,7 @@ Write a professional, warm, and concise reply. Rules:
 - Confirm Ferguson Law can assist and invite them to book a consultation
 - If the email mentions a property value or specific matter, reference it naturally
 - Keep it under 130 words
-- End with: "Warm regards,\nOwen K. Ferguson, JP\nFerguson Law\n(876) 320-0235"
+- Do not add a sign-off or signature; the firm's standard signature is appended automatically.
 - Write ONLY the email body — no subject line, no metadata`;
 
   if (apiKey) {
@@ -62,7 +63,13 @@ Write a professional, warm, and concise reply. Rules:
         .flatMap((block) => block.type === "text" ? [block.text] : [])
         .join("")
         .trim();
-      if (suggestion) return Response.json({ ok: true, suggestion, provider: "anthropic" });
+      if (suggestion) {
+        return Response.json({
+          ok: true,
+          suggestion: withFergusonSignature(suggestion),
+          provider: "anthropic",
+        });
+      }
       console.error(
         `[suggest-reply] Anthropic returned no text (stop_reason=${msg.stop_reason}; blocks=${msg.content.map((block) => block.type).join(",") || "none"})`,
       );
@@ -78,7 +85,11 @@ Write a professional, warm, and concise reply. Rules:
       maxTokens: 350,
     });
     if (result.ok) {
-      return Response.json({ ok: true, suggestion: result.text.trim(), provider: result.provider });
+      return Response.json({
+        ok: true,
+        suggestion: withFergusonSignature(result.text),
+        provider: result.provider,
+      });
     }
     console.error("[suggest-reply] Configured LLM providers failed:", result.error);
   }

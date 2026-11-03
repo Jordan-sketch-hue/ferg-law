@@ -1,10 +1,10 @@
 ﻿import { NextRequest, NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { withFergusonSignature } from "@/lib/email/signature";
 
 const RESEND_KEY = process.env.RESEND_API_KEY;
 const FROM = process.env.FERGUSON_FROM_EMAIL || "Ferguson Law <contact@fergusonlawja.com>";
 const SIG_MARKER = "Owen K. Ferguson, JP";
-const SIGNATURE = `Owen K. Ferguson, JP\nFerguson Law\n(876) 320-0235`;
 
 function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (char) => ({
@@ -29,7 +29,13 @@ function linkifyAndEscape(text: string): string {
 
 function buildHtml(body: string): string {
   const sigIdx = body.indexOf(SIG_MARKER);
-  const mainBody = sigIdx !== -1 ? body.slice(0, sigIdx).trim() : body;
+  const bodyBeforeSignature = sigIdx !== -1 ? body.slice(0, sigIdx) : body;
+  const signOff = sigIdx !== -1
+    ? bodyBeforeSignature.match(/(?:^|\n)(Warm regards,?)\s*$/i)?.[1]
+    : undefined;
+  const mainBody = sigIdx !== -1
+    ? bodyBeforeSignature.replace(/\n*Warm regards,?\s*$/i, "").trim()
+    : body;
   const sigBlock = sigIdx !== -1 ? body.slice(sigIdx).trim() : "";
 
   const paragraphs = mainBody.split(/\n{2,}/).map((paragraph) =>
@@ -47,6 +53,7 @@ function buildHtml(body: string): string {
     const phoneLine = sigLines[2] ?? "(876) 320-0235";
     sigHtml = `
 <div style="margin-top:8px;">
+  ${signOff ? `<p style="font-size:14px;color:#4a4a4a;margin:0 0 2px;font-family:Georgia,serif;">${escapeHtml(signOff)}</p>` : ""}
   <p style="font-family:'Allura','Brush Script MT','Segoe Script',cursive;font-size:56px;line-height:1.1;color:#10211c;margin:0 0 2px;font-weight:400;">${escapeHtml(firstName)}</p>
   <p style="font-size:13px;color:#10211c;margin:0 0 2px;font-family:Georgia,serif;font-weight:600;">${escapeHtml(fullName)}</p>
   <p style="font-size:12px;color:#6a6a6a;margin:0;font-family:Georgia,serif;">${escapeHtml(firmLine)}<br/>${escapeHtml(phoneLine)}</p>
@@ -128,9 +135,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Email service not configured." }, { status: 503 });
     }
 
-    const bodyForEmail = !/Owen K\. Ferguson\b/i.test(body)
-      ? `${body.trim()}\n\n${SIGNATURE}`
-      : body.trim();
+    const bodyForEmail = withFergusonSignature(body);
     const html = buildHtml(bodyForEmail);
     const payload: Record<string, unknown> = { from: FROM, to: [to], subject, html };
     payload.text = bodyForEmail;
