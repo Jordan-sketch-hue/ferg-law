@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 
 const RESEND_KEY = process.env.RESEND_API_KEY;
@@ -129,7 +129,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Email service not configured." }, { status: 503 });
     }
 
-    const bodyForEmail = replyToId && !/Owen K\. Ferguson\b/i.test(body)
+    const bodyForEmail = !/Owen K\. Ferguson\b/i.test(body)
       ? `${body.trim()}\n\n${SIGNATURE}`
       : body.trim();
     const html = buildHtml(bodyForEmail);
