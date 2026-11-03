@@ -1275,6 +1275,7 @@ function LeadsTable({ leads, loading, token, onStatus, onDelete, onConvert }: { 
                   {wa && <a href={wa} target="_blank" rel="noopener noreferrer" style={S.waBtn}>WhatsApp</a>}
                   {l.status === "new" && <button type="button" onClick={() => onStatus(l.id, "contacted")} style={{ ...S.waBtn, background: "rgba(47,122,82,.12)", color: "#2f7a52", border: "1px solid rgba(47,122,82,.25)" }}>Contacted</button>}
                   <button type="button" onClick={() => onDelete(l.id)} style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)" }}>Archive</button>
+                  <button type="button" onClick={() => onConvert(l.id)} style={{ ...S.waBtn, background: "rgba(12,80,60,.12)", color: "#0c503c", border: "1px solid rgba(12,80,60,.25)" }}>Convert to Client</button>
                   {l.email && <button type="button" onClick={() => setPurgeTarget({ email: l.email!, name: l.name, clientId: null })} style={{ ...S.waBtn, background: "#c0392b", color: "#fff", border: "none" }}>Delete Record</button>}
                 </div>
               </div>
@@ -1317,6 +1318,7 @@ function LeadsTable({ leads, loading, token, onStatus, onDelete, onConvert }: { 
                         style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)" }}>
                         Archive
                       </button>
+                      <button type="button" onClick={() => onConvert(l.id)} style={{ ...S.waBtn, background: "rgba(12,80,60,.12)", color: "#0c503c", border: "1px solid rgba(12,80,60,.25)" }}>Convert to Client</button>
                       {l.email && <button type="button" onClick={() => setPurgeTarget({ email: l.email!, name: l.name, clientId: null })} style={{ ...S.waBtn, background: "#c0392b", color: "#fff", border: "none", fontWeight: 700 }}>Delete Record</button>}
                     </div>
                   </Td>
