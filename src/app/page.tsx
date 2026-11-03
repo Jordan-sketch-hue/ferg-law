@@ -38,7 +38,7 @@ export default function Home() {
         <div className="hero-scrim" aria-hidden="true"></div>
         <div className="hero-full-inner reveal in">
           <p className="hero-firm" data-edit="hero.firm"><CmsText page="home" block="hero_firm" fallback="Ferguson Law" /></p>
-          <span style={{
+          <span className="hero-jam-badge" style={{
             display: "inline-flex", alignItems: "center", gap: 8,
             width: "fit-content", maxWidth: "100%", whiteSpace: "nowrap", alignSelf: "flex-start",
             background: "rgba(16,33,28,.78)", backdropFilter: "blur(6px)",

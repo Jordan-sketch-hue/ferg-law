@@ -1178,6 +1178,7 @@
 
   /* Hero inner — reduce padding for tall/narrow screens */
   .hero-full-inner{padding:60px 16px 110px}
+  .hero-jam-badge{font-size:11px!important;padding:5px 12px!important}
 
   /* Nav — tighten on very small screens */
   .nav-inner{padding:0 12px}
