@@ -30,9 +30,9 @@ function computeScore(a:QuizAnswer):number {
 function getSegment(score:number):Segment { return score>=65?"hot":score>=35?"warm":"cold"; }
 
 const SEG:Record<Segment,{label:string;headline:string;sub:string;cta:string;href:string;color:string}> = {
-  hot:  { label:"Priority Buyer",  headline:"You are ready to move.",              sub:"Your profile matches our most active Diaspora buyers. Let&rsquo;s lock in a priority consultation before Nov 14.",              cta:"Book Priority Consultation",   href:"/booking?utm_source=qr&utm_campaign=nyc2026&segment=hot",  color:GOLD   },
-  warm: { label:"Active Prospect", headline:"You are on the right path.",          sub:"Let&rsquo;s map your 90-day action plan and answer your biggest questions about Jamaican property law.",                               cta:"Schedule a Consultation",      href:"/booking?utm_source=qr&utm_campaign=nyc2026&segment=warm", color:"#7cb8e0" },
-  cold: { label:"Future Buyer",    headline:"You are building toward something real.", sub:"Start with our free Buyer&rsquo;s Guide &mdash; it covers every step of a Jamaican property transaction end to end.", cta:"Get the Free Buyer\u2019s Guide", href:"/buyers-guide?utm_source=qr&utm_campaign=nyc2026&segment=cold", color:"#9eab8e" },
+  hot:  { label:"Priority Buyer",  headline:"You are ready to move.",              sub:"Your profile matches our most active Diaspora buyers. Let’s lock in a priority consultation before Nov 14.",              cta:"Book Priority Consultation",   href:"/booking?utm_source=qr&utm_campaign=nyc2026&segment=hot",  color:GOLD   },
+  warm: { label:"Active Prospect", headline:"You are on the right path.",          sub:"Let’s map your 90-day action plan and answer your biggest questions about Jamaican property law.",                               cta:"Schedule a Consultation",      href:"/booking?utm_source=qr&utm_campaign=nyc2026&segment=warm", color:"#7cb8e0" },
+  cold: { label:"Future Buyer",    headline:"You are building toward something real.", sub:"Start with our free Buyer’s Guide — it covers every step of a Jamaican property transaction end to end.", cta:"Get the Free Buyer\u2019s Guide", href:"/buyers-guide?utm_source=qr&utm_campaign=nyc2026&segment=cold", color:"#9eab8e" },
 };
 
 const HERO_SLIDES = [
@@ -194,9 +194,9 @@ function CostSlider() {
   const buyerRows:FeeRow[]=[
     ["Stamp Duty (fixed statutory fee)",buyerStampDuty],
     ["Registration Fee (0.25%)",buyerReg],
-    ["Attorney&rsquo;s Fees (~2.5\u20133%)",buyerAtty],
-    ["Surveyor&rsquo;s Fee (~0.2\u20130.3%)",buyerSurv],
-    ["Valuator&rsquo;s Fee (~0.2\u20130.3%)",buyerVal],
+    ["Attorney’s Fees (~2.5\u20133%)",buyerAtty],
+    ["Surveyor’s Fee (~0.2\u20130.3%)",buyerSurv],
+    ["Valuator’s Fee (~0.2\u20130.3%)",buyerVal],
     ["Agreement for Sale (drafting)","Split with seller"],
     ["Letter of Possession","Split with seller"],
   ];
@@ -204,7 +204,7 @@ function CostSlider() {
     ["Transfer Tax (2%)",sellerTax],
     ["Stamp Duty (fixed statutory fee)",sellerStampDuty],
     ["Registration Fee (0.25%)",sellerReg],
-    ["Attorney&rsquo;s Fees (~2.5\u20133%)",sellerAtty],
+    ["Attorney’s Fees (~2.5\u20133%)",sellerAtty],
     ["Agreement for Sale (drafting)","Split with buyer"],
     ["Letter of Possession","Split with buyer"],
   ];
@@ -378,7 +378,7 @@ export default function NYC2026Client() {
           <div style={{textAlign:"center",marginBottom:36}}>
             <div style={{fontSize:10,color:GOLD,fontWeight:700,letterSpacing:3,textTransform:"uppercase",marginBottom:12}}>Client Portal</div>
             <h2 style={{fontSize:"clamp(22px,5vw,34px)",fontWeight:800,margin:"0 0 10px"}}>You are never in the dark.</h2>
-            <p style={{color:"rgba(246,242,234,0.5)",fontSize:14,margin:"0 auto",lineHeight:1.75,maxWidth:480}}>Every client gets a secure portal showing real-time matter progress, encrypted messaging, and document access &mdash; from New York or anywhere in the world.</p>
+            <p style={{color:"rgba(246,242,234,0.5)",fontSize:14,margin:"0 auto",lineHeight:1.75,maxWidth:480}}>Every client gets a secure portal showing real-time matter progress, encrypted messaging, and document access — from New York or anywhere in the world.</p>
           </div>
           <PortalDemoStrip/>
           <div style={{textAlign:"center",marginTop:24}}>
@@ -428,7 +428,7 @@ export default function NYC2026Client() {
         <div style={{position:"relative",maxWidth:580,margin:"0 auto",textAlign:"center"}}>
           <Image src="/img/logo-ferguson.webp" alt="Ferguson Law" width={52} height={52} style={{borderRadius:10,marginBottom:22,opacity:0.92}}/>
           <h2 style={{fontSize:"clamp(28px,6vw,50px)",fontWeight:900,margin:"0 0 16px",lineHeight:1.08,letterSpacing:"-0.02em"}}>Your name on a<br/><span style={{color:GOLD}}>Jamaican title deed.</span></h2>
-          <p style={{color:"rgba(246,242,234,0.5)",fontSize:15,margin:"0 0 32px",lineHeight:1.75}}>Ferguson Law has guided hundreds of Diaspora buyers through every step &mdash; from first enquiry to final keys.</p>
+          <p style={{color:"rgba(246,242,234,0.5)",fontSize:15,margin:"0 0 32px",lineHeight:1.75}}>Ferguson Law has guided hundreds of Diaspora buyers through every step — from first enquiry to final keys.</p>
           <a href="/booking?utm_source=qr&utm_campaign=nyc2026" style={{display:"inline-block",background:`linear-gradient(135deg,${GOLD_DEEP},${GOLD})`,borderRadius:50,padding:"18px 46px",color:INK,fontWeight:800,fontSize:16,textDecoration:"none"}}>Book a Free Consultation</a>
         </div>
       </section>
