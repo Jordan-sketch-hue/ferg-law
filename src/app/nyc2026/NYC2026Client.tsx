@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
+import { Lock, MessageCircle, Shield, Receipt, Sparkles, Smartphone } from "lucide-react";
 
 type Segment = "hot" | "warm" | "cold";
 interface QuizAnswer { q0?:number;q1?:number;q2?:number;q3?:number;q4?:number;q5?:number; }
@@ -54,12 +55,12 @@ function PortalDemoStrip() {
   useEffect(()=>{ iv.current=setInterval(adv,2800); return()=>{ if(iv.current)clearInterval(iv.current); }; },[adv]);
   const pct=Math.round(((active+1)/STAGE_LABELS.length)*100);
   const FEATS=[
-    {e:"\uD83D\uDD12",l:"Encrypted document vault"},
-    {e:"\uD83D\uDCAC",l:"Secure client-attorney messaging"},
-    {e:"\uD83D\uDEE1",l:"KYC & compliance tracking"},
-    {e:"\uD83E\uDDFE",l:"Payment receipts & invoicing"},
-    {e:"\u2728",l:"AI-generated legal summary"},
-    {e:"\uD83D\uDCF2",l:"WhatsApp milestone alerts"}
+    {Icon:Lock,l:"Encrypted document vault"},
+    {Icon:MessageCircle,l:"Secure client-attorney messaging"},
+    {Icon:Shield,l:"KYC & compliance tracking"},
+    {Icon:Receipt,l:"Payment receipts & invoicing"},
+    {Icon:Sparkles,l:"AI-generated legal summary"},
+    {Icon:Smartphone,l:"WhatsApp milestone alerts"}
   ];
   return (
     <div style={{background:"#0d1a0d",border:"1px solid rgba(200,166,92,0.25)",borderRadius:20,overflow:"hidden",maxWidth:680,margin:"0 auto"}}>
@@ -96,7 +97,7 @@ function PortalDemoStrip() {
         })}
       </div>
       <div style={{padding:"14px 24px 18px",borderTop:"1px solid rgba(255,255,255,0.06)",display:"flex",flexWrap:"wrap",gap:7}}>
-        {FEATS.map((f,i)=>(<span key={i} style={{display:"inline-flex",alignItems:"center",gap:6,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:20,padding:"5px 12px",fontSize:11,color:"rgba(255,255,255,0.6)"}}><span style={{fontSize:14}}>{f.e}</span>{f.l}</span>))}
+        {FEATS.map((f,i)=>(<span key={i} style={{display:"inline-flex",alignItems:"center",gap:6,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:20,padding:"5px 12px",fontSize:11,color:"rgba(255,255,255,0.6)"}}><f.Icon size={13} strokeWidth={1.8}/>{f.l}</span>))}
       </div>
       <div style={{padding:"14px 24px 20px",borderTop:"1px solid rgba(255,255,255,0.06)",textAlign:"center"}}>
         <p style={{margin:0,fontSize:13,color:"rgba(255,255,255,0.35)",fontStyle:"italic",lineHeight:1.6}}>&ldquo;The distance between New York and Jamaica shouldn&apos;t mean you&apos;re in the dark about your property transaction.&rdquo;</p>
