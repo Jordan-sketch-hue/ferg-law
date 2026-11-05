@@ -1,8 +1,4 @@
-﻿/* eslint-disable @next/next/no-img-ele
-            <span className="nav-jam-badge" aria-label="Jamaica" title="Ferguson Law — Jamaica" style={{display:"inline-flex",alignItems:"center",gap:5,marginLeft:10}}>
-              <span style={{fontSize:20,lineHeight:1,display:"inline-block",verticalAlign:"middle"}}>🇯🇲</span>
-              <span className="nav-jam-label">JAM</span>
-            </span>ment */
+﻿/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -103,7 +99,7 @@ export default function Nav() {
             </a>
           
           <span className="nav-jam-badge" aria-label="Jamaica" title="Ferguson Law — Jamaica" style={{display:"inline-flex",alignItems:"center",gap:5,marginLeft:10}}>
-              <span style={{fontSize:20,lineHeight:1,display:"inline-block",verticalAlign:"middle"}}>🇯🇲</span>
+              <img src="https://flagcdn.com/w20/jm.png" width="20" height="14" alt="Jamaica" style={{display:"inline-block",verticalAlign:"middle",borderRadius:2,flexShrink:0}} />
               <span className="nav-jam-label">JAM</span>
             </span>
           </div>
@@ -446,4 +442,5 @@ export default function Nav() {
     </>
   );
 }
+
 
