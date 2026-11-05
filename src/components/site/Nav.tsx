@@ -98,9 +98,9 @@ export default function Nav() {
               <CmsImage page="global" block="nav_logo" fallback="/img/logo-ferguson.png" alt="Ferguson Law" className="logo-img" />
             </a>
           
-          <span className="nav-jam-badge" aria-label="Jamaica" title="Ferguson Law — Jamaica" style={{display:"inline-flex",alignItems:"center",gap:5,marginLeft:10}}>
-              <img src="https://flagcdn.com/w20/jm.png" width="20" height="14" alt="Jamaica" style={{display:"inline-block",verticalAlign:"middle",borderRadius:2,flexShrink:0}} />
-              <span className="nav-jam-label">JAM</span>
+          <span className="nav-jam-badge" aria-label="Jamaica" title="Ferguson Law — Jamaica">
+              <img src="https://flagcdn.com/w40/jm.png" width="28" height="20" alt="Jamaica" className="nav-jam-flag" />
+              <span className="nav-jam-label">Jamaica</span>
             </span>
           </div>
 
@@ -283,11 +283,18 @@ export default function Nav() {
           background:var(--line); margin:0 .1rem; vertical-align:middle; opacity:.6;
         }
         .nav-jam-badge{
-          display:inline-flex; align-items:center; gap:3px;
-          font-size:.68rem; font-weight:700; color:var(--gold-deep);
-          letter-spacing:.04em; opacity:.75; vertical-align:middle;
+          display:inline-flex; align-items:center; gap:6px;
+          padding:3px 10px 3px 6px;
+          border:1px solid rgba(180,145,60,.35);
+          border-radius:999px;
+          background:rgba(180,145,60,.08);
+          font-size:.72rem; font-weight:700; color:var(--gold-deep);
+          letter-spacing:.06em; vertical-align:middle;
+          transition:background .2s, border-color .2s;
         }
-        .nav-jam-label{ font-family:var(--sans, sans-serif); font-size:.65rem; }
+        .nav-jam-badge:hover{ background:rgba(180,145,60,.16); border-color:rgba(180,145,60,.55); }
+        .nav-jam-flag{ border-radius:3px; box-shadow:0 1px 4px rgba(0,0,0,.25); flex-shrink:0; }
+        .nav-jam-label{ font-family:var(--sans, sans-serif); font-size:.7rem; }
         a.nav-home-inline{
           font-size:.78rem; font-weight:600;
           color:var(--gold-deep) !important;
@@ -442,5 +449,6 @@ export default function Nav() {
     </>
   );
 }
+
 
 
