@@ -1,4 +1,8 @@
-﻿/* eslint-disable @next/next/no-img-element */
+﻿/* eslint-disable @next/next/no-img-ele
+            <span className="nav-jam-badge" aria-label="Jamaica" title="Ferguson Law — Jamaica" style={{display:"inline-flex",alignItems:"center",gap:5,marginLeft:10}}>
+              <img src="https://flagcdn.com/w28/jm.png" width="28" height="20" alt="Jamaica" style={{display:"inline-block",verticalAlign:"middle",borderRadius:3,flexShrink:0}} />
+              <span className="nav-jam-label">JAM</span>
+            </span>ment */
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -24,7 +28,7 @@ const LOGIN_LINKS = [
 const HOME_LINK = { href: SITE.homeApp, label: "H.O.M.E. by Ferguson Law", external: true };
 
 const RESOURCE_LINKS = [
-  { href: "/buyers-guide", label: "Buyer's Guide" },
+  { href: "/buyers-guide", label: "Buyer's Guide®" },
   { href: "/explainers", label: "Explainers" },
   { href: "/cost-estimator", label: "Cost Estimator®" },
   { href: "/value-estimator", label: "Valuation Estimator" },
@@ -97,6 +101,11 @@ export default function Nav() {
             <a className="brand" href="/" aria-label="Ferguson Law home">
               <CmsImage page="global" block="nav_logo" fallback="/img/logo-ferguson.png" alt="Ferguson Law" className="logo-img" />
             </a>
+          
+          <span className="nav-jam-badge" aria-label="Jamaica" title="Ferguson Law — Jamaica" style={{display:"inline-flex",alignItems:"center",gap:5,marginLeft:10}}>
+              <img src="https://flagcdn.com/w28/jm.png" width="28" height="20" alt="Jamaica" style={{display:"inline-block",verticalAlign:"middle",borderRadius:3,flexShrink:0}} />
+              <span className="nav-jam-label">JAM</span>
+            </span>
           </div>
 
           {/* Desktop inline links */}
@@ -126,10 +135,7 @@ export default function Nav() {
               )}
             </div>
             <span className="nav-divider" aria-hidden="true" />
-            <span className="nav-jam-badge" aria-label="Jamaica" title="Ferguson Law — Jamaica">
-              <img src="https://flagcdn.com/w20/jm.png" width="18" height="13" alt="Jamaica" style={{display:"inline-block",verticalAlign:"middle",borderRadius:2,flexShrink:0}} />
-              <span className="nav-jam-label">JAM</span>
-            </span>
+
             <a
               href={HOME_LINK.href}
               className="nav-home-inline"
