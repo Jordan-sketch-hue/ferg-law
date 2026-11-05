@@ -47,8 +47,8 @@ const HERO_SLIDES = [
 ];
 
 const GALLERY_SLIDES = [
-  {type:"image" as const, src:"/nyc/title-card.webp", alt:"Own a piece of Jamaica — Ferguson Law"},
   {type:"image" as const, src:"/nyc/from-deed-to-key.webp", alt:"From Deed to Key — Ferguson Law NYC Event"},
+  {type:"image" as const, src:"/nyc/title-card.webp", alt:"Own a piece of Jamaica — Ferguson Law"},
 ];
 
 const goldPill: React.CSSProperties = {
