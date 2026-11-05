@@ -511,29 +511,37 @@ export default function NYC2026Client() {
         </div>
       </section>
 
-      {/* MEET THE ATTORNEY */}
-      <section style={{padding:"clamp(52px,8vw,88px) 20px",background:"linear-gradient(145deg,#0E1A14,#102A1E)"}}>
-        <div style={{maxWidth:860,margin:"0 auto",display:"grid",gridTemplateColumns:"minmax(0,1fr) minmax(0,1.6fr)",gap:"clamp(32px,6vw,64px)",alignItems:"center"}}>
-          <div style={{position:"relative",flexShrink:0}}>
-            <div style={{borderRadius:20,overflow:"hidden",border:"2px solid rgba(200,166,92,0.35)",boxShadow:"0 24px 64px rgba(0,0,0,0.6)"}}>
-              <Image src="/img/owen-nyc2026.jpg" alt="Owen K. Ferguson, JP — Founder & Principal Attorney-at-Law, Ferguson Law" width={380} height={480} style={{width:"100%",height:"auto",display:"block",objectFit:"cover",objectPosition:"center top"}}/>
-            </div>
-            <div style={{position:"absolute",bottom:16,left:16,right:16,background:"rgba(14,12,8,0.88)",backdropFilter:"blur(12px)",borderRadius:12,padding:"12px 16px",border:"1px solid rgba(200,166,92,0.2)"}}>
-              <div style={{fontSize:11,color:GOLD,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:3}}>Ferguson Law · Jamaica</div>
-              <div style={{fontSize:16,color:"#F6F2EA",fontWeight:700}}>Owen K. Ferguson, JP</div>
-              <div style={{fontSize:12,color:"rgba(246,242,234,0.6)",marginTop:2}}>Founder &amp; Principal Attorney-at-Law</div>
-            </div>
+      {/* MEET THE FOUNDER — full-bleed editorial */}
+      <section style={{position:"relative",overflow:"hidden",background:"#0A1510"}}>
+        {/* Full-bleed portrait */}
+        <div style={{position:"relative",width:"100%",minHeight:"clamp(520px,90vw,780px)",display:"flex",alignItems:"flex-end"}}>
+          <Image
+            src="/img/owen-nyc2026.jpg"
+            alt="Owen K. Ferguson, JP — Founder & Principal Attorney-at-Law, Ferguson Law"
+            fill
+            sizes="100vw"
+            style={{objectFit:"cover",objectPosition:"center top",zIndex:0}}
+            priority
+          />
+          {/* Deep gradient — bottom-up so copy is legible */}
+          <div style={{position:"absolute",inset:0,background:"linear-gradient(to top, rgba(10,21,16,0.97) 0%, rgba(10,21,16,0.72) 38%, rgba(10,21,16,0.18) 70%, transparent 100%)",zIndex:1}}/>
+          {/* Top-left eyebrow */}
+          <div style={{position:"absolute",top:32,left:"clamp(20px,5vw,52px)",zIndex:2}}>
+            <div style={{fontSize:10,color:GOLD_DEEP,fontWeight:700,letterSpacing:4,textTransform:"uppercase"}}>Meet the Founder</div>
           </div>
-          <div>
-            <div style={{fontSize:10,color:GOLD_DEEP,fontWeight:700,letterSpacing:3,textTransform:"uppercase",marginBottom:16}}>Meet the Founder</div>
-            <h2 style={{fontSize:"clamp(22px,4vw,36px)",fontWeight:800,margin:"0 0 8px",lineHeight:1.15,color:"#F6F2EA"}}>Owen K. Ferguson, JP</h2>
-            <p style={{fontSize:13,color:GOLD,fontWeight:600,margin:"0 0 20px",letterSpacing:0.5}}>Founder &amp; Principal Attorney-at-Law, Ferguson Law</p>
-            <p style={{fontSize:14,color:"rgba(246,242,234,0.78)",lineHeight:1.8,margin:"0 0 16px"}}>Owen K. Ferguson, JP is a graduate of the Norman Manley Law School with post-graduate studies in Law and Business Administration from the University of London. Before the bar, he spent two decades in Jamaica&apos;s banking and financial services sector — which means he understands the numbers as well as the law.</p>
-            <p style={{fontSize:14,color:"rgba(246,242,234,0.78)",lineHeight:1.8,margin:"0 0 28px"}}>As a Justice of the Peace and member of both the Jamaican Bar Association and the International Bar Association, Owen serves Diaspora buyers with the same clarity and rigour he brings to every local transaction.</p>
-            <a href="/booking?utm_source=qr&utm_campaign=nyc2026" style={{display:"inline-flex",alignItems:"center",gap:8,background:"linear-gradient(135deg,#A8853E,#C8A65C)",borderRadius:50,padding:"14px 32px",color:INK,fontWeight:800,fontSize:14,textDecoration:"none"}}>Book a consultation with Owen</a>
+          {/* Bottom overlay — name + bio */}
+          <div style={{position:"relative",zIndex:2,width:"100%",padding:"0 clamp(20px,5vw,52px) clamp(32px,6vw,56px)"}}>
+            <h2 style={{fontSize:"clamp(36px,8vw,80px)",fontWeight:900,margin:"0 0 4px",lineHeight:1,letterSpacing:"-0.03em",color:"#F6F2EA"}}>Owen K. Ferguson<span style={{color:GOLD}}>, JP</span></h2>
+            <p style={{fontSize:"clamp(13px,2vw,17px)",color:GOLD,fontWeight:600,margin:"0 0 clamp(16px,3vw,28px)",letterSpacing:0.5}}>Founder &amp; Principal Attorney-at-Law, Ferguson Law</p>
+            <div style={{display:"grid",gridTemplateColumns:"minmax(0,1fr) minmax(0,1fr)",gap:"clamp(12px,3vw,28px)",maxWidth:760,marginBottom:"clamp(24px,4vw,36px)"}}>
+              <p style={{fontSize:"clamp(12px,1.5vw,14px)",color:"rgba(246,242,234,0.80)",lineHeight:1.8,margin:0}}>Graduate of the Norman Manley Law School with post-graduate studies from the University of London. Two decades in Jamaica&apos;s banking and financial services sector before the bar — he understands the numbers as well as the law.</p>
+              <p style={{fontSize:"clamp(12px,1.5vw,14px)",color:"rgba(246,242,234,0.80)",lineHeight:1.8,margin:0}}>Justice of the Peace. Member of the Jamaican Bar Association and the International Bar Association. Owen serves Diaspora buyers with the same clarity and rigour he brings to every local transaction.</p>
+            </div>
+            <a href="/booking?utm_source=qr&utm_campaign=nyc2026" style={{display:"inline-flex",alignItems:"center",gap:10,background:`linear-gradient(135deg,${GOLD_DEEP},${GOLD})`,borderRadius:50,padding:"clamp(12px,2vw,16px) clamp(24px,4vw,38px)",color:INK,fontWeight:800,fontSize:"clamp(13px,1.8vw,15px)",textDecoration:"none"}}>
+              Book a consultation with Owen
+            </a>
           </div>
         </div>
-        <style>{".nyc-meet-grid{}"}</style>
       </section>
       {/* CTA */}
       <section style={{padding:"60px 20px 80px",position:"relative",overflow:"hidden",background:INK}}>
