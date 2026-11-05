@@ -525,8 +525,9 @@ export default function NYC2026Client() {
             </div>
           </div>
           <div>
-            <div style={{fontSize:10,color:GOLD_DEEP,fontWeight:700,letterSpacing:3,textTransform:"uppercase",marginBottom:16}}>Who you are working with</div>
-            <h2 style={{fontSize:"clamp(22px,4vw,36px)",fontWeight:800,margin:"0 0 20px",lineHeight:1.15,color:"#F6F2EA"}}>20+ years in banking. 10+ years at the bar. Your Jamaican property in both hands.</h2>
+            <div style={{fontSize:10,color:GOLD_DEEP,fontWeight:700,letterSpacing:3,textTransform:"uppercase",marginBottom:16}}>Meet the Founder</div>
+            <h2 style={{fontSize:"clamp(22px,4vw,36px)",fontWeight:800,margin:"0 0 8px",lineHeight:1.15,color:"#F6F2EA"}}>Owen K. Ferguson, JP</h2>
+            <p style={{fontSize:13,color:GOLD,fontWeight:600,margin:"0 0 20px",letterSpacing:0.5}}>Founder &amp; Principal Attorney-at-Law, Ferguson Law</p>
             <p style={{fontSize:14,color:"rgba(246,242,234,0.78)",lineHeight:1.8,margin:"0 0 16px"}}>Owen K. Ferguson, JP is a graduate of the Norman Manley Law School with post-graduate studies in Law and Business Administration from the University of London. Before the bar, he spent two decades in Jamaica&apos;s banking and financial services sector — which means he understands the numbers as well as the law.</p>
             <p style={{fontSize:14,color:"rgba(246,242,234,0.78)",lineHeight:1.8,margin:"0 0 28px"}}>As a Justice of the Peace and member of both the Jamaican Bar Association and the International Bar Association, Owen serves Diaspora buyers with the same clarity and rigour he brings to every local transaction.</p>
             <a href="/booking?utm_source=qr&utm_campaign=nyc2026" style={{display:"inline-flex",alignItems:"center",gap:8,background:"linear-gradient(135deg,#A8853E,#C8A65C)",borderRadius:50,padding:"14px 32px",color:INK,fontWeight:800,fontSize:14,textDecoration:"none"}}>Book a consultation with Owen</a>

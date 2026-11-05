@@ -2828,6 +2828,23 @@ function OverviewPanel({ leads, appts, convos, matters, homePros, emails, inquir
         ))}
       </div>
 
+      {/* NYC2026 QR Card */}
+      <div style={{ background: "#fff", border: "1px solid rgba(18,16,12,.08)", borderLeft: "3px solid #C8A65C", borderRadius: 12, padding: "18px 20px", marginBottom: 24, display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
+        <img src={`https://chart.googleapis.com/chart?chs=120x120&cht=qr&chl=${encodeURIComponent("https://home.fergusonlawja.com/nyc2026?utm_source=qr&utm_campaign=nyc2026")}&choe=UTF-8`} alt="NYC2026 QR Code" width={100} height={100} style={{ borderRadius: 8, flexShrink: 0 }} />
+        <div style={{ flex: 1, minWidth: 200 }}>
+          <div style={{ fontWeight: 700, fontSize: ".72rem", textTransform: "uppercase", letterSpacing: ".07em", color: "#8a6a22", marginBottom: 4 }}>NYC 2026 — Diaspora Landing Page</div>
+          <div style={{ fontWeight: 600, fontSize: ".92rem", color: "#102A1E", marginBottom: 6 }}>home.fergusonlawja.com/nyc2026</div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <a href="https://home.fergusonlawja.com/nyc2026?utm_source=qr&utm_campaign=nyc2026" target="_blank" rel="noopener" style={{ fontSize: ".78rem", fontWeight: 600, color: "#102A1E", background: "#f4f1ec", border: "1px solid #ede8de", borderRadius: 6, padding: "5px 12px", textDecoration: "none" }}>
+              Open page →
+            </a>
+            <button type="button" onClick={() => void navigator.clipboard.writeText("https://home.fergusonlawja.com/nyc2026?utm_source=qr&utm_campaign=nyc2026")}
+              style={{ fontSize: ".78rem", fontWeight: 600, color: "#8a6a22", background: "rgba(200,166,92,.1)", border: "1px solid rgba(200,166,92,.3)", borderRadius: 6, padding: "5px 12px", cursor: "pointer" }}>
+              Copy link
+            </button>
+          </div>
+        </div>
+      </div>
       <AttentionOverview
         appts={appts}
         token={token}
