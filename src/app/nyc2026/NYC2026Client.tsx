@@ -8,11 +8,11 @@ const GOLD_DEEP = "#A8853E";
 const INK = "#0a0a0a";
 const STAGE_LABELS = ["Client onboarding completed","Agreement reviewed & signed","Title investigation completed","Completion arrangements underway","Registration & closing report"];
 const QUIZ_QUESTIONS = [
-  { q: "When are you looking to purchase property in Jamaica?", opts: ["Within 6 months","6–18 months","2–5 years","Just exploring"], pts: [40,20,5,0] },
-  { q: "Have you identified a specific property or area?", opts: ["Yes — specific property","Yes — specific area","Researching options","Not yet"], pts: [20,15,8,0] },
+  { q: "When are you looking to purchase property in Jamaica?", opts: ["Within 6 months","6â€“18 months","2â€“5 years","Just exploring"], pts: [40,20,5,0] },
+  { q: "Have you identified a specific property or area?", opts: ["Yes â€” specific property","Yes â€” specific area","Researching options","Not yet"], pts: [20,15,8,0] },
   { q: "How is your financing currently structured?", opts: ["Cash ready / mortgage approved","Working on financing","Need to arrange it","Unsure"], pts: [20,12,5,0] },
   { q: "What is your primary purpose for purchasing?", opts: ["Primary home","Vacation / rental income","Retirement planning","Investment portfolio"], pts: [10,10,5,10] },
-  { q: "Have you worked with a Jamaican attorney before?", opts: ["Yes — previous transaction","No, but ready to start","No — want to learn first","No — first time buyer"], pts: [10,8,4,2] },
+  { q: "Have you worked with a Jamaican attorney before?", opts: ["Yes â€” previous transaction","No, but ready to start","No â€” want to learn first","No â€” first time buyer"], pts: [10,8,4,2] },
   { q: "What is driving your decision right now?", opts: ["Found the right property","Financial opportunity / rates","Family / life milestone","Long-term wealth building"], pts: [10,8,6,4] },
 ];
 function computeScore(a:QuizAnswer):number {
@@ -20,9 +20,9 @@ function computeScore(a:QuizAnswer):number {
 }
 function getSegment(score:number):Segment { return score>=65?"hot":score>=35?"warm":"cold"; }
 const SEG:Record<Segment,{label:string;headline:string;sub:string;cta:string;href:string;color:string}> = {
-  hot:  { label:"Priority Buyer",  headline:"You are ready to move.",              sub:"Your profile matches our most active Diaspora buyers. Let’s lock in a priority consultation before Nov 14.",              cta:"Book Priority Consultation",   href:"/booking?utm_source=qr&utm_campaign=nyc2026&segment=hot",  color:GOLD   },
-  warm: { label:"Active Prospect", headline:"You are on the right path.",          sub:"Let’s map your 90-day action plan and answer your biggest questions about Jamaican property law.",                               cta:"Schedule a Consultation",      href:"/booking?utm_source=qr&utm_campaign=nyc2026&segment=warm", color:"#7cb8e0" },
-  cold: { label:"Future Buyer",    headline:"You are building toward something real.", sub:"Start with our free Buyer’s Guide — it covers every step of a Jamaican property transaction end to end.", cta:"Get the Free Buyer’s Guide", href:"/buyers-guide?utm_source=qr&utm_campaign=nyc2026&segment=cold", color:"#9eab8e" },
+  hot:  { label:"Priority Buyer",  headline:"You are ready to move.",              sub:"Your profile matches our most active Diaspora buyers. Letâ€™s lock in a priority consultation before NovÂ 14.",              cta:"Book Priority Consultation",   href:"/booking?utm_source=qr&utm_campaign=nyc2026&segment=hot",  color:GOLD   },
+  warm: { label:"Active Prospect", headline:"You are on the right path.",          sub:"Letâ€™s map your 90-day action plan and answer your biggest questions about Jamaican property law.",                               cta:"Schedule a Consultation",      href:"/booking?utm_source=qr&utm_campaign=nyc2026&segment=warm", color:"#7cb8e0" },
+  cold: { label:"Future Buyer",    headline:"You are building toward something real.", sub:"Start with our free Buyerâ€™s Guide â€” it covers every step of a Jamaican property transaction end to end.", cta:"Get the Free Buyerâ€™s Guide", href:"/buyers-guide?utm_source=qr&utm_campaign=nyc2026&segment=cold", color:"#9eab8e" },
 };
 function PortalDemoStrip() {
   const [active,setActive]=useState(0);
@@ -30,14 +30,14 @@ function PortalDemoStrip() {
   const adv = useCallback(()=>setActive(p=>p<STAGE_LABELS.length-1?p+1:0),[]);
   useEffect(()=>{ iv.current=setInterval(adv,2800); return()=>{ if(iv.current)clearInterval(iv.current); }; },[adv]);
   const pct=Math.round(((active+1)/STAGE_LABELS.length)*100);
-  const FEATS=[{e:"??",l:"Encrypted document vault"},{e:"??",l:"Secure client–attorney messaging"},{e:"??",l:"KYC & compliance tracking"},{e:"??",l:"Payment receipts & invoicing"},{e:"??",l:"AI-generated legal summary"},{e:"??",l:"WhatsApp milestone alerts"}];
+  const FEATS=[{e:"??",l:"Encrypted document vault"},{e:"??",l:"Secure clientâ€“attorney messaging"},{e:"??",l:"KYC & compliance tracking"},{e:"??",l:"Payment receipts & invoicing"},{e:"??",l:"AI-generated legal summary"},{e:"??",l:"WhatsApp milestone alerts"}];
   return (
     <div style={{background:"#0d0d0d",border:"1px solid rgba(200,166,92,0.25)",borderRadius:20,overflow:"hidden",maxWidth:680,margin:"0 auto"}}>
       <div style={{background:"linear-gradient(135deg,#0e1a0e,#0d0d0d)",padding:"20px 24px",borderBottom:"1px solid rgba(200,166,92,0.12)"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:8}}>
           <div>
             <div style={{fontSize:11,color:GOLD,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>Sample client matter</div>
-            <div style={{fontSize:13,color:"rgba(255,255,255,0.5)"}}>Residential property purchase · Jamaica</div>
+            <div style={{fontSize:13,color:"rgba(255,255,255,0.5)"}}>Residential property purchase Â· Jamaica</div>
           </div>
           <span style={{background:"rgba(200,166,92,0.15)",border:"1px solid rgba(200,166,92,0.4)",borderRadius:20,padding:"4px 12px",fontSize:10,color:GOLD,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Live demo</span>
         </div>
@@ -191,9 +191,9 @@ export default function NYC2026Client() {
   function handleQuizDone(seg:Segment,s:number){setSegment(seg);setScore(s);setQuizDone(true);setTimeout(()=>quizRef.current?.scrollIntoView({behavior:"smooth",block:"start"}),100);}
   const seg=segment?SEG[segment]:null;
   const CARDS=[
-    {label:"Property Readiness Check",sub:"6 questions, 2 minutes. Know exactly where you stand — and get a personalised next-step plan.",img:"/nyc/card-readiness.webp",badge:"2 min quiz",cta:"Start the Check",primary:true,action:()=>{setQuizOpen(true);setTimeout(()=>quizRef.current?.scrollIntoView({behavior:"smooth"}),50);}},
+    {label:"Property Readiness Check",sub:"6 questions, 2 minutes. Know exactly where you stand â€” and get a personalised next-step plan.",img:"/nyc/card-readiness.webp",badge:"2 min quiz",cta:"Start the Check",primary:true,action:()=>{setQuizOpen(true);setTimeout(()=>quizRef.current?.scrollIntoView({behavior:"smooth"}),50);}},
     {label:"Transaction Cost Estimator",sub:"Instant breakdown of transfer tax, stamp duty, registration, and attorney fees for any property value.",img:"/nyc/card-estimator.webp",badge:"Instant calc",cta:"Estimate My Costs",primary:false,href:"/cost-estimator"},
-    {label:"Book a Consultation",sub:"30 minutes with a Ferguson Law attorney. No obligation — just clarity on your property goals.",img:"/nyc/card-consultation.webp",badge:"Free 30 min",cta:"Book Now",primary:false,href:"/booking?utm_source=qr&utm_campaign=nyc2026"},
+    {label:"Book a Consultation",sub:"30 minutes with a Ferguson Law attorney. No obligation â€” just clarity on your property goals.",img:"/nyc/card-consultation.webp",badge:"Free 30 min",cta:"Book Now",primary:false,href:"/booking?utm_source=qr&utm_campaign=nyc2026"},
   ];
   return (
     <div style={{background:INK,minHeight:"100vh",color:"#fff",fontFamily:"'Inter',sans-serif",overflowX:"hidden"}}>
@@ -205,7 +205,7 @@ export default function NYC2026Client() {
         <div style={{position:"relative",zIndex:1,textAlign:"center",padding:"0 20px",maxWidth:780,margin:"0 auto"}}>
           <div style={{display:"inline-flex",alignItems:"center",gap:8,background:"rgba(200,166,92,0.12)",border:"1px solid rgba(200,166,92,0.4)",borderRadius:24,padding:"8px 18px",marginBottom:28}}>
             <Image src="/img/logo-ferguson.webp" alt="Ferguson Law" width={18} height={18} style={{borderRadius:3,opacity:0.9}}/>
-            <span style={{fontSize:11,color:GOLD,fontWeight:700,letterSpacing:2,textTransform:"uppercase"}}>From Deed to Key · NYC · Nov 14, 2026</span>
+            <span style={{fontSize:11,color:GOLD,fontWeight:700,letterSpacing:2,textTransform:"uppercase"}}>From Deed to Key Â· NYC Â· Nov 14, 2026</span>
           </div>
           <h1 style={{fontSize:"clamp(34px,9vw,76px)",fontWeight:900,lineHeight:1.0,margin:"0 0 20px",letterSpacing:"-0.03em"}}>Own a Piece of<br/><span style={{color:GOLD}}>Jamaica.</span></h1>
           <p style={{fontSize:"clamp(14px,3vw,18px)",color:"rgba(255,255,255,0.6)",lineHeight:1.75,margin:"0 auto 36px",maxWidth:520}}>Expert conveyancing for Diaspora buyers. We handle the legal complexity so you can focus on the moment the keys are yours.</p>
@@ -217,7 +217,7 @@ export default function NYC2026Client() {
       </section>
       <section style={{background:"rgba(200,166,92,0.06)",borderTop:"1px solid rgba(200,166,92,0.14)",borderBottom:"1px solid rgba(200,166,92,0.14)",padding:"18px 20px"}}>
         <div style={{maxWidth:900,margin:"0 auto",display:"flex",justifyContent:"center",gap:"clamp(24px,6vw,64px)",flexWrap:"wrap",alignItems:"center"}}>
-          {[["25+","Years of practice"],["400+","Diaspora clients"],["$2B+","Transactions handled"],["100%","Licensed · Jamaica"]].map(([num,label])=>(
+          {[["25+","Years of practice"],["400+","Diaspora clients"],["$2B+","Transactions handled"],["100%","Licensed Â· Jamaica"]].map(([num,label])=>(
             <div key={label} style={{textAlign:"center"}}>
               <div style={{fontSize:"clamp(20px,4vw,28px)",fontWeight:800,color:GOLD,lineHeight:1}}>{num}</div>
               <div style={{fontSize:10,color:"rgba(255,255,255,0.35)",letterSpacing:1.5,marginTop:4,textTransform:"uppercase"}}>{label}</div>
@@ -266,7 +266,7 @@ export default function NYC2026Client() {
             <ReadinessQuiz onDone={handleQuizDone}/>
           </div>)}
           {quizDone&&seg&&(<div style={{background:"#0f0f0f",border:`1px solid ${seg.color}33`,borderRadius:20,padding:"36px clamp(20px,5vw,40px)",textAlign:"center"}}>
-            <div style={{display:"inline-block",background:`${seg.color}18`,border:`1px solid ${seg.color}44`,borderRadius:20,padding:"5px 16px",fontSize:10,color:seg.color,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:20}}>{seg.label} · Score {score}/110</div>
+            <div style={{display:"inline-block",background:`${seg.color}18`,border:`1px solid ${seg.color}44`,borderRadius:20,padding:"5px 16px",fontSize:10,color:seg.color,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:20}}>{seg.label} Â· Score {score}/110</div>
             <h2 style={{fontSize:"clamp(22px,5vw,32px)",fontWeight:800,margin:"0 0 12px"}}>{seg.headline}</h2>
             <p style={{color:"rgba(255,255,255,0.5)",fontSize:15,margin:"0 auto 28px",lineHeight:1.75,maxWidth:480}}>{seg.sub}</p>
             <a href={seg.href} style={{display:"inline-block",background:`linear-gradient(135deg,${GOLD_DEEP},${GOLD})`,borderRadius:50,padding:"15px 36px",color:"#0a0a0a",fontWeight:800,fontSize:15,textDecoration:"none"}}>{seg.cta}</a>
@@ -288,7 +288,7 @@ export default function NYC2026Client() {
           <div style={{textAlign:"center",marginBottom:36}}>
             <div style={{fontSize:10,color:GOLD,fontWeight:700,letterSpacing:3,textTransform:"uppercase",marginBottom:12}}>Client Portal</div>
             <h2 style={{fontSize:"clamp(22px,5vw,34px)",fontWeight:800,margin:"0 0 10px"}}>You are never in the dark.</h2>
-            <p style={{color:"rgba(255,255,255,0.4)",fontSize:14,margin:"0 auto",lineHeight:1.75,maxWidth:480}}>Every client gets a secure portal showing real-time matter progress, encrypted messaging, and document access — from New York or anywhere in the world.</p>
+            <p style={{color:"rgba(255,255,255,0.4)",fontSize:14,margin:"0 auto",lineHeight:1.75,maxWidth:480}}>Every client gets a secure portal showing real-time matter progress, encrypted messaging, and document access â€” from New York or anywhere in the world.</p>
           </div>
           <PortalDemoStrip/>
           <div style={{textAlign:"center",marginTop:24}}>
@@ -311,7 +311,7 @@ export default function NYC2026Client() {
             <div style={{position:"absolute",bottom:16,left:"50%",transform:"translateX(-50%)",display:"flex",gap:6,zIndex:2}}>
               {CAROUSEL.map((_,i)=>(<button key={i} onClick={()=>setCarouselIdx(i)} style={{width:i===carouselIdx?22:6,height:6,borderRadius:3,background:i===carouselIdx?GOLD:"rgba(255,255,255,0.28)",border:"none",cursor:"pointer",transition:"width .3s,background .3s",padding:0}}/>))}
             </div>
-            <div style={{position:"absolute",top:16,right:16,zIndex:2,background:"rgba(0,0,0,0.5)",borderRadius:6,padding:"4px 10px",fontSize:9,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase"}}>Ferguson Law · Jamaica</div>
+            <div style={{position:"absolute",top:16,right:16,zIndex:2,background:"rgba(0,0,0,0.5)",borderRadius:6,padding:"4px 10px",fontSize:9,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase"}}>Ferguson Law Â· Jamaica</div>
           </div>
         </div>
       </section>
@@ -322,7 +322,7 @@ export default function NYC2026Client() {
             <h2 style={{fontSize:"clamp(24px,5vw,40px)",fontWeight:800,margin:0}}>From this room to your registry.</h2>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(230px,1fr))",gap:18}}>
-            {[{n:"01",t:"Consultation",b:"We assess your situation, budget, and timeline. You leave with a clear action plan — not a sales pitch."},{n:"02",t:"Title investigation",b:"We verify ownership history, check for encumbrances, and ensure the property is clean before you commit."},{n:"03",t:"Agreement & transfer",b:"We draft and execute the sale agreement, manage stamp duty and registration, and hand you the title."}].map(({n,t,b})=>(
+            {[{n:"01",t:"Consultation",b:"We assess your situation, budget, and timeline. You leave with a clear action plan â€” not a sales pitch."},{n:"02",t:"Title investigation",b:"We verify ownership history, check for encumbrances, and ensure the property is clean before you commit."},{n:"03",t:"Agreement & transfer",b:"We draft and execute the sale agreement, manage stamp duty and registration, and hand you the title."}].map(({n,t,b})=>(
               <div key={n} style={{background:"#0f0f0f",border:"1px solid rgba(255,255,255,0.06)",borderRadius:16,padding:"28px 24px"}}>
                 <div style={{fontSize:11,color:GOLD,fontWeight:700,letterSpacing:3,marginBottom:14}}>{n}</div>
                 <h3 style={{fontSize:18,fontWeight:700,margin:"0 0 10px",lineHeight:1.3}}>{t}</h3>
@@ -337,13 +337,13 @@ export default function NYC2026Client() {
         <div style={{position:"relative",maxWidth:580,margin:"0 auto",textAlign:"center"}}>
           <Image src="/img/logo-ferguson.webp" alt="Ferguson Law" width={52} height={52} style={{borderRadius:10,marginBottom:22,opacity:0.92}}/>
           <h2 style={{fontSize:"clamp(28px,6vw,50px)",fontWeight:900,margin:"0 0 16px",lineHeight:1.08,letterSpacing:"-0.02em"}}>Your name on a<br/><span style={{color:GOLD}}>Jamaican title deed.</span></h2>
-          <p style={{color:"rgba(255,255,255,0.45)",fontSize:15,margin:"0 0 32px",lineHeight:1.75}}>Ferguson Law has guided hundreds of Diaspora buyers through every step — from first enquiry to final keys. Start with a free 30-minute consultation.</p>
+          <p style={{color:"rgba(255,255,255,0.45)",fontSize:15,margin:"0 0 32px",lineHeight:1.75}}>Ferguson Law has guided hundreds of Diaspora buyers through every step â€” from first enquiry to final keys. Start with a free 30-minute consultation.</p>
           <a href="/booking?utm_source=qr&utm_campaign=nyc2026" style={{display:"inline-block",background:`linear-gradient(135deg,${GOLD_DEEP},${GOLD})`,borderRadius:50,padding:"18px 46px",color:"#0a0a0a",fontWeight:800,fontSize:16,textDecoration:"none"}}>Book a Free Consultation</a>
-          <p style={{fontSize:11,color:"rgba(255,255,255,0.22)",marginTop:16,letterSpacing:1.5,textTransform:"uppercase"}}>No account needed · No commitment · Available now</p>
+          <p style={{fontSize:11,color:"rgba(255,255,255,0.22)",marginTop:16,letterSpacing:1.5,textTransform:"uppercase"}}>No account needed Â· No commitment Â· Available now</p>
         </div>
       </section>
       <footer style={{borderTop:"1px solid rgba(255,255,255,0.05)",padding:"24px 20px",textAlign:"center"}}>
-        <p style={{margin:0,fontSize:11,color:"#555"}}>Ferguson Law · fergusonlawja.com · Licensed attorneys · Jamaica</p>
+        <p style={{margin:0,fontSize:11,color:"#555"}}>Ferguson Law Â· fergusonlawja.com Â· Licensed attorneys Â· Jamaica</p>
       </footer>
       <div style={{position:"fixed",bottom:0,left:0,right:0,zIndex:100,background:"rgba(10,10,10,0.96)",backdropFilter:"blur(16px)",borderTop:"1px solid rgba(200,166,92,0.18)",padding:"12px 16px",display:"flex",gap:10,alignItems:"center"}}>
         <button onClick={()=>{setQuizOpen(true);setTimeout(()=>quizRef.current?.scrollIntoView({behavior:"smooth"}),50);}} style={{flex:1,background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"11px",color:"#fff",fontWeight:600,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>Readiness Check</button>
