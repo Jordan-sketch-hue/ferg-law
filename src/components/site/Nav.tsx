@@ -283,18 +283,18 @@ export default function Nav() {
           background:var(--line); margin:0 .1rem; vertical-align:middle; opacity:.6;
         }
         .nav-jam-badge{
-          display:inline-flex; align-items:center; gap:6px;
-          padding:3px 10px 3px 6px;
-          border:1px solid rgba(180,145,60,.35);
-          border-radius:999px;
-          background:rgba(180,145,60,.08);
-          font-size:.72rem; font-weight:700; color:var(--gold-deep);
-          letter-spacing:.06em; vertical-align:middle;
-          transition:background .2s, border-color .2s;
+          display:inline-flex; align-items:center; gap:7px;
+          padding-left:12px;
+          border-left:1px solid rgba(180,145,60,.4);
+          vertical-align:middle;
         }
-        .nav-jam-badge:hover{ background:rgba(180,145,60,.16); border-color:rgba(180,145,60,.55); }
-        .nav-jam-flag{ border-radius:3px; box-shadow:0 1px 4px rgba(0,0,0,.25); flex-shrink:0; }
-        .nav-jam-label{ font-family:var(--sans, sans-serif); font-size:.7rem; }
+        .nav-jam-flag{ border-radius:2px; box-shadow:0 1px 3px rgba(0,0,0,.3); flex-shrink:0; }
+        .nav-jam-label{
+          font-family:var(--sans, sans-serif);
+          font-size:.62rem; font-weight:600; letter-spacing:.12em;
+          text-transform:uppercase; color:var(--gold-deep);
+          opacity:.9;
+        }
         a.nav-home-inline{
           font-size:.78rem; font-weight:600;
           color:var(--gold-deep) !important;
@@ -449,6 +449,7 @@ export default function Nav() {
     </>
   );
 }
+
 
 
 
