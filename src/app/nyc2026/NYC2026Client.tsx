@@ -526,20 +526,13 @@ export default function NYC2026Client() {
           {/* Deep gradient — bottom-up so copy is legible */}
           <div style={{position:"absolute",inset:0,background:"linear-gradient(to top, rgba(10,21,16,0.97) 0%, rgba(10,21,16,0.72) 38%, rgba(10,21,16,0.18) 70%, transparent 100%)",zIndex:1}}/>
           {/* Top-left eyebrow */}
-          <div style={{position:"absolute",top:32,left:"clamp(20px,5vw,52px)",zIndex:2}}>
-            <div style={{fontSize:10,color:GOLD_DEEP,fontWeight:700,letterSpacing:4,textTransform:"uppercase"}}>Meet the Founder</div>
+          <div style={{position:"absolute",top:"clamp(28px,4vw,44px)",left:"clamp(20px,5vw,52px)",zIndex:2}}>
+            <div style={{fontSize:"clamp(10px,1.2vw,13px)",color:GOLD_DEEP,fontWeight:700,letterSpacing:"clamp(3px,0.4vw,5px)",textTransform:"uppercase"}}>Meet the Founder</div>
           </div>
-          {/* Bottom overlay — name + bio */}
+          {/* Bottom overlay — name + title only */}
           <div style={{position:"relative",zIndex:2,width:"100%",padding:"0 clamp(20px,5vw,52px) clamp(32px,6vw,56px)"}}>
-            <h2 style={{fontSize:"clamp(36px,8vw,80px)",fontWeight:900,margin:"0 0 4px",lineHeight:1,letterSpacing:"-0.03em",color:"#F6F2EA"}}>Owen K. Ferguson<span style={{color:GOLD}}>, JP</span></h2>
-            <p style={{fontSize:"clamp(13px,2vw,17px)",color:GOLD,fontWeight:600,margin:"0 0 clamp(16px,3vw,28px)",letterSpacing:0.5}}>Founder &amp; Principal Attorney-at-Law, Ferguson Law</p>
-            <div style={{display:"grid",gridTemplateColumns:"minmax(0,1fr) minmax(0,1fr)",gap:"clamp(12px,3vw,28px)",maxWidth:760,marginBottom:"clamp(24px,4vw,36px)"}}>
-              <p style={{fontSize:"clamp(12px,1.5vw,14px)",color:"rgba(246,242,234,0.80)",lineHeight:1.8,margin:0}}>Graduate of the Norman Manley Law School with post-graduate studies from the University of London. Two decades in Jamaica&apos;s banking and financial services sector before the bar — he understands the numbers as well as the law.</p>
-              <p style={{fontSize:"clamp(12px,1.5vw,14px)",color:"rgba(246,242,234,0.80)",lineHeight:1.8,margin:0}}>Justice of the Peace. Member of the Jamaican Bar Association and the International Bar Association. Owen serves Diaspora buyers with the same clarity and rigour he brings to every local transaction.</p>
-            </div>
-            <a href="/booking?utm_source=qr&utm_campaign=nyc2026" style={{display:"inline-flex",alignItems:"center",gap:10,background:`linear-gradient(135deg,${GOLD_DEEP},${GOLD})`,borderRadius:50,padding:"clamp(12px,2vw,16px) clamp(24px,4vw,38px)",color:INK,fontWeight:800,fontSize:"clamp(13px,1.8vw,15px)",textDecoration:"none"}}>
-              Book a consultation with Owen
-            </a>
+            <h2 style={{fontSize:"clamp(40px,9vw,96px)",fontWeight:900,margin:"0 0 6px",lineHeight:0.95,letterSpacing:"-0.03em",color:"#F6F2EA"}}>Owen K. Ferguson<span style={{color:GOLD}}>, JP</span></h2>
+            <p style={{fontSize:"clamp(13px,2vw,18px)",color:GOLD,fontWeight:600,margin:0,letterSpacing:0.5}}>Founder &amp; Principal Attorney-at-Law · Ferguson Law</p>
           </div>
         </div>
       </section>
