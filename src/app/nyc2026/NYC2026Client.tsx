@@ -473,8 +473,8 @@ export default function NYC2026Client() {
       </section>
 
       {/* GALLERY STRIP */}
-      <section style={{padding:"0 20px clamp(52px,8vw,80px)",background:INK}}>
-        <div style={{maxWidth:920,margin:"0 auto"}}>
+      <section style={{padding:"0 clamp(28px,7vw,140px) clamp(52px,8vw,80px)",background:INK}}>
+        <div style={{maxWidth:860,margin:"0 auto"}}>
           <div style={{position:"relative",borderRadius:20,overflow:"hidden",aspectRatio:"16/9",background:"#111"}}>
             {GALLERY_SLIDES.map((item,i)=>(
               <div key={i} style={{position:"absolute",inset:0,opacity:i===galleryIdx?1:0,transition:"opacity 1.4s cubic-bezier(.4,0,.2,1)",pointerEvents:i===galleryIdx?"auto":"none"}}>
