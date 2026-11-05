@@ -667,6 +667,12 @@ export async function sendAdminAttendanceAlert(args: {
               ${row("Time", escapeHtml(timeLabel))}
               ${row("Reference", `<span style="font-family:'Courier New',monospace;letter-spacing:1px;">${escapeHtml(ref)}</span>`)}
             </td></tr></table>
+            <div style="margin-top:28px;text-align:center;">
+              <a href="https://home.fergusonlaw.com/admin?booking=${encodeURIComponent(ref)}" target="_blank" rel="noopener"
+                style="display:inline-block;padding:14px 32px;background:#10211c;color:#c9a86a;font-size:14px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;text-decoration:none;border-radius:6px;">
+                Mark Appointment
+              </a>
+            </div>
           </td></tr>
         </table>
       </td></tr>
