@@ -511,9 +511,9 @@ export default function NYC2026Client() {
         </div>
       </section>
 
-      {/* MEET THE FOUNDER — full-bleed editorial, centered */}
+      {/* MEET THE FOUNDER — full-bleed editorial, left-anchored */}
       <section style={{position:"relative",overflow:"hidden",background:"#0A1510"}}>
-        <div style={{position:"relative",width:"100%",minHeight:"clamp(480px,70vw,760px)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-end"}}>
+        <div style={{position:"relative",width:"100%",minHeight:"clamp(520px,75vw,820px)",display:"flex",flexDirection:"column",alignItems:"flex-start",justifyContent:"flex-end"}}>
           <Image
             src="/img/owen-nyc2026.jpg"
             alt="Owen K. Ferguson, JP — Founder & Principal Attorney-at-Law, Ferguson Law"
@@ -522,22 +522,22 @@ export default function NYC2026Client() {
             style={{objectFit:"cover",objectPosition:"center top",zIndex:0}}
             priority
           />
-          {/* Gradient overlay — bottom fade */}
-          <div style={{position:"absolute",inset:0,background:"linear-gradient(to top, rgba(10,21,16,1) 0%, rgba(10,21,16,0.75) 35%, rgba(10,21,16,0.1) 65%, transparent 100%)",zIndex:1}}/>
-          {/* Eyebrow — top center */}
-          <div style={{position:"absolute",top:"clamp(24px,4vw,44px)",left:"50%",transform:"translateX(-50%)",zIndex:2,textAlign:"center",whiteSpace:"nowrap"}}>
-            <div style={{fontSize:"clamp(9px,1.1vw,12px)",color:GOLD_DEEP,fontWeight:700,letterSpacing:"clamp(3px,0.5vw,6px)",textTransform:"uppercase"}}>Meet the Founder</div>
+          {/* Gradient overlay — left + bottom fade for text legibility */}
+          <div style={{position:"absolute",inset:0,background:"linear-gradient(to right, rgba(10,21,16,0.92) 0%, rgba(10,21,16,0.55) 50%, rgba(10,21,16,0.0) 100%), linear-gradient(to top, rgba(10,21,16,0.85) 0%, transparent 50%)",zIndex:1}}/>
+          {/* Eyebrow — top left */}
+          <div style={{position:"absolute",top:"clamp(24px,4vw,44px)",left:"clamp(24px,5vw,72px)",zIndex:2}}>
+            <div style={{fontSize:"clamp(9px,1.1vw,12px)",color:GOLD_DEEP,fontWeight:700,letterSpacing:"clamp(3px,0.5vw,6px)",textTransform:"uppercase",textShadow:"0 1px 8px rgba(0,0,0,0.6)"}}>Meet the Founder</div>
           </div>
-          {/* Bottom center — name + title */}
-          <div style={{position:"relative",zIndex:2,width:"100%",textAlign:"center",padding:"0 20px clamp(28px,5vw,52px)"}}>
-            <h2 className="nyc-founder-name" style={{fontWeight:900,margin:"0 0 8px",lineHeight:0.95,letterSpacing:"-0.03em",color:"#F6F2EA"}}>Owen K. Ferguson<span style={{color:GOLD}}>, JP</span></h2>
-            <p style={{fontSize:"clamp(13px,1.8vw,17px)",color:GOLD,fontWeight:600,margin:0,letterSpacing:0.5}}>Founder &amp; Principal Attorney-at-Law · Ferguson Law</p>
+          {/* Bottom left — name + title */}
+          <div style={{position:"relative",zIndex:2,padding:"0 clamp(24px,5vw,72px) clamp(32px,5vw,60px)",maxWidth:"clamp(320px,65vw,780px)"}}>
+            <h2 className="nyc-founder-name" style={{fontWeight:900,margin:"0 0 10px",lineHeight:0.93,letterSpacing:"-0.03em",color:"#F6F2EA",textShadow:"0 2px 24px rgba(0,0,0,0.7), 0 1px 4px rgba(0,0,0,0.9)"}}>Owen K. Ferguson<span style={{color:GOLD}}>, JP</span></h2>
+            <p style={{fontSize:"clamp(13px,1.8vw,18px)",color:GOLD,fontWeight:600,margin:0,letterSpacing:0.5,textShadow:"0 1px 12px rgba(0,0,0,0.8)"}}>Founder &amp; Principal Attorney-at-Law · Ferguson Law</p>
           </div>
         </div>
         <style>{`
-          .nyc-founder-name { font-size: clamp(32px, 7vw, 88px); }
+          .nyc-founder-name { font-size: clamp(36px, 8vw, 96px); }
           @media (min-width: 768px) {
-            .nyc-founder-name { font-size: clamp(52px, 8vw, 96px); }
+            .nyc-founder-name { font-size: clamp(56px, 9vw, 112px); }
           }
         `}</style>
       </section>
