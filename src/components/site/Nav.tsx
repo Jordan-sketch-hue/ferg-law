@@ -1,6 +1,6 @@
 ﻿/* eslint-disable @next/next/no-img-ele
             <span className="nav-jam-badge" aria-label="Jamaica" title="Ferguson Law — Jamaica" style={{display:"inline-flex",alignItems:"center",gap:5,marginLeft:10}}>
-              <img src="https://flagcdn.com/w28/jm.png" width="28" height="20" alt="Jamaica" style={{display:"inline-block",verticalAlign:"middle",borderRadius:3,flexShrink:0}} />
+              <span style={{fontSize:20,lineHeight:1,display:"inline-block",verticalAlign:"middle"}}>🇯🇲</span>
               <span className="nav-jam-label">JAM</span>
             </span>ment */
 "use client";
@@ -103,7 +103,7 @@ export default function Nav() {
             </a>
           
           <span className="nav-jam-badge" aria-label="Jamaica" title="Ferguson Law — Jamaica" style={{display:"inline-flex",alignItems:"center",gap:5,marginLeft:10}}>
-              <img src="https://flagcdn.com/w28/jm.png" width="28" height="20" alt="Jamaica" style={{display:"inline-block",verticalAlign:"middle",borderRadius:3,flexShrink:0}} />
+              <span style={{fontSize:20,lineHeight:1,display:"inline-block",verticalAlign:"middle"}}>🇯🇲</span>
               <span className="nav-jam-label">JAM</span>
             </span>
           </div>
