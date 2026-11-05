@@ -295,6 +295,7 @@ export default function Nav() {
           text-transform:uppercase; color:var(--gold-deep);
           opacity:.9;
         }
+        @media(max-width:900px){ .nav-jam-badge{ display:none; } }
         a.nav-home-inline{
           font-size:.78rem; font-weight:600;
           color:var(--gold-deep) !important;
@@ -449,6 +450,7 @@ export default function Nav() {
     </>
   );
 }
+
 
 
 
