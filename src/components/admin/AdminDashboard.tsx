@@ -1040,11 +1040,11 @@ function Empty({ children }: { children: React.ReactNode }) { return <div style=
 // ---------------------------------------------------------------------------
 const TEMPLATES: Record<string, (name: string, service?: string) => string> = {
   acknowledge: (name) =>
-    `Dear ${name.split(" ")[0]},\n\nThank you for reaching out to Ferguson Law. We have received your enquiry and a member of our team will be in touch shortly.\n\nShould you have any immediate questions, please feel free to reply to this email or reach us via WhatsApp at (876) 320-0235.\n\nWarm regards,\nFerguson Law`,
+    `Dear ${name.split(" ")[0]},\n\nThank you for reaching out to Ferguson Law. We have received your enquiry and a member of our team will be in touch shortly.\n\nShould you have any immediate questions, please feel free to reply to this email or reach us via WhatsApp at (876) 320-0235.\n\nWarm regards,\nOwen K. Ferguson, JP\nFerguson Law\n(876) 320-0235 · contact@fergusonlawja.com`,
   followup: (name, service) =>
-    `Dear ${name.split(" ")[0]},\n\nI hope this message finds you well. I wanted to follow up on your recent enquiry${service ? ` regarding ${service}` : ""} and ensure that we have addressed all of your questions.\n\nPlease do not hesitate to reach out if you need any further assistance. We look forward to working with you.\n\nWarm regards,\nFerguson Law`,
+    `Dear ${name.split(" ")[0]},\n\nI hope this message finds you well. I wanted to follow up on your recent enquiry${service ? ` regarding ${service}` : ""} and ensure that we have addressed all of your questions.\n\nPlease do not hesitate to reach out if you need any further assistance. We look forward to working with you.\n\nWarm regards,\nOwen K. Ferguson, JP\nFerguson Law\n(876) 320-0235 · contact@fergusonlawja.com`,
   booking: (name) =>
-    `Dear ${name.split(" ")[0]},\n\nThank you for booking a consultation with Ferguson Law. Your appointment has been confirmed and you will receive a calendar invitation shortly.\n\nIf you have any questions before your appointment, please do not hesitate to contact us.\n\nWarm regards,\nFerguson Law`,
+    `Dear ${name.split(" ")[0]},\n\nThank you for booking a consultation with Ferguson Law. Your appointment has been confirmed and you will receive a calendar invitation shortly.\n\nIf you have any questions before your appointment, please do not hesitate to contact us.\n\nWarm regards,\nOwen K. Ferguson, JP\nFerguson Law\n(876) 320-0235 · contact@fergusonlawja.com`,
 };
 
 function EmailComposeModal({ to, toName, defaultSubject, context, service, token, onClose }: {
@@ -2985,6 +2985,7 @@ function EmailTab({ emails, token, leads, onMarkRead, onMarkAllRead, onDelete, o
   const [composing, setComposing] = useState(false);
   const [replyOpen, setReplyOpen] = useState(false);
   const [replyBody, setReplyBody] = useState("");
+  const [replyFiles, setReplyFiles] = useState<File[]>([]);
   const [sending, setSending] = useState(false);
   const [sendResult, setSendResult] = useState<{ ok: boolean; msg: string } | null>(null);
   const [newTo, setNewTo] = useState("");
@@ -3082,15 +3083,23 @@ function EmailTab({ emails, token, leads, onMarkRead, onMarkAllRead, onDelete, o
     setSending(true); setSendResult(null);
     const to = selected.reply_to || selected.from_email;
     const subject = selected.subject ? (selected.subject.startsWith("Re:") ? selected.subject : `Re: ${selected.subject}`) : "Re: (no subject)";
-    const res = await fetch("/api/admin/send-email", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token, to, subject, body: replyBody.trim(), replyToId: selected.id }),
-    });
+    let res: Response;
+    if (replyFiles.length > 0) {
+      const fd = new FormData();
+      fd.set("token", token); fd.set("to", to); fd.set("subject", subject); fd.set("body", replyBody.trim()); fd.set("replyToId", selected.id);
+      for (const f of replyFiles) fd.append("files", f);
+      res = await fetch("/api/admin/send-email", { method: "POST", body: fd });
+    } else {
+      res = await fetch("/api/admin/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, to, subject, body: replyBody.trim(), replyToId: selected.id }),
+      });
+    }
     const json = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
     if (json.ok) {
       setSendResult({ ok: true, msg: `Sent to ${to}` });
-      setReplyBody(""); setReplyOpen(false);
+      setReplyBody(""); setReplyFiles([]); setReplyOpen(false);
       // If the email recipient matches a stale lead, mark them as contacted
       const matchedLead = leads.find(l => l.email && l.email.toLowerCase() === to.toLowerCase() && (l.status ?? "new") === "new");
       if (matchedLead) onLeadContacted(matchedLead.id);
@@ -3260,6 +3269,9 @@ function EmailTab({ emails, token, leads, onMarkRead, onMarkAllRead, onDelete, o
                 Sent before full-body logging was added — only the first 300 characters were saved for this one.
               </div>
             )}
+            <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid rgba(18,16,12,.1)', display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <button type='button' onClick={() => { setComposing(true); setSelectedSent(null); setNewTo(selectedSent.to_email); setNewSubject(selectedSent.subject ? (selectedSent.subject.startsWith('Fwd:') ? selectedSent.subject : `Fwd: ${selectedSent.subject}`) : 'Fwd: (no subject)'); setNewBody(''); }} style={{ padding: '9px 20px', background: GREEN, color: '#fff', border: 'none', borderRadius: 999, fontSize: '.85rem', fontWeight: 700, cursor: 'pointer' }}>Forward</button>
+            </div>
           </div>
         ) : pane === "sent" ? (
           <div style={{ color: MUTED, textAlign: "center", paddingTop: 60 }}>Select a sent email to view</div>
@@ -3423,6 +3435,20 @@ function EmailTab({ emails, token, leads, onMarkRead, onMarkAllRead, onDelete, o
                 <p style={{ margin: "-4px 0 10px", color: MUTED, fontSize: ".78rem" }}>
                   The sent email automatically includes Owen’s handwritten-style signature.
                 </p>
+                <div style={{ marginBottom: 10 }}>
+                  <label style={{ display: 'block', fontSize: '.76rem', fontWeight: 700, color: MUTED, marginBottom: 4, textTransform: 'uppercase' }}>Attachments (optional)</label>
+                  <input type='file' multiple onChange={(e) => setReplyFiles(prev => [...prev, ...Array.from(e.target.files ?? [])])} style={{ fontSize: '.8rem' }} />
+                  {replyFiles.length > 0 && (
+                    <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      {replyFiles.map((f, i) => (
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '.76rem', color: INK, background: '#f8f6f1', borderRadius: 6, padding: '3px 8px' }}>
+                          <span>{f.name} ({Math.round(f.size / 1024)} KB)</span>
+                          <button type='button' onClick={() => setReplyFiles(prev => prev.filter((_, idx) => idx !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#b00', fontSize: '.76rem' }}>Remove</button>
+                        </div>
+                      ))}<br/>
+                    </div>
+                  )}
+                </div>
                 {sendResult && <p style={{ fontSize: ".82rem", color: sendResult.ok ? "#2e7d4f" : "#a23b3b", marginBottom: 8 }}>{sendResult.msg}</p>}
                 <div style={{ display: "flex", gap: 10 }}>
                   <button type="button" onClick={() => void sendReply()} disabled={sending || !replyBody.trim()}
