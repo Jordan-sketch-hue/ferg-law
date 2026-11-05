@@ -35,8 +35,6 @@ async function fetchResendInbound(emailId: string, apiKey: string) {
       id?: string;
       filename?: string;
       content_type?: string;
-      content?: string;
-      download_url?: string;
       size?: number;
     }> : [],
   };
@@ -45,42 +43,39 @@ async function fetchResendInbound(emailId: string, apiKey: string) {
 async function downloadAttachment(
   emailId: string,
   attIndex: number,
-  att: { id?: string; filename?: string; content_type?: string; content?: string; download_url?: string; size?: number },
+  att: { id?: string; filename?: string; content_type?: string; size?: number },
   apiKey: string,
 ): Promise<{ buf: Buffer; filename: string; contentType: string } | null> {
   const filename = att.filename || `attachment-${attIndex + 1}`;
   const contentType = att.content_type || "application/octet-stream";
 
-  if (att.content) {
-    try {
-      const buf = Buffer.from(att.content, "base64");
-      if (buf.length > 0 && buf.length <= MAX_ATTACHMENT_BYTES) return { buf, filename, contentType };
-    } catch { /* fall through */ }
-  }
+  if (!att.id) return null;
 
-  if (att.id) {
-    try {
-      const r = await fetch(`${RESEND_API}/emails/receiving/${emailId}/attachments/${att.id}`, {
-        headers: { Authorization: `Bearer ${apiKey}` },
-      });
-      if (r.ok) {
-        const data = await r.json() as { content?: string };
-        if (data.content) {
-          const buf = Buffer.from(data.content, "base64");
-          if (buf.length > 0 && buf.length <= MAX_ATTACHMENT_BYTES) return { buf, filename, contentType };
-        }
-      }
-    } catch { /* fall through */ }
-  }
+  // Call /attachments/{id} to get the signed download_url
+  const metaRes = await fetch(`${RESEND_API}/emails/receiving/${emailId}/attachments/${att.id}`, {
+    headers: { Authorization: `Bearer ${apiKey}` },
+  });
+  if (!metaRes.ok) return null;
 
-  if (att.download_url) {
+  const meta = await metaRes.json() as { download_url?: string; content?: string };
+
+  // Fetch binary from the signed download_url
+  if (meta.download_url) {
     try {
-      const r = await fetch(att.download_url);
-      if (r.ok) {
-        const arrayBuf = await r.arrayBuffer();
+      const binRes = await fetch(meta.download_url);
+      if (binRes.ok) {
+        const arrayBuf = await binRes.arrayBuffer();
         const buf = Buffer.from(arrayBuf);
         if (buf.length > 0 && buf.length <= MAX_ATTACHMENT_BYTES) return { buf, filename, contentType };
       }
+    } catch { /* fall through */ }
+  }
+
+  // Fallback: base64 content if present
+  if (meta.content) {
+    try {
+      const buf = Buffer.from(meta.content, "base64");
+      if (buf.length > 0 && buf.length <= MAX_ATTACHMENT_BYTES) return { buf, filename, contentType };
     } catch { /* fall through */ }
   }
 

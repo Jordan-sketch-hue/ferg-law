@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import { Lock, MessageCircle, Shield, Receipt, Sparkles, Smartphone } from "lucide-react";
@@ -21,11 +21,11 @@ const MUTED = "#8A8A82";
 const STAGE_LABELS = ["Client onboarding completed","Agreement reviewed & signed","Title investigation completed","Completion arrangements underway","Registration & closing report"];
 
 const QUIZ_QUESTIONS = [
-  { q: "When are you looking to purchase property in Jamaica?", opts: ["Within 6 months","6-18 months","2-5 years","Just exploring"], pts: [40,20,5,0] },
-  { q: "Have you identified a specific property or area?", opts: ["Yes - specific property","Yes - specific area","Researching options","Not yet"], pts: [20,15,8,0] },
+  { q: "When are you looking to purchase property in Jamaica?", opts: ["Within 6 months","6\u201318 months","2\u20135 years","Just exploring"], pts: [40,20,5,0] },
+  { q: "Have you identified a specific property or area?", opts: ["Yes \u2014 specific property","Yes \u2014 specific area","Researching options","Not yet"], pts: [20,15,8,0] },
   { q: "How is your financing currently structured?", opts: ["Cash ready / mortgage approved","Working on financing","Need to arrange it","Unsure"], pts: [20,12,5,0] },
   { q: "What is your primary purpose for purchasing?", opts: ["Primary home","Vacation / rental income","Retirement planning","Investment portfolio"], pts: [10,10,5,10] },
-  { q: "Have you worked with a Jamaican attorney before?", opts: ["Yes - previous transaction","No, but ready to start","No - want to learn first","No - first time buyer"], pts: [10,8,4,2] },
+  { q: "Have you worked with a Jamaican attorney before?", opts: ["Yes \u2014 previous transaction","No \u2014 but ready to start","No \u2014 want to learn first","No \u2014 first time buyer"], pts: [10,8,4,2] },
   { q: "What is driving your decision right now?", opts: ["Found the right property","Financial opportunity / rates","Family / life milestone","Long-term wealth building"], pts: [10,8,6,4] },
 ];
 
