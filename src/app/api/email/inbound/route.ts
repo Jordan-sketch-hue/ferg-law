@@ -422,7 +422,7 @@ export async function POST(req: NextRequest) {
     if (!isInternalSender && !spam && fromEmail) {
       const { createHash } = await import("crypto");
       const ticketSourceKey = `email:${emailId || (fromEmail + ":" + Date.now())}`;
-      const ticketId = "t_" + createHash("sha256").update(ticketSourceKey).digest("hex").slice(0, 16);
+      const ticketId = "FL-" + new Date().getFullYear() + "-" + createHash("sha256").update(ticketSourceKey).digest("hex").slice(0, 6).toUpperCase();
       const slaHours = 24;
       const ticketRow = {
         id: ticketId,
@@ -460,7 +460,7 @@ export async function POST(req: NextRequest) {
               from: "Ferguson Law <contact@fergusonlawja.com>",
               to: [fromEmail],
               subject: `Re: ${String(payload.subject ?? "Your enquiry")}`,
-              text: `Hi ${senderFirst},\n\nThank you for reaching out to Ferguson Law. We have received your message and will respond within 24 hours.\n\nReference: ${ticketId}\n\nKind regards,\nFerguson Law\n(658) 218-2282`,
+              text: `Hi ${senderFirst},\n\nThank you for reaching out to Ferguson Law. We have received your message and will respond within 24 hours.\n\nReference: ${ticketId}\n\nKind regards,\nFerguson Law\n(876) 320-0235`,
             }),
           }).catch((e) => console.error("[inbound] ack email error:", e));
         }
