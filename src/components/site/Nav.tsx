@@ -1,4 +1,4 @@
-﻿/* eslint-disable @next/next/no-img-element */
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -91,6 +91,35 @@ export default function Nav() {
 
   return (
     <>
+      {pathname === "/nyc2026" && (
+        <div className="nyc-ticker-wrap" aria-label="From Deed to Key NYC 2026">
+          <div className="nyc-ticker-track">
+            {[0,1].map(i=>(
+              <span key={i} className="nyc-ticker-inner" aria-hidden={i===1 ? true : undefined}>
+                <span>FROM DEED TO KEY</span>
+                <span className="nyc-ticker-dot">•</span>
+                <span>NEW YORK</span>
+                <span className="nyc-ticker-dot">•</span>
+                <span>NOV 14, 2026</span>
+                <span className="nyc-ticker-dot">•</span>
+                <span>FERGUSON LAW</span>
+                <span className="nyc-ticker-dot">•</span>
+                <span>DIASPORA REAL ESTATE</span>
+                <span className="nyc-ticker-dot">•</span>
+              </span>
+            ))}
+          </div>
+          <style>{`
+            .nyc-ticker-wrap{position:fixed;top:0;left:0;right:0;z-index:9600;background:#0a1a0e;border-bottom:1px solid rgba(200,166,92,0.25);height:30px;overflow:hidden;}
+            .nyc-ticker-track{display:flex;width:max-content;animation:nyc-marquee 24s linear infinite;}
+            .nyc-ticker-inner{display:inline-flex;align-items:center;gap:14px;padding:0 20px;font-size:.6rem;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:#C8A65C;white-space:nowrap;line-height:30px;}
+            .nyc-ticker-dot{opacity:.45;}
+            @keyframes nyc-marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+            .nav{top:30px!important;}
+            @media(max-width:500px){.nyc-ticker-inner{font-size:.55rem;gap:10px;letter-spacing:.12em;}}
+          `}</style>
+        </div>
+      )}
       <header className={`nav${scrolled ? " scrolled" : ""}`} id="nav">
         <div className="wrap nav-inner">
           <div className="nav-left">

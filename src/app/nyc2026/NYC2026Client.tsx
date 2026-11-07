@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import { Lock, MessageCircle, Shield, Receipt, Smartphone } from "lucide-react";
@@ -40,6 +40,7 @@ const SEG:Record<Segment,{label:string;headline:string;sub:string;cta:string;hre
 };
 
 const HERO_SLIDES = [
+  {type:"video" as const, src:"/nyc/kgn-waterfront.mp4", alt:"Kingston waterfront — From Deed to Key"},
   {type:"image" as const, src:"/nyc/hero-property.webp", alt:"Luxury property in Jamaica"},
   {type:"image" as const, src:"/img/home-kingston.webp", alt:"Home in Kingston Jamaica"},
   {type:"image" as const, src:"/nyc/ja-apartment.webp", alt:"Kingston apartment complex"},
