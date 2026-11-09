@@ -42,12 +42,12 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(url);
     }
   } catch {
-    // Fail open — a Supabase timeout or error should never bring the site down.
+    // Fail open â€” a Supabase timeout or error should never bring the site down.
   }
 
   return response;
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon|sw\\.js|manifest|buyers-guide|admin|api).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon|sw\\.js|manifest|buyers-guide|admin|api|booking).*)"],
 };
