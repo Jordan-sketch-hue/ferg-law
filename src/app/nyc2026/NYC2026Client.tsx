@@ -43,6 +43,7 @@ const HERO_SLIDES = [
   {type:"video" as const, src:"/nyc/kgn-waterfront.mp4", alt:"Kingston waterfront — From Deed to Key"},
   {type:"image" as const, src:"/nyc/hero-property.webp", alt:"Luxury property in Jamaica"},
   {type:"image" as const, src:"/img/home-kingston.webp", alt:"Home in Kingston Jamaica"},
+  {type:"image" as const, src:"/nyc/from-deed-to-key.webp", alt:"From Deed to Key – Nov 14 New York", hideText:true, duration:6000},
   {type:"image" as const, src:"/nyc/ja-apartment.webp", alt:"Kingston apartment complex"},
   {type:"image" as const, src:"/img/jamaica-coast.webp", alt:"Jamaica coastline"},
 ];
@@ -304,7 +305,7 @@ export default function NYC2026Client() {
   const [mobileMenuOpen,setMobileMenuOpen]=useState(false);
   const quizRef=useRef<HTMLDivElement>(null);
 
-  useEffect(()=>{const t=setInterval(()=>setHeroIdx(i=>(i+1)%HERO_SLIDES.length),4500);return()=>clearInterval(t);},[]);
+  useEffect(()=>{const dur=(HERO_SLIDES[heroIdx] as any).duration||4500;const t=setTimeout(()=>setHeroIdx(i=>(i+1)%HERO_SLIDES.length),dur);return()=>clearTimeout(t);},[heroIdx]);
   useEffect(()=>{const t=setInterval(()=>setGalleryIdx(i=>(i+1)%GALLERY_SLIDES.length),6000);return()=>clearInterval(t);},[]);
   useEffect(()=>{document.body.classList.add('has-sticky-cta');return()=>document.body.classList.remove('has-sticky-cta');},[]);
 
@@ -385,7 +386,7 @@ export default function NYC2026Client() {
           </div>
         ))}
         <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse 80% 60% at 50% 50%,rgba(0,0,0,0.28) 0%,rgba(0,0,0,0.0) 70%),linear-gradient(to bottom,rgba(14,12,8,0.0) 0%,rgba(14,12,8,0.0) 50%,rgba(14,12,8,0.5) 80%,rgba(16,42,30,0.75) 100%)",zIndex:1}}/>
-        <div style={{position:"relative",zIndex:2,textAlign:"center",padding:"0 20px",maxWidth:780,margin:"0 auto"}}>
+        <div style={{position:"relative",zIndex:2,textAlign:"center",padding:"0 20px",maxWidth:780,margin:"0 auto",opacity:(HERO_SLIDES[heroIdx] as any).hideText?0:1,transition:"opacity 0.6s"}}>
           <div style={{display:"inline-flex",flexDirection:"column" as const,alignItems:"center",gap:0,marginBottom:24}}>
             <div style={{display:"inline-flex",alignItems:"center",gap:0,background:"linear-gradient(135deg,rgba(14,12,8,0.82),rgba(16,42,20,0.72))",border:"1px solid rgba(200,166,92,0.55)",borderRadius:3,padding:"10px 24px",backdropFilter:"blur(16px)",boxShadow:"0 0 32px rgba(200,166,92,0.12),0 2px 16px rgba(0,0,0,0.5),inset 0 1px 0 rgba(200,166,92,0.08)"}}>
               <span style={{fontSize:"0.52rem",fontWeight:900,letterSpacing:"0.28em",textTransform:"uppercase" as const,color:"#C8A65C",whiteSpace:"nowrap" as const}}>From Deed to Key</span>
