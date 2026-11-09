@@ -42,7 +42,7 @@ const SEG:Record<Segment,{label:string;headline:string;sub:string;cta:string;hre
 const HERO_SLIDES = [
   {type:"image" as const, src:"/nyc/hero-property.webp", alt:"Luxury property in Jamaica"},
   {type:"image" as const, src:"/img/home-kingston.webp", alt:"Home in Kingston Jamaica"},
-  {type:"image" as const, src:"/nyc/from-deed-to-key.webp", alt:"From Deed to Key – Nov 14 New York", hideText:true, duration:6000},
+  {type:"image" as const, src:"/nyc/hero-event.webp", alt:"From Deed to Key – Nov 14 New York", hideText:true, duration:6000},
   {type:"image" as const, src:"/nyc/ja-apartment.webp", alt:"Kingston apartment complex"},
   {type:"image" as const, src:"/img/jamaica-coast.webp", alt:"Jamaica coastline"},
 ];
@@ -314,7 +314,7 @@ export default function NYC2026Client() {
   const CARDS=[
     {label:"Property Readiness Check",sub:"6 questions, 2 minutes. Know exactly where you stand - and get a personalised next-step plan.",img:"/nyc/card-readiness.webp",badge:"2 min quiz",cta:"Start the Check",action:()=>{setQuizOpen(true);setTimeout(()=>quizRef.current?.scrollIntoView({behavior:"smooth"}),50);}},
     {label:"Transaction Cost Estimator",sub:"Instant Buyer & Seller breakdown of transfer tax, stamp duty, registration, and attorney fees.",img:"/nyc/card-estimator.webp",badge:"Instant calc",cta:"Estimate My Costs",href:"#estimator"},
-    {label:"Book a Consultation",sub:"20 minutes with a Ferguson Law attorney. No obligation, just clarity on your property goals.",img:"/nyc/card-consultation.webp",badge:"Free 20 min",cta:"Book Now",href:"/booking?utm_source=qr&utm_campaign=nyc2026"},
+    {label:"Book a Consultation",sub:"20 minutes with a Ferguson Law attorney. No obligation, just clarity on your property goals.",img:"/img/reach-consultation.webp",badge:"Free 20 min",cta:"Book Now",href:"/booking?utm_source=qr&utm_campaign=nyc2026"},
   ];
 
   const NAV_LINKS=[
@@ -325,7 +325,7 @@ export default function NYC2026Client() {
   ];
 
   return (
-    <div style={{background:INK,minHeight:"100vh",color:"#fff",fontFamily:"'Inter',sans-serif",overflowX:"hidden",paddingTop:32}}>
+    <div style={{background:INK,minHeight:"100vh",color:"#fff",fontFamily:"'Inter',sans-serif",overflowX:"clip",paddingTop:32}}>
       {/* NYC EVENT TICKER */}
       <div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,height:32,background:"linear-gradient(90deg,#060d08 0%,#0a1a0e 20%,#0a1a0e 80%,#060d08 100%)",borderBottom:"1px solid rgba(200,166,92,0.2)",overflow:"hidden",display:"flex",alignItems:"center",WebkitMaskImage:"linear-gradient(90deg,transparent 0%,black 8%,black 92%,transparent 100%)",maskImage:"linear-gradient(90deg,transparent 0%,black 8%,black 92%,transparent 100%)"}}>
         <div style={{display:"flex",width:"max-content",animation:"nyc-marquee 30s linear infinite"}}>
@@ -341,7 +341,6 @@ export default function NYC2026Client() {
         </div>
         <style>{`@keyframes nyc-marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}`}</style>
       </div>
-
       {/* NAVBAR */}
       <div style={{position:"sticky",top:32,zIndex:200,background:`linear-gradient(90deg,${INK} 0%,${GREEN} 50%,${INK} 100%)`,borderBottom:"1px solid rgba(200,166,92,0.22)"}}>
         <div style={{maxWidth:960,margin:"0 auto",padding:"0 20px",display:"flex",alignItems:"center",justifyContent:"space-between",height:60}}>
@@ -387,10 +386,10 @@ export default function NYC2026Client() {
         <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse 80% 60% at 50% 50%,rgba(0,0,0,0.28) 0%,rgba(0,0,0,0.0) 70%),linear-gradient(to bottom,rgba(14,12,8,0.0) 0%,rgba(14,12,8,0.0) 50%,rgba(14,12,8,0.5) 80%,rgba(16,42,30,0.75) 100%)",zIndex:1}}/>
         <div style={{position:"relative",zIndex:2,textAlign:"center",padding:"0 20px",maxWidth:780,margin:"0 auto",opacity:(HERO_SLIDES[heroIdx] as any).hideText?0:1,transition:"opacity 0.6s"}}>
           <div style={{display:"inline-flex",flexDirection:"column" as const,alignItems:"center",gap:0,marginBottom:24}}>
-            <div style={{display:"inline-flex",alignItems:"center",gap:0,background:"linear-gradient(135deg,rgba(14,12,8,0.82),rgba(16,42,20,0.72))",border:"1px solid rgba(200,166,92,0.55)",borderRadius:3,padding:"10px 24px",backdropFilter:"blur(16px)",boxShadow:"0 0 32px rgba(200,166,92,0.12),0 2px 16px rgba(0,0,0,0.5),inset 0 1px 0 rgba(200,166,92,0.08)"}}>
-              <span style={{fontSize:"0.52rem",fontWeight:900,letterSpacing:"0.28em",textTransform:"uppercase" as const,color:"#C8A65C",whiteSpace:"nowrap" as const}}>From Deed to Key</span>
+            <div style={{display:"inline-flex",alignItems:"center",gap:0,background:"linear-gradient(135deg,rgba(14,12,8,0.65),rgba(16,42,20,0.55))",border:"1px solid rgba(200,166,92,0.75)",borderRadius:3,padding:"10px 24px",backdropFilter:"blur(16px)",boxShadow:"0 0 48px rgba(200,166,92,0.22),0 2px 20px rgba(0,0,0,0.4),inset 0 1px 0 rgba(200,166,92,0.18)"}}>
+              <span style={{fontSize:"0.58rem",fontWeight:900,letterSpacing:"0.28em",textTransform:"uppercase" as const,color:"#C8A65C",whiteSpace:"nowrap" as const}}>From Deed to Key</span>
               <span style={{width:1,height:12,background:"rgba(200,166,92,0.35)",margin:"0 14px",display:"inline-block",flexShrink:0}}/>
-              <span style={{fontSize:"0.52rem",fontWeight:600,letterSpacing:"0.22em",textTransform:"uppercase" as const,color:"rgba(200,166,92,0.65)",whiteSpace:"nowrap" as const}}>New York&nbsp;&nbsp;·&nbsp;&nbsp;Nov 14, 2026</span>
+              <span style={{fontSize:"0.56rem",fontWeight:600,letterSpacing:"0.22em",textTransform:"uppercase" as const,color:"rgba(220,186,110,0.9)",whiteSpace:"nowrap" as const}}>New York&nbsp;&nbsp;·&nbsp;&nbsp;Nov 14, 2026</span>
             </div>
           </div>
           <h1 style={{fontSize:"clamp(34px,9vw,76px)",fontWeight:900,lineHeight:1.0,margin:"0 0 20px",letterSpacing:"-0.03em",color:"#FFFFFF",textShadow:"0 0 40px rgba(0,0,0,0.95),0 0 12px rgba(0,0,0,0.9),0 2px 4px rgba(0,0,0,0.9),0 4px 20px rgba(0,0,0,0.8)"}}>Own a Piece of<br/><span style={{color:GOLD,textShadow:"0 0 30px rgba(0,0,0,0.95),0 2px 4px rgba(0,0,0,0.9)"}}>Jamaica.</span></h1>
@@ -578,7 +577,7 @@ export default function NYC2026Client() {
       </section>
 
       <footer style={{borderTop:"1px solid rgba(200,166,92,0.15)",padding:"28px 20px 36px",textAlign:"center",background:INK}}>
-        <p style={{margin:0,fontSize:12,color:"rgba(255,255,255,0.35)",letterSpacing:0.5}}>Ferguson Law &middot; fergusonlawja.com &middot; Licensed attorneys &middot; Jamaica</p>
+        <p style={{margin:0,fontSize:12,color:"rgba(255,255,255,0.35)",letterSpacing:0.5}}>Ferguson Law &middot; (876) 320-0235 &middot; contact@fergusonlawja.com &middot; fergusonlawja.com</p>
       </footer>
 
       {/* STICKY BAR */}
