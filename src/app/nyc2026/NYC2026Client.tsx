@@ -40,7 +40,6 @@ const SEG:Record<Segment,{label:string;headline:string;sub:string;cta:string;hre
 };
 
 const HERO_SLIDES = [
-  {type:"video" as const, src:"/nyc/kgn-waterfront.mp4", alt:"Kingston waterfront — From Deed to Key"},
   {type:"image" as const, src:"/nyc/hero-property.webp", alt:"Luxury property in Jamaica"},
   {type:"image" as const, src:"/img/home-kingston.webp", alt:"Home in Kingston Jamaica"},
   {type:"image" as const, src:"/nyc/from-deed-to-key.webp", alt:"From Deed to Key – Nov 14 New York", hideText:true, duration:6000},
