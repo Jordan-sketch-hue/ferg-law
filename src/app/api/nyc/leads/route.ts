@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/^\uFEFF/, "");
-const supabaseKey = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? "").replace(/^\uFEFF/, "");
-const supabase = createClient(supabaseUrl, supabaseKey);
-
 export async function POST(req: NextRequest) {
+  const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/^\uFEFF/, "");
+  const supabaseKey = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? "").replace(/^\uFEFF/, "");
+  const supabase = createClient(supabaseUrl, supabaseKey);
   try {
     const body = await req.json() as {
       first_name: string;
