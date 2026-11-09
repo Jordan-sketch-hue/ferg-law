@@ -1,7 +1,5 @@
 "use client";
 
-export const dynamic = 'force-dynamic';
-
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BookingProvider, useBooking } from "@/components/site/BookingProvider";
@@ -94,7 +92,7 @@ function BookingContent() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: "1rem" }}>
           {TESTIMONIALS.map((t, i) => (
             <div key={t.name} style={{ background: "#fff", borderRadius: 14, padding: "1.5rem", border: "1px solid rgba(18,16,12,.07)", display: "flex", flexDirection: "column", gap: "1rem" }}>
-              <p style={{ color: "#b8a060", fontSize: "0.85rem", margin: 0 }}>Ã¢Ëœâ€¦Ã¢Ëœâ€¦Ã¢Ëœâ€¦Ã¢Ëœâ€¦Ã¢Ëœâ€¦</p>
+              <p style={{ color: "#b8a060", fontSize: "0.85rem", margin: 0 }}>ÃƒÂ¢Ã‹Å“Ã¢â‚¬Â¦ÃƒÂ¢Ã‹Å“Ã¢â‚¬Â¦ÃƒÂ¢Ã‹Å“Ã¢â‚¬Â¦ÃƒÂ¢Ã‹Å“Ã¢â‚¬Â¦ÃƒÂ¢Ã‹Å“Ã¢â‚¬Â¦</p>
               <p style={{ color: "var(--ink)", lineHeight: 1.65, fontSize: "0.9rem", margin: 0, fontStyle: "italic" }}>
                 &ldquo;<CmsText page="booking" block={`testimonial_${i}_quote`} fallback={t.quote} />&rdquo;
               </p>
