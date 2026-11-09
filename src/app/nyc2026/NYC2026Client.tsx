@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import { Lock, MessageCircle, Shield, Receipt, Smartphone } from "lucide-react";
@@ -42,7 +42,7 @@ const SEG:Record<Segment,{label:string;headline:string;sub:string;cta:string;hre
 const HERO_SLIDES = [
   {type:"image" as const, src:"/nyc/hero-property.webp", alt:"Luxury property in Jamaica"},
   {type:"image" as const, src:"/img/home-kingston.webp", alt:"Home in Kingston Jamaica"},
-  {type:"image" as const, src:"/nyc/hero-event.webp", alt:"From Deed to Key – Nov 14 New York", hideText:true, duration:6000},
+  {type:"image" as const, src:"/nyc/hero-event-mobile.webp", srcDesktop:"/nyc/hero-event-desktop.webp", alt:"From Deed to Key – Nov 14 New York", hideText:true, duration:6000},
   {type:"image" as const, src:"/nyc/ja-apartment.webp", alt:"Kingston apartment complex"},
   {type:"image" as const, src:"/img/jamaica-coast.webp", alt:"Jamaica coastline"},
 ];
@@ -342,7 +342,7 @@ export default function NYC2026Client() {
         <style>{`@keyframes nyc-marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}`}</style>
       </div>
       {/* NAVBAR */}
-      <div style={{position:"sticky",top:32,zIndex:200,background:`linear-gradient(90deg,${INK} 0%,${GREEN} 50%,${INK} 100%)`,borderBottom:"1px solid rgba(200,166,92,0.22)"}}>
+      <div style={{position:"sticky",top:32,zIndex:9000,backgroundColor:INK,background:`linear-gradient(90deg,${INK} 0%,${GREEN} 50%,${INK} 100%)`,borderBottom:"1px solid rgba(200,166,92,0.22)",isolation:"isolate"}}>
         <div style={{maxWidth:960,margin:"0 auto",padding:"0 20px",display:"flex",alignItems:"center",justifyContent:"space-between",height:60}}>
           {/* Logo */}
           <a href="/nyc2026" style={{display:"flex",alignItems:"center",textDecoration:"none",background:"linear-gradient(150deg,#0E0C08,#141208)",padding:"7px 15px",borderRadius:13,border:"1px solid rgba(194,160,91,0.38)",boxShadow:"0 3px 14px rgba(21,19,14,0.14),inset 0 0 0 1px rgba(194,160,91,0.12)"}}>
@@ -379,7 +379,13 @@ export default function NYC2026Client() {
           <div key={i} style={{position:"absolute",inset:0,opacity:i===heroIdx?1:0,transition:"opacity 1.6s cubic-bezier(.4,0,.2,1)",zIndex:0}}>
             {(slide.type as string)==="video"
               ? <video autoPlay muted loop playsInline poster="/nyc/hero-property.webp" preload="auto" style={{width:"100%",height:"100%",objectFit:"cover"}}><source src={slide.src} type="video/mp4"/></video>
-              : <img src={slide.src} alt={((slide as unknown) as {alt:string}).alt} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}} loading="eager"/>
+              : ((slide as any).srcDesktop
+                ? <picture style={{width:"100%",height:"100%",display:"block"}}>
+                    <source media="(min-width:769px)" srcSet={(slide as any).srcDesktop}/>
+                    <img src={slide.src} alt={((slide as unknown) as {alt:string}).alt} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}} loading="eager"/>
+                  </picture>
+                : <img src={slide.src} alt={((slide as unknown) as {alt:string}).alt} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}} loading="eager"/>
+              )
             }
           </div>
         ))}
