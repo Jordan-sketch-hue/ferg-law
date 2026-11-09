@@ -314,7 +314,7 @@ export default function NYC2026Client() {
   const CARDS=[
     {label:"Property Readiness Check",sub:"6 questions, 2 minutes. Know exactly where you stand - and get a personalised next-step plan.",img:"/nyc/card-readiness.webp",badge:"2 min quiz",cta:"Start the Check",action:()=>{setQuizOpen(true);setTimeout(()=>quizRef.current?.scrollIntoView({behavior:"smooth"}),50);}},
     {label:"Transaction Cost Estimator",sub:"Instant Buyer & Seller breakdown of transfer tax, stamp duty, registration, and attorney fees.",img:"/nyc/card-estimator.webp",badge:"Instant calc",cta:"Estimate My Costs",href:"#estimator"},
-    {label:"Book a Consultation",sub:"20 minutes with a Ferguson Law attorney. No obligation, just clarity on your property goals.",img:"/nyc/card-consultation-ai.png",badge:"Free 20 min",cta:"Book Now",href:"/booking?utm_source=qr&utm_campaign=nyc2026"},
+    {label:"Book a Consultation",sub:"20 minutes with a Ferguson Law attorney. No obligation, just clarity on your property goals.",img:"/nyc/card-consultation.webp",badge:"Free 20 min",cta:"Book Now",href:"/booking?utm_source=qr&utm_campaign=nyc2026"},
   ];
 
   const NAV_LINKS=[
@@ -325,10 +325,25 @@ export default function NYC2026Client() {
   ];
 
   return (
-    <div style={{background:INK,minHeight:"100vh",color:"#fff",fontFamily:"'Inter',sans-serif",overflowX:"hidden"}}>
+    <div style={{background:INK,minHeight:"100vh",color:"#fff",fontFamily:"'Inter',sans-serif",overflowX:"hidden",paddingTop:32}}>
+      {/* NYC EVENT TICKER */}
+      <div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,height:32,background:"linear-gradient(90deg,#060d08 0%,#0a1a0e 20%,#0a1a0e 80%,#060d08 100%)",borderBottom:"1px solid rgba(200,166,92,0.2)",overflow:"hidden",display:"flex",alignItems:"center",WebkitMaskImage:"linear-gradient(90deg,transparent 0%,black 8%,black 92%,transparent 100%)",maskImage:"linear-gradient(90deg,transparent 0%,black 8%,black 92%,transparent 100%)"}}>
+        <div style={{display:"flex",width:"max-content",animation:"nyc-marquee 30s linear infinite"}}>
+          {[0,1].map(ti=>(
+            <span key={ti} style={{display:"inline-flex",alignItems:"center",gap:18,padding:"0 32px",fontSize:"0.52rem",fontWeight:700,letterSpacing:"0.25em",textTransform:"uppercase" as const,color:"#C8A65C",whiteSpace:"nowrap" as const,lineHeight:"32px"}}>
+              <span>From Deed to Key</span><span style={{opacity:0.3,fontWeight:300}}>◆</span>
+              <span>New York</span><span style={{opacity:0.3,fontWeight:300}}>◆</span>
+              <span>Nov 14, 2026</span><span style={{opacity:0.3,fontWeight:300}}>◆</span>
+              <span style={{color:"rgba(200,166,92,0.6)"}}>Ferguson Law</span><span style={{opacity:0.3,fontWeight:300}}>◆</span>
+              <span style={{color:"rgba(200,166,92,0.6)"}}>Diaspora Real Estate</span><span style={{opacity:0.3,fontWeight:300}}>◆</span>
+            </span>
+          ))}
+        </div>
+        <style>{`@keyframes nyc-marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}`}</style>
+      </div>
 
       {/* NAVBAR */}
-      <div style={{position:"sticky",top:0,zIndex:200,background:`linear-gradient(90deg,${INK} 0%,${GREEN} 50%,${INK} 100%)`,borderBottom:"1px solid rgba(200,166,92,0.22)"}}>
+      <div style={{position:"sticky",top:32,zIndex:200,background:`linear-gradient(90deg,${INK} 0%,${GREEN} 50%,${INK} 100%)`,borderBottom:"1px solid rgba(200,166,92,0.22)"}}>
         <div style={{maxWidth:960,margin:"0 auto",padding:"0 20px",display:"flex",alignItems:"center",justifyContent:"space-between",height:60}}>
           {/* Logo */}
           <a href="/nyc2026" style={{display:"flex",alignItems:"center",textDecoration:"none",background:"linear-gradient(150deg,#0E0C08,#141208)",padding:"7px 15px",borderRadius:13,border:"1px solid rgba(194,160,91,0.38)",boxShadow:"0 3px 14px rgba(21,19,14,0.14),inset 0 0 0 1px rgba(194,160,91,0.12)"}}>
@@ -364,13 +379,20 @@ export default function NYC2026Client() {
         {HERO_SLIDES.map((slide,i)=>(
           <div key={i} style={{position:"absolute",inset:0,opacity:i===heroIdx?1:0,transition:"opacity 1.6s cubic-bezier(.4,0,.2,1)",zIndex:0}}>
             {(slide.type as string)==="video"
-              ? <video autoPlay muted loop playsInline poster={((slide as unknown) as {poster:string}).poster} style={{width:"100%",height:"100%",objectFit:"cover"}}><source src={slide.src} type="video/mp4"/></video>
-              : <Image src={slide.src} alt={((slide as unknown) as {alt:string}).alt} fill style={{objectFit:"cover"}} priority={i===0}/>
+              ? <video autoPlay muted loop playsInline poster="/nyc/hero-property.webp" preload="auto" style={{width:"100%",height:"100%",objectFit:"cover"}}><source src={slide.src} type="video/mp4"/></video>
+              : <img src={slide.src} alt={((slide as unknown) as {alt:string}).alt} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}} loading="eager"/>
             }
           </div>
         ))}
         <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse 80% 60% at 50% 50%,rgba(0,0,0,0.28) 0%,rgba(0,0,0,0.0) 70%),linear-gradient(to bottom,rgba(14,12,8,0.0) 0%,rgba(14,12,8,0.0) 50%,rgba(14,12,8,0.5) 80%,rgba(16,42,30,0.75) 100%)",zIndex:1}}/>
         <div style={{position:"relative",zIndex:2,textAlign:"center",padding:"0 20px",maxWidth:780,margin:"0 auto"}}>
+          <div style={{display:"inline-flex",flexDirection:"column" as const,alignItems:"center",gap:0,marginBottom:24}}>
+            <div style={{display:"inline-flex",alignItems:"center",gap:0,background:"linear-gradient(135deg,rgba(14,12,8,0.82),rgba(16,42,20,0.72))",border:"1px solid rgba(200,166,92,0.55)",borderRadius:3,padding:"10px 24px",backdropFilter:"blur(16px)",boxShadow:"0 0 32px rgba(200,166,92,0.12),0 2px 16px rgba(0,0,0,0.5),inset 0 1px 0 rgba(200,166,92,0.08)"}}>
+              <span style={{fontSize:"0.52rem",fontWeight:900,letterSpacing:"0.28em",textTransform:"uppercase" as const,color:"#C8A65C",whiteSpace:"nowrap" as const}}>From Deed to Key</span>
+              <span style={{width:1,height:12,background:"rgba(200,166,92,0.35)",margin:"0 14px",display:"inline-block",flexShrink:0}}/>
+              <span style={{fontSize:"0.52rem",fontWeight:600,letterSpacing:"0.22em",textTransform:"uppercase" as const,color:"rgba(200,166,92,0.65)",whiteSpace:"nowrap" as const}}>New York&nbsp;&nbsp;·&nbsp;&nbsp;Nov 14, 2026</span>
+            </div>
+          </div>
           <h1 style={{fontSize:"clamp(34px,9vw,76px)",fontWeight:900,lineHeight:1.0,margin:"0 0 20px",letterSpacing:"-0.03em",color:"#FFFFFF",textShadow:"0 0 40px rgba(0,0,0,0.95),0 0 12px rgba(0,0,0,0.9),0 2px 4px rgba(0,0,0,0.9),0 4px 20px rgba(0,0,0,0.8)"}}>Own a Piece of<br/><span style={{color:GOLD,textShadow:"0 0 30px rgba(0,0,0,0.95),0 2px 4px rgba(0,0,0,0.9)"}}>Jamaica.</span></h1>
           <p style={{fontSize:"clamp(14px,3vw,18px)",color:"rgba(255,255,255,0.95)",lineHeight:1.75,margin:"0 auto 36px",maxWidth:520,textShadow:"0 0 20px rgba(0,0,0,0.9),0 1px 3px rgba(0,0,0,0.9)"}}>Expert conveyancing for Diaspora buyers. We handle the legal complexity so you can focus on the moment the keys are yours.</p>
           <div style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap"}}>
