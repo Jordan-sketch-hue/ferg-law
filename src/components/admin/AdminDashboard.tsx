@@ -2834,14 +2834,12 @@ function OverviewPanel({ leads, appts, convos, matters, homePros, emails, inquir
       {/* QR Fullscreen Modal */}
       {expandedQr && (
         <div onClick={() => setExpandedQr(null)}
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.85)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", cursor: "zoom-out" }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 16, padding: 32, display: "flex", flexDirection: "column", alignItems: "center", gap: 16, maxWidth: "90vw" }}>
-            <img src={expandedQr} alt="QR Code" style={{ width: "min(72vw, 320px)", height: "min(72vw, 320px)", borderRadius: 8 }} />
-            <button type="button" onClick={() => setExpandedQr(null)}
-              style={{ fontSize: ".8rem", fontWeight: 600, color: "#102A1E", background: "rgba(16,42,30,.08)", border: "1px solid rgba(16,42,30,.25)", borderRadius: 8, padding: "8px 24px", cursor: "pointer" }}>
-              Close
-            </button>
-          </div>
+          style={{ position: "fixed", inset: 0, background: "#000", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <button type="button" onClick={() => setExpandedQr(null)}
+            style={{ position: "absolute", top: 20, right: 24, background: "none", border: "none", color: "#fff", fontSize: "1.8rem", lineHeight: 1, cursor: "pointer", opacity: .7, padding: 4 }}>
+            ✕
+          </button>
+          <img src={expandedQr} alt="QR Code" onClick={e => e.stopPropagation()} style={{ width: "min(80vw, 360px)", height: "min(80vw, 360px)", borderRadius: 12 }} />
         </div>
       )}
 
@@ -2859,8 +2857,10 @@ function OverviewPanel({ leads, appts, convos, matters, homePros, emails, inquir
         </div>
         {showNycQr && (
           <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap", padding: "16px 20px" }}>
-            <img src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent("https://fergusonlawja.com/nyc2026?utm_source=qr&utm_campaign=nyc2026")}&color=102A1E&bgcolor=ffffff&margin=4`} alt="NYC2026 QR Code" width={100} height={100} style={{ borderRadius: 8, flexShrink: 0, cursor: "zoom-in" }} onClick={() => setExpandedQr(`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent("https://fergusonlawja.com/nyc2026?utm_source=qr&utm_campaign=nyc2026")}&color=102A1E&bgcolor=ffffff&margin=8`)} />
-            <div style={{ fontSize: ".65rem", color: "#8a6a22", marginTop: 4, textAlign: "center", letterSpacing: ".03em" }}>Click to expand</div>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0 }}>
+              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent("https://fergusonlawja.com/nyc2026?utm_source=qr&utm_campaign=nyc2026")}&color=102A1E&bgcolor=ffffff&margin=4`} alt="NYC2026 QR Code" width={100} height={100} style={{ borderRadius: 8, cursor: "zoom-in" }} onClick={() => setExpandedQr(`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent("https://fergusonlawja.com/nyc2026?utm_source=qr&utm_campaign=nyc2026")}&color=102A1E&bgcolor=ffffff&margin=8`)} />
+              <div style={{ fontSize: ".62rem", color: "#8a6a22", marginTop: 5, textAlign: "center", letterSpacing: ".03em" }}>Click to expand</div>
+            </div>
             <div style={{ flex: 1, minWidth: 200 }}>
               <div style={{ fontWeight: 600, fontSize: ".9rem", color: "#102A1E", marginBottom: 6 }}>fergusonlawja.com/nyc2026</div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -2891,8 +2891,10 @@ function OverviewPanel({ leads, appts, convos, matters, homePros, emails, inquir
         </div>
         {showPartnerQr && (
           <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap", padding: "16px 20px" }}>
-            <img src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent("https://fergusonlawja.com/directory/join?utm_source=qr&utm_campaign=partner")}&color=102A1E&bgcolor=ffffff&margin=4`} alt="Partner Sign-up QR Code" width={100} height={100} style={{ borderRadius: 8, flexShrink: 0, cursor: "zoom-in" }} onClick={() => setExpandedQr(`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent("https://fergusonlawja.com/directory/join?utm_source=qr&utm_campaign=partner")}&color=102A1E&bgcolor=ffffff&margin=8`)} />
-            <div style={{ fontSize: ".65rem", color: "#102A1E", marginTop: 4, textAlign: "center", letterSpacing: ".03em", opacity: 0.6 }}>Click to expand</div>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0 }}>
+              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent("https://fergusonlawja.com/directory/join?utm_source=qr&utm_campaign=partner")}&color=102A1E&bgcolor=ffffff&margin=4`} alt="Partner Sign-up QR Code" width={100} height={100} style={{ borderRadius: 8, cursor: "zoom-in" }} onClick={() => setExpandedQr(`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent("https://fergusonlawja.com/directory/join?utm_source=qr&utm_campaign=partner")}&color=102A1E&bgcolor=ffffff&margin=8`)} />
+              <div style={{ fontSize: ".62rem", color: "#102A1E", marginTop: 5, textAlign: "center", letterSpacing: ".03em", opacity: 0.65 }}>Click to expand</div>
+            </div>
             <div style={{ flex: 1, minWidth: 200 }}>
               <div style={{ fontWeight: 600, fontSize: ".9rem", color: "#102A1E", marginBottom: 4 }}>fergusonlawja.com/directory/join</div>
               <div style={{ fontSize: ".78rem", color: "#666", marginBottom: 8 }}>For real estate agents, valuators &amp; legal professionals</div>
