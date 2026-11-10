@@ -2860,6 +2860,7 @@ function OverviewPanel({ leads, appts, convos, matters, homePros, emails, inquir
         {showNycQr && (
           <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap", padding: "16px 20px" }}>
             <img src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent("https://fergusonlawja.com/nyc2026?utm_source=qr&utm_campaign=nyc2026")}&color=102A1E&bgcolor=ffffff&margin=4`} alt="NYC2026 QR Code" width={100} height={100} style={{ borderRadius: 8, flexShrink: 0, cursor: "zoom-in" }} onClick={() => setExpandedQr(`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent("https://fergusonlawja.com/nyc2026?utm_source=qr&utm_campaign=nyc2026")}&color=102A1E&bgcolor=ffffff&margin=8`)} />
+            <div style={{ fontSize: ".65rem", color: "#8a6a22", marginTop: 4, textAlign: "center", letterSpacing: ".03em" }}>Click to expand</div>
             <div style={{ flex: 1, minWidth: 200 }}>
               <div style={{ fontWeight: 600, fontSize: ".9rem", color: "#102A1E", marginBottom: 6 }}>fergusonlawja.com/nyc2026</div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -2891,6 +2892,7 @@ function OverviewPanel({ leads, appts, convos, matters, homePros, emails, inquir
         {showPartnerQr && (
           <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap", padding: "16px 20px" }}>
             <img src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent("https://fergusonlawja.com/directory/join?utm_source=qr&utm_campaign=partner")}&color=102A1E&bgcolor=ffffff&margin=4`} alt="Partner Sign-up QR Code" width={100} height={100} style={{ borderRadius: 8, flexShrink: 0, cursor: "zoom-in" }} onClick={() => setExpandedQr(`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent("https://fergusonlawja.com/directory/join?utm_source=qr&utm_campaign=partner")}&color=102A1E&bgcolor=ffffff&margin=8`)} />
+            <div style={{ fontSize: ".65rem", color: "#102A1E", marginTop: 4, textAlign: "center", letterSpacing: ".03em", opacity: 0.6 }}>Click to expand</div>
             <div style={{ flex: 1, minWidth: 200 }}>
               <div style={{ fontWeight: 600, fontSize: ".9rem", color: "#102A1E", marginBottom: 4 }}>fergusonlawja.com/directory/join</div>
               <div style={{ fontSize: ".78rem", color: "#666", marginBottom: 8 }}>For real estate agents, valuators &amp; legal professionals</div>
