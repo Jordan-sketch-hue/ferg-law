@@ -508,7 +508,7 @@ export default function NYC2026Client() {
               <div key={i} style={{position:"absolute",inset:0,opacity:i===galleryIdx?1:0,transition:"opacity 1.4s cubic-bezier(.4,0,.2,1)",pointerEvents:i===galleryIdx?"auto":"none"}}>
                 {(item.type as string)==="video"
                   ? <video muted loop playsInline poster={((item as unknown) as {poster:string}).poster} style={{width:"100%",height:"100%",objectFit:"cover"}}><source src={item.src} type="video/mp4"/></video>
-                  : <Image src={item.src} alt={((item as unknown) as {alt:string}).alt} fill style={{objectFit:"contain",objectPosition:"center"}}/>
+                  : <Image src={item.src} alt={((item as unknown) as {alt:string}).alt} fill style={{objectFit:"cover",objectPosition:"center"}}/>
                 }
               </div>
             ))}
@@ -611,3 +611,5 @@ export default function NYC2026Client() {
     </div>
   );
 }
+
+
