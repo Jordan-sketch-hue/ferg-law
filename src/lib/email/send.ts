@@ -242,7 +242,7 @@ export async function sendNurtureEmail(args: SendNurtureEmailArgs): Promise<Send
               <p style="font-size:14px;line-height:1.65;margin:0 0 8px;color:#6b6b6b;">Prefer to message us directly?</p>
               <a href="${wa}" style="font-size:14px;color:#c9a86a;">WhatsApp: ${SITE.whatsappDisplay}</a>
               <hr style="border:none;border-top:1px solid #ece6da;margin:28px 0 18px;" />
-              <p style="font-size:12px;line-height:1.6;margin:0;color:#aaa;">
+              <p style="font-size:12px;line-height:1.6;margin:0;color:#666;">
                 Ferguson Law, 22B Old Hope Road, Kingston 5, Jamaica.
               </p>
             </td>
@@ -312,7 +312,7 @@ export async function sendPasswordReset(args: {
       </td></tr>
       <tr><td style="padding:26px 40px 40px;">
         <hr style="border:none;border-top:1px solid #ece6da;margin:0 0 18px;" />
-        <p style="font-size:13px;line-height:1.6;margin:0;color:#9a9a9a;word-break:break-all;">
+        <p style="font-size:13px;line-height:1.6;margin:0;color:#666;word-break:break-all;">
           Or paste this link into your browser:<br />${link}
         </p>
       </td></tr>
@@ -405,8 +405,8 @@ export async function sendConsultationFollowUp(
           <tr>
             <td style="padding:20px 40px 40px;">
               <hr style="border:none;border-top:1px solid #ece6da;margin:0 0 18px;" />
-              <p style="font-size:13px;margin:0 0 6px;color:#9a9a9a;">Have questions? <a href="${wa}" style="color:#c9a86a;">WhatsApp us</a></p>
-              <p style="font-size:12px;line-height:1.6;margin:0;color:#aaa;">Ferguson Law, 22B Old Hope Road, Kingston 5, Jamaica &nbsp;&middot;&nbsp; Ref: ${escapeHtml(ref)}</p>
+              <p style="font-size:13px;margin:0 0 6px;color:#666;">Have questions? <a href="${wa}" style="color:#c9a86a;">WhatsApp us</a></p>
+              <p style="font-size:12px;line-height:1.6;margin:0;color:#666;">Ferguson Law, 22B Old Hope Road, Kingston 5, Jamaica &nbsp;&middot;&nbsp; Ref: ${escapeHtml(ref)}</p>
             </td>
           </tr>
         </table>
@@ -521,7 +521,7 @@ function buildHtml(d: {
                   <strong style="color:#3a3a3a;">${SITE.whatsappDisplay}</strong> &nbsp;·&nbsp;
                   <a href="mailto:${SITE.email}" style="color:#8a7a52;">${SITE.email}</a>
                 </p>
-                <p style="font-size:13px;line-height:1.6;margin:18px 0 0 0;color:#9a9a9a;">
+                <p style="font-size:13px;line-height:1.6;margin:18px 0 0 0;color:#666;">
                   ${SITE.founder} &nbsp;·&nbsp; ${SITE.city}
                 </p>
               </td>
@@ -606,7 +606,7 @@ export async function sendAdminDigest(args: {
           <tr><td style="padding:44px 40px 40px;">
             <p style="font-size:22px;line-height:1.3;margin:0 0 18px;color:#10211c;">Good morning, Owen.</p>
             <p style="font-size:16px;line-height:1.75;margin:0 0 10px;color:#3a3a3a;">${summary}</p>
-            <p style="font-size:14px;color:#9a9a9a;margin:24px 0 0;">Date: ${escapeHtml(dateLabel)}</p>
+            <p style="font-size:14px;color:#666;margin:24px 0 0;">Date: ${escapeHtml(dateLabel)}</p>
           </td></tr>
         </table>
       </td></tr>

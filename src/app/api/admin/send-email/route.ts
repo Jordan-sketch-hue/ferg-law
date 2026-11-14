@@ -78,7 +78,7 @@ function buildHtml(body: string): string {
   ${sigHtml}
 </td></tr>
 <tr><td style="padding:8px 36px 36px;">
-  <p style="font-size:13px;color:#9a9a9a;margin:0;">
+  <p style="font-size:13px;color:#666;margin:0;">
     Ferguson Law &nbsp;&#183;&nbsp; Jamaica<br/>
     <a href="tel:+18763200235" style="color:#9a8f7a;">(876) 320-0235</a> &nbsp;&#183;&nbsp;
     <a href="mailto:contact@fergusonlawja.com" style="color:#9a8f7a;">contact@fergusonlawja.com</a>

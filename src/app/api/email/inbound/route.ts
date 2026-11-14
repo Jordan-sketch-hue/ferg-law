@@ -383,7 +383,7 @@ export async function POST(req: NextRequest) {
       const rawSubject = String(payload.subject ?? "(no subject)");
       // Strip any accumulated "New enquiry: " prefixes before adding one.
       const cleanSubject = rawSubject.replace(/^(New enquiry:\s*)+/i, "");
-      const previewText = (bodyText || bodyHtml.replace(/<[^>]+>/g, "")).slice(0, 300) || "(no body)";
+      const previewText = (bodyText || bodyHtml.replace(/<[^>]+>/g, "")).slice(0, 2000) || "(no body)";
       const attLines = storedAttachments.length > 0
         ? `\n\nAttachments (${storedAttachments.length}):\n` + storedAttachments.map((a) => `  â€¢ ${a.filename} â€” ${a.url}`).join("\n")
         : "";
