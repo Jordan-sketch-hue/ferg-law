@@ -15,7 +15,7 @@ export async function GET() {
   const admin = createAdminClient();
   const { data, error } = await admin
     .from("fl_client_kyc")
-    .select("id, full_legal_name, date_of_birth, nationality, address, trn, id_type, id_number, id_doc_url, source_of_funds, is_pep, pep_details, aml_declared, submitted_at, status, reviewer_notes")
+    .select("id, full_legal_name, date_of_birth, nationality, country_of_residence, occupation, address, trn, id_type, id_number, id_doc_url, source_of_funds, source_of_wealth, purpose_of_transaction, is_pep, pep_details, aml_declared, submitted_at, status, reviewer_notes")
     .eq("client_id", user.id)
     .maybeSingle();
 
@@ -42,7 +42,11 @@ export async function POST(req: NextRequest) {
     trn?: string;
     id_type: string;
     id_number: string;
+    country_of_residence?: string;
+    occupation?: string;
     source_of_funds: string;
+    source_of_wealth?: string;
+    purpose_of_transaction?: string;
     is_pep: boolean;
     pep_details?: string;
     aml_declared: boolean;
@@ -59,7 +63,11 @@ export async function POST(req: NextRequest) {
       trn: fd.get("trn") as string ?? "",
       id_type: fd.get("id_type") as string ?? "national_id",
       id_number: fd.get("id_number") as string ?? "",
+      country_of_residence: fd.get("country_of_residence") as string ?? "",
+      occupation: fd.get("occupation") as string ?? "",
       source_of_funds: fd.get("source_of_funds") as string ?? "",
+      source_of_wealth: fd.get("source_of_wealth") as string ?? "",
+      purpose_of_transaction: fd.get("purpose_of_transaction") as string ?? "",
       is_pep: fd.get("is_pep") === "true",
       pep_details: fd.get("pep_details") as string ?? "",
       aml_declared: fd.get("aml_declared") === "true",
@@ -103,7 +111,11 @@ export async function POST(req: NextRequest) {
       id_type: fields.id_type,
       id_number: fields.id_number.trim(),
       ...(id_doc_url ? { id_doc_url } : {}),
+      country_of_residence: fields.country_of_residence?.trim() || null,
+      occupation: fields.occupation?.trim() || null,
       source_of_funds: fields.source_of_funds?.trim() || null,
+      source_of_wealth: fields.source_of_wealth?.trim() || null,
+      purpose_of_transaction: fields.purpose_of_transaction?.trim() || null,
       is_pep: fields.is_pep ?? false,
       pep_details: fields.is_pep ? fields.pep_details?.trim() || null : null,
       aml_declared: fields.aml_declared ?? false,

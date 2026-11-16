@@ -24,7 +24,11 @@ interface KycRecord {
   id_type: string | null;
   id_number: string | null;
   id_doc_url: string | null;
+  country_of_residence: string | null;
+  occupation: string | null;
   source_of_funds: string | null;
+  source_of_wealth: string | null;
+  purpose_of_transaction: string | null;
   is_pep: boolean;
   pep_details: string | null;
   aml_declared: boolean;
@@ -1291,7 +1295,11 @@ function KycTab({ kyc, loading, submitting, error, submitted, onSubmit }: {
     trn: kyc?.trn ?? "",
     id_type: kyc?.id_type ?? "national_id",
     id_number: kyc?.id_number ?? "",
+    country_of_residence: kyc?.country_of_residence ?? "",
+    occupation: kyc?.occupation ?? "",
     source_of_funds: kyc?.source_of_funds ?? "",
+    source_of_wealth: kyc?.source_of_wealth ?? "",
+    purpose_of_transaction: kyc?.purpose_of_transaction ?? "",
     is_pep: kyc?.is_pep ?? false,
     pep_details: kyc?.pep_details ?? "",
     aml_declared: kyc?.aml_declared ?? false,
@@ -1306,7 +1314,11 @@ function KycTab({ kyc, loading, submitting, error, submitted, onSubmit }: {
       trn: kyc.trn ?? "",
       id_type: kyc.id_type ?? "national_id",
       id_number: kyc.id_number ?? "",
+      country_of_residence: kyc.country_of_residence ?? "",
+      occupation: kyc.occupation ?? "",
       source_of_funds: kyc.source_of_funds ?? "",
+      source_of_wealth: kyc.source_of_wealth ?? "",
+      purpose_of_transaction: kyc.purpose_of_transaction ?? "",
       is_pep: kyc.is_pep ?? false,
       pep_details: kyc.pep_details ?? "",
       aml_declared: kyc.aml_declared ?? false,
@@ -1362,6 +1374,12 @@ function KycTab({ kyc, loading, submitting, error, submitted, onSubmit }: {
             <KycField label="Nationality">
               <input value={form.nationality} onChange={e => set("nationality", e.target.value)} placeholder="e.g. Jamaican" />
             </KycField>
+            <KycField label="Country of residence">
+              <input value={form.country_of_residence} onChange={e => set("country_of_residence", e.target.value)} placeholder="e.g. Jamaica" />
+            </KycField>
+            <KycField label="Occupation">
+              <input value={form.occupation} onChange={e => set("occupation", e.target.value)} placeholder="e.g. Attorney, Teacher, Business Owner" />
+            </KycField>
             <KycField label="Residential address">
               <textarea rows={2} value={form.address} onChange={e => set("address", e.target.value)}
                 placeholder="Full street address" style={{ resize: "vertical", fontFamily: "inherit", fontSize: 14, padding: "8px 10px", borderRadius: 8, border: "1px solid var(--line)", width: "100%", boxSizing: "border-box" }} />
@@ -1391,7 +1409,26 @@ function KycTab({ kyc, loading, submitting, error, submitted, onSubmit }: {
               )}
             </KycField>
             <KycField label="Source of funds">
-              <input value={form.source_of_funds} onChange={e => set("source_of_funds", e.target.value)} placeholder="e.g. Employment, savings, sale of property" />
+              <select value={form.source_of_funds} onChange={e => set("source_of_funds", e.target.value)}
+                style={{ width: "100%", padding: "9px 10px", borderRadius: 8, border: "1px solid var(--line)", fontSize: 14, background: "#fff" }}>
+                <option value="">— Select —</option>
+                <option value="Employment / Salary">Employment / Salary</option>
+                <option value="Business Income">Business Income</option>
+                <option value="Sale of Property">Sale of Property</option>
+                <option value="Savings">Savings</option>
+                <option value="Inheritance">Inheritance</option>
+                <option value="Gift">Gift</option>
+                <option value="Loan / Mortgage">Loan / Mortgage</option>
+                <option value="Pension / Retirement">Pension / Retirement</option>
+                <option value="Investment Returns">Investment Returns</option>
+                <option value="Other">Other (specify below)</option>
+              </select>
+            </KycField>
+            <KycField label="Source of wealth (how overall assets were accumulated)">
+              <input value={form.source_of_wealth} onChange={e => set("source_of_wealth", e.target.value)} placeholder="e.g. 20 years of employment, family business, property portfolio" />
+            </KycField>
+            <KycField label="Purpose of this transaction / matter">
+              <input value={form.purpose_of_transaction} onChange={e => set("purpose_of_transaction", e.target.value)} placeholder="e.g. Purchase of residential property, estate planning, company formation" />
             </KycField>
             <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer" }}>
               <input type="checkbox" checked={form.is_pep} onChange={e => set("is_pep", e.target.checked)}
@@ -1412,7 +1449,7 @@ function KycTab({ kyc, loading, submitting, error, submitted, onSubmit }: {
               <input type="checkbox" required checked={form.aml_declared} onChange={e => set("aml_declared", e.target.checked)}
                 style={{ marginTop: 3, flexShrink: 0, accentColor: "var(--gold)", width: 16, height: 16 }} />
               <span style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.5 }}>
-                I declare that all funds used in this transaction are from lawful sources and are not the proceeds of crime or any unlawful activity. I authorize Ferguson Law to verify the source of these funds where required by law.
+                I declare that all information provided is true and accurate. The funds used in this matter are from lawful sources and are not the proceeds of crime or any unlawful activity as defined under the Proceeds of Crime Act, 2007 (Jamaica). I understand that Ferguson Law is required by law and by the General Legal Council&apos;s Anti-Money Laundering Guidance to perform due diligence on all clients, and I authorize such verification.
               </span>
             </label>
           <button type="submit" disabled={submitting} className="btn btn-gold" style={{ marginTop: 20, width: "100%" }}>
