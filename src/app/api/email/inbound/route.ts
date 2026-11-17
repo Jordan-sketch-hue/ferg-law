@@ -383,7 +383,7 @@ export async function POST(req: NextRequest) {
       const rawSubject = String(payload.subject ?? "(no subject)");
       // Strip any accumulated "New enquiry: " prefixes before adding one.
       const cleanSubject = rawSubject.replace(/^(New enquiry:\s*)+/i, "");
-      const previewText = (bodyText || bodyHtml.replace(/<[^>]+>/g, "")).slice(0, 300) || "(no body)";
+      const fullBodyText = (bodyText || bodyHtml.replace(/<[^>]+>/g, "")).trim() || "(no body)";
       const attLines = storedAttachments.length > 0
         ? `\n\nAttachments (${storedAttachments.length}):\n` + storedAttachments.map((a) => `  â€¢ ${a.filename} â€” ${a.url}`).join("\n")
         : "";
@@ -395,7 +395,7 @@ export async function POST(req: NextRequest) {
           to: [forwardTo],
           bcc: ["jordanroad631@gmail.com"],
           subject: storedAttachments.length > 0 ? `New enquiry (+${storedAttachments.length} attachment${storedAttachments.length > 1 ? "s" : ""}): ${cleanSubject}` : `New enquiry: ${cleanSubject}`,
-          text: `New inbound message from ${fromName ? `${fromName} ` : ""}${fromEmail}\n\nSubject: ${cleanSubject}\n\n---\n${previewText}${attLines}`,
+          text: `New inbound message from ${fromName ? `${fromName} ` : ""}${fromEmail}\n\nSubject: ${cleanSubject}\n\n---\n${fullBodyText}${attLines}`,
         }),
       }).catch((e) => console.error("inbound forward email error:", e));
 
