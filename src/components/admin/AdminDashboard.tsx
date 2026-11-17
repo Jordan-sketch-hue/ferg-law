@@ -5152,13 +5152,13 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                       });
                       setSummaryModal(true);
                     }}
-                    style={{ fontSize: 12, padding: "5px 10px", borderRadius: 8, border: "1px solid " + (activeSummary ? "#16823c" : "rgba(18,16,12,.3)"), background: activeSummary ? "#f0fdf4" : "#fff", color: activeSummary ? "#16823c" : INK, cursor: "pointer", fontWeight: 600 }}
+                    style={{ fontSize: 12, padding: "5px 10px", borderRadius: 8, border: "1px solid " + (activeSummary ? "rgba(200,166,92,.7)" : "rgba(18,16,12,.3)"), background: activeSummary ? "rgba(200,166,92,.12)" : "#fff", color: activeSummary ? "#8a6a22" : INK, cursor: "pointer", fontWeight: 600 }}
                   >
                     {activeSummary ? "✓ Preliminary Summary" : "Generate Preliminary Summary"}
                   </button>
                   {activeSummary && selected && (
                     <a href={"/preliminary-summary/" + selected + "?token=" + encodeURIComponent(token)} target="_blank" rel="noopener noreferrer"
-                      style={{ fontSize: 12, padding: "5px 10px", borderRadius: 8, border: "1px solid #16823c", background: "#16823c", color: "#fff", textDecoration: "none", fontWeight: 600 }}
+                      style={{ fontSize: 12, padding: "5px 10px", borderRadius: 8, border: "1px solid #8a6a22", background: "#8a6a22", color: "#fff", textDecoration: "none", fontWeight: 600 }}
                     >View →</a>
                   )}
                   {activeSummary && selected && (
@@ -5184,7 +5184,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                         } catch { setSendResult("Network error"); }
                         finally { setSendBusy(false); }
                       }}
-                      style={{ fontSize: 12, padding: "5px 10px", borderRadius: 8, border: "1px solid #0a4f7a", background: (activeSummary as { sent_at?: string }).sent_at ? "#f0f8ff" : "#0a4f7a", color: (activeSummary as { sent_at?: string }).sent_at ? "#0a4f7a" : "#fff", cursor: sendBusy ? "default" : "pointer", fontWeight: 600, opacity: sendBusy ? 0.7 : 1 }}
+                      style={{ fontSize: 12, padding: "5px 10px", borderRadius: 8, border: "1px solid #8a6a22", background: (activeSummary as { sent_at?: string }).sent_at ? "rgba(200,166,92,.12)" : "#8a6a22", color: (activeSummary as { sent_at?: string }).sent_at ? "#8a6a22" : "#fff", cursor: sendBusy ? "default" : "pointer", fontWeight: 600, opacity: sendBusy ? 0.7 : 1 }}
                     >
                       {sendBusy ? "Sending…" : (activeSummary as { sent_at?: string }).sent_at ? "↺ Resend to Client" : "✉ Send to Client"}
                     </button>
@@ -5836,7 +5836,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                       else if (j.error) alert("Draft failed: " + j.error);
                     } catch { alert("Draft failed"); } finally { setDraftBusy(false); }
                   }}
-                  style={{ padding: "7px 14px", borderRadius: 8, border: "1.5px solid #0a4f7a", background: draftBusy ? "#e8f4fb" : "#f0f8ff", color: "#0a4f7a", fontSize: 12.5, cursor: draftBusy ? "default" : "pointer", fontWeight: 700, whiteSpace: "nowrap" }}
+                  style={{ padding: "7px 14px", borderRadius: 8, border: "1.5px solid #8a6a22", background: draftBusy ? "rgba(200,166,92,.08)" : "rgba(200,166,92,.06)", color: "#8a6a22", fontSize: 12.5, cursor: draftBusy ? "default" : "pointer", fontWeight: 700, whiteSpace: "nowrap" }}
                 >
                   {draftBusy ? "Drafting…" : "✦ Draft with AI"}
                 </button>
