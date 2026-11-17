@@ -3356,8 +3356,6 @@ function EmailTab({ emails, token, leads, onMarkRead, onMarkAllRead, onDelete, o
               <button type='button' onClick={() => { setComposing(true); setSelectedSent(null); setNewTo(selectedSent.to_email); setNewSubject(selectedSent.subject ? (selectedSent.subject.startsWith('Fwd:') ? selectedSent.subject : `Fwd: ${selectedSent.subject}`) : 'Fwd: (no subject)'); setNewBody(''); }} style={{ padding: '9px 20px', background: GREEN, color: '#fff', border: 'none', borderRadius: 999, fontSize: '.85rem', fontWeight: 700, cursor: 'pointer' }}>Forward</button>
             </div>
           </div>
-        ) : pane === "sent" ? (
-          <div style={{ color: MUTED, textAlign: "center", paddingTop: 60 }}>Select a sent email to view</div>
         ) : composing ? (
           <div>
             <div style={{ fontFamily: "var(--serif, Georgia, serif)", fontWeight: 700, fontSize: "1.1rem", color: GREEN, marginBottom: 16 }}>New Email</div>
