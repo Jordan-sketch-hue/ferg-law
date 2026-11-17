@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +16,8 @@ type MilestoneStatus = "pending" | "in_progress" | "done" | "blocked";
 
 interface KycRecord {
   id: string;
+  kyc_type: "individual" | "entity";
+  // Individual
   full_legal_name: string | null;
   date_of_birth: string | null;
   nationality: string | null;
@@ -23,7 +25,12 @@ interface KycRecord {
   trn: string | null;
   id_type: string | null;
   id_number: string | null;
+  id_expiry_date: string | null;
   id_doc_url: string | null;
+  id2_type: string | null;
+  id2_number: string | null;
+  id2_expiry_date: string | null;
+  id2_doc_url: string | null;
   country_of_residence: string | null;
   occupation: string | null;
   source_of_funds: string | null;
@@ -31,6 +38,22 @@ interface KycRecord {
   purpose_of_transaction: string | null;
   is_pep: boolean;
   pep_details: string | null;
+  // Entity
+  entity_name: string | null;
+  entity_type: string | null;
+  entity_registration_number: string | null;
+  entity_date_of_incorporation: string | null;
+  entity_country_of_incorporation: string | null;
+  entity_registered_address: string | null;
+  entity_principal_address: string | null;
+  entity_nature_of_business: string | null;
+  entity_trn: string | null;
+  entity_resolution_url: string | null;
+  entity_directors: Array<{ name: string; nationality: string; dob: string; role: string }> | null;
+  entity_beneficial_owners: Array<{ name: string; nationality: string; dob: string; ownership_pct: string; is_pep: boolean; pep_details: string }> | null;
+  entity_authorised_signatories: Array<{ name: string; id_type: string; id_number: string }> | null;
+  entity_has_pep_director: boolean;
+  entity_pep_details: string | null;
   aml_declared: boolean;
   submitted_at: string | null;
   status: string;
@@ -1279,6 +1302,14 @@ function MatterPane({
 
 // ── KycTab ──────────────────────────────────────────────────────────────────
 
+type Director = { name: string; nationality: string; dob: string; role: string };
+type BeneficialOwner = { name: string; nationality: string; dob: string; ownership_pct: string; is_pep: boolean; pep_details: string };
+type AuthSignatory = { name: string; id_type: string; id_number: string };
+
+function emptyDirector(): Director { return { name: "", nationality: "", dob: "", role: "" }; }
+function emptyOwner(): BeneficialOwner { return { name: "", nationality: "", dob: "", ownership_pct: "", is_pep: false, pep_details: "" }; }
+function emptySignatory(): AuthSignatory { return { name: "", id_type: "national_id", id_number: "" }; }
+
 function KycTab({ kyc, loading, submitting, error, submitted, onSubmit }: {
   kyc: KycRecord | null;
   loading: boolean;
@@ -1287,16 +1318,22 @@ function KycTab({ kyc, loading, submitting, error, submitted, onSubmit }: {
   submitted: boolean;
   onSubmit: (fields: Record<string, unknown>) => Promise<void>;
 }) {
-  const [form, setForm] = useState({
+  const [kycType, setKycType] = useState<"individual" | "entity">(kyc?.kyc_type ?? "individual");
+
+  const [ind, setInd] = useState({
     full_legal_name: kyc?.full_legal_name ?? "",
     date_of_birth: kyc?.date_of_birth ?? "",
     nationality: kyc?.nationality ?? "",
+    country_of_residence: kyc?.country_of_residence ?? "",
+    occupation: kyc?.occupation ?? "",
     address: kyc?.address ?? "",
     trn: kyc?.trn ?? "",
     id_type: kyc?.id_type ?? "national_id",
     id_number: kyc?.id_number ?? "",
-    country_of_residence: kyc?.country_of_residence ?? "",
-    occupation: kyc?.occupation ?? "",
+    id_expiry_date: kyc?.id_expiry_date ?? "",
+    id2_type: kyc?.id2_type ?? "",
+    id2_number: kyc?.id2_number ?? "",
+    id2_expiry_date: kyc?.id2_expiry_date ?? "",
     source_of_funds: kyc?.source_of_funds ?? "",
     source_of_wealth: kyc?.source_of_wealth ?? "",
     purpose_of_transaction: kyc?.purpose_of_transaction ?? "",
@@ -1305,29 +1342,66 @@ function KycTab({ kyc, loading, submitting, error, submitted, onSubmit }: {
     aml_declared: kyc?.aml_declared ?? false,
   });
 
+  const [ent, setEnt] = useState({
+    entity_name: kyc?.entity_name ?? "",
+    entity_type: kyc?.entity_type ?? "private_limited",
+    entity_registration_number: kyc?.entity_registration_number ?? "",
+    entity_date_of_incorporation: kyc?.entity_date_of_incorporation ?? "",
+    entity_country_of_incorporation: kyc?.entity_country_of_incorporation ?? "Jamaica",
+    entity_registered_address: kyc?.entity_registered_address ?? "",
+    entity_principal_address: kyc?.entity_principal_address ?? "",
+    entity_nature_of_business: kyc?.entity_nature_of_business ?? "",
+    entity_trn: kyc?.entity_trn ?? "",
+    source_of_funds: kyc?.source_of_funds ?? "",
+    source_of_wealth: kyc?.source_of_wealth ?? "",
+    purpose_of_transaction: kyc?.purpose_of_transaction ?? "",
+    entity_has_pep_director: kyc?.entity_has_pep_director ?? false,
+    entity_pep_details: kyc?.entity_pep_details ?? "",
+    aml_declared: kyc?.aml_declared ?? false,
+  });
+  const [directors, setDirectors] = useState<Director[]>(kyc?.entity_directors?.length ? kyc.entity_directors : [emptyDirector()]);
+  const [owners, setOwners] = useState<BeneficialOwner[]>(kyc?.entity_beneficial_owners?.length ? kyc.entity_beneficial_owners : [emptyOwner()]);
+  const [signatories, setSignatories] = useState<AuthSignatory[]>(kyc?.entity_authorised_signatories?.length ? kyc.entity_authorised_signatories : [emptySignatory()]);
+
   useEffect(() => {
-    if (kyc) setForm({
-      full_legal_name: kyc.full_legal_name ?? "",
-      date_of_birth: kyc.date_of_birth ?? "",
-      nationality: kyc.nationality ?? "",
-      address: kyc.address ?? "",
-      trn: kyc.trn ?? "",
-      id_type: kyc.id_type ?? "national_id",
-      id_number: kyc.id_number ?? "",
-      country_of_residence: kyc.country_of_residence ?? "",
-      occupation: kyc.occupation ?? "",
-      source_of_funds: kyc.source_of_funds ?? "",
-      source_of_wealth: kyc.source_of_wealth ?? "",
+    if (!kyc) return;
+    setKycType(kyc.kyc_type ?? "individual");
+    setInd({
+      full_legal_name: kyc.full_legal_name ?? "", date_of_birth: kyc.date_of_birth ?? "",
+      nationality: kyc.nationality ?? "", country_of_residence: kyc.country_of_residence ?? "",
+      occupation: kyc.occupation ?? "", address: kyc.address ?? "", trn: kyc.trn ?? "",
+      id_type: kyc.id_type ?? "national_id", id_number: kyc.id_number ?? "",
+      id_expiry_date: kyc.id_expiry_date ?? "", id2_type: kyc.id2_type ?? "",
+      id2_number: kyc.id2_number ?? "", id2_expiry_date: kyc.id2_expiry_date ?? "",
+      source_of_funds: kyc.source_of_funds ?? "", source_of_wealth: kyc.source_of_wealth ?? "",
       purpose_of_transaction: kyc.purpose_of_transaction ?? "",
-      is_pep: kyc.is_pep ?? false,
-      pep_details: kyc.pep_details ?? "",
+      is_pep: kyc.is_pep ?? false, pep_details: kyc.pep_details ?? "",
       aml_declared: kyc.aml_declared ?? false,
     });
+    setEnt({
+      entity_name: kyc.entity_name ?? "", entity_type: kyc.entity_type ?? "private_limited",
+      entity_registration_number: kyc.entity_registration_number ?? "",
+      entity_date_of_incorporation: kyc.entity_date_of_incorporation ?? "",
+      entity_country_of_incorporation: kyc.entity_country_of_incorporation ?? "Jamaica",
+      entity_registered_address: kyc.entity_registered_address ?? "",
+      entity_principal_address: kyc.entity_principal_address ?? "",
+      entity_nature_of_business: kyc.entity_nature_of_business ?? "",
+      entity_trn: kyc.entity_trn ?? "", source_of_funds: kyc.source_of_funds ?? "",
+      source_of_wealth: kyc.source_of_wealth ?? "",
+      purpose_of_transaction: kyc.purpose_of_transaction ?? "",
+      entity_has_pep_director: kyc.entity_has_pep_director ?? false,
+      entity_pep_details: kyc.entity_pep_details ?? "",
+      aml_declared: kyc.aml_declared ?? false,
+    });
+    if (kyc.entity_directors?.length) setDirectors(kyc.entity_directors);
+    if (kyc.entity_beneficial_owners?.length) setOwners(kyc.entity_beneficial_owners);
+    if (kyc.entity_authorised_signatories?.length) setSignatories(kyc.entity_authorised_signatories);
   }, [kyc]);
 
-  const set = (k: string, v: string | boolean) => setForm(f => ({ ...f, [k]: v }));
+  const setI = (k: string, v: string | boolean) => setInd(f => ({ ...f, [k]: v }));
+  const setE = (k: string, v: string | boolean) => setEnt(f => ({ ...f, [k]: v }));
 
-  if (loading) return <p style={{ color: "var(--muted)", fontSize: 14 }}>Loading…</p>;
+  if (loading) return <p style={{ color: "var(--muted)", fontSize: 14 }}>Loading...</p>;
 
   const isApproved = kyc?.status === "approved";
   const isSubmitted = kyc?.status === "submitted";
@@ -1338,19 +1412,70 @@ function KycTab({ kyc, loading, submitting, error, submitted, onSubmit }: {
     </div>
   ) : isSubmitted ? (
     <div style={{ marginBottom: 18, padding: "10px 14px", borderRadius: 10, background: "#fdf3d9", border: "1px solid #f0e4b0", fontSize: 13.5, color: "#5a5200" }}>
-      Your KYC information has been submitted and is under review. We will notify you of the outcome.
+      Your KYC information has been submitted and is under review.
     </div>
   ) : kyc?.status === "flagged" ? (
     <div style={{ marginBottom: 18, padding: "10px 14px", borderRadius: 10, background: "#fbeaea", border: "1px solid #eecaca", fontSize: 13.5, color: "#7a2020" }}>
-      Your submission was flagged for review.{kyc.reviewer_notes ? ` Note from Ferguson Law: ${kyc.reviewer_notes}` : " Please update and resubmit below."}
+      Your submission was flagged.{kyc.reviewer_notes ? ` Note: ${kyc.reviewer_notes}` : " Please update and resubmit."}
     </div>
   ) : null;
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (kycType === "individual") {
+      await onSubmit({ ...ind, kyc_type: "individual" });
+    } else {
+      await onSubmit({
+        ...ent, kyc_type: "entity",
+        entity_directors: JSON.stringify(directors),
+        entity_beneficial_owners: JSON.stringify(owners),
+        entity_authorised_signatories: JSON.stringify(signatories),
+      });
+    }
+  }
+
+  const toggleStyle = (active: boolean) => ({
+    flex: 1, padding: "9px 14px", borderRadius: 8, border: "none", cursor: "pointer", fontWeight: 700,
+    fontSize: 13.5, background: active ? "#1B4D32" : "#f4f0e8", color: active ? "#C8A65C" : "#69736d",
+    transition: "background .2s, color .2s",
+  } as React.CSSProperties);
+
+  const inpStyle: React.CSSProperties = {
+    width: "100%", padding: "9px 10px", borderRadius: 8, border: "1px solid var(--line)",
+    fontSize: 14, background: "#fff", boxSizing: "border-box",
+  };
+  const selStyle: React.CSSProperties = { ...inpStyle };
+  const taStyle: React.CSSProperties = { ...inpStyle, resize: "vertical", fontFamily: "inherit" };
+
+  const sofOptions = [
+    "Employment / Salary", "Business Income / Revenue", "Sale of Property",
+    "Savings", "Inheritance", "Gift", "Loan / Mortgage", "Pension / Retirement",
+    "Investment Returns", "Remittance from Overseas", "Other (specify below)",
+  ];
+
+  function addRow<T>(setter: React.Dispatch<React.SetStateAction<T[]>>, empty: T) {
+    setter(prev => [...prev, { ...empty }]);
+  }
+  function removeRow<T>(setter: React.Dispatch<React.SetStateAction<T[]>>, idx: number) {
+    setter(prev => prev.filter((_, i) => i !== idx));
+  }
+  function updateRow<T>(setter: React.Dispatch<React.SetStateAction<T[]>>, idx: number, key: keyof T, val: string | boolean) {
+    setter(prev => prev.map((row, i) => i === idx ? { ...row, [key]: val } : row));
+  }
 
   return (
     <div>
       <p style={{ fontSize: 13.5, color: "var(--muted)", marginBottom: 16, lineHeight: 1.6 }}>
-        Ferguson Law is required by law to verify the identity of all clients (Know Your Customer / KYC). Please fill in your details accurately. This information is linked to your account — not to any specific matter — and only needs to be submitted once.
+        Ferguson Law is required by law to verify the identity of all clients (KYC / AML). Please complete the form accurately. This is linked to your account and only needs to be submitted once.
       </p>
+
+      {!isApproved && (
+        <div style={{ display: "flex", gap: 6, background: "#f4f0e8", padding: 5, borderRadius: 10, marginBottom: 20, border: "1px solid var(--line)" }}>
+          <button type="button" style={toggleStyle(kycType === "individual")} onClick={() => setKycType("individual")}>Individual</button>
+          <button type="button" style={toggleStyle(kycType === "entity")} onClick={() => setKycType("entity")}>Entity / Company</button>
+        </div>
+      )}
+
       {statusBanner}
       {submitted && (
         <div style={{ marginBottom: 16, padding: "10px 14px", borderRadius: 10, background: "#dff0df", border: "1px solid #a5d4a5", fontSize: 13.5, color: "#1a4d28", fontWeight: 600 }}>
@@ -1362,101 +1487,342 @@ function KycTab({ kyc, loading, submitting, error, submitted, onSubmit }: {
           {error}
         </div>
       )}
+
       {!isApproved && (
-        <form onSubmit={async e => { e.preventDefault(); await onSubmit(form); }} noValidate>
-          <div style={{ display: "grid", gap: 14 }}>
-            <KycField label="Full legal name (as on ID)">
-              <input value={form.full_legal_name} onChange={e => set("full_legal_name", e.target.value)} required placeholder="e.g. Jane Mary Smith" />
-            </KycField>
-            <KycField label="Date of birth">
-              <input type="date" value={form.date_of_birth} onChange={e => set("date_of_birth", e.target.value)} required />
-            </KycField>
-            <KycField label="Nationality">
-              <input value={form.nationality} onChange={e => set("nationality", e.target.value)} placeholder="e.g. Jamaican" />
-            </KycField>
-            <KycField label="Country of residence">
-              <input value={form.country_of_residence} onChange={e => set("country_of_residence", e.target.value)} placeholder="e.g. Jamaica" />
-            </KycField>
-            <KycField label="Occupation">
-              <input value={form.occupation} onChange={e => set("occupation", e.target.value)} placeholder="e.g. Attorney, Teacher, Business Owner" />
-            </KycField>
-            <KycField label="Residential address">
-              <textarea rows={2} value={form.address} onChange={e => set("address", e.target.value)}
-                placeholder="Full street address" style={{ resize: "vertical", fontFamily: "inherit", fontSize: 14, padding: "8px 10px", borderRadius: 8, border: "1px solid var(--line)", width: "100%", boxSizing: "border-box" }} />
-            </KycField>
-            <KycField label="TRN (Tax Registration Number)">
-              <input value={form.trn} onChange={e => set("trn", e.target.value)} placeholder="000-000-000" />
-            </KycField>
-            <KycField label="ID type">
-              <select value={form.id_type} onChange={e => set("id_type", e.target.value)}
-                style={{ width: "100%", padding: "9px 10px", borderRadius: 8, border: "1px solid var(--line)", fontSize: 14, background: "#fff" }}>
-                <option value="national_id">National ID</option>
-                <option value="passport">Passport</option>
-                <option value="drivers_license">Driver&apos;s Licence</option>
-              </select>
-            </KycField>
-            <KycField label="ID number">
-              <input value={form.id_number} onChange={e => set("id_number", e.target.value)} required placeholder="As printed on your ID" />
-            </KycField>
-            <KycField label="Upload a copy of your ID (photo or scan)">
-              <input type="file" accept="image/*,.pdf"
-                onChange={e => set("id_doc_file", e.target.files?.[0] as unknown as string)}
-                style={{ fontSize: 13, padding: "6px 0" }} />
-              {kyc?.id_doc_url && (
-                <a href={kyc.id_doc_url} target="_blank" rel="noopener" style={{ fontSize: 12, color: "var(--gold-deep)" }}>
-                  Previously uploaded document ↗
-                </a>
-              )}
-            </KycField>
-            <KycField label="Source of funds">
-              <select value={form.source_of_funds} onChange={e => set("source_of_funds", e.target.value)}
-                style={{ width: "100%", padding: "9px 10px", borderRadius: 8, border: "1px solid var(--line)", fontSize: 14, background: "#fff" }}>
-                <option value="">— Select —</option>
-                <option value="Employment / Salary">Employment / Salary</option>
-                <option value="Business Income">Business Income</option>
-                <option value="Sale of Property">Sale of Property</option>
-                <option value="Savings">Savings</option>
-                <option value="Inheritance">Inheritance</option>
-                <option value="Gift">Gift</option>
-                <option value="Loan / Mortgage">Loan / Mortgage</option>
-                <option value="Pension / Retirement">Pension / Retirement</option>
-                <option value="Investment Returns">Investment Returns</option>
-                <option value="Other">Other (specify below)</option>
-              </select>
-            </KycField>
-            <KycField label="Source of wealth (how overall assets were accumulated)">
-              <input value={form.source_of_wealth} onChange={e => set("source_of_wealth", e.target.value)} placeholder="e.g. 20 years of employment, family business, property portfolio" />
-            </KycField>
-            <KycField label="Purpose of this transaction / matter">
-              <input value={form.purpose_of_transaction} onChange={e => set("purpose_of_transaction", e.target.value)} placeholder="e.g. Purchase of residential property, estate planning, company formation" />
-            </KycField>
+        <form onSubmit={handleSubmit} noValidate>
+          {kycType === "individual" && (
+            <div style={{ display: "grid", gap: 14 }}>
+              <KycSection label="A. Personal Information">
+                <KycField label="Full legal name (as on ID)">
+                  <input style={inpStyle} value={ind.full_legal_name} onChange={e => setI("full_legal_name", e.target.value)} required placeholder="e.g. Jane Mary Smith" />
+                </KycField>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <KycField label="Date of birth">
+                    <input type="date" style={inpStyle} value={ind.date_of_birth} onChange={e => setI("date_of_birth", e.target.value)} required />
+                  </KycField>
+                  <KycField label="Nationality">
+                    <input style={inpStyle} value={ind.nationality} onChange={e => setI("nationality", e.target.value)} placeholder="e.g. Jamaican" />
+                  </KycField>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <KycField label="Country of residence">
+                    <input style={inpStyle} value={ind.country_of_residence} onChange={e => setI("country_of_residence", e.target.value)} placeholder="e.g. Jamaica" />
+                  </KycField>
+                  <KycField label="Occupation">
+                    <input style={inpStyle} value={ind.occupation} onChange={e => setI("occupation", e.target.value)} placeholder="e.g. Attorney, Teacher" />
+                  </KycField>
+                </div>
+                <KycField label="Residential address">
+                  <textarea rows={2} style={taStyle} value={ind.address} onChange={e => setI("address", e.target.value)} placeholder="Full street address, parish" />
+                </KycField>
+                <KycField label="TRN (Tax Registration Number)">
+                  <input style={inpStyle} value={ind.trn} onChange={e => setI("trn", e.target.value)} placeholder="000-000-000" />
+                </KycField>
+              </KycSection>
+
+              <KycSection label="B. Identity Document - Primary">
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <KycField label="ID type">
+                    <select style={selStyle} value={ind.id_type} onChange={e => setI("id_type", e.target.value)}>
+                      <option value="national_id">National ID</option>
+                      <option value="passport">Passport</option>
+                      <option value="drivers_license">Driver&apos;s Licence</option>
+                    </select>
+                  </KycField>
+                  <KycField label="ID number">
+                    <input style={inpStyle} value={ind.id_number} onChange={e => setI("id_number", e.target.value)} required placeholder="As printed on ID" />
+                  </KycField>
+                </div>
+                <KycField label="Expiry date">
+                  <input type="date" style={inpStyle} value={ind.id_expiry_date} onChange={e => setI("id_expiry_date", e.target.value)} />
+                </KycField>
+                <KycField label="Upload a copy of your primary ID (photo or PDF)">
+                  <input type="file" accept="image/*,.pdf"
+                    onChange={e => setI("id_doc_file", e.target.files?.[0] as unknown as string)}
+                    style={{ fontSize: 13, padding: "6px 0" }} />
+                  {kyc?.id_doc_url && <a href={kyc.id_doc_url} target="_blank" rel="noopener" style={{ fontSize: 12, color: "var(--gold-deep)" }}>Previously uploaded</a>}
+                </KycField>
+              </KycSection>
+
+              <KycSection label="C. Identity Document - Secondary (Enhanced Due Diligence)">
+                <p style={{ fontSize: 12.5, color: "var(--muted)", marginBottom: 10, lineHeight: 1.5 }}>
+                  A second form of ID may be required for high-value or complex matters. Leave blank if not applicable.
+                </p>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <KycField label="Second ID type">
+                    <select style={selStyle} value={ind.id2_type} onChange={e => setI("id2_type", e.target.value)}>
+                      <option value="">Not applicable</option>
+                      <option value="passport">Passport</option>
+                      <option value="national_id">National ID</option>
+                      <option value="drivers_license">Driver&apos;s Licence</option>
+                      <option value="voter_id">Voter ID</option>
+                      <option value="utility_bill">Utility Bill (address proof)</option>
+                      <option value="bank_statement">Bank Statement (address proof)</option>
+                    </select>
+                  </KycField>
+                  <KycField label="Second ID number">
+                    <input style={inpStyle} value={ind.id2_number} onChange={e => setI("id2_number", e.target.value)} placeholder="If applicable" />
+                  </KycField>
+                </div>
+                {ind.id2_type && ind.id2_type !== "" && (
+                  <>
+                    <KycField label="Second ID expiry date">
+                      <input type="date" style={inpStyle} value={ind.id2_expiry_date} onChange={e => setI("id2_expiry_date", e.target.value)} />
+                    </KycField>
+                    <KycField label="Upload second ID (photo or PDF)">
+                      <input type="file" accept="image/*,.pdf"
+                        onChange={e => setI("id2_doc_file", e.target.files?.[0] as unknown as string)}
+                        style={{ fontSize: 13, padding: "6px 0" }} />
+                      {kyc?.id2_doc_url && <a href={kyc.id2_doc_url} target="_blank" rel="noopener" style={{ fontSize: 12, color: "var(--gold-deep)" }}>Previously uploaded</a>}
+                    </KycField>
+                  </>
+                )}
+              </KycSection>
+
+              <KycSection label="D. Source of Funds &amp; Wealth">
+                <KycField label="Source of funds (funds used in this specific transaction)">
+                  <select style={selStyle} value={ind.source_of_funds} onChange={e => setI("source_of_funds", e.target.value)}>
+                    <option value="">Select...</option>
+                    {sofOptions.map(o => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                </KycField>
+                <KycField label="Source of wealth (how your overall assets were accumulated)">
+                  <input style={inpStyle} value={ind.source_of_wealth} onChange={e => setI("source_of_wealth", e.target.value)} placeholder="e.g. 20 years of employment, family business, property portfolio" />
+                </KycField>
+                <KycField label="Purpose of this transaction / matter">
+                  <input style={inpStyle} value={ind.purpose_of_transaction} onChange={e => setI("purpose_of_transaction", e.target.value)} placeholder="e.g. Purchase of residential property, estate planning" />
+                </KycField>
+              </KycSection>
+
+              <KycSection label="E. Politically Exposed Person (PEP) Declaration">
+                <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer" }}>
+                  <input type="checkbox" checked={ind.is_pep} onChange={e => setI("is_pep", e.target.checked)}
+                    style={{ marginTop: 3, flexShrink: 0, accentColor: "var(--gold)", width: 16, height: 16 }} />
+                  <span style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.55 }}>
+                    I am, or have been within the last 12 months, a Politically Exposed Person (PEP) - a senior government official, judge, senior military officer, state enterprise executive, senior political party official, or a close family member or known associate of one.
+                  </span>
+                </label>
+                {ind.is_pep && (
+                  <KycField label="PEP details (describe the role or relationship)">
+                    <textarea rows={3} style={taStyle} value={ind.pep_details} onChange={e => setI("pep_details", e.target.value)}
+                      required placeholder="e.g. Former Minister of Finance 2018-2022; father is a sitting Member of Parliament" />
+                  </KycField>
+                )}
+              </KycSection>
+            </div>
+          )}
+
+          {kycType === "entity" && (
+            <div style={{ display: "grid", gap: 14 }}>
+              <KycSection label="A. Entity Registration Details">
+                <KycField label="Registered entity / company name">
+                  <input style={inpStyle} value={ent.entity_name} onChange={e => setE("entity_name", e.target.value)} required placeholder="As registered with Companies Office of Jamaica" />
+                </KycField>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <KycField label="Entity type">
+                    <select style={selStyle} value={ent.entity_type} onChange={e => setE("entity_type", e.target.value)}>
+                      <option value="private_limited">Private Limited Company</option>
+                      <option value="public_limited">Public Limited Company</option>
+                      <option value="sole_trader">Sole Trader</option>
+                      <option value="partnership">Partnership</option>
+                      <option value="trust">Trust</option>
+                      <option value="ngo">NGO / Non-Profit</option>
+                      <option value="cooperative">Cooperative</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </KycField>
+                  <KycField label="Registration number (COJ)">
+                    <input style={inpStyle} value={ent.entity_registration_number} onChange={e => setE("entity_registration_number", e.target.value)} required placeholder="e.g. 123456789" />
+                  </KycField>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <KycField label="Date of incorporation">
+                    <input type="date" style={inpStyle} value={ent.entity_date_of_incorporation} onChange={e => setE("entity_date_of_incorporation", e.target.value)} />
+                  </KycField>
+                  <KycField label="Country of incorporation">
+                    <input style={inpStyle} value={ent.entity_country_of_incorporation} onChange={e => setE("entity_country_of_incorporation", e.target.value)} placeholder="e.g. Jamaica" />
+                  </KycField>
+                </div>
+                <KycField label="Registered address">
+                  <textarea rows={2} style={taStyle} value={ent.entity_registered_address} onChange={e => setE("entity_registered_address", e.target.value)} placeholder="As per Companies Office registration" />
+                </KycField>
+                <KycField label="Principal place of business (if different)">
+                  <textarea rows={2} style={taStyle} value={ent.entity_principal_address} onChange={e => setE("entity_principal_address", e.target.value)} placeholder="Leave blank if same as registered address" />
+                </KycField>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <KycField label="Nature of business / industry">
+                    <input style={inpStyle} value={ent.entity_nature_of_business} onChange={e => setE("entity_nature_of_business", e.target.value)} placeholder="e.g. Real estate development, Import/Export" />
+                  </KycField>
+                  <KycField label="Company TRN">
+                    <input style={inpStyle} value={ent.entity_trn} onChange={e => setE("entity_trn", e.target.value)} placeholder="000-000-000" />
+                  </KycField>
+                </div>
+              </KycSection>
+
+              <KycSection label="B. Directors">
+                <p style={{ fontSize: 12.5, color: "var(--muted)", marginBottom: 10, lineHeight: 1.5 }}>
+                  List all current directors. Provide full name, nationality, and date of birth at minimum.
+                </p>
+                {directors.map((d, i) => (
+                  <div key={i} style={{ padding: "12px 14px", borderRadius: 10, border: "1px solid var(--line)", background: "#fafaf8", marginBottom: 10 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: "var(--gold-deep)", textTransform: "uppercase", letterSpacing: ".08em" }}>Director {i + 1}</span>
+                      {directors.length > 1 && (
+                        <button type="button" onClick={() => removeRow(setDirectors, i)} style={{ background: "none", border: "none", color: "#7a2020", fontSize: 12, cursor: "pointer" }}>Remove</button>
+                      )}
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                      <KycField label="Full name"><input style={inpStyle} value={d.name} onChange={e => updateRow(setDirectors, i, "name", e.target.value)} placeholder="Full legal name" /></KycField>
+                      <KycField label="Nationality"><input style={inpStyle} value={d.nationality} onChange={e => updateRow(setDirectors, i, "nationality", e.target.value)} placeholder="e.g. Jamaican" /></KycField>
+                      <KycField label="Date of birth"><input type="date" style={inpStyle} value={d.dob} onChange={e => updateRow(setDirectors, i, "dob", e.target.value)} /></KycField>
+                      <KycField label="Role / title"><input style={inpStyle} value={d.role} onChange={e => updateRow(setDirectors, i, "role", e.target.value)} placeholder="e.g. CEO, Director" /></KycField>
+                    </div>
+                  </div>
+                ))}
+                <button type="button" onClick={() => addRow(setDirectors, emptyDirector())}
+                  style={{ background: "none", border: "1px solid var(--line)", borderRadius: 8, padding: "7px 14px", fontSize: 12.5, cursor: "pointer", color: "var(--gold-deep)", fontWeight: 600 }}>
+                  + Add director
+                </button>
+              </KycSection>
+
+              <KycSection label="C. Beneficial Owners (25% or more)">
+                <p style={{ fontSize: 12.5, color: "var(--muted)", marginBottom: 10, lineHeight: 1.55 }}>
+                  Under the FATF Recommendations and Jamaica&apos;s Proceeds of Crime Act, Ferguson Law is required to identify all individuals who ultimately own or control 25% or more of this entity.
+                </p>
+                {owners.map((o, i) => (
+                  <div key={i} style={{ padding: "12px 14px", borderRadius: 10, border: "1px solid var(--line)", background: "#fafaf8", marginBottom: 10 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: "var(--gold-deep)", textTransform: "uppercase", letterSpacing: ".08em" }}>Beneficial Owner {i + 1}</span>
+                      {owners.length > 1 && (
+                        <button type="button" onClick={() => removeRow(setOwners, i)} style={{ background: "none", border: "none", color: "#7a2020", fontSize: 12, cursor: "pointer" }}>Remove</button>
+                      )}
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                      <KycField label="Full name"><input style={inpStyle} value={o.name} onChange={e => updateRow(setOwners, i, "name", e.target.value)} placeholder="Full legal name" /></KycField>
+                      <KycField label="Nationality"><input style={inpStyle} value={o.nationality} onChange={e => updateRow(setOwners, i, "nationality", e.target.value)} placeholder="e.g. Jamaican" /></KycField>
+                      <KycField label="Date of birth"><input type="date" style={inpStyle} value={o.dob} onChange={e => updateRow(setOwners, i, "dob", e.target.value)} /></KycField>
+                      <KycField label="Ownership %"><input style={inpStyle} value={o.ownership_pct} onChange={e => updateRow(setOwners, i, "ownership_pct", e.target.value)} placeholder="e.g. 50" type="number" min="25" max="100" /></KycField>
+                    </div>
+                    <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", marginTop: 10 }}>
+                      <input type="checkbox" checked={o.is_pep} onChange={e => updateRow(setOwners, i, "is_pep", e.target.checked)}
+                        style={{ marginTop: 3, flexShrink: 0, accentColor: "var(--gold)", width: 15, height: 15 }} />
+                      <span style={{ fontSize: 12.5, color: "var(--text)", lineHeight: 1.5 }}>This person is or has been a Politically Exposed Person (PEP)</span>
+                    </label>
+                    {o.is_pep && (
+                      <KycField label="PEP details">
+                        <textarea rows={2} style={{ ...taStyle, marginTop: 8 }} value={o.pep_details} onChange={e => updateRow(setOwners, i, "pep_details", e.target.value)} placeholder="Describe the public role or relationship" />
+                      </KycField>
+                    )}
+                  </div>
+                ))}
+                <button type="button" onClick={() => addRow(setOwners, emptyOwner())}
+                  style={{ background: "none", border: "1px solid var(--line)", borderRadius: 8, padding: "7px 14px", fontSize: 12.5, cursor: "pointer", color: "var(--gold-deep)", fontWeight: 600 }}>
+                  + Add beneficial owner
+                </button>
+              </KycSection>
+
+              <KycSection label="D. Authorised Signatories">
+                <p style={{ fontSize: 12.5, color: "var(--muted)", marginBottom: 10, lineHeight: 1.5 }}>
+                  Persons authorised to sign on behalf of the entity in this matter.
+                </p>
+                {signatories.map((s, i) => (
+                  <div key={i} style={{ padding: "12px 14px", borderRadius: 10, border: "1px solid var(--line)", background: "#fafaf8", marginBottom: 10 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: "var(--gold-deep)", textTransform: "uppercase", letterSpacing: ".08em" }}>Signatory {i + 1}</span>
+                      {signatories.length > 1 && (
+                        <button type="button" onClick={() => removeRow(setSignatories, i)} style={{ background: "none", border: "none", color: "#7a2020", fontSize: 12, cursor: "pointer" }}>Remove</button>
+                      )}
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+                      <KycField label="Full name"><input style={inpStyle} value={s.name} onChange={e => updateRow(setSignatories, i, "name", e.target.value)} placeholder="Full legal name" /></KycField>
+                      <KycField label="ID type">
+                        <select style={selStyle} value={s.id_type} onChange={e => updateRow(setSignatories, i, "id_type", e.target.value)}>
+                          <option value="national_id">National ID</option>
+                          <option value="passport">Passport</option>
+                          <option value="drivers_license">Driver&apos;s Licence</option>
+                        </select>
+                      </KycField>
+                      <KycField label="ID number"><input style={inpStyle} value={s.id_number} onChange={e => updateRow(setSignatories, i, "id_number", e.target.value)} placeholder="As on ID" /></KycField>
+                    </div>
+                  </div>
+                ))}
+                <button type="button" onClick={() => addRow(setSignatories, emptySignatory())}
+                  style={{ background: "none", border: "1px solid var(--line)", borderRadius: 8, padding: "7px 14px", fontSize: 12.5, cursor: "pointer", color: "var(--gold-deep)", fontWeight: 600 }}>
+                  + Add signatory
+                </button>
+              </KycSection>
+
+              <KycSection label="E. Source of Funds &amp; Wealth">
+                <KycField label="Source of funds (funds used in this specific transaction)">
+                  <select style={selStyle} value={ent.source_of_funds} onChange={e => setE("source_of_funds", e.target.value)}>
+                    <option value="">Select...</option>
+                    {sofOptions.map(o => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                </KycField>
+                <KycField label="Source of wealth (how the entity&apos;s overall assets were accumulated)">
+                  <input style={inpStyle} value={ent.source_of_wealth} onChange={e => setE("source_of_wealth", e.target.value)} placeholder="e.g. 10 years of commercial operations, sale of real estate portfolio" />
+                </KycField>
+                <KycField label="Purpose of this transaction / matter">
+                  <input style={inpStyle} value={ent.purpose_of_transaction} onChange={e => setE("purpose_of_transaction", e.target.value)} placeholder="e.g. Acquisition of commercial property, company formation" />
+                </KycField>
+              </KycSection>
+
+              <KycSection label="F. PEP Declaration (Entity)">
+                <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer" }}>
+                  <input type="checkbox" checked={ent.entity_has_pep_director} onChange={e => setE("entity_has_pep_director", e.target.checked)}
+                    style={{ marginTop: 3, flexShrink: 0, accentColor: "var(--gold)", width: 16, height: 16 }} />
+                  <span style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.55 }}>
+                    One or more directors, beneficial owners, or authorised signatories of this entity is, or has been within the last 12 months, a Politically Exposed Person (PEP).
+                  </span>
+                </label>
+                {ent.entity_has_pep_director && (
+                  <KycField label="PEP details (name(s) and relevant role or relationship)">
+                    <textarea rows={3} style={taStyle} value={ent.entity_pep_details} onChange={e => setE("entity_pep_details", e.target.value)}
+                      required placeholder="e.g. John Smith (Director) - former Minister of Finance; Jane Brown (Beneficial Owner) - spouse of sitting Member of Parliament" />
+                  </KycField>
+                )}
+              </KycSection>
+
+              <KycSection label="G. Corporate Resolution / Board Minutes">
+                <p style={{ fontSize: 12.5, color: "var(--muted)", marginBottom: 10, lineHeight: 1.5 }}>
+                  Upload a signed board resolution or minutes authorising this transaction and the named signatories.
+                </p>
+                <input type="file" accept="image/*,.pdf"
+                  onChange={e => setE("entity_resolution_file", e.target.files?.[0] as unknown as string)}
+                  style={{ fontSize: 13, padding: "6px 0" }} />
+                {kyc?.entity_resolution_url && (
+                  <a href={kyc.entity_resolution_url} target="_blank" rel="noopener" style={{ fontSize: 12, color: "var(--gold-deep)" }}>Previously uploaded</a>
+                )}
+              </KycSection>
+            </div>
+          )}
+
+          <div style={{ marginTop: 20 }}>
             <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer" }}>
-              <input type="checkbox" checked={form.is_pep} onChange={e => set("is_pep", e.target.checked)}
+              <input type="checkbox" required
+                checked={kycType === "individual" ? ind.aml_declared : ent.aml_declared}
+                onChange={e => kycType === "individual" ? setI("aml_declared", e.target.checked) : setE("aml_declared", e.target.checked)}
                 style={{ marginTop: 3, flexShrink: 0, accentColor: "var(--gold)", width: 16, height: 16 }} />
-              <span style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.5 }}>
-                I am or have been a Politically Exposed Person (PEP) — a senior government official, politician, judge, or close family member or associate of one.
+              <span style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.55 }}>
+                I declare that all information provided is true and accurate. {kycType === "individual" ? "The funds used in this matter are from lawful sources and are not the proceeds of crime or any unlawful activity" : "The funds and assets of the entity are from lawful sources and are not the proceeds of crime or any unlawful activity"} as defined under the Proceeds of Crime Act, 2007 (Jamaica). I understand that Ferguson Law is required by law and by the General Legal Council&apos;s Anti-Money Laundering Guidance to perform due diligence on all clients and entities, and I authorize such verification.
               </span>
             </label>
-            {form.is_pep && (
-              <KycField label="PEP details">
-                <textarea rows={3} value={form.pep_details} onChange={e => set("pep_details", e.target.value)}
-                  required placeholder="Please describe the relevant public role or relationship."
-                  style={{ resize: "vertical", fontFamily: "inherit", fontSize: 14, padding: "8px 10px", borderRadius: 8, border: "1px solid var(--line)", width: "100%", boxSizing: "border-box" }} />
-              </KycField>
-            )}
           </div>
-            <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", marginTop: 8 }}>
-              <input type="checkbox" required checked={form.aml_declared} onChange={e => set("aml_declared", e.target.checked)}
-                style={{ marginTop: 3, flexShrink: 0, accentColor: "var(--gold)", width: 16, height: 16 }} />
-              <span style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.5 }}>
-                I declare that all information provided is true and accurate. The funds used in this matter are from lawful sources and are not the proceeds of crime or any unlawful activity as defined under the Proceeds of Crime Act, 2007 (Jamaica). I understand that Ferguson Law is required by law and by the General Legal Council&apos;s Anti-Money Laundering Guidance to perform due diligence on all clients, and I authorize such verification.
-              </span>
-            </label>
+
           <button type="submit" disabled={submitting} className="btn btn-gold" style={{ marginTop: 20, width: "100%" }}>
-            {submitting ? "Submitting…" : isSubmitted ? "Re-submit KYC" : "Submit KYC"}
+            {submitting ? "Submitting..." : isSubmitted ? "Re-submit KYC" : "Submit KYC"}
           </button>
         </form>
       )}
+    </div>
+  );
+}
+
+function KycSection({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div style={{ padding: "16px 18px", borderRadius: 12, border: "1px solid var(--line)", background: "#fafaf8" }}>
+      <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--gold-deep)", marginBottom: 14, paddingBottom: 8, borderBottom: "1px solid var(--line)" }} dangerouslySetInnerHTML={{ __html: label }} />
+      <div style={{ display: "grid", gap: 12 }}>{children}</div>
     </div>
   );
 }
@@ -1469,4 +1835,5 @@ function KycField({ label, children }: { label: string; children: React.ReactNod
     </div>
   );
 }
+
 

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 /**
  * Consultation CRM — the Ferguson Law back office.
@@ -200,11 +200,11 @@ interface HomeProperty {
   status: string;
 }
 
-type Tab = "overview" | "leads" | "bookings" | "clients" | "matters" | "cms" | "calendar" | "chats" | "invites" | "directory" | "availability" | "home_pros" | "home_listings" | "email" | "inquiries" | "referrals" | "recycle_bin" | "workflows" | "zoom" | "feedback" | "analytics" | "ebook_leads" | "site_content";
+type Tab = "overview" | "leads" | "bookings" | "clients" | "matters" | "cms" | "calendar" | "chats" | "invites" | "directory" | "availability" | "home_pros" | "home_listings" | "email" | "inquiries" | "referrals" | "recycle_bin" | "workflows" | "zoom" | "feedback" | "analytics" | "ebook_leads" | "site_content" | "qr_codes";
 // ── Admin tab groups ──────────────────────────────────────────────────────────
 type TabGroup = "dashboard" | "crm" | "email" | "directory" | "home";
 const TAB_GROUPS: Record<TabGroup, { label: string; tabs: Tab[] }> = {
-  dashboard: { label: "Dashboard", tabs: ["overview","analytics","calendar","zoom","site_content"] },
+  dashboard: { label: "Dashboard", tabs: ["overview","analytics","calendar","zoom","site_content","qr_codes"] },
   crm:       { label: "CRM",       tabs: ["leads","bookings","clients","matters","chats","cms","ebook_leads"] },
   email:     { label: "Email",     tabs: ["email","feedback"] },
   directory: { label: "Directory", tabs: ["invites","directory","availability","referrals","workflows"] },
@@ -326,6 +326,9 @@ export default function AdminDashboard() {
   const [seenCounts, setSeenCounts] = useState<Partial<Record<Tab, number>>>(() => {
     try { return JSON.parse(localStorage.getItem("fl_admin_seen") ?? "{}") as Partial<Record<Tab, number>>; } catch { return {}; }
   });
+  const [showNycQr, setShowNycQr] = useState(true);
+  const [showPartnerQr, setShowPartnerQr] = useState(true);
+  const [expandedQr, setExpandedQr] = useState<string | null>(null);
 
   // Verify stored token on mount
   useEffect(() => {
@@ -916,7 +919,7 @@ export default function AdminDashboard() {
           <div style={{ display:"flex", gap:6, padding:"7px 10px", background:"rgba(18,16,12,.02)", overflowX:"auto", scrollbarWidth:"none" as React.CSSProperties["scrollbarWidth"] }}>
             {TAB_GROUPS[group].tabs.map((t) => {
               const isActive = tab === t;
-              const label = t==="overview"?"Overview":t==="cms"?(cmsUnread>0?"CMS ("+cmsUnread+")":"CMS"):t==="home_pros"?"Pros":t==="home_listings"?"Listings":t==="inquiries"?"Inquiries":t==="analytics"?"Analytics":t==="ebook_leads"?"Ebook Leads":t==="site_content"?"Site Content":t==="referrals"?"Referrals":t==="recycle_bin"?"🗑 Bin":t==="workflows"?"Workflows":t==="zoom"?"Meetings":t==="feedback"?"Feedback":t.charAt(0).toUpperCase()+t.slice(1);
+              const label = t==="overview"?"Overview":t==="cms"?(cmsUnread>0?"CMS ("+cmsUnread+")":"CMS"):t==="home_pros"?"Pros":t==="home_listings"?"Listings":t==="inquiries"?"Inquiries":t==="analytics"?"Analytics":t==="ebook_leads"?"Ebook Leads":t==="site_content"?"Site Content":t==="referrals"?"Referrals":t==="recycle_bin"?"🗑 Bin":t==="workflows"?"Workflows":t==="zoom"?"Meetings":t==="feedback"?"Feedback":t==="qr_codes"?"QR Codes":t.charAt(0).toUpperCase()+t.slice(1);
               const raw = t==="leads"?leads.length:t==="bookings"?appts.length:t==="clients"?clients.length:t==="matters"?matters.length:t==="chats"?convos.length:t==="email"?emails.filter(e=>!e.read).length:t==="invites"?invites.length:t==="directory"?listings.length:t==="availability"?availability.length:t==="home_pros"?homePros.length:t==="home_listings"?homeListings.length:t==="inquiries"?inquiries.filter(i=>i.status==="new").length:t==="recycle_bin"?binItems.length:0;
               const count = Math.max(0, raw - (seenCounts[t] ?? 0));
               return (
@@ -972,6 +975,124 @@ export default function AdminDashboard() {
           {tab === "analytics" && token && <AnalyticsTab token={token} />}
           {tab === "ebook_leads" && token && <EbookLeadsTab token={token} />}
           {tab === "site_content" && token && <SiteContentTab token={token} />}
+
+          {tab === "qr_codes" && (
+            <div style={{ maxWidth: 680 }}>
+              <div style={{ marginBottom: 20 }}>
+                <div style={{ fontWeight: 700, fontSize: ".65rem", textTransform: "uppercase", letterSpacing: ".09em", color: "#7a7a6a", marginBottom: 4 }}>QR CODES</div>
+                <div style={{ fontWeight: 700, fontSize: "1.1rem", color: "#12100c" }}>Shareable QR Codes</div>
+                <div style={{ fontSize: ".82rem", color: "#7a7a6a", marginTop: 4 }}>Scan-safe links — no client data visible when sharing.</div>
+              </div>
+
+              {/* QR FULLSCREEN MODAL */}
+              {expandedQr && (
+                <div onClick={() => setExpandedQr(null)}
+                  style={{ position: "fixed", inset: 0, background: "#000", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <button type="button" onClick={() => setExpandedQr(null)}
+                    style={{ position: "absolute", top: 20, right: 24, background: "none", border: "none", color: "#fff", fontSize: "1.8rem", lineHeight: 1, cursor: "pointer", opacity: .7, padding: 4 }}>
+                    ✕
+                  </button>
+                  <img src={expandedQr} alt="QR Code" onClick={e => e.stopPropagation()} style={{ width: "min(80vw, 360px)", height: "min(80vw, 360px)", borderRadius: 12 }} />
+                </div>
+              )}
+
+              {/* QR CARD — Main Website */}
+              <div style={{ background: "#fff", border: "1px solid rgba(18,16,12,.08)", borderLeft: "3px solid #C8A65C", borderRadius: 12, marginBottom: 12, overflow: "hidden" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px", borderBottom: showNycQr ? "1px solid rgba(18,16,12,.07)" : "none" }}>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: ".65rem", textTransform: "uppercase", letterSpacing: ".09em", color: "#8a6a22" }}>QR CODE — 1 OF 3</div>
+                    <div style={{ fontWeight: 700, fontSize: ".9rem", color: "#102A1E", marginTop: 2 }}>Main Website</div>
+                  </div>
+                  <button type="button" onClick={() => setShowNycQr(v => !v)}
+                    style={{ fontSize: ".72rem", fontWeight: 600, color: "#8a6a22", background: "rgba(200,166,92,.12)", border: "1px solid rgba(200,166,92,.35)", borderRadius: 6, padding: "4px 12px", cursor: "pointer" }}>
+                    {showNycQr ? "Hide" : "Show"}
+                  </button>
+                </div>
+                {showNycQr && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap", padding: "16px 20px" }}>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0 }}>
+                      <img src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent("https://fergusonlawja.com/")}&color=102A1E&bgcolor=ffffff&margin=4`} alt="Main Website QR Code" width={100} height={100} style={{ borderRadius: 8, cursor: "zoom-in" }} onClick={() => setExpandedQr(`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent("https://fergusonlawja.com/")}&color=102A1E&bgcolor=ffffff&margin=8`)} />
+                      <div style={{ fontSize: ".62rem", color: "#8a6a22", marginTop: 5, textAlign: "center", letterSpacing: ".03em" }}>Click to expand</div>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 200 }}>
+                      <div style={{ fontWeight: 600, fontSize: ".9rem", color: "#102A1E", marginBottom: 6 }}>fergusonlawja.com</div>
+                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                        <a href="https://fergusonlawja.com/" target="_blank" rel="noopener" style={{ fontSize: ".78rem", fontWeight: 600, color: "#102A1E", background: "#f4f1ec", border: "1px solid #ede8de", borderRadius: 6, padding: "5px 12px", textDecoration: "none" }}>Open page →</a>
+                        <button type="button" onClick={() => void navigator.clipboard.writeText("https://fergusonlawja.com/")}
+                          style={{ fontSize: ".78rem", fontWeight: 600, color: "#8a6a22", background: "rgba(200,166,92,.1)", border: "1px solid rgba(200,166,92,.3)", borderRadius: 6, padding: "5px 12px", cursor: "pointer" }}>
+                          Copy link
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* QR CARD — Get Started */}
+              <div style={{ background: "#fff", border: "1px solid rgba(18,16,12,.08)", borderLeft: "3px solid #2f7a52", borderRadius: 12, marginBottom: 12, overflow: "hidden" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px", borderBottom: showPartnerQr ? "1px solid rgba(18,16,12,.07)" : "none" }}>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: ".65rem", textTransform: "uppercase", letterSpacing: ".09em", color: "#2f7a52" }}>QR CODE — 2 OF 3</div>
+                    <div style={{ fontWeight: 700, fontSize: ".9rem", color: "#102A1E", marginTop: 2 }}>Get Started</div>
+                  </div>
+                  <button type="button" onClick={() => setShowPartnerQr(v => !v)}
+                    style={{ fontSize: ".72rem", fontWeight: 600, color: "#2f7a52", background: "rgba(47,122,82,.1)", border: "1px solid rgba(47,122,82,.3)", borderRadius: 6, padding: "4px 12px", cursor: "pointer" }}>
+                    {showPartnerQr ? "Hide" : "Show"}
+                  </button>
+                </div>
+                {showPartnerQr && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap", padding: "16px 20px" }}>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0 }}>
+                      <img src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent("https://fergusonlawja.com/get-started")}&color=102A1E&bgcolor=ffffff&margin=4`} alt="Get Started QR Code" width={100} height={100} style={{ borderRadius: 8, cursor: "zoom-in" }} onClick={() => setExpandedQr(`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent("https://fergusonlawja.com/get-started")}&color=102A1E&bgcolor=ffffff&margin=8`)} />
+                      <div style={{ fontSize: ".62rem", color: "#2f7a52", marginTop: 5, textAlign: "center", letterSpacing: ".03em" }}>Click to expand</div>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 200 }}>
+                      <div style={{ fontWeight: 600, fontSize: ".9rem", color: "#102A1E", marginBottom: 4 }}>fergusonlawja.com/get-started</div>
+                      <div style={{ fontSize: ".78rem", color: "#666", marginBottom: 8 }}>For new clients ready to begin</div>
+                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                        <a href="https://fergusonlawja.com/get-started" target="_blank" rel="noopener" style={{ fontSize: ".78rem", fontWeight: 600, color: "#fff", background: "#2f7a52", border: "1px solid #2f7a52", borderRadius: 6, padding: "5px 12px", textDecoration: "none" }}>Open page →</a>
+                        <button type="button" onClick={() => void navigator.clipboard.writeText("https://fergusonlawja.com/get-started")}
+                          style={{ fontSize: ".78rem", fontWeight: 600, color: "#2f7a52", background: "rgba(47,122,82,.08)", border: "1px solid rgba(47,122,82,.25)", borderRadius: 6, padding: "5px 12px", cursor: "pointer" }}>
+                          Copy link
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* QR CARD — Partner / Professional Directory */}
+              <div style={{ background: "#fff", border: "1px solid rgba(18,16,12,.08)", borderLeft: "3px solid #102A1E", borderRadius: 12, marginBottom: 24, overflow: "hidden" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px" }}>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: ".65rem", textTransform: "uppercase", letterSpacing: ".09em", color: "#102A1E" }}>QR CODE — 3 OF 3</div>
+                    <div style={{ fontWeight: 700, fontSize: ".9rem", color: "#102A1E", marginTop: 2 }}>Become a Partner · Professional Directory</div>
+                  </div>
+                  <button type="button" onClick={() => setExpandedQr(expandedQr ? null : `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent("https://fergusonlawja.com/directory/join?utm_source=qr&utm_campaign=partner")}&color=102A1E&bgcolor=ffffff&margin=8`)}
+                    style={{ fontSize: ".72rem", fontWeight: 600, color: "#102A1E", background: "rgba(16,42,30,.08)", border: "1px solid rgba(16,42,30,.25)", borderRadius: 6, padding: "4px 12px", cursor: "pointer" }}>
+                    Show
+                  </button>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap", padding: "0 20px 16px" }}>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0 }}>
+                    <img src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent("https://fergusonlawja.com/directory/join?utm_source=qr&utm_campaign=partner")}&color=102A1E&bgcolor=ffffff&margin=4`} alt="Partner Sign-up QR Code" width={100} height={100} style={{ borderRadius: 8, cursor: "zoom-in" }} onClick={() => setExpandedQr(`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent("https://fergusonlawja.com/directory/join?utm_source=qr&utm_campaign=partner")}&color=102A1E&bgcolor=ffffff&margin=8`)} />
+                    <div style={{ fontSize: ".62rem", color: "#102A1E", marginTop: 5, textAlign: "center", letterSpacing: ".03em", opacity: 0.65 }}>Click to expand</div>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 200 }}>
+                    <div style={{ fontWeight: 600, fontSize: ".9rem", color: "#102A1E", marginBottom: 4 }}>fergusonlawja.com/directory/join</div>
+                    <div style={{ fontSize: ".78rem", color: "#666", marginBottom: 8 }}>For real estate agents, valuators &amp; legal professionals</div>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <a href="https://fergusonlawja.com/directory/join?utm_source=qr&utm_campaign=partner" target="_blank" rel="noopener" style={{ fontSize: ".78rem", fontWeight: 600, color: "#fff", background: "#102A1E", border: "1px solid #102A1E", borderRadius: 6, padding: "5px 12px", textDecoration: "none" }}>Open page →</a>
+                      <button type="button" onClick={() => void navigator.clipboard.writeText("https://fergusonlawja.com/directory/join?utm_source=qr&utm_campaign=partner")}
+                        style={{ fontSize: ".78rem", fontWeight: 600, color: "#102A1E", background: "rgba(16,42,30,.08)", border: "1px solid rgba(16,42,30,.25)", borderRadius: 6, padding: "5px 12px", cursor: "pointer" }}>
+                        Copy link
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -1271,13 +1392,13 @@ function LeadsTable({ leads, loading, token, onStatus, onDelete, onConvert }: { 
                 {l.service && <div style={{ fontSize: ".78rem", color: INK, marginBottom: 4 }}>{l.service} <SourceBadge source={l.source} /></div>}
                 {l.message && <div style={{ fontSize: ".76rem", color: MUTED, marginBottom: 8, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as React.CSSProperties["WebkitBoxOrient"] }}>{l.message}</div>}
                 <div style={{ fontSize: ".7rem", color: MUTED, marginBottom: 10 }}>{fmtDate(l.created_at)}</div>
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  {l.email && <button type="button" onClick={() => setComposing(l)} style={{ ...S.waBtn, background: "#c9a86a", color: "#10211c" }}>Email</button>}
-                  {wa && <a href={wa} target="_blank" rel="noopener noreferrer" style={S.waBtn}>WhatsApp</a>}
-                  {l.status === "new" && <button type="button" onClick={() => onStatus(l.id, "contacted")} style={{ ...S.waBtn, background: "rgba(47,122,82,.12)", color: "#2f7a52", border: "1px solid rgba(47,122,82,.25)" }}>Contacted</button>}
-                  <button type="button" onClick={() => onDelete(l.id)} style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)" }}>Archive</button>
-                  <button type="button" onClick={() => onConvert(l.id)} style={{ ...S.waBtn, background: "rgba(12,80,60,.12)", color: "#0c503c", border: "1px solid rgba(12,80,60,.25)" }}>Convert to Client</button>
-                  {l.email && <button type="button" onClick={() => setPurgeTarget({ email: l.email!, name: l.name, clientId: null })} style={{ ...S.waBtn, background: "#c0392b", color: "#fff", border: "none" }}>Delete Record</button>}
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+                  {l.email && <button type="button" onClick={() => setComposing(l)} style={{ display: "inline-block", padding: "5px 12px", borderRadius: 5, fontSize: ".76rem", fontWeight: 600, cursor: "pointer", border: "1px solid rgba(201,168,106,.45)", background: "rgba(201,168,106,.12)", color: "#7a5a1e" }}>Email</button>}
+                  {wa && <a href={wa} target="_blank" rel="noopener noreferrer" style={{ display: "inline-block", padding: "5px 12px", borderRadius: 5, fontSize: ".76rem", fontWeight: 600, cursor: "pointer", textDecoration: "none", border: "1px solid rgba(47,122,82,.3)", background: "rgba(47,122,82,.08)", color: "#2f7a52" }}>WhatsApp</a>}
+                  {l.status === "new" && <button type="button" onClick={() => onStatus(l.id, "contacted")} style={{ display: "inline-block", padding: "5px 12px", borderRadius: 5, fontSize: ".76rem", fontWeight: 600, cursor: "pointer", border: "1px solid rgba(47,122,82,.22)", background: "rgba(47,122,82,.06)", color: "#2f7a52" }}>Mark contacted</button>}
+                  <button type="button" onClick={() => onDelete(l.id)} style={{ display: "inline-block", padding: "5px 12px", borderRadius: 5, fontSize: ".76rem", fontWeight: 600, cursor: "pointer", border: "1px solid rgba(18,16,12,.14)", background: "transparent", color: MUTED }}>Archive</button>
+                  <button type="button" onClick={() => onConvert(l.id)} style={{ display: "inline-block", padding: "5px 12px", borderRadius: 5, fontSize: ".76rem", fontWeight: 600, cursor: "pointer", border: "1px solid rgba(18,16,12,.14)", background: "rgba(18,16,12,.04)", color: INK }}>→ Client</button>
+                  {l.email && <button type="button" onClick={() => setPurgeTarget({ email: l.email!, name: l.name, clientId: null })} style={{ display: "inline-block", padding: "4px 8px", borderRadius: 5, fontSize: ".68rem", fontWeight: 500, cursor: "pointer", border: "none", background: "transparent", color: "rgba(162,59,59,.55)" }}>Delete</button>}
                 </div>
               </div>
             );
@@ -1300,27 +1421,40 @@ function LeadsTable({ leads, loading, token, onStatus, onDelete, onConvert }: { 
                   <Td><div style={S.msgCell} title={l.message ?? ""}>{l.message || "—"}</div></Td>
                   <Td><StatusSelect value={l.status} options={LEAD_STATUSES} onChange={(v) => onStatus(l.id, v)} /></Td>
                   <Td>
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", gap: 5, flexWrap: "wrap", alignItems: "center" }}>
                       {l.email && (
                         <button type="button" onClick={() => setComposing(l)}
-                          style={{ ...S.waBtn, background: "#c9a86a", color: "#10211c" }}>
+                          style={{ display: "inline-block", padding: "4px 10px", borderRadius: 5, fontSize: ".74rem", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", border: "1px solid rgba(201,168,106,.45)", background: "rgba(201,168,106,.12)", color: "#7a5a1e" }}>
                           Email
                         </button>
                       )}
-                      {wa && <a href={wa} target="_blank" rel="noopener noreferrer" style={S.waBtn}>WhatsApp</a>}
+                      {wa && (
+                        <a href={wa} target="_blank" rel="noopener noreferrer"
+                          style={{ display: "inline-block", padding: "4px 10px", borderRadius: 5, fontSize: ".74rem", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", textDecoration: "none", border: "1px solid rgba(47,122,82,.3)", background: "rgba(47,122,82,.08)", color: "#2f7a52" }}>
+                          WhatsApp
+                        </a>
+                      )}
                       {l.status === "new" && (
                         <button type="button" onClick={() => onStatus(l.id, "contacted")}
-                          style={{ ...S.waBtn, background: "rgba(47,122,82,.12)", color: "#2f7a52", border: "1px solid rgba(47,122,82,.25)" }}>
-                          ✓ Contacted
+                          style={{ display: "inline-block", padding: "4px 10px", borderRadius: 5, fontSize: ".74rem", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", border: "1px solid rgba(47,122,82,.22)", background: "rgba(47,122,82,.06)", color: "#2f7a52" }}>
+                          Mark contacted
                         </button>
                       )}
                       {!l.email && !wa && l.status !== "new" && <span style={S.muted}>—</span>}
                       <button type="button" onClick={() => onDelete(l.id)}
-                        style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)" }}>
+                        style={{ display: "inline-block", padding: "4px 10px", borderRadius: 5, fontSize: ".74rem", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", border: "1px solid rgba(18,16,12,.14)", background: "transparent", color: MUTED }}>
                         Archive
                       </button>
-                      <button type="button" onClick={() => onConvert(l.id)} style={{ ...S.waBtn, background: "rgba(12,80,60,.12)", color: "#0c503c", border: "1px solid rgba(12,80,60,.25)" }}>Convert to Client</button>
-                      {l.email && <button type="button" onClick={() => setPurgeTarget({ email: l.email!, name: l.name, clientId: null })} style={{ ...S.waBtn, background: "#c0392b", color: "#fff", border: "none", fontWeight: 700 }}>Delete Record</button>}
+                      <button type="button" onClick={() => onConvert(l.id)}
+                        style={{ display: "inline-block", padding: "4px 10px", borderRadius: 5, fontSize: ".74rem", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", border: "1px solid rgba(18,16,12,.14)", background: "rgba(18,16,12,.04)", color: INK }}>
+                        → Client
+                      </button>
+                      {l.email && (
+                        <button type="button" onClick={() => setPurgeTarget({ email: l.email!, name: l.name, clientId: null })}
+                          style={{ display: "inline-block", padding: "4px 8px", borderRadius: 5, fontSize: ".68rem", fontWeight: 500, cursor: "pointer", whiteSpace: "nowrap", border: "none", background: "transparent", color: "rgba(162,59,59,.55)", letterSpacing: ".01em" }}>
+                          Delete
+                        </button>
+                      )}
                     </div>
                   </Td>
                 </tr>
@@ -2843,74 +2977,7 @@ function OverviewPanel({ leads, appts, convos, matters, homePros, emails, inquir
         </div>
       )}
 
-            {/* QR CARD — NYC2026 Diaspora Landing Page */}
-      <div style={{ background: "#fff", border: "1px solid rgba(18,16,12,.08)", borderLeft: "3px solid #C8A65C", borderRadius: 12, marginBottom: 12, overflow: "hidden" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px", borderBottom: showNycQr ? "1px solid rgba(18,16,12,.07)" : "none" }}>
-          <div>
-            <div style={{ fontWeight: 700, fontSize: ".65rem", textTransform: "uppercase", letterSpacing: ".09em", color: "#8a6a22" }}>QR CODE — CAMPAIGN 1 OF 2</div>
-            <div style={{ fontWeight: 700, fontSize: ".9rem", color: "#102A1E", marginTop: 2 }}>NYC 2026 · Diaspora Landing Page</div>
-          </div>
-          <button type="button" onClick={() => setShowNycQr(v => !v)}
-            style={{ fontSize: ".72rem", fontWeight: 600, color: "#8a6a22", background: "rgba(200,166,92,.12)", border: "1px solid rgba(200,166,92,.35)", borderRadius: 6, padding: "4px 12px", cursor: "pointer" }}>
-            {showNycQr ? "Hide" : "Show"}
-          </button>
-        </div>
-        {showNycQr && (
-          <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap", padding: "16px 20px" }}>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0 }}>
-              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent("https://fergusonlawja.com/nyc2026?utm_source=qr&utm_campaign=nyc2026")}&color=102A1E&bgcolor=ffffff&margin=4`} alt="NYC2026 QR Code" width={100} height={100} style={{ borderRadius: 8, cursor: "zoom-in" }} onClick={() => setExpandedQr(`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent("https://fergusonlawja.com/nyc2026?utm_source=qr&utm_campaign=nyc2026")}&color=102A1E&bgcolor=ffffff&margin=8`)} />
-              <div style={{ fontSize: ".62rem", color: "#8a6a22", marginTop: 5, textAlign: "center", letterSpacing: ".03em" }}>Click to expand</div>
-            </div>
-            <div style={{ flex: 1, minWidth: 200 }}>
-              <div style={{ fontWeight: 600, fontSize: ".9rem", color: "#102A1E", marginBottom: 6 }}>fergusonlawja.com/nyc2026</div>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <a href="https://fergusonlawja.com/nyc2026?utm_source=qr&utm_campaign=nyc2026" target="_blank" rel="noopener" style={{ fontSize: ".78rem", fontWeight: 600, color: "#102A1E", background: "#f4f1ec", border: "1px solid #ede8de", borderRadius: 6, padding: "5px 12px", textDecoration: "none" }}>
-                  Open page →
-                </a>
-                <button type="button" onClick={() => void navigator.clipboard.writeText("https://fergusonlawja.com/nyc2026?utm_source=qr&utm_campaign=nyc2026")}
-                  style={{ fontSize: ".78rem", fontWeight: 600, color: "#8a6a22", background: "rgba(200,166,92,.1)", border: "1px solid rgba(200,166,92,.3)", borderRadius: 6, padding: "5px 12px", cursor: "pointer" }}>
-                  Copy link
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
 
-      {/* QR CARD — Partner / Professional Sign-up */}
-      <div style={{ background: "#fff", border: "1px solid rgba(18,16,12,.08)", borderLeft: "3px solid #102A1E", borderRadius: 12, marginBottom: 24, overflow: "hidden" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px", borderBottom: showPartnerQr ? "1px solid rgba(18,16,12,.07)" : "none" }}>
-          <div>
-            <div style={{ fontWeight: 700, fontSize: ".65rem", textTransform: "uppercase", letterSpacing: ".09em", color: "#102A1E" }}>QR CODE — CAMPAIGN 2 OF 2</div>
-            <div style={{ fontWeight: 700, fontSize: ".9rem", color: "#102A1E", marginTop: 2 }}>Become a Partner · Professional Directory</div>
-          </div>
-          <button type="button" onClick={() => setShowPartnerQr(v => !v)}
-            style={{ fontSize: ".72rem", fontWeight: 600, color: "#102A1E", background: "rgba(16,42,30,.08)", border: "1px solid rgba(16,42,30,.25)", borderRadius: 6, padding: "4px 12px", cursor: "pointer" }}>
-            {showPartnerQr ? "Hide" : "Show"}
-          </button>
-        </div>
-        {showPartnerQr && (
-          <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap", padding: "16px 20px" }}>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0 }}>
-              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent("https://fergusonlawja.com/directory/join?utm_source=qr&utm_campaign=partner")}&color=102A1E&bgcolor=ffffff&margin=4`} alt="Partner Sign-up QR Code" width={100} height={100} style={{ borderRadius: 8, cursor: "zoom-in" }} onClick={() => setExpandedQr(`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent("https://fergusonlawja.com/directory/join?utm_source=qr&utm_campaign=partner")}&color=102A1E&bgcolor=ffffff&margin=8`)} />
-              <div style={{ fontSize: ".62rem", color: "#102A1E", marginTop: 5, textAlign: "center", letterSpacing: ".03em", opacity: 0.65 }}>Click to expand</div>
-            </div>
-            <div style={{ flex: 1, minWidth: 200 }}>
-              <div style={{ fontWeight: 600, fontSize: ".9rem", color: "#102A1E", marginBottom: 4 }}>fergusonlawja.com/directory/join</div>
-              <div style={{ fontSize: ".78rem", color: "#666", marginBottom: 8 }}>For real estate agents, valuators &amp; legal professionals</div>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <a href="https://fergusonlawja.com/directory/join?utm_source=qr&utm_campaign=partner" target="_blank" rel="noopener" style={{ fontSize: ".78rem", fontWeight: 600, color: "#fff", background: "#102A1E", border: "1px solid #102A1E", borderRadius: 6, padding: "5px 12px", textDecoration: "none" }}>
-                  Open page →
-                </a>
-                <button type="button" onClick={() => void navigator.clipboard.writeText("https://fergusonlawja.com/directory/join?utm_source=qr&utm_campaign=partner")}
-                  style={{ fontSize: ".78rem", fontWeight: 600, color: "#102A1E", background: "rgba(16,42,30,.08)", border: "1px solid rgba(16,42,30,.25)", borderRadius: 6, padding: "5px 12px", cursor: "pointer" }}>
-                  Copy link
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
             <AttentionOverview
         appts={appts}
         token={token}
@@ -4628,17 +4695,42 @@ interface CmsFile {
 interface CmsKyc {
   id: string;
   client_id: string;
+  kyc_type: "individual" | "entity";
   full_legal_name: string | null;
   date_of_birth: string | null;
   nationality: string | null;
   address: string | null;
+  country_of_residence: string | null;
+  occupation: string | null;
   id_type: string | null;
   id_number: string | null;
+  id_expiry_date: string | null;
   id_doc_url: string | null;
+  id2_type: string | null;
+  id2_number: string | null;
+  id2_expiry_date: string | null;
+  id2_doc_url: string | null;
   trn: string | null;
   source_of_funds: string | null;
+  source_of_wealth: string | null;
+  purpose_of_transaction: string | null;
   is_pep: boolean;
   pep_details: string | null;
+  entity_name: string | null;
+  entity_type: string | null;
+  entity_registration_number: string | null;
+  entity_date_of_incorporation: string | null;
+  entity_country_of_incorporation: string | null;
+  entity_registered_address: string | null;
+  entity_principal_address: string | null;
+  entity_nature_of_business: string | null;
+  entity_trn: string | null;
+  entity_resolution_url: string | null;
+  entity_directors: Array<{ name: string; nationality: string; dob: string; role: string }> | null;
+  entity_beneficial_owners: Array<{ name: string; nationality: string; dob: string; ownership_pct: string; is_pep: boolean; pep_details: string }> | null;
+  entity_authorised_signatories: Array<{ name: string; id_type: string; id_number: string }> | null;
+  entity_has_pep_director: boolean;
+  entity_pep_details: string | null;
   aml_declared: boolean;
   submitted_at: string | null;
   reviewed_at: string | null;
@@ -5615,27 +5707,138 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                         }}>{{ pending: "Pending review", approved: "Approved", flagged: "Flagged" }[kyc.status] ?? kyc.status}</span>
                         {kyc.submitted_at && <span style={{ fontSize: 12, color: MUTED }}>Submitted {fmtDate(kyc.submitted_at)}</span>}
                       </div>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
-                        {[["Full legal name", kyc.full_legal_name], ["Date of birth", kyc.date_of_birth], ["Nationality", kyc.nationality],
-                          ["TRN", kyc.trn], ["ID type", kyc.id_type], ["ID number", kyc.id_number], ["Address", kyc.address],
-                          ["Source of funds", kyc.source_of_funds], ["Politically exposed?", kyc.is_pep ? "Yes" : "No"],
-                          ["AML declaration", kyc.aml_declared ? "✓ Declared" : "Not declared"]].map(([label, val]) => (
-                          <div key={label as string}>
-                            <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 2 }}>{label}</div>
-                            <div style={{ fontSize: 13.5, color: INK }}>{val || "—"}</div>
-                          </div>
-                        ))}
+                      {/* KYC type badge */}
+                      <div style={{ marginBottom: 14 }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 999, background: "rgba(27,77,50,.12)", color: "#1B4D32", letterSpacing: ".05em", textTransform: "uppercase" }}>
+                          {kyc.kyc_type === "entity" ? "Entity / Company" : "Individual"}
+                        </span>
                       </div>
-                      {kyc.is_pep && kyc.pep_details && (
-                        <div style={{ marginBottom: 16, padding: "10px 14px", background: "#fbeaea", borderRadius: 10, fontSize: 13 }}>
-                          <strong>PEP details:</strong> {kyc.pep_details}
-                        </div>
+
+                      {/* INDIVIDUAL sections */}
+                      {kyc.kyc_type !== "entity" && (
+                        <>
+                          <div style={{ marginBottom: 20 }}>
+                            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: MUTED, borderBottom: "1px solid rgba(18,16,12,.1)", paddingBottom: 6, marginBottom: 12 }}>1. Personal Information</div>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                              {[["Full legal name", kyc.full_legal_name], ["Date of birth", kyc.date_of_birth], ["Nationality", kyc.nationality], ["Country of residence", kyc.country_of_residence], ["Occupation", kyc.occupation], ["TRN", kyc.trn]].map(([label, val]) => (
+                                <div key={label as string}>
+                                  <div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 2 }}>{label}</div>
+                                  <div style={{ fontSize: 13.5, color: INK }}>{val || "—"}</div>
+                                </div>
+                              ))}
+                              <div style={{ gridColumn: "1/-1" }}>
+                                <div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 2 }}>Address</div>
+                                <div style={{ fontSize: 13.5, color: INK }}>{kyc.address || "—"}</div>
+                              </div>
+                            </div>
+                          </div>
+                          <div style={{ marginBottom: 20 }}>
+                            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: MUTED, borderBottom: "1px solid rgba(18,16,12,.1)", paddingBottom: 6, marginBottom: 12 }}>2. Identity Document</div>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                              {[["ID type", kyc.id_type], ["ID number", kyc.id_number], ["Expiry", kyc.id_expiry_date]].map(([label, val]) => (
+                                <div key={label as string}><div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 2 }}>{label}</div><div style={{ fontSize: 13.5, color: INK }}>{val || "—"}</div></div>
+                              ))}
+                            </div>
+                            {kyc.id_doc_url && <a href={kyc.id_doc_url} target="_blank" rel="noopener" style={{ display: "inline-block", marginTop: 10, fontSize: 12.5, color: "#8a6a22", fontWeight: 600, textDecoration: "none", border: "1px solid rgba(201,168,106,.4)", background: "rgba(201,168,106,.08)", borderRadius: 6, padding: "5px 12px" }}>View primary ID</a>}
+                            {kyc.id2_type && (
+                              <div style={{ marginTop: 14 }}>
+                                <div style={{ fontSize: 10, fontWeight: 700, color: MUTED, marginBottom: 8 }}>SECONDARY ID</div>
+                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                                  {[["Type", kyc.id2_type], ["Number", kyc.id2_number], ["Expiry", kyc.id2_expiry_date]].map(([label, val]) => (
+                                    <div key={label as string}><div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 2 }}>{label}</div><div style={{ fontSize: 13.5, color: INK }}>{val || "—"}</div></div>
+                                  ))}
+                                </div>
+                                {kyc.id2_doc_url && <a href={kyc.id2_doc_url} target="_blank" rel="noopener" style={{ display: "inline-block", marginTop: 8, fontSize: 12.5, color: "#8a6a22", fontWeight: 600, textDecoration: "none", border: "1px solid rgba(201,168,106,.4)", background: "rgba(201,168,106,.08)", borderRadius: 6, padding: "5px 12px" }}>View secondary ID</a>}
+                              </div>
+                            )}
+                          </div>
+                          <div style={{ marginBottom: 20 }}>
+                            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: MUTED, borderBottom: "1px solid rgba(18,16,12,.1)", paddingBottom: 6, marginBottom: 12 }}>3. Source of Funds</div>
+                            {[["Source of funds", kyc.source_of_funds], ["Source of wealth", kyc.source_of_wealth], ["Purpose of transaction", kyc.purpose_of_transaction]].map(([label, val]) => (
+                              <div key={label as string} style={{ marginBottom: 10 }}><div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 2 }}>{label}</div><div style={{ fontSize: 13.5, color: INK }}>{val || "—"}</div></div>
+                            ))}
+                          </div>
+                          <div style={{ marginBottom: 20 }}>
+                            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: MUTED, borderBottom: "1px solid rgba(18,16,12,.1)", paddingBottom: 6, marginBottom: 12 }}>4. PEP Declaration</div>
+                            <span style={{ fontSize: 13.5, color: kyc.is_pep ? "#7a2020" : INK, fontWeight: kyc.is_pep ? 700 : 400 }}>{kyc.is_pep ? "Yes — Politically Exposed Person" : "No"}</span>
+                            {kyc.is_pep && kyc.pep_details && <div style={{ marginTop: 10, padding: "10px 14px", background: "rgba(122,32,32,.06)", border: "1px solid rgba(122,32,32,.14)", borderRadius: 8, fontSize: 13 }}>{kyc.pep_details}</div>}
+                          </div>
+                        </>
                       )}
-                      {kyc.id_doc_url && (
-                        <a href={kyc.id_doc_url} target="_blank" rel="noopener" style={{ display: "inline-block", marginBottom: 18, fontSize: 13, color: "#8a6a22", fontWeight: 600 }}>
-                          📄 View identity document
-                        </a>
+
+                      {/* ENTITY sections */}
+                      {kyc.kyc_type === "entity" && (
+                        <>
+                          <div style={{ marginBottom: 20 }}>
+                            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: MUTED, borderBottom: "1px solid rgba(18,16,12,.1)", paddingBottom: 6, marginBottom: 12 }}>1. Entity Registration</div>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                              {[["Entity name", kyc.entity_name], ["Entity type", kyc.entity_type], ["Registration no.", kyc.entity_registration_number], ["TRN", kyc.entity_trn], ["Date of incorporation", kyc.entity_date_of_incorporation], ["Country of incorporation", kyc.entity_country_of_incorporation]].map(([label, val]) => (
+                                <div key={label as string}><div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 2 }}>{label}</div><div style={{ fontSize: 13.5, color: INK }}>{val || "—"}</div></div>
+                              ))}
+                              {[["Registered address", kyc.entity_registered_address], ["Principal address", kyc.entity_principal_address], ["Nature of business", kyc.entity_nature_of_business]].map(([label, val]) => (
+                                <div key={label as string} style={{ gridColumn: "1/-1" }}><div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 2 }}>{label}</div><div style={{ fontSize: 13.5, color: INK }}>{val || "—"}</div></div>
+                              ))}
+                            </div>
+                            {kyc.entity_resolution_url && <a href={kyc.entity_resolution_url} target="_blank" rel="noopener" style={{ display: "inline-block", marginTop: 10, fontSize: 12.5, color: "#8a6a22", fontWeight: 600, textDecoration: "none", border: "1px solid rgba(201,168,106,.4)", background: "rgba(201,168,106,.08)", borderRadius: 6, padding: "5px 12px" }}>View corporate resolution</a>}
+                          </div>
+                          {kyc.entity_directors?.length && (
+                            <div style={{ marginBottom: 20 }}>
+                              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: MUTED, borderBottom: "1px solid rgba(18,16,12,.1)", paddingBottom: 6, marginBottom: 12 }}>2. Directors</div>
+                              {kyc.entity_directors.map((d, i) => (
+                                <div key={i} style={{ padding: "8px 12px", background: "#fafaf8", borderRadius: 8, border: "1px solid rgba(18,16,12,.08)", marginBottom: 8, display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 10 }}>
+                                  {[["Name", d.name], ["Nationality", d.nationality], ["DOB", d.dob], ["Role", d.role]].map(([label, val]) => (
+                                    <div key={label as string}><div style={{ fontSize: 10, textTransform: "uppercase", color: MUTED, marginBottom: 1 }}>{label}</div><div style={{ fontSize: 13, color: INK }}>{val || "—"}</div></div>
+                                  ))}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {kyc.entity_beneficial_owners?.length && (
+                            <div style={{ marginBottom: 20 }}>
+                              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: MUTED, borderBottom: "1px solid rgba(18,16,12,.1)", paddingBottom: 6, marginBottom: 12 }}>3. Beneficial Owners (25%+)</div>
+                              {kyc.entity_beneficial_owners.map((o, i) => (
+                                <div key={i} style={{ padding: "8px 12px", background: "#fafaf8", borderRadius: 8, border: "1px solid rgba(18,16,12,.08)", marginBottom: 8 }}>
+                                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 10, marginBottom: o.is_pep ? 8 : 0 }}>
+                                    {[["Name", o.name], ["Nationality", o.nationality], ["DOB", o.dob], ["Ownership %", o.ownership_pct]].map(([label, val]) => (
+                                      <div key={label as string}><div style={{ fontSize: 10, textTransform: "uppercase", color: MUTED, marginBottom: 1 }}>{label}</div><div style={{ fontSize: 13, color: INK }}>{val || "—"}</div></div>
+                                    ))}
+                                  </div>
+                                  {o.is_pep && <div style={{ padding: "6px 10px", background: "rgba(122,32,32,.06)", borderRadius: 6, fontSize: 12.5, color: "#7a2020", fontWeight: 600 }}>PEP{o.pep_details ? ": " + o.pep_details : ""}</div>}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {kyc.entity_authorised_signatories?.length && (
+                            <div style={{ marginBottom: 20 }}>
+                              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: MUTED, borderBottom: "1px solid rgba(18,16,12,.1)", paddingBottom: 6, marginBottom: 12 }}>4. Authorised Signatories</div>
+                              {kyc.entity_authorised_signatories.map((s, i) => (
+                                <div key={i} style={{ padding: "8px 12px", background: "#fafaf8", borderRadius: 8, border: "1px solid rgba(18,16,12,.08)", marginBottom: 8, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+                                  {[["Name", s.name], ["ID type", s.id_type], ["ID number", s.id_number]].map(([label, val]) => (
+                                    <div key={label as string}><div style={{ fontSize: 10, textTransform: "uppercase", color: MUTED, marginBottom: 1 }}>{label}</div><div style={{ fontSize: 13, color: INK }}>{val || "—"}</div></div>
+                                  ))}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          <div style={{ marginBottom: 20 }}>
+                            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: MUTED, borderBottom: "1px solid rgba(18,16,12,.1)", paddingBottom: 6, marginBottom: 12 }}>5. Source of Funds</div>
+                            {[["Source of funds", kyc.source_of_funds], ["Source of wealth", kyc.source_of_wealth], ["Purpose of transaction", kyc.purpose_of_transaction]].map(([label, val]) => (
+                              <div key={label as string} style={{ marginBottom: 10 }}><div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 2 }}>{label}</div><div style={{ fontSize: 13.5, color: INK }}>{val || "—"}</div></div>
+                            ))}
+                          </div>
+                          <div style={{ marginBottom: 20 }}>
+                            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: MUTED, borderBottom: "1px solid rgba(18,16,12,.1)", paddingBottom: 6, marginBottom: 12 }}>6. PEP Declaration</div>
+                            <span style={{ fontSize: 13.5, color: kyc.entity_has_pep_director ? "#7a2020" : INK, fontWeight: kyc.entity_has_pep_director ? 700 : 400 }}>{kyc.entity_has_pep_director ? "Yes — PEP director / owner" : "No"}</span>
+                            {kyc.entity_has_pep_director && kyc.entity_pep_details && <div style={{ marginTop: 10, padding: "10px 14px", background: "rgba(122,32,32,.06)", border: "1px solid rgba(122,32,32,.14)", borderRadius: 8, fontSize: 13 }}>{kyc.entity_pep_details}</div>}
+                          </div>
+                        </>
                       )}
+
+                      {/* AML declaration */}
+                      <div style={{ marginBottom: 20 }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: MUTED, borderBottom: "1px solid rgba(18,16,12,.1)", paddingBottom: 6, marginBottom: 12 }}>AML Declaration</div>
+                        <div style={{ fontSize: 13.5, color: kyc.aml_declared ? "#2f7a52" : MUTED, fontWeight: kyc.aml_declared ? 600 : 400 }}>{kyc.aml_declared ? "Declared" : "Not declared"}</div>
+                      </div>
                       <div style={S.field}>
                         <label style={S.fieldLabel}>Reviewer notes</label>
                         <textarea value={kycNotes} onChange={e => setKycNotes(e.target.value)} rows={3}
