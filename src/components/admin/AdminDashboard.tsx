@@ -3374,11 +3374,15 @@ function EmailTab({ emails, token, leads, onMarkRead, onMarkAllRead, onDelete, o
             </div>
             <div style={{ ...S.field, marginBottom: 16 }}>
               <label style={S.fieldLabel}>Attachments</label>
+              <label htmlFor="compose-file-input" style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 16px", borderRadius: 999, border: "1px solid rgba(18,16,12,.18)", background: newFiles.length > 0 ? "rgba(200,166,92,.12)" : "#faf8f3", cursor: "pointer", fontSize: ".82rem", fontWeight: 600, color: INK, userSelect: "none" as const }}>
+                📎 {newFiles.length > 0 ? `${newFiles.length} file${newFiles.length !== 1 ? "s" : ""} attached` : "Attach files"}
+              </label>
               <input
+                id="compose-file-input"
                 type="file"
                 multiple
                 onChange={(e) => setNewFiles(prev => [...prev, ...Array.from(e.target.files ?? [])])}
-                style={{ fontSize: ".82rem" }}
+                style={{ display: "none" }}
               />
               {newFiles.length > 0 && (
                 <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
@@ -3497,6 +3501,10 @@ function EmailTab({ emails, token, leads, onMarkRead, onMarkAllRead, onDelete, o
                   style={{ ...S.authBtn, width: "auto", padding: "9px 22px" }}>
                   Reply
                 </button>
+                <button type="button" onClick={() => { setComposing(true); setNewTo(selected.from_email); setNewSubject(selected.subject ? (selected.subject.startsWith('Fwd:') ? selected.subject : `Fwd: ${selected.subject}`) : 'Fwd: (no subject)'); setNewBody(''); }}
+                  style={{ padding: "9px 20px", background: "#1a4a6e", color: "#fff", border: "none", borderRadius: 999, fontSize: ".85rem", fontWeight: 700, cursor: "pointer" }}>
+                  Forward
+                </button>
                 <button type="button" onClick={() => void suggestReply()} disabled={suggesting}
                   style={{ padding: "9px 18px", borderRadius: 999, border: `1px solid ${GOLD}`, background: "rgba(200,166,92,.08)", color: "#8a6a22", fontWeight: 600, fontSize: ".82rem", cursor: "pointer", ...(suggesting ? S.btnOff : null) }}>
                   {suggesting ? "Thinking…" : "✦ AI draft"}
@@ -3520,7 +3528,10 @@ function EmailTab({ emails, token, leads, onMarkRead, onMarkAllRead, onDelete, o
                 </p>
                 <div style={{ marginBottom: 10 }}>
                   <label style={{ display: 'block', fontSize: '.76rem', fontWeight: 700, color: MUTED, marginBottom: 4, textTransform: 'uppercase' }}>Attachments (optional)</label>
-                  <input type='file' multiple onChange={(e) => setReplyFiles(prev => [...prev, ...Array.from(e.target.files ?? [])])} style={{ fontSize: '.8rem' }} />
+                  <label htmlFor="reply-file-input" style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "7px 14px", borderRadius: 999, border: "1px solid rgba(18,16,12,.18)", background: replyFiles.length > 0 ? "rgba(200,166,92,.12)" : "#faf8f3", cursor: "pointer", fontSize: ".78rem", fontWeight: 600, color: INK, userSelect: "none" as const }}>
+                    📎 {replyFiles.length > 0 ? `${replyFiles.length} file${replyFiles.length !== 1 ? "s" : ""} attached` : "Attach files"}
+                  </label>
+                  <input id="reply-file-input" type='file' multiple onChange={(e) => setReplyFiles(prev => [...prev, ...Array.from(e.target.files ?? [])])} style={{ display: 'none' }} />
                   {replyFiles.length > 0 && (
                     <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 4 }}>
                       {replyFiles.map((f, i) => (
@@ -4705,18 +4716,21 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
   const [kycReviewing, setKycReviewing] = useState(false);
   const [summaryModal, setSummaryModal] = useState(false);
   const [summaryBusy, setSummaryBusy] = useState(false);
+  const [sendBusy, setSendBusy] = useState(false);
+  const [sendResult, setSendResult] = useState<string | null>(null);
+  const [draftBusy, setDraftBusy] = useState(false);
   const [activeSummary, setActiveSummary] = useState<{
     objective: string; recommendation: string; how_we_assist: string;
     expected_timing: string; what_happens_next: string; created_at: string;
   } | null>(null);
   const [summaryFields, setSummaryFields] = useState({
-    objective: "", recommendation: "", how_we_assist: "", expected_timing: "", what_happens_next: "",
+    objective: "", recommendation: "", how_we_assist: "", expected_timing: "", what_happens_next: "", internal_notes: "",
   });
-  const [addingPayment, setAddingPayment] = useState(false);
   const [payKind, setPayKind] = useState("deposit");
   const [payAmount, setPayAmount] = useState("");
   const [payMethod, setPayMethod] = useState("wipay");
   const [payRef, setPayRef] = useState("");
+  const [addingPayment, setAddingPayment] = useState(false);
   const msgEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isMobile, setIsMobile] = useState(false);
@@ -5195,22 +5209,56 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                     onClick={() => {
                       const wf = (activeMatter.workflow_type || activeMatter.matter_type || "acquire/transfer").replace(/_/g, " ");
                       setSummaryFields({
-                        objective: "Client seeks to " + wf + ".",
-                        recommendation: "Based on the information provided, we recommend proceeding with " + wf + ".",
-                        how_we_assist: "Ferguson Law will guide you through each step of the process, including document preparation, title verification, and registration.",
-                        expected_timing: "The matter is expected to take 4 to 8 weeks depending on the complexity and responsiveness of all parties.",
-                        what_happens_next: "Upon receipt of the required documents and deposit payment, we will formally open your file and commence work.",
+                        objective: (activeSummary as { objective?: string })?.objective ?? "Client seeks to " + wf + ".",
+                        recommendation: (activeSummary as { recommendation?: string })?.recommendation ?? "Based on the information provided, we recommend proceeding with " + wf + ".",
+                        how_we_assist: (activeSummary as { how_we_assist?: string })?.how_we_assist ?? "Ferguson Law will guide you through each step of the process, including document preparation, title verification, and registration.",
+                        expected_timing: (activeSummary as { expected_timing?: string })?.expected_timing ?? "The matter is expected to take 4 to 8 weeks depending on the complexity and responsiveness of all parties.",
+                        what_happens_next: (activeSummary as { what_happens_next?: string })?.what_happens_next ?? "Upon receipt of the required documents and deposit payment, we will formally open your file and commence work.",
+                        internal_notes: (activeSummary as { internal_notes?: string })?.internal_notes ?? "",
                       });
                       setSummaryModal(true);
                     }}
-                    style={{ fontSize: 12, padding: "5px 10px", borderRadius: 8, border: "1px solid " + (activeSummary ? "#16823c" : "rgba(18,16,12,.3)"), background: activeSummary ? "#f0fdf4" : "#fff", color: activeSummary ? "#16823c" : INK, cursor: "pointer", fontWeight: 600 }}
+                    style={{ fontSize: 12, padding: "5px 10px", borderRadius: 8, border: "1px solid " + (activeSummary ? "rgba(200,166,92,.7)" : "rgba(18,16,12,.3)"), background: activeSummary ? "rgba(200,166,92,.12)" : "#fff", color: activeSummary ? "#8a6a22" : INK, cursor: "pointer", fontWeight: 600 }}
                   >
                     {activeSummary ? "✓ Preliminary Summary" : "Generate Preliminary Summary"}
                   </button>
                   {activeSummary && selected && (
                     <a href={"/preliminary-summary/" + selected + "?token=" + encodeURIComponent(token)} target="_blank" rel="noopener noreferrer"
-                      style={{ fontSize: 12, padding: "5px 10px", borderRadius: 8, border: "1px solid #16823c", background: "#16823c", color: "#fff", textDecoration: "none", fontWeight: 600 }}
+                      style={{ fontSize: 12, padding: "5px 10px", borderRadius: 8, border: "1px solid #8a6a22", background: "#8a6a22", color: "#fff", textDecoration: "none", fontWeight: 600 }}
                     >View →</a>
+                  )}
+                  {activeSummary && selected && (
+                    <button
+                      disabled={sendBusy}
+                      onClick={async () => {
+                        if (!confirm((activeSummary as { sent_at?: string }).sent_at ? "Resend the preliminary summary to the client?" : "Send the preliminary summary to the client?")) return;
+                        setSendBusy(true);
+                        setSendResult(null);
+                        try {
+                          const r = await fetch("/api/admin/cms/send-summary", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json", "x-admin-token": token },
+                            body: JSON.stringify({ matterId: selected }),
+                          });
+                          const j = await r.json();
+                          if (j.ok) {
+                            setSendResult("Sent to " + j.sentTo);
+                            setActiveSummary({ ...activeSummary, sent_at: new Date().toISOString() } as typeof activeSummary);
+                          } else {
+                            setSendResult("Error: " + (j.error ?? "Unknown error"));
+                          }
+                        } catch { setSendResult("Network error"); }
+                        finally { setSendBusy(false); }
+                      }}
+                      style={{ fontSize: 12, padding: "5px 10px", borderRadius: 8, border: "1px solid #8a6a22", background: (activeSummary as { sent_at?: string }).sent_at ? "rgba(200,166,92,.12)" : "#8a6a22", color: (activeSummary as { sent_at?: string }).sent_at ? "#8a6a22" : "#fff", cursor: sendBusy ? "default" : "pointer", fontWeight: 600, opacity: sendBusy ? 0.7 : 1 }}
+                    >
+                      {sendBusy ? "Sending…" : (activeSummary as { sent_at?: string }).sent_at ? "↺ Resend to Client" : "✉ Send to Client"}
+                    </button>
+                  )}
+                  {sendResult && (
+                    <span style={{ fontSize: 12, color: sendResult.startsWith("Error") || sendResult.startsWith("Network") ? "#a23b3b" : "#16823c", fontWeight: 600 }}>
+                      {sendResult}
+                    </span>
                   )}
                   {activeMatter.status !== "archived" ? (
                     <button
@@ -5836,7 +5884,30 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                 <div style={{ fontFamily: "var(--serif, Georgia, serif)", fontSize: 18, fontWeight: 700, color: GREEN }}>Generate Preliminary Summary</div>
                 <div style={{ fontSize: 12.5, color: MUTED, marginTop: 3 }}>Edit the pre-filled content, then save to generate the document.</div>
               </div>
-              <button onClick={() => setSummaryModal(false)} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: MUTED, lineHeight: 1 }}>✕</button>
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <button
+                  disabled={draftBusy}
+                  onClick={async () => {
+                    if (!selected) return;
+                    const matter = matters.find(m => m.id === selected);
+                    setDraftBusy(true);
+                    try {
+                      const res = await fetch("/api/admin/cms/draft-summary", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", "x-admin-token": token },
+                        body: JSON.stringify({ matterId: selected, matterType: matter?.matter_type, workflowType: matter?.workflow_type, clientName: matter?.client_name }),
+                      });
+                      const j = await res.json() as { ok: boolean; draft?: { objective: string; recommendation: string; how_we_assist: string; expected_timing: string; what_happens_next: string }; error?: string };
+                      if (j.ok && j.draft) setSummaryFields(prev => ({ ...prev, ...j.draft }));
+                      else if (j.error) alert("Draft failed: " + j.error);
+                    } catch { alert("Draft failed"); } finally { setDraftBusy(false); }
+                  }}
+                  style={{ padding: "7px 14px", borderRadius: 8, border: "1.5px solid #8a6a22", background: draftBusy ? "rgba(200,166,92,.08)" : "rgba(200,166,92,.06)", color: "#8a6a22", fontSize: 12.5, cursor: draftBusy ? "default" : "pointer", fontWeight: 700, whiteSpace: "nowrap" }}
+                >
+                  {draftBusy ? "Drafting…" : "✦ Draft with AI"}
+                </button>
+                <button onClick={() => setSummaryModal(false)} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: MUTED, lineHeight: 1 }}>✕</button>
+              </div>
             </div>
             <div style={{ padding: "22px 28px", display: "flex", flexDirection: "column", gap: 18 }}>
               {([
@@ -5856,6 +5927,16 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                   />
                 </div>
               ))}
+              <div style={{ borderTop: "1.5px dashed rgba(18,16,12,.12)", paddingTop: 18, marginTop: 4 }}>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: "#888", marginBottom: 4 }}>Internal Notes <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0, fontSize: 11, color: "#aaa" }}>— not shown to client</span></label>
+                <textarea
+                  value={summaryFields.internal_notes}
+                  onChange={e => setSummaryFields(prev => ({ ...prev, internal_notes: e.target.value }))}
+                  rows={3}
+                  placeholder="Notes for your records only…"
+                  style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1.5px dashed rgba(18,16,12,.18)", fontSize: 13.5, lineHeight: 1.6, resize: "vertical", outline: "none", fontFamily: "inherit", boxSizing: "border-box", background: "#fafafa" }}
+                />
+              </div>
             </div>
             <div style={{ padding: "16px 28px 24px", display: "flex", gap: 10, justifyContent: "flex-end" }}>
               <button onClick={() => setSummaryModal(false)} style={{ padding: "10px 22px", borderRadius: 10, border: "1px solid rgba(18,16,12,.2)", background: "#fff", fontSize: 13.5, cursor: "pointer", fontWeight: 600 }}>Cancel</button>
@@ -6256,5 +6337,6 @@ function TesterFeedbackTab({ token }: { token: string }) {
     </div>
   );
 }
+
 
 
