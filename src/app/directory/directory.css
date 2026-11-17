@@ -87,6 +87,9 @@
 .dform-field input, .dform-field textarea, .dform-field select {
   border: 1px solid var(--line); border-radius: 10px; padding: 11px 13px; font: inherit;
   font-size: 15px; background: var(--paper); color: var(--text); width: 100%; }
+.dform-field input[type="checkbox"], .dform-field input[type="radio"] {
+  width: auto; padding: 0; border: none; background: none; border-radius: 0;
+  box-shadow: none; min-height: unset; }
 .dform-field input:focus, .dform-field textarea:focus, .dform-field select:focus {
   outline: none; border-color: var(--gold); background: #fff; }
 .kind-choose { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 16px; }

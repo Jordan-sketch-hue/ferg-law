@@ -259,7 +259,7 @@ function JoinWizard() {
             <button
               type="button"
               className="btn btn-gold"
-              style={{ width: "100%", marginTop: "1.5rem" }}
+              style={{ width: "100%", marginTop: "1.5rem", justifyContent: "flex-start" }}
               onClick={nextStep}
             >
               Continue →
@@ -357,7 +357,7 @@ function JoinWizard() {
               )}
             </div>
 
-            <button type="submit" className="btn btn-gold" style={{ width: "100%", marginTop: "0.5rem" }}>
+            <button type="submit" className="btn btn-gold" style={{ width: "100%", marginTop: "0.5rem", justifyContent: "flex-start" }}>
               Continue →
             </button>
           </form>
@@ -435,7 +435,7 @@ function JoinWizard() {
               Your listing will be reviewed before going live — typically 1–2 business days.
             </p>
 
-            <button className="btn btn-gold" type="submit" disabled={busy} style={{ width: "100%" }}>
+            <button className="btn btn-gold" type="submit" disabled={busy} style={{ width: "100%", justifyContent: "flex-start" }}>
               {busy ? "Submitting application…" : "Submit application →"}
             </button>
 
