@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
+import { pushToAdmins } from "@/lib/push";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -104,6 +105,7 @@ export async function POST(req: NextRequest) {
     });
 
     await sendWAReply(jid, ACK_MESSAGE);
+    void pushToAdmins(`WA Message - ${senderName}`, text.length > 80 ? text.slice(0, 77) + "..." : text, "/admin", "fl-wa-inbound");
 
     return NextResponse.json({ ok: true, ticketId });
   } catch (e) {
