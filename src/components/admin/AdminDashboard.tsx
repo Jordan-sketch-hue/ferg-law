@@ -5157,9 +5157,10 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                     {activeSummary ? "✓ Preliminary Summary" : "Generate Preliminary Summary"}
                   </button>
                   {activeSummary && selected && (
-                    <a href={"/preliminary-summary/" + selected + "?token=" + encodeURIComponent(token)} target="_blank" rel="noopener noreferrer"
-                      style={{ fontSize: 12, padding: "5px 10px", borderRadius: 8, border: "1px solid #8a6a22", background: "#8a6a22", color: "#fff", textDecoration: "none", fontWeight: 600 }}
-                    >View →</a>
+                    <button
+                      onClick={() => window.open("/preliminary-summary/" + selected + "?token=" + encodeURIComponent(token), "_blank", "noopener,noreferrer")}
+                      style={{ fontSize: 12, padding: "5px 10px", borderRadius: 8, border: "1px solid #8a6a22", background: "#8a6a22", color: "#fff", cursor: "pointer", fontWeight: 600 }}
+                    >View →</button>
                   )}
                   {activeSummary && selected && (
                     <button

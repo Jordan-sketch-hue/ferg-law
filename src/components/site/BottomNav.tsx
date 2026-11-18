@@ -1,8 +1,8 @@
-"use client";
+﻿"use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Calendar, BookOpen, User } from "lucide-react";
+import { Home, Calendar, BookOpen, User, Lock } from "lucide-react";
 
 const PenIcon = () => (
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -29,6 +29,7 @@ export default function BottomNav() {
   const isResources = pathname === "/buyers-guide" || pathname === "/explainers" || pathname.startsWith("/explainers/") || pathname === "/cost-estimator" || pathname === "/glossary" || pathname === "/faq";
   const isStart = pathname === "/get-started";
   const isAccount = pathname === "/auth" || pathname.startsWith("/directory/client") || pathname.startsWith("/auth/");
+  const isAdmin = pathname === "/admin" || pathname.startsWith("/admin/");
 
   const tab: React.CSSProperties = {
     flex: 1, display: "flex", flexDirection: "column", alignItems: "center",
