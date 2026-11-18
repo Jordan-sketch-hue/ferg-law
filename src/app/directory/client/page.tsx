@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 export const dynamic = "force-dynamic";
 
@@ -8,6 +8,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { waLink } from "@/lib/site";
 import NotificationBell from "@/components/client/NotificationBell";
+import PushSubscribe from "@/components/pwa/PushSubscribe";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -748,6 +749,7 @@ function ClientDashboardInner() {
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <NotificationBell />
+          {clientId && <PushSubscribe userRole="client" userRef={clientId} promptText="Get notified of updates" />}
           <button onClick={onSignOut} className="link-btn" style={{ fontSize: 13 }}>Sign out</button>
         </div>
       </div>

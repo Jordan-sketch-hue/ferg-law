@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 /**
  * Consultation CRM — the Ferguson Law back office.
@@ -1286,7 +1286,7 @@ function LeadsTable({ leads, loading, token, onStatus, onDelete, onConvert }: { 
       ) : (
       <div style={S.tableWrap}>
         <table style={S.table}>
-          <thead><tr><Th>Date</Th><Th>Name</Th><Th>Contact</Th><Th>Service</Th><Th>Source</Th><Th>Message</Th><Th>Status</Th><Th>Actions</Th></tr></thead>
+              <thead><tr><Th>Name</Th><Th>Contact</Th><Th>Type</Th><Th>Country</Th><Th>Status</Th><Th>Source</Th><Th>Date</Th><Th>Matters</Th><Th>Actions</Th></tr></thead>
           <tbody>
             {leads.map((l) => {
               const wa = l.phone ? waLinkTo(l.phone, `Hello ${l.name ?? ""}, this is Ferguson Law following up on your enquiry.`) : null;
@@ -1730,6 +1730,13 @@ function ClientsTab({ clients, matters, loading, onUpsert, onDelete, token }: {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [inviteSent, setInviteSent] = useState<Record<string, boolean>>({});
 
+  const [pushSubs, setPushSubs] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    const sb = createClient();
+    void sb.from('fl_push_subscriptions').select('user_ref').eq('user_role', 'client').then(({ data }) => {
+      if (data) setPushSubs(new Set(data.map((r: { user_ref: string }) => r.user_ref)));
+    });
+  }, []);
   const sendInvite = async (clientEmail: string, clientName: string, clientId: string) => {
     setInviteSent((p) => ({ ...p, [clientId]: true }));
     await fetch("/api/admin/cms/invite-client", {
@@ -1785,7 +1792,7 @@ function ClientsTab({ clients, matters, loading, onUpsert, onDelete, token }: {
         clients.length === 0 ? <Empty>No clients yet. Add one above.</Empty> : (
           <div style={S.tableWrap}>
             <table style={S.table}>
-              <thead><tr><Th>Name</Th><Th>Contact</Th><Th>Type</Th><Th>Country</Th><Th>Status</Th><Th>Source</Th><Th>Date</Th><Th>Matters</Th><Th>Actions</Th></tr></thead>
+              <thead><tr><Th>Name</Th><Th>Notif</Th><Th>Contact</Th><Th>Type</Th><Th>Country</Th><Th>Status</Th><Th>Source</Th><Th>Date</Th><Th>Matters</Th><Th>Actions</Th></tr></thead>
               <tbody>
                 {clients.map((c) => {
                   const cms = clientMatters(c.id);
@@ -1793,6 +1800,7 @@ function ClientsTab({ clients, matters, loading, onUpsert, onDelete, token }: {
                     <>
                       <tr key={c.id} style={S.tr}>
                         <Td><span style={S.strong}>{c.name}</span></Td>
+                        <Td><span title={pushSubs.has(c.id) ? 'Push ON' : 'Push OFF'} style={{ fontSize: '1rem', opacity: pushSubs.has(c.id) ? 1 : 0.25 }}>{pushSubs.has(c.id) ? String.fromCharCode(0x1F514) : String.fromCharCode(0x1F515)}</span></Td>
                         <Td><div style={S.contactCol}>{c.email && <span>{c.email}</span>}{c.phone && <span style={S.muted}>{c.phone}</span>}</div></Td>
                         <Td><TypeBadge type={c.client_type} colors={CLIENT_TYPE_COLORS} /></Td>
                         <Td>{c.country_of_residence || <span style={S.muted}>—</span>}</Td>
