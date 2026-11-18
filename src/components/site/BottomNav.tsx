@@ -99,6 +99,11 @@ export default function BottomNav() {
           <User size={24} strokeWidth={isAccount ? 2.5 : 1.8} />
           <span style={{ fontSize: "0.66rem", letterSpacing: "0.03em", fontWeight: isAccount ? 600 : 400 }}>Account</span>
         </Link>
+
+        {/* Staff-only admin entry */}
+        <Link href="/admin" style={{ ...tab, flex: "0 0 44px", color: isAdmin ? "#C8A65C" : "rgba(200,166,92,0.2)" }}>
+          <Lock size={18} strokeWidth={isAdmin ? 2.5 : 1.6} />
+        </Link>
       </nav>
     </>
   );
