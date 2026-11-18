@@ -57,6 +57,7 @@ interface Lead {
   message: string | null;
   ref: string | null;
   status: string | null;
+  archived_at?: string | null;
 }
 
 interface Appointment {
@@ -131,6 +132,7 @@ interface Client {
   status: string;
   meta: Record<string, unknown>;
   portal_invited_at: string | null;
+  archived_at?: string | null;
 }
 
 interface Matter {
@@ -645,18 +647,31 @@ export default function AdminDashboard() {
   }, [token]);
 
   const deleteClient = useCallback(async (id: string) => {
-    if (!token || !confirm("Archive this client? They'll move to the Recycle Bin and be permanently removed after 30 days. You can restore them anytime before then.")) return;
+    if (!token || !confirm("Archive this client? They will be hidden from the active list. You can restore them from the Archived tab.")) return;
     const supabase = createClient();
     await supabase.rpc("fl_admin_delete_client", { p_token: token, p_id: id });
-    setClients((prev) => prev.filter((c) => c.id !== id));
-    setMatters((prev) => prev.filter((m) => m.client_id !== id));
+    setClients((prev) => prev.map((c) => c.id === id ? { ...c, archived_at: new Date().toISOString() } : c));
+  }, [token]);
+
+  const restoreClient = useCallback(async (id: string) => {
+    if (!token) return;
+    const supabase = createClient();
+    await supabase.rpc("fl_admin_restore_client", { p_token: token, p_id: id });
+    setClients((prev) => prev.map((c) => c.id === id ? { ...c, archived_at: null } : c));
   }, [token]);
 
   const deleteLead = useCallback(async (id: string) => {
-    if (!token || !confirm("Archive this lead? They'll move to the Recycle Bin and be permanently removed after 30 days. You can restore them anytime before then.")) return;
+    if (!token || !confirm("Archive this lead? They will be hidden from the active list. You can restore them from the Archived tab.")) return;
     const supabase = createClient();
     await supabase.rpc("fl_admin_delete_lead", { p_token: token, p_id: id });
-    setLeads((prev) => prev.filter((l) => l.id !== id));
+    setLeads((prev) => prev.map((l) => l.id === id ? { ...l, archived_at: new Date().toISOString() } : l));
+  }, [token]);
+
+  const restoreLead = useCallback(async (id: string) => {
+    if (!token) return;
+    const supabase = createClient();
+    await supabase.rpc("fl_admin_restore_lead", { p_token: token, p_id: id });
+    setLeads((prev) => prev.map((l) => l.id === id ? { ...l, archived_at: null } : l));
   }, [token]);
 
   const cancelBooking = useCallback(async (id: string) => {
@@ -943,7 +958,7 @@ export default function AdminDashboard() {
               onRefresh={() => { if (token) void fetchAll(token); }}
             />
           )}
-          {tab === "leads" && <LeadsTable leads={leads} loading={loading} token={token} onStatus={setLeadStatus} onDelete={deleteLead} onConvert={convertLeadToClient} />}
+          {tab === "leads" && <LeadsTable leads={leads.filter(l => !l.archived_at)} loading={loading} token={token} onStatus={setLeadStatus} onDelete={deleteLead} onRestore={restoreLead} onConvert={convertLeadToClient} archivedLeads={leads.filter(l => !!l.archived_at)} />}
           {tab === "bookings" && <BookingsTable appts={appts} loading={loading} token={token ?? ""} onStatus={setApptStatus} onCancel={cancelBooking} onRefresh={() => { if (token) void fetchAll(token); }} />}
           {tab === "clients" && <ClientsTab clients={clients} matters={matters} loading={loading} token={token ?? ""} onUpsert={upsertClient} onDelete={deleteClient} />}
           {tab === "matters" && <MattersTab matters={matters} loading={loading} token={token ?? ""} onStage={setMatterStage} onPayment={setMatterPayment} onDelete={deleteMatter} />}
@@ -1238,10 +1253,11 @@ function PurgeModal({ target, token, onDone, onClose }: { target: PurgeTarget; t
 // ---------------------------------------------------------------------------
 // Leads
 // ---------------------------------------------------------------------------
-function LeadsTable({ leads, loading, token, onStatus, onDelete, onConvert }: { leads: Lead[]; loading: boolean; token: string; onStatus: (id: string, s: string) => void; onDelete: (id: string) => void; onConvert: (id: string) => void }) {
+function LeadsTable({ leads, loading, token, onStatus, onDelete, onRestore, onConvert, archivedLeads }: { leads: Lead[]; loading: boolean; token: string; onStatus: (id: string, s: string) => void; onDelete: (id: string) => void; onRestore: (id: string) => void; onConvert: (id: string) => void; archivedLeads?: Lead[] }) {
   const [composing, setComposing] = useState<Lead | null>(null);
   const [purgeTarget, setPurgeTarget] = useState<PurgeTarget | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 640);
     check();
@@ -1249,17 +1265,29 @@ function LeadsTable({ leads, loading, token, onStatus, onDelete, onConvert }: { 
     return () => window.removeEventListener("resize", check);
   }, []);
   async function deleteLead(id: string, name: string | null) {
-    if (!confirm(`Delete lead "${name || "this lead"}"? This cannot be undone.`)) return;
-    await createClient().rpc("fl_admin_delete_lead", { p_token: token, p_id: id });
+    if (!confirm(`Archive lead "${name || "this lead"}"? They will be hidden from active leads.`)) return;
     onDelete(id);
   }
+  const displayLeads = showArchived ? (archivedLeads ?? []) : leads;
   if (loading && leads.length === 0) return <Empty>Loading leads…</Empty>;
-  if (leads.length === 0) return <Empty>No leads yet.</Empty>;
+  if (displayLeads.length === 0 && !loading) return (
+    <>
+      <div style={{ display: "flex", gap: 8, padding: "8px 16px 0", alignItems: "center" }}>
+        <button type="button" onClick={() => setShowArchived(false)} style={{ padding: "4px 14px", borderRadius: 6, border: "none", cursor: "pointer", fontWeight: 600, fontSize: 13, background: !showArchived ? "#102A1E" : "rgba(18,16,12,.07)", color: !showArchived ? "#fff" : "#24211b" }}>Active ({leads.length})</button>
+        <button type="button" onClick={() => setShowArchived(true)} style={{ padding: "4px 14px", borderRadius: 6, border: "none", cursor: "pointer", fontWeight: 600, fontSize: 13, background: showArchived ? "#a23b3b" : "rgba(18,16,12,.07)", color: showArchived ? "#fff" : "#24211b" }}>Archived ({archivedLeads?.length ?? 0})</button>
+      </div>
+      <Empty>{showArchived ? "No archived leads." : "No leads yet."}</Empty>
+    </>
+  );
   return (
     <>
+      <div style={{ display: "flex", gap: 8, padding: "8px 16px 0", alignItems: "center" }}>
+        <button type="button" onClick={() => setShowArchived(false)} style={{ padding: "4px 14px", borderRadius: 6, border: "none", cursor: "pointer", fontWeight: 600, fontSize: 13, background: !showArchived ? "#102A1E" : "rgba(18,16,12,.07)", color: !showArchived ? "#fff" : "#24211b" }}>Active ({leads.length})</button>
+        <button type="button" onClick={() => setShowArchived(true)} style={{ padding: "4px 14px", borderRadius: 6, border: "none", cursor: "pointer", fontWeight: 600, fontSize: 13, background: showArchived ? "#a23b3b" : "rgba(18,16,12,.07)", color: showArchived ? "#fff" : "#24211b" }}>Archived ({archivedLeads?.length ?? 0})</button>
+      </div>
       {isMobile ? (
         <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "12px 16px" }}>
-          {leads.map((l) => {
+          {displayLeads.map((l) => {
             const wa = l.phone ? waLinkTo(l.phone, "Hello " + (l.name ?? "") + ", this is Ferguson Law following up on your enquiry.") : null;
             return (
               <div key={l.id} style={{ background: "#fff", border: "1px solid rgba(18,16,12,.1)", borderRadius: 12, padding: "14px 16px" }}>
@@ -1275,7 +1303,11 @@ function LeadsTable({ leads, loading, token, onStatus, onDelete, onConvert }: { 
                   {l.email && <button type="button" onClick={() => setComposing(l)} style={{ ...S.waBtn, background: "#c9a86a", color: "#10211c" }}>Email</button>}
                   {wa && <a href={wa} target="_blank" rel="noopener noreferrer" style={S.waBtn}>WhatsApp</a>}
                   {l.status === "new" && <button type="button" onClick={() => onStatus(l.id, "contacted")} style={{ ...S.waBtn, background: "rgba(47,122,82,.12)", color: "#2f7a52", border: "1px solid rgba(47,122,82,.25)" }}>Contacted</button>}
-                  <button type="button" onClick={() => onDelete(l.id)} style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)" }}>Archive</button>
+                  {l.archived_at ? (
+                    <button type="button" onClick={() => onRestore(l.id)} style={{ ...S.waBtn, background: "rgba(47,122,82,.12)", color: "#2f7a52", border: "1px solid rgba(47,122,82,.25)" }}>Restore</button>
+                  ) : (
+                    <button type="button" onClick={() => onDelete(l.id)} style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)" }}>Archive</button>
+                  )}
                   <button type="button" onClick={() => onConvert(l.id)} style={{ ...S.waBtn, background: "rgba(12,80,60,.12)", color: "#0c503c", border: "1px solid rgba(12,80,60,.25)" }}>Convert to Client</button>
                   {l.email && <button type="button" onClick={() => setPurgeTarget({ email: l.email!, name: l.name, clientId: null })} style={{ ...S.waBtn, background: "#c0392b", color: "#fff", border: "none" }}>Delete Record</button>}
                 </div>
@@ -1288,7 +1320,7 @@ function LeadsTable({ leads, loading, token, onStatus, onDelete, onConvert }: { 
         <table style={S.table}>
               <thead><tr><Th>Name</Th><Th>Contact</Th><Th>Type</Th><Th>Country</Th><Th>Status</Th><Th>Source</Th><Th>Date</Th><Th>Matters</Th><Th>Actions</Th></tr></thead>
           <tbody>
-            {leads.map((l) => {
+            {displayLeads.map((l) => {
               const wa = l.phone ? waLinkTo(l.phone, `Hello ${l.name ?? ""}, this is Ferguson Law following up on your enquiry.`) : null;
               return (
                 <tr key={l.id} style={S.tr}>
@@ -1315,10 +1347,17 @@ function LeadsTable({ leads, loading, token, onStatus, onDelete, onConvert }: { 
                         </button>
                       )}
                       {!l.email && !wa && l.status !== "new" && <span style={S.muted}>—</span>}
-                      <button type="button" onClick={() => onDelete(l.id)}
-                        style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)" }}>
-                        Archive
-                      </button>
+                      {l.archived_at ? (
+                        <button type="button" onClick={() => onRestore(l.id)}
+                          style={{ ...S.waBtn, background: "rgba(47,122,82,.12)", color: "#2f7a52", border: "1px solid rgba(47,122,82,.25)" }}>
+                          Restore
+                        </button>
+                      ) : (
+                        <button type="button" onClick={() => onDelete(l.id)}
+                          style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)" }}>
+                          Archive
+                        </button>
+                      )}
                       <button type="button" onClick={() => onConvert(l.id)} style={{ ...S.waBtn, background: "rgba(12,80,60,.12)", color: "#0c503c", border: "1px solid rgba(12,80,60,.25)" }}>Convert to Client</button>
                       {l.email && <button type="button" onClick={() => setPurgeTarget({ email: l.email!, name: l.name, clientId: null })} style={{ ...S.waBtn, background: "#c0392b", color: "#fff", border: "none", fontWeight: 700 }}>Delete Record</button>}
                     </div>
