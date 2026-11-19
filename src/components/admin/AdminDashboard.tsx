@@ -1839,6 +1839,94 @@ const CLIENT_STATUS_COLORS: Record<string, React.CSSProperties> = {
   prospect: { background: "rgba(200,166,92,.22)", color: "#8a6a22" },
 };
 
+// ---------------------------------------------------------------------------
+// Data Privacy (admin tool for client profile)
+// ---------------------------------------------------------------------------
+function DataPrivacyModal({ client, token, onDelete, onClose }: {
+  client: Client; token: string; onDelete: (id: string) => void; onClose: () => void;
+}) {
+  const [exporting, setExporting] = useState(false);
+  const [exportErr, setExportErr] = useState<string | null>(null);
+  const [showPurge, setShowPurge] = useState(false);
+
+  async function exportData() {
+    if (!client.email) { setExportErr("No email on file for this client."); return; }
+    setExporting(true); setExportErr(null);
+    try {
+      const res = await fetch(`/api/admin/cms/export-client-data?email=${encodeURIComponent(client.email)}`, {
+        headers: { "x-admin-token": token },
+      });
+      if (!res.ok) { const j = await res.json(); throw new Error(j.error || "Export failed."); }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `ferguson-law-${client.email}-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) { setExportErr(e instanceof Error ? e.message : "Export failed."); }
+    finally { setExporting(false); }
+  }
+
+  const overlay: React.CSSProperties = { position: "fixed", inset: 0, background: "rgba(0,0,0,.45)", zIndex: 9000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 };
+  const modal: React.CSSProperties = { background: "#fff", borderRadius: 14, padding: "28px 28px 24px", maxWidth: 540, width: "100%", boxShadow: "0 8px 40px rgba(0,0,0,.22)" };
+
+  if (showPurge && client.email) {
+    return (
+      <PurgeModal
+        target={{ clientId: client.id, email: client.email, name: client.name }}
+        token={token}
+        onDone={() => { onDelete(client.id); onClose(); }}
+        onClose={() => setShowPurge(false)}
+      />
+    );
+  }
+
+  return (
+    <div style={overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div style={modal}>
+        <div style={{ fontWeight: 700, fontSize: "1rem", color: "#10211c", marginBottom: 4 }}>Data Privacy</div>
+        <div style={{ fontSize: ".82rem", color: "#888", marginBottom: 18 }}>
+          {client.name} {client.email && <span>({client.email})</span>}
+        </div>
+
+        <div style={{ background: "#f5f9f5", borderRadius: 10, border: "1px solid rgba(47,122,82,.2)", padding: "14px 16px", marginBottom: 20 }}>
+          <div style={{ fontSize: ".75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em", color: GREEN, marginBottom: 6 }}>Jamaica Data Protection Act 2020</div>
+          <div style={{ fontSize: ".8rem", color: "#444", lineHeight: 1.6 }}>
+            Under the Jamaica Data Protection Act 2020, clients have the right to access a copy of their personal data and to request its deletion. These tools allow you to fulfil those requests on behalf of the firm. All actions are logged for compliance purposes.
+          </div>
+        </div>
+
+        <div style={{ display: "grid", gap: 12 }}>
+          <div style={{ border: "1px solid #e8e8e8", borderRadius: 10, padding: "16px 18px" }}>
+            <div style={{ fontWeight: 700, fontSize: ".85rem", color: "#10211c", marginBottom: 4 }}>Export client data</div>
+            <div style={{ fontSize: ".78rem", color: "#888", marginBottom: 12 }}>Download a JSON file of all data Ferguson Law holds for this client — profile, matters, documents, KYC, messages, and payment history.</div>
+            {exportErr && <p style={{ color: "#b00", fontSize: ".75rem", marginBottom: 8 }}>{exportErr}</p>}
+            <button onClick={() => void exportData()} disabled={exporting || !client.email}
+              style={{ padding: "9px 18px", borderRadius: 8, border: "1px solid #ccc", background: "#fff", color: "#10211c", fontSize: ".82rem", fontWeight: 600, cursor: (exporting || !client.email) ? "default" : "pointer", opacity: !client.email ? 0.5 : 1 }}>
+              {exporting ? "Preparing…" : "Export data"}
+            </button>
+          </div>
+
+          <div style={{ border: "1px solid #f0d5d5", borderRadius: 10, padding: "16px 18px" }}>
+            <div style={{ fontWeight: 700, fontSize: ".85rem", color: "#c0392b", marginBottom: 4 }}>Delete account & data</div>
+            <div style={{ fontSize: ".78rem", color: "#888", marginBottom: 12 }}>Permanently remove this client's account, all matter records, documents, KYC, messages, and history. This action is irreversible and will send a confirmation email to the client.</div>
+            <button onClick={() => setShowPurge(true)} disabled={!client.email}
+              style={{ padding: "9px 18px", borderRadius: 8, border: "1px solid #d33", background: "#fff", color: "#d33", fontSize: ".82rem", fontWeight: 600, cursor: !client.email ? "default" : "pointer", opacity: !client.email ? 0.5 : 1 }}>
+              Delete account & data
+            </button>
+          </div>
+        </div>
+
+        <button onClick={onClose}
+          style={{ marginTop: 20, padding: "9px 18px", borderRadius: 8, border: "1px solid #ddd", background: "#f5f5f5", color: "#555", fontSize: ".82rem", cursor: "pointer", width: "100%" }}>
+          Close
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function ClientsTab({ clients, matters, loading, onUpsert, onDelete, token }: {
   clients: Client[]; matters: Matter[]; loading: boolean; token: string;
   onUpsert: (f: { name: string; email: string; phone: string; type: string; country: string; notes: string }) => Promise<string | null>;
@@ -1850,6 +1938,7 @@ function ClientsTab({ clients, matters, loading, onUpsert, onDelete, token }: {
   const [busy, setBusy] = useState(false); const [err, setErr] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [inviteSent, setInviteSent] = useState<Record<string, boolean>>({});
+  const [privacyTarget, setPrivacyTarget] = useState<Client | null>(null);
 
   const [pushSubs, setPushSubs] = useState<Set<string>>(new Set());
   useEffect(() => {
@@ -1909,6 +1998,14 @@ function ClientsTab({ clients, matters, loading, onUpsert, onDelete, token }: {
         </div>
       </div>
 
+      {privacyTarget && (
+        <DataPrivacyModal
+          client={privacyTarget}
+          token={token}
+          onDelete={onDelete}
+          onClose={() => setPrivacyTarget(null)}
+        />
+      )}
       {loading && clients.length === 0 ? <Empty>Loading clients…</Empty> :
         clients.length === 0 ? <Empty>No clients yet. Add one above.</Empty> : (
           <div style={S.tableWrap}>
@@ -1950,6 +2047,10 @@ function ClientsTab({ clients, matters, loading, onUpsert, onDelete, token }: {
                                 </button>
                               );
                             })()}
+                            <button type="button" onClick={() => setPrivacyTarget(c)}
+                              style={{ ...S.waBtn, background: "rgba(47,122,82,.08)", color: GREEN, border: "1px solid rgba(47,122,82,.2)" }}>
+                              Data Privacy
+                            </button>
                             <button type="button" onClick={() => onDelete(c.id)}
                               style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)" }}>
                               Archive
