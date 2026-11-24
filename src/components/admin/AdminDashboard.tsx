@@ -1,10 +1,10 @@
-"use client";
+﻿"use client";
 
 /**
- * Consultation CRM — the Ferguson Law back office.
+ * Consultation CRM â€” the Ferguson Law back office.
  *
  * One pane of glass over every lead, booking and chat. Reads/writes go through
- * the token-gated SECURITY DEFINER RPCs using the browser anon client — there
+ * the token-gated SECURITY DEFINER RPCs using the browser anon client â€” there
  * is NO service-role key in the browser. The shared admin token (verified
  * server-side by public.fl_is_admin) is the gate; we keep it in localStorage
  * and pass it as the `p_token` arg on every call.
@@ -57,6 +57,7 @@ interface Lead {
   message: string | null;
   ref: string | null;
   status: string | null;
+  archived_at?: string | null;
 }
 
 interface Appointment {
@@ -131,6 +132,7 @@ interface Client {
   status: string;
   meta: Record<string, unknown>;
   portal_invited_at: string | null;
+  archived_at?: string | null;
 }
 
 interface Matter {
@@ -201,7 +203,7 @@ interface HomeProperty {
 }
 
 type Tab = "overview" | "leads" | "bookings" | "clients" | "matters" | "cms" | "calendar" | "chats" | "invites" | "directory" | "availability" | "home_pros" | "home_listings" | "email" | "inquiries" | "referrals" | "recycle_bin" | "workflows" | "zoom" | "feedback" | "analytics" | "ebook_leads" | "site_content" | "qr_codes";
-// ── Admin tab groups ──────────────────────────────────────────────────────────
+// â”€â”€ Admin tab groups â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 type TabGroup = "dashboard" | "crm" | "email" | "directory" | "home";
 const TAB_GROUPS: Record<TabGroup, { label: string; tabs: Tab[] }> = {
   dashboard: { label: "Dashboard", tabs: ["overview","analytics","calendar","zoom","site_content","qr_codes"] },
@@ -275,21 +277,93 @@ const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Frid
 // Formatting helpers
 // ---------------------------------------------------------------------------
 function fmtDate(iso: string | null): string {
-  if (!iso) return "—";
+  if (!iso) return "â€”";
   try { return formatInTimeZone(new Date(iso), TZ, "d MMM yyyy, h:mm a"); } catch { return iso; }
 }
 function fmtWhen(iso: string | null): string {
-  if (!iso) return "—";
-  try { return formatInTimeZone(new Date(iso), TZ, "EEE d MMM yyyy · h:mm a"); } catch { return iso; }
+  if (!iso) return "â€”";
+  try { return formatInTimeZone(new Date(iso), TZ, "EEE d MMM yyyy Â· h:mm a"); } catch { return iso; }
 }
 function fmtTime(iso: string | null): string {
-  if (!iso) return "—";
+  if (!iso) return "â€”";
   try { return formatInTimeZone(new Date(iso), TZ, "h:mm a"); } catch { return iso; }
 }
 
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
+// ===========================================================================
+// QR Codes Tab
+// ===========================================================================
+const QR_ITEMS = [
+  {
+    label: "Main Website",
+    sub: "fergusonlawja.com",
+    url: "https://fergusonlawja.com",
+    desc: "Homepage â€” share for general inquiries",
+  },
+  {
+    label: "Directory / Join",
+    sub: "fergusonlawja.com/directory/join",
+    url: "https://fergusonlawja.com/directory/join",
+    desc: "Professional directory sign-up page",
+  },
+  {
+    label: "NYC 2026 â€” Diaspora",
+    sub: "fergusonlawja.com/nyc2026",
+    url: "https://fergusonlawja.com/nyc2026?utm_source=qr&utm_campaign=nyc2026",
+    desc: "Diaspora landing page for NYC outreach",
+  },
+  {
+    label: "Book a Consultation",
+    sub: "fergusonlawja.com/booking",
+    url: "https://fergusonlawja.com/booking",
+    desc: "Direct booking link",
+  },
+];
+
+function QrCodesTab() {
+  const [copied, setCopied] = useState<string | null>(null);
+  const copy = (url: string) => {
+    void navigator.clipboard.writeText(url);
+    setCopied(url);
+    setTimeout(() => setCopied(null), 1800);
+  };
+  return (
+    <div style={{ maxWidth: 900, margin: "0 auto", padding: "24px 20px" }}>
+      <div style={{ fontFamily: "var(--serif, Georgia, serif)", fontSize: "1.1rem", fontWeight: 700, color: GREEN, marginBottom: 6 }}>QR Codes</div>
+      <div style={{ fontSize: ".82rem", color: MUTED, marginBottom: 28 }}>Print or screen-share these codes at events, in presentations, or on printed materials.</div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 20 }}>
+        {QR_ITEMS.map((item) => (
+          <div key={item.url} style={{ background: "#fff", border: "1px solid rgba(18,16,12,.08)", borderRadius: 14, padding: "20px", display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
+            <img
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(item.url)}&color=102A1E&bgcolor=ffffff&margin=6`}
+              alt={item.label + " QR Code"}
+              width={160} height={160}
+              style={{ borderRadius: 10, border: "1px solid rgba(18,16,12,.06)" }}
+            />
+            <div style={{ textAlign: "center", width: "100%" }}>
+              <div style={{ fontWeight: 700, fontSize: ".88rem", color: GREEN, marginBottom: 2 }}>{item.label}</div>
+              <div style={{ fontSize: ".74rem", color: MUTED, marginBottom: 8 }}>{item.desc}</div>
+              <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
+                <a href={item.url} target="_blank" rel="noopener"
+                  style={{ fontSize: ".76rem", fontWeight: 600, color: GREEN, background: "rgba(16,42,30,.07)", border: "1px solid rgba(16,42,30,.12)", borderRadius: 6, padding: "5px 12px", textDecoration: "none" }}>
+                  Open
+                </a>
+                <button type="button" onClick={() => copy(item.url)}
+                  style={{ fontSize: ".76rem", fontWeight: 600, color: "#8a6a22", background: "rgba(200,166,92,.1)", border: "1px solid rgba(200,166,92,.3)", borderRadius: 6, padding: "5px 12px", cursor: "pointer" }}>
+                  {copied === item.url ? "Copied!" : "Copy link"}
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
 export default function AdminDashboard() {
   const [token, setToken] = useState<string | null>(null);
   const [checking, setChecking] = useState(true);
@@ -467,7 +541,7 @@ export default function AdminDashboard() {
     return () => { cancelled = true; };
   }, [token, fetchAll]);
 
-  // Realtime subscription — re-fetch partner/home-pro queues instantly on any change
+  // Realtime subscription â€” re-fetch partner/home-pro queues instantly on any change
   useEffect(() => {
     if (!token) return;
     if (tab !== "directory" && tab !== "home_pros") return;
@@ -494,7 +568,7 @@ export default function AdminDashboard() {
     return () => { void supabase.removeChannel(channel); };
   }, [token, tab]);
 
-  // Per-tab refresh — re-fetch stale data whenever the admin switches to a key tab
+  // Per-tab refresh â€” re-fetch stale data whenever the admin switches to a key tab
   useEffect(() => {
     if (!token) return;
     const supabase = createClient();
@@ -530,7 +604,7 @@ export default function AdminDashboard() {
     })();
   }, [tab, token]);
 
-  // Email tab polling — auto-refresh every 60 s while the email tab is active
+  // Email tab polling â€” auto-refresh every 60 s while the email tab is active
   useEffect(() => {
     if (!token || tab !== "email") return;
     const supabase = createClient();
@@ -648,18 +722,31 @@ export default function AdminDashboard() {
   }, [token]);
 
   const deleteClient = useCallback(async (id: string) => {
-    if (!token || !confirm("Archive this client? They'll move to the Recycle Bin and be permanently removed after 30 days. You can restore them anytime before then.")) return;
+    if (!token || !confirm("Archive this client? They will be hidden from the active list. You can restore them from the Archived tab.")) return;
     const supabase = createClient();
     await supabase.rpc("fl_admin_delete_client", { p_token: token, p_id: id });
-    setClients((prev) => prev.filter((c) => c.id !== id));
-    setMatters((prev) => prev.filter((m) => m.client_id !== id));
+    setClients((prev) => prev.map((c) => c.id === id ? { ...c, archived_at: new Date().toISOString() } : c));
+  }, [token]);
+
+  const restoreClient = useCallback(async (id: string) => {
+    if (!token) return;
+    const supabase = createClient();
+    await supabase.rpc("fl_admin_restore_client", { p_token: token, p_id: id });
+    setClients((prev) => prev.map((c) => c.id === id ? { ...c, archived_at: null } : c));
   }, [token]);
 
   const deleteLead = useCallback(async (id: string) => {
-    if (!token || !confirm("Archive this lead? They'll move to the Recycle Bin and be permanently removed after 30 days. You can restore them anytime before then.")) return;
+    if (!token || !confirm("Archive this lead? They will be hidden from the active list. You can restore them from the Archived tab.")) return;
     const supabase = createClient();
     await supabase.rpc("fl_admin_delete_lead", { p_token: token, p_id: id });
-    setLeads((prev) => prev.filter((l) => l.id !== id));
+    setLeads((prev) => prev.map((l) => l.id === id ? { ...l, archived_at: new Date().toISOString() } : l));
+  }, [token]);
+
+  const restoreLead = useCallback(async (id: string) => {
+    if (!token) return;
+    const supabase = createClient();
+    await supabase.rpc("fl_admin_restore_lead", { p_token: token, p_id: id });
+    setLeads((prev) => prev.map((l) => l.id === id ? { ...l, archived_at: null } : l));
   }, [token]);
 
   const cancelBooking = useCallback(async (id: string) => {
@@ -701,7 +788,7 @@ export default function AdminDashboard() {
     setBinItems((prev) => prev.filter((b) => b.id !== binId));
   }, [token]);
 
-  // H.O.M.E. data — fetched directly from the homeready Supabase project
+  // H.O.M.E. data â€” fetched directly from the homeready Supabase project
   useEffect(() => {
     if (!token) return;
     let cancelled = false;
@@ -746,10 +833,10 @@ export default function AdminDashboard() {
   }, []);
 
 
-  // Role — Jordan sees everything; Owen gets a simplified label on his greeting
+  // Role â€” Jordan sees everything; Owen gets a simplified label on his greeting
   const isJordan = accountEmail === "jordanrmorris01@icloud.com";
 
-  // Badge seen — clears tab count when the tab is opened
+  // Badge seen â€” clears tab count when the tab is opened
   const switchTab = useCallback((t: Tab) => {
     setTab(t);
     setSeenCounts(prev => {
@@ -779,7 +866,7 @@ export default function AdminDashboard() {
   const openChats = convos.filter((c) => c.status === "waiting_agent" || c.status === "agent").length;
   const pendingListings = listings.filter((l) => (l.status ?? "pending") === "pending").length;
 
-  // Follow-up queue — leads not contacted in 48h
+  // Follow-up queue â€” leads not contacted in 48h
   const staleLeads = leads.filter((l) => {
     if ((l.status ?? "new") !== "new") return false;
     return Date.now() - new Date(l.created_at).getTime() > 48 * 60 * 60 * 1000;
@@ -789,7 +876,7 @@ export default function AdminDashboard() {
     return (
       <div style={S.authWrap}>
         <div style={S.brandMark}>Ferguson Law</div>
-        <p style={{ color: "#b9b099", marginTop: 8 }}>Loading…</p>
+        <p style={{ color: "#b9b099", marginTop: 8 }}>Loadingâ€¦</p>
       </div>
     );
   }
@@ -824,7 +911,7 @@ export default function AdminDashboard() {
               <button type="button" onClick={() => void submitLogin()}
                 disabled={verifying || !emailInput.trim() || !pwInput}
                 style={{ ...S.authBtn, ...(verifying || !emailInput.trim() || !pwInput ? S.btnOff : null) }}>
-                {verifying ? "Signing in…" : "Sign in"}
+                {verifying ? "Signing inâ€¦" : "Sign in"}
               </button>
               <div style={S.authLinks}>
                 <a href="/reset?request=admin" style={S.authLink}>Forgot password?</a>
@@ -842,7 +929,7 @@ export default function AdminDashboard() {
               {authError && <p style={S.authErr}>{authError}</p>}
               <button type="button" onClick={() => void submitCode()} disabled={verifying || !codeInput.trim()}
                 style={{ ...S.authBtn, ...(verifying || !codeInput.trim() ? S.btnOff : null) }}>
-                {verifying ? "Checking…" : "Enter"}
+                {verifying ? "Checkingâ€¦" : "Enter"}
               </button>
               <div style={S.authLinks}>
                 <button type="button" onClick={() => { setLoginMode("account"); setAuthError(null); }} style={S.authLinkBtn}>
@@ -861,12 +948,12 @@ export default function AdminDashboard() {
       <header className="fl-admin-topbar" style={S.topbar}>
         <div>
           <div style={S.brandMarkSm}>Ferguson Law</div>
-          <div style={S.topSub}>Consultation CRM · Back office</div>
+          <div style={S.topSub}>Consultation CRM Â· Back office</div>
         </div>
         <div style={S.topActions}>
           <button type="button" onClick={() => void refresh()} disabled={loading}
             style={{ ...S.ghostBtn, ...(loading ? S.btnOff : null) }}>
-            {loading ? "Refreshing…" : "Refresh"}
+            {loading ? "Refreshingâ€¦" : "Refresh"}
           </button>
           {accountEmail && (
             <button type="button" onClick={() => setShowAccount(true)} style={S.ghostBtn}>Account</button>
@@ -919,7 +1006,7 @@ export default function AdminDashboard() {
           <div style={{ display:"flex", gap:6, padding:"7px 10px", background:"rgba(18,16,12,.02)", overflowX:"auto", scrollbarWidth:"none" as React.CSSProperties["scrollbarWidth"] }}>
             {TAB_GROUPS[group].tabs.map((t) => {
               const isActive = tab === t;
-              const label = t==="overview"?"Overview":t==="cms"?(cmsUnread>0?"CMS ("+cmsUnread+")":"CMS"):t==="home_pros"?"Pros":t==="home_listings"?"Listings":t==="inquiries"?"Inquiries":t==="analytics"?"Analytics":t==="ebook_leads"?"Ebook Leads":t==="site_content"?"Site Content":t==="referrals"?"Referrals":t==="recycle_bin"?"🗑 Bin":t==="workflows"?"Workflows":t==="zoom"?"Meetings":t==="feedback"?"Feedback":t==="qr_codes"?"QR Codes":t.charAt(0).toUpperCase()+t.slice(1);
+              const label = t==="overview"?"Overview":t==="cms"?(cmsUnread>0?"CMS ("+cmsUnread+")":"CMS"):t==="home_pros"?"Pros":t==="home_listings"?"Listings":t==="inquiries"?"Inquiries":t==="analytics"?"Analytics":t==="ebook_leads"?"Ebook Leads":t==="site_content"?"Site Content":t==="qr_codes"?"QR Codes":t==="referrals"?"Referrals":t==="recycle_bin"?"ðŸ—‘ Bin":t==="workflows"?"Workflows":t==="zoom"?"Meetings":t==="feedback"?"Feedback":t.charAt(0).toUpperCase()+t.slice(1);
               const raw = t==="leads"?leads.length:t==="bookings"?appts.length:t==="clients"?clients.length:t==="matters"?matters.length:t==="chats"?convos.length:t==="email"?emails.filter(e=>!e.read).length:t==="invites"?invites.length:t==="directory"?listings.length:t==="availability"?availability.length:t==="home_pros"?homePros.length:t==="home_listings"?homeListings.length:t==="inquiries"?inquiries.filter(i=>i.status==="new").length:t==="recycle_bin"?binItems.length:0;
               const count = Math.max(0, raw - (seenCounts[t] ?? 0));
               return (
@@ -946,7 +1033,7 @@ export default function AdminDashboard() {
               onRefresh={() => { if (token) void fetchAll(token); }}
             />
           )}
-          {tab === "leads" && <LeadsTable leads={leads} loading={loading} token={token} onStatus={setLeadStatus} onDelete={deleteLead} onConvert={convertLeadToClient} />}
+          {tab === "leads" && <LeadsTable leads={leads.filter(l => !l.archived_at)} loading={loading} token={token} onStatus={setLeadStatus} onDelete={deleteLead} onRestore={restoreLead} onConvert={convertLeadToClient} archivedLeads={leads.filter(l => !!l.archived_at)} />}
           {tab === "bookings" && <BookingsTable appts={appts} loading={loading} token={token ?? ""} onStatus={setApptStatus} onCancel={cancelBooking} onRefresh={() => { if (token) void fetchAll(token); }} />}
           {tab === "clients" && <ClientsTab clients={clients} matters={matters} loading={loading} token={token ?? ""} onUpsert={upsertClient} onDelete={deleteClient} />}
           {tab === "matters" && <MattersTab matters={matters} loading={loading} token={token ?? ""} onStage={setMatterStage} onPayment={setMatterPayment} onDelete={deleteMatter} />}
@@ -975,125 +1062,7 @@ export default function AdminDashboard() {
           {tab === "analytics" && token && <AnalyticsTab token={token} />}
           {tab === "ebook_leads" && token && <EbookLeadsTab token={token} />}
           {tab === "site_content" && token && <SiteContentTab token={token} />}
-
-          {tab === "qr_codes" && (
-            <div style={{ maxWidth: 680 }}>
-              <div style={{ marginBottom: 20 }}>
-                <div style={{ fontWeight: 700, fontSize: ".65rem", textTransform: "uppercase", letterSpacing: ".09em", color: "#7a7a6a", marginBottom: 4 }}>QR CODES</div>
-                <div style={{ fontWeight: 700, fontSize: "1.1rem", color: "#12100c" }}>Shareable QR Codes</div>
-                <div style={{ fontSize: ".82rem", color: "#7a7a6a", marginTop: 4 }}>Scan-safe links — no client data visible when sharing.</div>
-              </div>
-
-              {/* QR FULLSCREEN MODAL */}
-              {expandedQr && (
-                <div onClick={() => setExpandedQr(null)}
-                  style={{ position: "fixed", inset: 0, background: "#000", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <button type="button" onClick={() => setExpandedQr(null)}
-                    style={{ position: "absolute", top: 20, right: 24, background: "none", border: "none", color: "#fff", fontSize: "1.8rem", lineHeight: 1, cursor: "pointer", opacity: .7, padding: 4 }}>
-                    ✕
-                  </button>
-                  <img src={expandedQr} alt="QR Code" onClick={e => e.stopPropagation()} style={{ width: "min(80vw, 360px)", height: "min(80vw, 360px)", borderRadius: 12 }} />
-                </div>
-              )}
-
-              {/* QR CARD — Main Website */}
-              <div style={{ background: "#fff", border: "1px solid rgba(18,16,12,.08)", borderLeft: "3px solid #C8A65C", borderRadius: 12, marginBottom: 12, overflow: "hidden" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px", borderBottom: showNycQr ? "1px solid rgba(18,16,12,.07)" : "none" }}>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: ".65rem", textTransform: "uppercase", letterSpacing: ".09em", color: "#8a6a22" }}>QR CODE — 1 OF 3</div>
-                    <div style={{ fontWeight: 700, fontSize: ".9rem", color: "#102A1E", marginTop: 2 }}>Main Website</div>
-                  </div>
-                  <button type="button" onClick={() => setShowNycQr(v => !v)}
-                    style={{ fontSize: ".72rem", fontWeight: 600, color: "#8a6a22", background: "rgba(200,166,92,.12)", border: "1px solid rgba(200,166,92,.35)", borderRadius: 6, padding: "4px 12px", cursor: "pointer" }}>
-                    {showNycQr ? "Hide" : "Show"}
-                  </button>
-                </div>
-                {showNycQr && (
-                  <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap", padding: "16px 20px" }}>
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0 }}>
-                      <img src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent("https://fergusonlawja.com/")}&color=102A1E&bgcolor=ffffff&margin=4`} alt="Main Website QR Code" width={100} height={100} style={{ borderRadius: 8, cursor: "zoom-in" }} onClick={() => setExpandedQr(`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent("https://fergusonlawja.com/")}&color=102A1E&bgcolor=ffffff&margin=8`)} />
-                      <div style={{ fontSize: ".62rem", color: "#8a6a22", marginTop: 5, textAlign: "center", letterSpacing: ".03em" }}>Click to expand</div>
-                    </div>
-                    <div style={{ flex: 1, minWidth: 200 }}>
-                      <div style={{ fontWeight: 600, fontSize: ".9rem", color: "#102A1E", marginBottom: 6 }}>fergusonlawja.com</div>
-                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                        <a href="https://fergusonlawja.com/" target="_blank" rel="noopener" style={{ fontSize: ".78rem", fontWeight: 600, color: "#102A1E", background: "#f4f1ec", border: "1px solid #ede8de", borderRadius: 6, padding: "5px 12px", textDecoration: "none" }}>Open page →</a>
-                        <button type="button" onClick={() => void navigator.clipboard.writeText("https://fergusonlawja.com/")}
-                          style={{ fontSize: ".78rem", fontWeight: 600, color: "#8a6a22", background: "rgba(200,166,92,.1)", border: "1px solid rgba(200,166,92,.3)", borderRadius: 6, padding: "5px 12px", cursor: "pointer" }}>
-                          Copy link
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* QR CARD — Get Started */}
-              <div style={{ background: "#fff", border: "1px solid rgba(18,16,12,.08)", borderLeft: "3px solid #2f7a52", borderRadius: 12, marginBottom: 12, overflow: "hidden" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px", borderBottom: showPartnerQr ? "1px solid rgba(18,16,12,.07)" : "none" }}>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: ".65rem", textTransform: "uppercase", letterSpacing: ".09em", color: "#2f7a52" }}>QR CODE — 2 OF 3</div>
-                    <div style={{ fontWeight: 700, fontSize: ".9rem", color: "#102A1E", marginTop: 2 }}>Get Started</div>
-                  </div>
-                  <button type="button" onClick={() => setShowPartnerQr(v => !v)}
-                    style={{ fontSize: ".72rem", fontWeight: 600, color: "#2f7a52", background: "rgba(47,122,82,.1)", border: "1px solid rgba(47,122,82,.3)", borderRadius: 6, padding: "4px 12px", cursor: "pointer" }}>
-                    {showPartnerQr ? "Hide" : "Show"}
-                  </button>
-                </div>
-                {showPartnerQr && (
-                  <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap", padding: "16px 20px" }}>
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0 }}>
-                      <img src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent("https://fergusonlawja.com/get-started")}&color=102A1E&bgcolor=ffffff&margin=4`} alt="Get Started QR Code" width={100} height={100} style={{ borderRadius: 8, cursor: "zoom-in" }} onClick={() => setExpandedQr(`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent("https://fergusonlawja.com/get-started")}&color=102A1E&bgcolor=ffffff&margin=8`)} />
-                      <div style={{ fontSize: ".62rem", color: "#2f7a52", marginTop: 5, textAlign: "center", letterSpacing: ".03em" }}>Click to expand</div>
-                    </div>
-                    <div style={{ flex: 1, minWidth: 200 }}>
-                      <div style={{ fontWeight: 600, fontSize: ".9rem", color: "#102A1E", marginBottom: 4 }}>fergusonlawja.com/get-started</div>
-                      <div style={{ fontSize: ".78rem", color: "#666", marginBottom: 8 }}>For new clients ready to begin</div>
-                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                        <a href="https://fergusonlawja.com/get-started" target="_blank" rel="noopener" style={{ fontSize: ".78rem", fontWeight: 600, color: "#fff", background: "#2f7a52", border: "1px solid #2f7a52", borderRadius: 6, padding: "5px 12px", textDecoration: "none" }}>Open page →</a>
-                        <button type="button" onClick={() => void navigator.clipboard.writeText("https://fergusonlawja.com/get-started")}
-                          style={{ fontSize: ".78rem", fontWeight: 600, color: "#2f7a52", background: "rgba(47,122,82,.08)", border: "1px solid rgba(47,122,82,.25)", borderRadius: 6, padding: "5px 12px", cursor: "pointer" }}>
-                          Copy link
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* QR CARD — Partner / Professional Directory */}
-              <div style={{ background: "#fff", border: "1px solid rgba(18,16,12,.08)", borderLeft: "3px solid #102A1E", borderRadius: 12, marginBottom: 24, overflow: "hidden" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px" }}>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: ".65rem", textTransform: "uppercase", letterSpacing: ".09em", color: "#102A1E" }}>QR CODE — 3 OF 3</div>
-                    <div style={{ fontWeight: 700, fontSize: ".9rem", color: "#102A1E", marginTop: 2 }}>Become a Partner · Professional Directory</div>
-                  </div>
-                  <button type="button" onClick={() => setExpandedQr(expandedQr ? null : `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent("https://fergusonlawja.com/directory/join?utm_source=qr&utm_campaign=partner")}&color=102A1E&bgcolor=ffffff&margin=8`)}
-                    style={{ fontSize: ".72rem", fontWeight: 600, color: "#102A1E", background: "rgba(16,42,30,.08)", border: "1px solid rgba(16,42,30,.25)", borderRadius: 6, padding: "4px 12px", cursor: "pointer" }}>
-                    Show
-                  </button>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap", padding: "0 20px 16px" }}>
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0 }}>
-                    <img src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent("https://fergusonlawja.com/directory/join?utm_source=qr&utm_campaign=partner")}&color=102A1E&bgcolor=ffffff&margin=4`} alt="Partner Sign-up QR Code" width={100} height={100} style={{ borderRadius: 8, cursor: "zoom-in" }} onClick={() => setExpandedQr(`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent("https://fergusonlawja.com/directory/join?utm_source=qr&utm_campaign=partner")}&color=102A1E&bgcolor=ffffff&margin=8`)} />
-                    <div style={{ fontSize: ".62rem", color: "#102A1E", marginTop: 5, textAlign: "center", letterSpacing: ".03em", opacity: 0.65 }}>Click to expand</div>
-                  </div>
-                  <div style={{ flex: 1, minWidth: 200 }}>
-                    <div style={{ fontWeight: 600, fontSize: ".9rem", color: "#102A1E", marginBottom: 4 }}>fergusonlawja.com/directory/join</div>
-                    <div style={{ fontSize: ".78rem", color: "#666", marginBottom: 8 }}>For real estate agents, valuators &amp; legal professionals</div>
-                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                      <a href="https://fergusonlawja.com/directory/join?utm_source=qr&utm_campaign=partner" target="_blank" rel="noopener" style={{ fontSize: ".78rem", fontWeight: 600, color: "#fff", background: "#102A1E", border: "1px solid #102A1E", borderRadius: 6, padding: "5px 12px", textDecoration: "none" }}>Open page →</a>
-                      <button type="button" onClick={() => void navigator.clipboard.writeText("https://fergusonlawja.com/directory/join?utm_source=qr&utm_campaign=partner")}
-                        style={{ fontSize: ".78rem", fontWeight: 600, color: "#102A1E", background: "rgba(16,42,30,.08)", border: "1px solid rgba(16,42,30,.25)", borderRadius: 6, padding: "5px 12px", cursor: "pointer" }}>
-                        Copy link
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+          {tab === "qr_codes" && <QrCodesTab />}        </div>
       </div>
     </div>
   );
@@ -1127,19 +1096,19 @@ function TabBtn({ active, onClick, label, count }: { active: boolean; onClick: (
 }
 
 function StatusBadge({ status }: { status: string | null }) {
-  const s = status ?? "—";
+  const s = status ?? "â€”";
   const tone = STATUS_TONE[s] ?? S.badgeNeutral;
   return <span style={{ ...S.statusBadge, ...tone }}>{s}</span>;
 }
 
 function TypeBadge({ type, colors }: { type: string | null; colors?: Record<string, React.CSSProperties> }) {
-  if (!type) return <span style={S.muted}>—</span>;
+  if (!type) return <span style={S.muted}>â€”</span>;
   const tone = colors?.[type] ?? { background: "rgba(18,16,12,.08)", color: MUTED };
   return <span style={{ ...S.statusBadge, ...tone }}>{type}</span>;
 }
 
 function SourceBadge({ source }: { source: string | null }) {
-  if (!source) return <span style={S.muted}>—</span>;
+  if (!source) return <span style={S.muted}>â€”</span>;
   return <span style={S.sourceBadge}>{source}</span>;
 }
 
@@ -1161,11 +1130,11 @@ function Empty({ children }: { children: React.ReactNode }) { return <div style=
 // ---------------------------------------------------------------------------
 const TEMPLATES: Record<string, (name: string, service?: string) => string> = {
   acknowledge: (name) =>
-    `Dear ${name.split(" ")[0]},\n\nThank you for reaching out to Ferguson Law. We have received your enquiry and a member of our team will be in touch shortly.\n\nShould you have any immediate questions, please feel free to reply to this email or reach us via WhatsApp at (876) 320-0235.\n\nWarm regards,\nOwen K. Ferguson, JP\nFerguson Law\n(876) 320-0235 · contact@fergusonlawja.com`,
+    `Dear ${name.split(" ")[0]},\n\nThank you for reaching out to Ferguson Law. We have received your enquiry and a member of our team will be in touch shortly.\n\nShould you have any immediate questions, please feel free to reply to this email or reach us via WhatsApp at (876) 320-0235.\n\nWarm regards,\nOwen K. Ferguson, JP\nFerguson Law\n(876) 320-0235 Â· contact@fergusonlawja.com`,
   followup: (name, service) =>
-    `Dear ${name.split(" ")[0]},\n\nI hope this message finds you well. I wanted to follow up on your recent enquiry${service ? ` regarding ${service}` : ""} and ensure that we have addressed all of your questions.\n\nPlease do not hesitate to reach out if you need any further assistance. We look forward to working with you.\n\nWarm regards,\nOwen K. Ferguson, JP\nFerguson Law\n(876) 320-0235 · contact@fergusonlawja.com`,
+    `Dear ${name.split(" ")[0]},\n\nI hope this message finds you well. I wanted to follow up on your recent enquiry${service ? ` regarding ${service}` : ""} and ensure that we have addressed all of your questions.\n\nPlease do not hesitate to reach out if you need any further assistance. We look forward to working with you.\n\nWarm regards,\nOwen K. Ferguson, JP\nFerguson Law\n(876) 320-0235 Â· contact@fergusonlawja.com`,
   booking: (name) =>
-    `Dear ${name.split(" ")[0]},\n\nThank you for booking a consultation with Ferguson Law. Your appointment has been confirmed and you will receive a calendar invitation shortly.\n\nIf you have any questions before your appointment, please do not hesitate to contact us.\n\nWarm regards,\nOwen K. Ferguson, JP\nFerguson Law\n(876) 320-0235 · contact@fergusonlawja.com`,
+    `Dear ${name.split(" ")[0]},\n\nThank you for booking a consultation with Ferguson Law. Your appointment has been confirmed and you will receive a calendar invitation shortly.\n\nIf you have any questions before your appointment, please do not hesitate to contact us.\n\nWarm regards,\nOwen K. Ferguson, JP\nFerguson Law\n(876) 320-0235 Â· contact@fergusonlawja.com`,
 };
 
 function EmailComposeModal({ to, toName, defaultSubject, context, service, token, onClose }: {
@@ -1207,10 +1176,10 @@ function EmailComposeModal({ to, toName, defaultSubject, context, service, token
       <div onClick={(e) => e.stopPropagation()} style={{ background: "#fff", borderRadius: 18, padding: 28, width: "100%", maxWidth: 540, maxHeight: "92vh", overflowY: "auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
           <span style={{ fontFamily: "var(--serif, Georgia, serif)", fontWeight: 700, fontSize: "1.1rem", color: GREEN }}>Reply to {toName}</span>
-          <button type="button" onClick={onClose} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "#888" }}>×</button>
+          <button type="button" onClick={onClose} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "#888" }}>Ã—</button>
         </div>
         <div style={{ fontSize: ".78rem", color: MUTED, marginBottom: 14 }}>
-          To: <strong style={{ color: INK }}>{toName}</strong> &lt;{to}&gt;&nbsp;&nbsp;·&nbsp;&nbsp;From: contact@fergusonlawja.com
+          To: <strong style={{ color: INK }}>{toName}</strong> &lt;{to}&gt;&nbsp;&nbsp;Â·&nbsp;&nbsp;From: contact@fergusonlawja.com
         </div>
 
         {/* Templates */}
@@ -1235,7 +1204,7 @@ function EmailComposeModal({ to, toName, defaultSubject, context, service, token
               style={{ ...S.fieldInput, resize: "vertical", minHeight: 180, fontFamily: "inherit" }}
               value={body}
               onChange={(e) => setBody(e.target.value)}
-              placeholder={`Dear ${toName.split(" ")[0]},\n\nThank you for reaching out to Ferguson Law…`}
+              placeholder={`Dear ${toName.split(" ")[0]},\n\nThank you for reaching out to Ferguson Lawâ€¦`}
               autoFocus
             />
           </div>
@@ -1255,7 +1224,7 @@ function EmailComposeModal({ to, toName, defaultSubject, context, service, token
         <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
           <button type="button" onClick={() => void send()} disabled={sending || !body.trim()}
             style={{ ...S.authBtn, width: "auto", padding: "11px 26px", ...(sending || !body.trim() ? S.btnOff : null) }}>
-            {sending ? "Sending…" : "Send email"}
+            {sending ? "Sendingâ€¦" : "Send email"}
           </button>
           <button type="button" onClick={onClose}
             style={{ padding: "11px 18px", border: "1px solid rgba(18,16,12,.2)", borderRadius: 999, background: "#fff", fontSize: ".88rem", cursor: "pointer" }}>
@@ -1268,12 +1237,12 @@ function EmailComposeModal({ to, toName, defaultSubject, context, service, token
 }
 
 // ---------------------------------------------------------------------------
-// PurgeModal â€” shared deletion modal with editable message + reason selector
+// PurgeModal Ã¢â‚¬â€ shared deletion modal with editable message + reason selector
 // ---------------------------------------------------------------------------
 interface PurgeTarget { email: string; name: string | null; clientId?: string | null; }
 function PurgeModal({ target, token, onDone, onClose }: { target: PurgeTarget; token: string; onDone: () => void; onClose: () => void }) {
-  const defaultClientBody = `Following your request to our team, we have permanently removed your account and all associated information from Ferguson Law's systems â€” your login, client profile, matter records, uploaded documents, KYC information, messages, appointment history, and correspondence log. This action is irreversible and cannot be undone.\n\nThis deletion was carried out in accordance with the Jamaica Data Protection Act. If you did not request this, or believe this was done in error, please contact us immediately at the details below.`;
-  const defaultFirmBody = `Your records have been permanently removed from Ferguson Law's systems â€” your login, client profile, matter records, uploaded documents, KYC information, messages, appointment history, and correspondence log. This action is irreversible and cannot be undone.\n\nThis was carried out in accordance with the Jamaica Data Protection Act. If you believe this was done in error, please contact us immediately at the details below.`;
+  const defaultClientBody = `Following your request to our team, we have permanently removed your account and all associated information from Ferguson Law's systems Ã¢â‚¬â€ your login, client profile, matter records, uploaded documents, KYC information, messages, appointment history, and correspondence log. This action is irreversible and cannot be undone.\n\nThis deletion was carried out in accordance with the Jamaica Data Protection Act. If you did not request this, or believe this was done in error, please contact us immediately at the details below.`;
+  const defaultFirmBody = `Your records have been permanently removed from Ferguson Law's systems Ã¢â‚¬â€ your login, client profile, matter records, uploaded documents, KYC information, messages, appointment history, and correspondence log. This action is irreversible and cannot be undone.\n\nThis was carried out in accordance with the Jamaica Data Protection Act. If you believe this was done in error, please contact us immediately at the details below.`;
   const [reason, setReason] = useState<"admin" | "firm_decision">("admin");
   const [body, setBody] = useState(defaultClientBody);
   const [busy, setBusy] = useState(false);
@@ -1327,7 +1296,7 @@ function PurgeModal({ target, token, onDone, onClose }: { target: PurgeTarget; t
         <select value={reason} onChange={(e) => setReason(e.target.value as "admin" | "firm_decision")}
           style={{ width: "100%", padding: "7px 10px", borderRadius: 8, border: "1px solid #ccc", fontSize: ".82rem", marginBottom: 14 }}>
           <option value="admin">Client requested deletion</option>
-          <option value="firm_decision">Firm decision â€” we are not proceeding</option>
+          <option value="firm_decision">Firm decision Ã¢â‚¬â€ we are not proceeding</option>
         </select>
 
         <label style={{ fontSize: ".78rem", fontWeight: 600, color: "#333", display: "block", marginBottom: 4 }}>Email message to client</label>
@@ -1349,7 +1318,7 @@ function PurgeModal({ target, token, onDone, onClose }: { target: PurgeTarget; t
           </button>
           <button type="button" onClick={doPurge} disabled={busy}
             style={{ padding: "8px 18px", borderRadius: 8, border: "none", background: "#c0392b", color: "#fff", fontSize: ".82rem", fontWeight: 700, cursor: busy ? "default" : "pointer", opacity: busy ? 0.7 : 1 }}>
-            {busy ? "Deletingâ€¦" : "Delete permanently"}
+            {busy ? "DeletingÃ¢â‚¬Â¦" : "Delete permanently"}
           </button>
         </div>
       </div>
@@ -1359,10 +1328,11 @@ function PurgeModal({ target, token, onDone, onClose }: { target: PurgeTarget; t
 // ---------------------------------------------------------------------------
 // Leads
 // ---------------------------------------------------------------------------
-function LeadsTable({ leads, loading, token, onStatus, onDelete, onConvert }: { leads: Lead[]; loading: boolean; token: string; onStatus: (id: string, s: string) => void; onDelete: (id: string) => void; onConvert: (id: string) => void }) {
+function LeadsTable({ leads, loading, token, onStatus, onDelete, onRestore, onConvert, archivedLeads }: { leads: Lead[]; loading: boolean; token: string; onStatus: (id: string, s: string) => void; onDelete: (id: string) => void; onRestore: (id: string) => void; onConvert: (id: string) => void; archivedLeads?: Lead[] }) {
   const [composing, setComposing] = useState<Lead | null>(null);
   const [purgeTarget, setPurgeTarget] = useState<PurgeTarget | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 640);
     check();
@@ -1370,35 +1340,51 @@ function LeadsTable({ leads, loading, token, onStatus, onDelete, onConvert }: { 
     return () => window.removeEventListener("resize", check);
   }, []);
   async function deleteLead(id: string, name: string | null) {
-    if (!confirm(`Delete lead "${name || "this lead"}"? This cannot be undone.`)) return;
-    await createClient().rpc("fl_admin_delete_lead", { p_token: token, p_id: id });
+    if (!confirm(`Archive lead "${name || "this lead"}"? They will be hidden from active leads.`)) return;
     onDelete(id);
   }
-  if (loading && leads.length === 0) return <Empty>Loading leads…</Empty>;
-  if (leads.length === 0) return <Empty>No leads yet.</Empty>;
+  const displayLeads = showArchived ? (archivedLeads ?? []) : leads;
+  if (loading && leads.length === 0) return <Empty>Loading leadsâ€¦</Empty>;
+  if (displayLeads.length === 0 && !loading) return (
+    <>
+      <div style={{ display: "flex", gap: 8, padding: "8px 16px 0", alignItems: "center" }}>
+        <button type="button" onClick={() => setShowArchived(false)} style={{ padding: "4px 14px", borderRadius: 6, border: "none", cursor: "pointer", fontWeight: 600, fontSize: 13, background: !showArchived ? "#102A1E" : "rgba(18,16,12,.07)", color: !showArchived ? "#fff" : "#24211b" }}>Active ({leads.length})</button>
+        <button type="button" onClick={() => setShowArchived(true)} style={{ padding: "4px 14px", borderRadius: 6, border: "none", cursor: "pointer", fontWeight: 600, fontSize: 13, background: showArchived ? "#a23b3b" : "rgba(18,16,12,.07)", color: showArchived ? "#fff" : "#24211b" }}>Archived ({archivedLeads?.length ?? 0})</button>
+      </div>
+      <Empty>{showArchived ? "No archived leads." : "No leads yet."}</Empty>
+    </>
+  );
   return (
     <>
+      <div style={{ display: "flex", gap: 8, padding: "8px 16px 0", alignItems: "center" }}>
+        <button type="button" onClick={() => setShowArchived(false)} style={{ padding: "4px 14px", borderRadius: 6, border: "none", cursor: "pointer", fontWeight: 600, fontSize: 13, background: !showArchived ? "#102A1E" : "rgba(18,16,12,.07)", color: !showArchived ? "#fff" : "#24211b" }}>Active ({leads.length})</button>
+        <button type="button" onClick={() => setShowArchived(true)} style={{ padding: "4px 14px", borderRadius: 6, border: "none", cursor: "pointer", fontWeight: 600, fontSize: 13, background: showArchived ? "#a23b3b" : "rgba(18,16,12,.07)", color: showArchived ? "#fff" : "#24211b" }}>Archived ({archivedLeads?.length ?? 0})</button>
+      </div>
       {isMobile ? (
         <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "12px 16px" }}>
-          {leads.map((l) => {
+          {displayLeads.map((l) => {
             const wa = l.phone ? waLinkTo(l.phone, "Hello " + (l.name ?? "") + ", this is Ferguson Law following up on your enquiry.") : null;
             return (
               <div key={l.id} style={{ background: "#fff", border: "1px solid rgba(18,16,12,.1)", borderRadius: 12, padding: "14px 16px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginBottom: 6 }}>
-                  <span style={{ fontWeight: 700, fontSize: ".92rem", color: GREEN }}>{l.name || "—"}</span>
+                  <span style={{ fontWeight: 700, fontSize: ".92rem", color: GREEN }}>{l.name || "â€”"}</span>
                   <StatusSelect value={l.status} options={LEAD_STATUSES} onChange={(v) => onStatus(l.id, v)} />
                 </div>
                 {(l.email || l.phone) && (<div style={{ fontSize: ".8rem", color: MUTED, marginBottom: 4 }}>{l.email && <div>{l.email}</div>}{l.phone && <div>{l.phone}</div>}</div>)}
                 {l.service && <div style={{ fontSize: ".78rem", color: INK, marginBottom: 4 }}>{l.service} <SourceBadge source={l.source} /></div>}
                 {l.message && <div style={{ fontSize: ".76rem", color: MUTED, marginBottom: 8, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as React.CSSProperties["WebkitBoxOrient"] }}>{l.message}</div>}
                 <div style={{ fontSize: ".7rem", color: MUTED, marginBottom: 10 }}>{fmtDate(l.created_at)}</div>
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-                  {l.email && <button type="button" onClick={() => setComposing(l)} style={{ display: "inline-block", padding: "5px 12px", borderRadius: 5, fontSize: ".76rem", fontWeight: 600, cursor: "pointer", border: "1px solid rgba(201,168,106,.45)", background: "rgba(201,168,106,.12)", color: "#7a5a1e" }}>Email</button>}
-                  {wa && <a href={wa} target="_blank" rel="noopener noreferrer" style={{ display: "inline-block", padding: "5px 12px", borderRadius: 5, fontSize: ".76rem", fontWeight: 600, cursor: "pointer", textDecoration: "none", border: "1px solid rgba(47,122,82,.3)", background: "rgba(47,122,82,.08)", color: "#2f7a52" }}>WhatsApp</a>}
-                  {l.status === "new" && <button type="button" onClick={() => onStatus(l.id, "contacted")} style={{ display: "inline-block", padding: "5px 12px", borderRadius: 5, fontSize: ".76rem", fontWeight: 600, cursor: "pointer", border: "1px solid rgba(47,122,82,.22)", background: "rgba(47,122,82,.06)", color: "#2f7a52" }}>Mark contacted</button>}
-                  <button type="button" onClick={() => onDelete(l.id)} style={{ display: "inline-block", padding: "5px 12px", borderRadius: 5, fontSize: ".76rem", fontWeight: 600, cursor: "pointer", border: "1px solid rgba(18,16,12,.14)", background: "transparent", color: MUTED }}>Archive</button>
-                  <button type="button" onClick={() => onConvert(l.id)} style={{ display: "inline-block", padding: "5px 12px", borderRadius: 5, fontSize: ".76rem", fontWeight: 600, cursor: "pointer", border: "1px solid rgba(18,16,12,.14)", background: "rgba(18,16,12,.04)", color: INK }}>→ Client</button>
-                  {l.email && <button type="button" onClick={() => setPurgeTarget({ email: l.email!, name: l.name, clientId: null })} style={{ display: "inline-block", padding: "4px 8px", borderRadius: 5, fontSize: ".68rem", fontWeight: 500, cursor: "pointer", border: "none", background: "transparent", color: "rgba(162,59,59,.55)" }}>Delete</button>}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5 }}>
+                  {l.email && <button type="button" onClick={() => setComposing(l)} style={{ ...S.waBtn, background: "#c9a86a", color: "#10211c" }}>Email</button>}
+                  {wa && <a href={wa} target="_blank" rel="noopener noreferrer" style={S.waBtn}>WhatsApp</a>}
+                  {l.status === "new" && <button type="button" onClick={() => onStatus(l.id, "contacted")} style={{ ...S.waBtn, background: "rgba(47,122,82,.12)", color: "#2f7a52", border: "1px solid rgba(47,122,82,.25)" }}>Contacted</button>}
+                  <button type="button" onClick={() => onConvert(l.id)} style={{ ...S.waBtn, background: "rgba(12,80,60,.1)", color: "#0c503c", border: "1px solid rgba(12,80,60,.2)" }}>â†’ Client</button>
+                  {l.archived_at ? (
+                    <button type="button" onClick={() => onRestore(l.id)} style={{ ...S.waBtn, background: "rgba(47,122,82,.12)", color: "#2f7a52", border: "1px solid rgba(47,122,82,.25)", gridColumn: "span 2" }}>Restore</button>
+                  ) : (
+                    <button type="button" onClick={() => onDelete(l.id)} style={{ ...S.waBtn, background: "rgba(162,59,59,.08)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)", gridColumn: "span 2" }}>Archive</button>
+                  )}
+                  {l.email && <button type="button" onClick={() => setPurgeTarget({ email: l.email!, name: l.name, clientId: null })} style={{ ...S.waBtn, background: "rgba(162,59,59,.18)", color: "#7a1515", border: "1px solid rgba(162,59,59,.4)", fontWeight: 700, gridColumn: "span 2" }}>Delete Record</button>}
                 </div>
               </div>
             );
@@ -1407,52 +1393,55 @@ function LeadsTable({ leads, loading, token, onStatus, onDelete, onConvert }: { 
       ) : (
       <div style={S.tableWrap}>
         <table style={S.table}>
-          <thead><tr><Th>Date</Th><Th>Name</Th><Th>Contact</Th><Th>Service</Th><Th>Source</Th><Th>Message</Th><Th>Status</Th><Th>Actions</Th></tr></thead>
+              <thead><tr><Th>Name</Th><Th>Contact</Th><Th>Type</Th><Th>Country</Th><Th>Status</Th><Th>Source</Th><Th>Date</Th><Th>Matters</Th><Th>Actions</Th></tr></thead>
           <tbody>
-            {leads.map((l) => {
+            {displayLeads.map((l) => {
               const wa = l.phone ? waLinkTo(l.phone, `Hello ${l.name ?? ""}, this is Ferguson Law following up on your enquiry.`) : null;
               return (
                 <tr key={l.id} style={S.tr}>
                   <Td>{fmtDate(l.created_at)}</Td>
-                  <Td><span style={S.strong}>{l.name || "—"}</span></Td>
-                  <Td><div style={S.contactCol}>{l.email && <span>{l.email}</span>}{l.phone && <span style={S.muted}>{l.phone}</span>}{!l.email && !l.phone && <span style={S.muted}>—</span>}</div></Td>
-                  <Td>{l.service || "—"}</Td>
+                  <Td><span style={S.strong}>{l.name || "â€”"}</span></Td>
+                  <Td><div style={S.contactCol}>{l.email && <span>{l.email}</span>}{l.phone && <span style={S.muted}>{l.phone}</span>}{!l.email && !l.phone && <span style={S.muted}>â€”</span>}</div></Td>
+                  <Td>{l.service || "â€”"}</Td>
                   <Td><SourceBadge source={l.source} /></Td>
-                  <Td><div style={S.msgCell} title={l.message ?? ""}>{l.message || "—"}</div></Td>
+                  <Td><div style={S.msgCell} title={l.message ?? ""}>{l.message || "â€”"}</div></Td>
                   <Td><StatusSelect value={l.status} options={LEAD_STATUSES} onChange={(v) => onStatus(l.id, v)} /></Td>
                   <Td>
-                    <div style={{ display: "flex", gap: 5, flexWrap: "wrap", alignItems: "center" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5, minWidth: 200 }}>
                       {l.email && (
                         <button type="button" onClick={() => setComposing(l)}
                           style={{ display: "inline-block", padding: "4px 10px", borderRadius: 5, fontSize: ".74rem", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", border: "1px solid rgba(201,168,106,.45)", background: "rgba(201,168,106,.12)", color: "#7a5a1e" }}>
                           Email
                         </button>
                       )}
-                      {wa && (
-                        <a href={wa} target="_blank" rel="noopener noreferrer"
-                          style={{ display: "inline-block", padding: "4px 10px", borderRadius: 5, fontSize: ".74rem", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", textDecoration: "none", border: "1px solid rgba(47,122,82,.3)", background: "rgba(47,122,82,.08)", color: "#2f7a52" }}>
-                          WhatsApp
-                        </a>
-                      )}
+                      {wa ? (
+                        <a href={wa} target="_blank" rel="noopener noreferrer" style={S.waBtn}>WhatsApp</a>
+                      ) : <span />}
                       {l.status === "new" && (
                         <button type="button" onClick={() => onStatus(l.id, "contacted")}
                           style={{ display: "inline-block", padding: "4px 10px", borderRadius: 5, fontSize: ".74rem", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", border: "1px solid rgba(47,122,82,.22)", background: "rgba(47,122,82,.06)", color: "#2f7a52" }}>
                           Mark contacted
                         </button>
                       )}
-                      {!l.email && !wa && l.status !== "new" && <span style={S.muted}>—</span>}
-                      <button type="button" onClick={() => onDelete(l.id)}
-                        style={{ display: "inline-block", padding: "4px 10px", borderRadius: 5, fontSize: ".74rem", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", border: "1px solid rgba(18,16,12,.14)", background: "transparent", color: MUTED }}>
-                        Archive
-                      </button>
                       <button type="button" onClick={() => onConvert(l.id)}
-                        style={{ display: "inline-block", padding: "4px 10px", borderRadius: 5, fontSize: ".74rem", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", border: "1px solid rgba(18,16,12,.14)", background: "rgba(18,16,12,.04)", color: INK }}>
-                        → Client
+                        style={{ ...S.waBtn, background: "rgba(12,80,60,.1)", color: "#0c503c", border: "1px solid rgba(12,80,60,.2)" }}>
+                        â†’ Client
                       </button>
+                      {l.archived_at ? (
+                        <button type="button" onClick={() => onRestore(l.id)}
+                          style={{ ...S.waBtn, background: "rgba(47,122,82,.12)", color: "#2f7a52", border: "1px solid rgba(47,122,82,.25)", gridColumn: "span 2" }}>
+                          Restore
+                        </button>
+                      ) : (
+                        <button type="button" onClick={() => onDelete(l.id)}
+                          style={{ ...S.waBtn, background: "rgba(162,59,59,.08)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)", gridColumn: "span 2" }}>
+                          Archive
+                        </button>
+                      )}
                       {l.email && (
                         <button type="button" onClick={() => setPurgeTarget({ email: l.email!, name: l.name, clientId: null })}
-                          style={{ display: "inline-block", padding: "4px 8px", borderRadius: 5, fontSize: ".68rem", fontWeight: 500, cursor: "pointer", whiteSpace: "nowrap", border: "none", background: "transparent", color: "rgba(162,59,59,.55)", letterSpacing: ".01em" }}>
-                          Delete
+                          style={{ ...S.waBtn, background: "rgba(162,59,59,.18)", color: "#7a1515", border: "1px solid rgba(162,59,59,.4)", fontWeight: 700, gridColumn: "span 2" }}>
+                          Delete Record
                         </button>
                       )}
                     </div>
@@ -1468,7 +1457,7 @@ function LeadsTable({ leads, loading, token, onStatus, onDelete, onConvert }: { 
         <EmailComposeModal
           to={composing.email}
           toName={composing.name ?? "Client"}
-          defaultSubject={composing.service ? `Re: Your ${composing.service} enquiry — Ferguson Law` : `Re: Your enquiry — Ferguson Law`}
+          defaultSubject={composing.service ? `Re: Your ${composing.service} enquiry â€” Ferguson Law` : `Re: Your enquiry â€” Ferguson Law`}
           context={composing.message ?? undefined}
           service={composing.service ?? undefined}
           token={token}
@@ -1542,12 +1531,12 @@ function NewBookingModal({ token, onClose, onCreated }: { token: string; onClose
       <div style={box}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
           <span style={{ fontWeight: 700, fontSize: "1.05rem", color: GOLD }}>New Booking</span>
-          <button type="button" onClick={onClose} style={{ background: "none", border: "none", color: "#9fb3ab", fontSize: "1.2rem", cursor: "pointer" }}>✕</button>
+          <button type="button" onClick={onClose} style={{ background: "none", border: "none", color: "#9fb3ab", fontSize: "1.2rem", cursor: "pointer" }}>âœ•</button>
         </div>
 
         {result?.ok ? (
           <div>
-            <div style={{ color: "#2f7a52", fontWeight: 600, marginBottom: 12 }}>Booking created — Ref {result.ref}</div>
+            <div style={{ color: "#2f7a52", fontWeight: 600, marginBottom: 12 }}>Booking created â€” Ref {result.ref}</div>
             {result.meetingUrl && (
               <div style={{ marginBottom: 16 }}>
                 <div style={{ ...lbl }}>Meeting link</div>
@@ -1559,11 +1548,11 @@ function NewBookingModal({ token, onClose, onCreated }: { token: string; onClose
                   </button>
                 </div>
                 <div style={{ marginTop: 8, fontSize: ".78rem", color: "#9fb3ab" }}>
-                  {sendEmail ? "Email with this link was sent to the client." : "Email not sent — share this link manually."}
+                  {sendEmail ? "Email with this link was sent to the client." : "Email not sent â€” share this link manually."}
                 </div>
               </div>
             )}
-            {!result.meetingUrl && <div style={{ color: "#9fb3ab", fontSize: ".85rem", marginBottom: 12 }}>No meeting link generated — you can send one from the Bookings table.</div>}
+            {!result.meetingUrl && <div style={{ color: "#9fb3ab", fontSize: ".85rem", marginBottom: 12 }}>No meeting link generated â€” you can send one from the Bookings table.</div>}
             <button type="button" onClick={onClose} style={{ ...S.waBtn, background: GOLD, color: "#0e2518" }}>Done</button>
           </div>
         ) : (
@@ -1598,7 +1587,7 @@ function NewBookingModal({ token, onClose, onCreated }: { token: string; onClose
             </div>
             <div style={row}>
               <label style={lbl}>Notes</label>
-              <textarea value={notes} onChange={e => setNotes(e.target.value)} style={{ ...inp, minHeight: 64, resize: "vertical" }} placeholder="Any context for Owen…" />
+              <textarea value={notes} onChange={e => setNotes(e.target.value)} style={{ ...inp, minHeight: 64, resize: "vertical" }} placeholder="Any context for Owenâ€¦" />
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 18 }}>
               <input type="checkbox" id="sendEmail" checked={sendEmail} onChange={e => setSendEmail(e.target.checked)} style={{ accentColor: GOLD, width: 16, height: 16 }} />
@@ -1607,7 +1596,7 @@ function NewBookingModal({ token, onClose, onCreated }: { token: string; onClose
             {result && !result.ok && <div style={{ color: "#a23b3b", fontSize: ".85rem", marginBottom: 10 }}>{result.error}</div>}
             <div style={{ display: "flex", gap: 10 }}>
               <button type="submit" disabled={saving} style={{ ...S.waBtn, background: GOLD, color: "#0e2518", flex: 1, opacity: saving ? 0.7 : 1 }}>
-                {saving ? "Creating…" : "Create booking & generate link"}
+                {saving ? "Creatingâ€¦" : "Create booking & generate link"}
               </button>
               <button type="button" onClick={onClose} style={{ ...S.waBtn }}>Cancel</button>
             </div>
@@ -1718,7 +1707,7 @@ function BookingsTable({ appts, loading, token, onStatus, onCancel, onRefresh }:
           </button>
         </div>
       </div>
-      {loading && appts.length === 0 ? <Empty>Loading bookings…</Empty> : sorted.length === 0 ? <Empty>No bookings match this filter.</Empty> : (
+      {loading && appts.length === 0 ? <Empty>Loading bookingsâ€¦</Empty> : sorted.length === 0 ? <Empty>No bookings match this filter.</Empty> : (
         isMobile ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "12px 16px" }}>
             {sorted.map((a) => {
@@ -1727,7 +1716,7 @@ function BookingsTable({ appts, loading, token, onStatus, onCancel, onRefresh }:
                 <div key={a.id} style={{ background: "#fff", border: "1px solid rgba(18,16,12,.1)", borderRadius: 12, padding: "14px 16px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginBottom: 6 }}>
                     <div>
-                      <div style={{ fontWeight: 700, fontSize: ".88rem", color: GREEN }}>{a.name || "—"}</div>
+                      <div style={{ fontWeight: 700, fontSize: ".88rem", color: GREEN }}>{a.name || "â€”"}</div>
                       <div style={{ fontSize: ".78rem", color: MUTED }}>{fmtWhen(a.starts_at)}</div>
                     </div>
                     <StatusSelect value={a.status} options={APPT_STATUSES} onChange={(v) => onStatus(a.id, v)} />
@@ -1739,7 +1728,7 @@ function BookingsTable({ appts, loading, token, onStatus, onCancel, onRefresh }:
                   </div>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     {a.email && <button type="button" onClick={() => setComposing(a)} style={{ ...S.waBtn, background: "#c9a86a", color: "#10211c" }}>Email</button>}
-                    {a.email && a.status === "confirmed" && <button type="button" onClick={() => void sendMeetingLink(a)} disabled={linkSending === a.id} style={{ ...S.waBtn, background: "rgba(16,42,30,.1)", color: GREEN, opacity: linkSending === a.id ? 0.6 : 1 }}>{linkSending === a.id ? "Sending…" : "Meeting link"}</button>}
+                    {a.email && a.status === "confirmed" && <button type="button" onClick={() => void sendMeetingLink(a)} disabled={linkSending === a.id} style={{ ...S.waBtn, background: "rgba(16,42,30,.1)", color: GREEN, opacity: linkSending === a.id ? 0.6 : 1 }}>{linkSending === a.id ? "Sendingâ€¦" : "Meeting link"}</button>}
                     {(a.status === "pending" || a.status === "confirmed") && new Date(a.starts_at) > new Date() && <button type="button" onClick={() => onCancel(a.id)} style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)" }}>Cancel</button>}
                     {a.email && <button type="button" onClick={() => setPurgeTarget({ email: a.email!, name: a.name, clientId: null })} style={{ ...S.waBtn, background: "#c0392b", color: "#fff", border: "none" }}>Delete Record</button>}
                     {linkResult[a.id] && <span style={{ fontSize: ".72rem", color: linkResult[a.id].ok ? "#2f7a52" : "#a23b3b" }}>{linkResult[a.id].msg}</span>}
@@ -1756,10 +1745,10 @@ function BookingsTable({ appts, loading, token, onStatus, onCancel, onRefresh }:
               {sorted.map((a) => (
                 <tr key={a.id} style={S.tr}>
                   <Td><span style={S.strong}>{fmtWhen(a.starts_at)}</span></Td>
-                  <Td>{a.service || "—"}</Td>
-                  <Td>{a.name || "—"}</Td>
-                  <Td><div style={S.contactCol}>{a.email && <span>{a.email}</span>}{a.phone && <span style={S.muted}>{a.phone}</span>}{!a.email && !a.phone && <span style={S.muted}>—</span>}</div></Td>
-                  <Td><span style={S.mono}>{a.ref || "—"}</span></Td>
+                  <Td>{a.service || "â€”"}</Td>
+                  <Td>{a.name || "â€”"}</Td>
+                  <Td><div style={S.contactCol}>{a.email && <span>{a.email}</span>}{a.phone && <span style={S.muted}>{a.phone}</span>}{!a.email && !a.phone && <span style={S.muted}>â€”</span>}</div></Td>
+                  <Td><span style={S.mono}>{a.ref || "â€”"}</span></Td>
                   <Td><StatusSelect value={a.status} options={APPT_STATUSES} onChange={(v) => onStatus(a.id, v)} /></Td>
                   <Td>
                     <button type="button" onClick={() => setAttentionAppt(a)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
@@ -1784,7 +1773,7 @@ function BookingsTable({ appts, loading, token, onStatus, onCancel, onRefresh }:
                             onClick={() => void sendMeetingLink(a)}
                             disabled={linkSending === a.id}
                             style={{ ...S.waBtn, background: "rgba(16,42,30,.1)", color: GREEN, border: `1px solid ${GREEN}30`, opacity: linkSending === a.id ? 0.6 : 1 }}>
-                            {linkSending === a.id ? "Sending…" : "Send meeting link"}
+                            {linkSending === a.id ? "Sendingâ€¦" : "Send meeting link"}
                           </button>
                         )}
                         {(a.status === "pending" || a.status === "confirmed") && new Date(a.starts_at) > new Date() && (
@@ -1793,7 +1782,7 @@ function BookingsTable({ appts, loading, token, onStatus, onCancel, onRefresh }:
                             Cancel
                           </button>
                         )}
-                        {!a.email && a.status === "cancelled" && <span style={S.muted}>—</span>}
+                        {!a.email && a.status === "cancelled" && <span style={S.muted}>â€”</span>}
                       </div>
                       {linkResult[a.id] && (
                         <span style={{ fontSize: ".72rem", color: linkResult[a.id].ok ? "#2f7a52" : "#a23b3b" }}>{linkResult[a.id].msg}</span>
@@ -1811,7 +1800,7 @@ function BookingsTable({ appts, loading, token, onStatus, onCancel, onRefresh }:
         <EmailComposeModal
           to={composing.email}
           toName={composing.name ?? "Client"}
-          defaultSubject={`Your ${composing.service ?? "consultation"} booking — Ferguson Law`}
+          defaultSubject={`Your ${composing.service ?? "consultation"} booking â€” Ferguson Law`}
           service={composing.service ?? undefined}
           token={token}
           onClose={() => setComposing(null)}
@@ -1852,6 +1841,94 @@ const CLIENT_STATUS_COLORS: Record<string, React.CSSProperties> = {
   prospect: { background: "rgba(200,166,92,.22)", color: "#8a6a22" },
 };
 
+// ---------------------------------------------------------------------------
+// Data Privacy (admin tool for client profile)
+// ---------------------------------------------------------------------------
+function DataPrivacyModal({ client, token, onDelete, onClose }: {
+  client: Client; token: string; onDelete: (id: string) => void; onClose: () => void;
+}) {
+  const [exporting, setExporting] = useState(false);
+  const [exportErr, setExportErr] = useState<string | null>(null);
+  const [showPurge, setShowPurge] = useState(false);
+
+  async function exportData() {
+    if (!client.email) { setExportErr("No email on file for this client."); return; }
+    setExporting(true); setExportErr(null);
+    try {
+      const res = await fetch(`/api/admin/cms/export-client-data?email=${encodeURIComponent(client.email)}`, {
+        headers: { "x-admin-token": token },
+      });
+      if (!res.ok) { const j = await res.json(); throw new Error(j.error || "Export failed."); }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `ferguson-law-${client.email}-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) { setExportErr(e instanceof Error ? e.message : "Export failed."); }
+    finally { setExporting(false); }
+  }
+
+  const overlay: React.CSSProperties = { position: "fixed", inset: 0, background: "rgba(0,0,0,.45)", zIndex: 9000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 };
+  const modal: React.CSSProperties = { background: "#fff", borderRadius: 14, padding: "28px 28px 24px", maxWidth: 540, width: "100%", boxShadow: "0 8px 40px rgba(0,0,0,.22)" };
+
+  if (showPurge && client.email) {
+    return (
+      <PurgeModal
+        target={{ clientId: client.id, email: client.email, name: client.name }}
+        token={token}
+        onDone={() => { onDelete(client.id); onClose(); }}
+        onClose={() => setShowPurge(false)}
+      />
+    );
+  }
+
+  return (
+    <div style={overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div style={modal}>
+        <div style={{ fontWeight: 700, fontSize: "1rem", color: "#10211c", marginBottom: 4 }}>Data Privacy</div>
+        <div style={{ fontSize: ".82rem", color: "#888", marginBottom: 18 }}>
+          {client.name} {client.email && <span>({client.email})</span>}
+        </div>
+
+        <div style={{ background: "#f5f9f5", borderRadius: 10, border: "1px solid rgba(47,122,82,.2)", padding: "14px 16px", marginBottom: 20 }}>
+          <div style={{ fontSize: ".75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em", color: GREEN, marginBottom: 6 }}>Jamaica Data Protection Act 2020</div>
+          <div style={{ fontSize: ".8rem", color: "#444", lineHeight: 1.6 }}>
+            Under the Jamaica Data Protection Act 2020, clients have the right to access a copy of their personal data and to request its deletion. These tools allow you to fulfil those requests on behalf of the firm. All actions are logged for compliance purposes.
+          </div>
+        </div>
+
+        <div style={{ display: "grid", gap: 12 }}>
+          <div style={{ border: "1px solid #e8e8e8", borderRadius: 10, padding: "16px 18px" }}>
+            <div style={{ fontWeight: 700, fontSize: ".85rem", color: "#10211c", marginBottom: 4 }}>Export client data</div>
+            <div style={{ fontSize: ".78rem", color: "#888", marginBottom: 12 }}>Download a JSON file of all data Ferguson Law holds for this client â€” profile, matters, documents, KYC, messages, and payment history.</div>
+            {exportErr && <p style={{ color: "#b00", fontSize: ".75rem", marginBottom: 8 }}>{exportErr}</p>}
+            <button onClick={() => void exportData()} disabled={exporting || !client.email}
+              style={{ padding: "9px 18px", borderRadius: 8, border: "1px solid #ccc", background: "#fff", color: "#10211c", fontSize: ".82rem", fontWeight: 600, cursor: (exporting || !client.email) ? "default" : "pointer", opacity: !client.email ? 0.5 : 1 }}>
+              {exporting ? "Preparingâ€¦" : "Export data"}
+            </button>
+          </div>
+
+          <div style={{ border: "1px solid #f0d5d5", borderRadius: 10, padding: "16px 18px" }}>
+            <div style={{ fontWeight: 700, fontSize: ".85rem", color: "#c0392b", marginBottom: 4 }}>Delete account & data</div>
+            <div style={{ fontSize: ".78rem", color: "#888", marginBottom: 12 }}>Permanently remove this client's account, all matter records, documents, KYC, messages, and history. This action is irreversible and will send a confirmation email to the client.</div>
+            <button onClick={() => setShowPurge(true)} disabled={!client.email}
+              style={{ padding: "9px 18px", borderRadius: 8, border: "1px solid #d33", background: "#fff", color: "#d33", fontSize: ".82rem", fontWeight: 600, cursor: !client.email ? "default" : "pointer", opacity: !client.email ? 0.5 : 1 }}>
+              Delete account & data
+            </button>
+          </div>
+        </div>
+
+        <button onClick={onClose}
+          style={{ marginTop: 20, padding: "9px 18px", borderRadius: 8, border: "1px solid #ddd", background: "#f5f5f5", color: "#555", fontSize: ".82rem", cursor: "pointer", width: "100%" }}>
+          Close
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function ClientsTab({ clients, matters, loading, onUpsert, onDelete, token }: {
   clients: Client[]; matters: Matter[]; loading: boolean; token: string;
   onUpsert: (f: { name: string; email: string; phone: string; type: string; country: string; notes: string }) => Promise<string | null>;
@@ -1863,7 +1940,15 @@ function ClientsTab({ clients, matters, loading, onUpsert, onDelete, token }: {
   const [busy, setBusy] = useState(false); const [err, setErr] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [inviteSent, setInviteSent] = useState<Record<string, boolean>>({});
+  const [privacyTarget, setPrivacyTarget] = useState<Client | null>(null);
 
+  const [pushSubs, setPushSubs] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    const sb = createClient();
+    void sb.from('fl_push_subscriptions').select('user_ref').eq('user_role', 'client').then(({ data }) => {
+      if (data) setPushSubs(new Set(data.map((r: { user_ref: string }) => r.user_ref)));
+    });
+  }, []);
   const sendInvite = async (clientEmail: string, clientName: string, clientId: string) => {
     setInviteSent((p) => ({ ...p, [clientId]: true }));
     await fetch("/api/admin/cms/invite-client", {
@@ -1909,17 +1994,25 @@ function ClientsTab({ clients, matters, loading, onUpsert, onDelete, token }: {
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 12 }}>
           <button type="button" onClick={() => void submit()} disabled={busy || !name.trim()}
             style={{ ...S.authBtn, width: "auto", padding: "10px 22px", ...(busy || !name.trim() ? S.btnOff : null) }}>
-            {busy ? "Saving…" : "Save client"}
+            {busy ? "Savingâ€¦" : "Save client"}
           </button>
           {err && <span style={{ color: "#a23b3b", fontSize: ".82rem" }}>{err}</span>}
         </div>
       </div>
 
-      {loading && clients.length === 0 ? <Empty>Loading clients…</Empty> :
+      {privacyTarget && (
+        <DataPrivacyModal
+          client={privacyTarget}
+          token={token}
+          onDelete={onDelete}
+          onClose={() => setPrivacyTarget(null)}
+        />
+      )}
+      {loading && clients.length === 0 ? <Empty>Loading clientsâ€¦</Empty> :
         clients.length === 0 ? <Empty>No clients yet. Add one above.</Empty> : (
           <div style={S.tableWrap}>
             <table style={S.table}>
-              <thead><tr><Th>Name</Th><Th>Contact</Th><Th>Type</Th><Th>Country</Th><Th>Status</Th><Th>Source</Th><Th>Date</Th><Th>Matters</Th><Th>Actions</Th></tr></thead>
+              <thead><tr><Th>Name</Th><Th>Notif</Th><Th>Contact</Th><Th>Type</Th><Th>Country</Th><Th>Status</Th><Th>Source</Th><Th>Date</Th><Th>Matters</Th><Th>Actions</Th></tr></thead>
               <tbody>
                 {clients.map((c) => {
                   const cms = clientMatters(c.id);
@@ -1927,9 +2020,10 @@ function ClientsTab({ clients, matters, loading, onUpsert, onDelete, token }: {
                     <>
                       <tr key={c.id} style={S.tr}>
                         <Td><span style={S.strong}>{c.name}</span></Td>
+                        <Td><span title={pushSubs.has(c.id) ? 'Push ON' : 'Push OFF'} style={{ fontSize: '1rem', opacity: pushSubs.has(c.id) ? 1 : 0.25 }}>{pushSubs.has(c.id) ? String.fromCharCode(0x1F514) : String.fromCharCode(0x1F515)}</span></Td>
                         <Td><div style={S.contactCol}>{c.email && <span>{c.email}</span>}{c.phone && <span style={S.muted}>{c.phone}</span>}</div></Td>
                         <Td><TypeBadge type={c.client_type} colors={CLIENT_TYPE_COLORS} /></Td>
-                        <Td>{c.country_of_residence || <span style={S.muted}>—</span>}</Td>
+                        <Td>{c.country_of_residence || <span style={S.muted}>â€”</span>}</Td>
                         <Td><TypeBadge type={c.status} colors={CLIENT_STATUS_COLORS} /></Td>
                         <Td><SourceBadge source={c.source} /></Td>
                         <Td>{fmtDate(c.created_at)}</Td>
@@ -1937,9 +2031,9 @@ function ClientsTab({ clients, matters, loading, onUpsert, onDelete, token }: {
                           {cms.length > 0 ? (
                             <button type="button" onClick={() => setExpanded(expanded === c.id ? null : c.id)}
                               style={{ ...S.waBtn, background: "transparent", color: GREEN, border: `1px solid ${GREEN}` }}>
-                              {cms.length} matter{cms.length > 1 ? "s" : ""} {expanded === c.id ? "▲" : "▼"}
+                              {cms.length} matter{cms.length > 1 ? "s" : ""} {expanded === c.id ? "â–²" : "â–¼"}
                             </button>
-                          ) : <span style={S.muted}>—</span>}
+                          ) : <span style={S.muted}>â€”</span>}
                         </Td>
                         <Td>
                           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
@@ -1951,10 +2045,14 @@ function ClientsTab({ clients, matters, loading, onUpsert, onDelete, token }: {
                                   disabled={alreadySent}
                                   title={c.portal_invited_at ? `Sent ${new Date(c.portal_invited_at).toLocaleDateString()}` : undefined}
                                   style={{ ...S.waBtn, background: alreadySent ? "rgba(47,122,82,.08)" : "rgba(201,168,106,.12)", color: alreadySent ? GREEN : "#8a6a22", border: `1px solid ${alreadySent ? GREEN : "rgba(201,168,106,.4)"}`, cursor: alreadySent ? "default" : "pointer" }}>
-                                  {alreadySent ? "✓ Login Email Sent" : "Send Login Email"}
+                                  {alreadySent ? "âœ“ Login Email Sent" : "Send Login Email"}
                                 </button>
                               );
                             })()}
+                            <button type="button" onClick={() => setPrivacyTarget(c)}
+                              style={{ ...S.waBtn, background: "rgba(47,122,82,.08)", color: GREEN, border: "1px solid rgba(47,122,82,.2)" }}>
+                              Data Privacy
+                            </button>
                             <button type="button" onClick={() => onDelete(c.id)}
                               style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)" }}>
                               Archive
@@ -1966,10 +2064,10 @@ function ClientsTab({ clients, matters, loading, onUpsert, onDelete, token }: {
                         <tr key={m.id} style={{ ...S.tr, background: "#faf8f2" }}>
                           <td colSpan={10} style={{ ...S.td, paddingLeft: 32 }}>
                             <span style={S.mono}>{m.ref}</span>
-                            {" · "}<strong>{m.matter_type || "matter"}</strong>
-                            {" · stage: "}{m.stage}
-                            {" · "}{m.payment_status}
-                            {m.description ? ` · ${m.description.slice(0, 80)}` : ""}
+                            {" Â· "}<strong>{m.matter_type || "matter"}</strong>
+                            {" Â· stage: "}{m.stage}
+                            {" Â· "}{m.payment_status}
+                            {m.description ? ` Â· ${m.description.slice(0, 80)}` : ""}
                           </td>
                         </tr>
                       ))}
@@ -2015,7 +2113,7 @@ function MattersTab({ matters, loading, token, onStage, onPayment, onDelete }: {
   }, []);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  if (loading && matters.length === 0) return <Empty>Loading matters…</Empty>;
+  if (loading && matters.length === 0) return <Empty>Loading mattersâ€¦</Empty>;
   if (matters.length === 0) return <Empty>No matters yet. Use the CMS tab to open a new matter for any client.</Empty>;
 
   function toggleExpand(id: string) {
@@ -2028,7 +2126,7 @@ function MattersTab({ matters, loading, token, onStage, onPayment, onDelete }: {
         {(isMobile ? (["kanban"] as const) : (["kanban", "table"] as const)).map(v => (
           <button key={v} type="button" onClick={() => setView(v)}
             style={{ padding: "6px 14px", borderRadius: 6, border: "1px solid rgba(18,16,12,.15)", background: view === v ? GREEN : "transparent", color: view === v ? CREAM : MUTED, fontSize: ".75rem", fontWeight: 600, cursor: "pointer", textTransform: "capitalize" }}>
-            {v === "kanban" ? "⬛ Kanban" : "≡ Table"}
+            {v === "kanban" ? "â¬› Kanban" : "â‰¡ Table"}
           </button>
         ))}
       </div>
@@ -2043,21 +2141,21 @@ function MattersTab({ matters, loading, token, onStage, onPayment, onDelete }: {
       ) : (
         <div style={S.tableWrap}>
           <table style={S.table}>
-            <thead><tr><Th>​</Th><Th>Ref</Th><Th>Client</Th><Th>Type</Th><Th>Stage</Th><Th>Priority</Th><Th>Payment</Th><Th>Description</Th><Th>Date</Th><Th>&#160;</Th></tr></thead>
+            <thead><tr><Th>â€‹</Th><Th>Ref</Th><Th>Client</Th><Th>Type</Th><Th>Stage</Th><Th>Priority</Th><Th>Payment</Th><Th>Description</Th><Th>Date</Th><Th>&#160;</Th></tr></thead>
             <tbody>
               {matters.filter((m) => m.stage !== "archived").map((m) => (
                 <>
                   <tr key={m.id} style={{ ...S.tr, cursor: "pointer" }} onClick={() => toggleExpand(m.id)}>
-                    <Td><span style={{ color: GOLD, fontWeight: 700, fontSize: ".8rem" }}>{expandedId === m.id ? "▼" : "▶"}</span></Td>
+                    <Td><span style={{ color: GOLD, fontWeight: 700, fontSize: ".8rem" }}>{expandedId === m.id ? "â–¼" : "â–¶"}</span></Td>
                     <Td><span style={S.mono}>{m.ref}</span></Td>
-                    <Td><span style={S.strong}>{m.client_name || "—"}</span></Td>
+                    <Td><span style={S.strong}>{m.client_name || "â€”"}</span></Td>
                     <Td><TypeBadge type={m.matter_type} colors={MATTER_TYPE_COLORS} /></Td>
                     <Td onClick={e => e.stopPropagation()}><StatusSelect value={m.stage} options={MATTER_STAGES} onChange={(v) => onStage(m.id, v)} /></Td>
                     <Td><TypeBadge type={m.priority} colors={PRIORITY_COLORS} /></Td>
                     <Td onClick={e => e.stopPropagation()}><StatusSelect value={m.payment_status} options={PAYMENT_STATUSES} onChange={(v) => onPayment(m.id, v)} /></Td>
-                    <Td><div style={S.msgCell} title={m.description ?? ""}>{m.description || "—"}</div></Td>
+                    <Td><div style={S.msgCell} title={m.description ?? ""}>{m.description || "â€”"}</div></Td>
                     <Td>{fmtDate(m.created_at)}</Td>
-                    <Td onClick={e => e.stopPropagation()}><button type="button" title="Delete matter" onClick={() => onDelete(m.id)} style={{ background: "none", border: "none", cursor: "pointer", color: "#c94b4b", fontSize: "1rem", padding: "2px 6px" }}>🗑</button></Td>
+                    <Td onClick={e => e.stopPropagation()}><button type="button" title="Delete matter" onClick={() => onDelete(m.id)} style={{ background: "none", border: "none", cursor: "pointer", color: "#c94b4b", fontSize: "1rem", padding: "2px 6px" }}>ðŸ—‘</button></Td>
                   </tr>
                   {expandedId === m.id && (
                     <tr key={`${m.id}-milestones`}>
@@ -2077,11 +2175,11 @@ function MattersTab({ matters, loading, token, onStage, onPayment, onDelete }: {
 }
 
 // ---------------------------------------------------------------------------
-// Milestone panel — shown inline (table) or as modal overlay (kanban)
+// Milestone panel â€” shown inline (table) or as modal overlay (kanban)
 // ---------------------------------------------------------------------------
 const MILESTONE_STATUSES = ["pending", "in_progress", "completed"] as const;
 const MILESTONE_STATUS_LABELS: Record<string, string> = {
-  pending: "⬜ Pending", in_progress: "🔵 In Progress", completed: "✅ Done",
+  pending: "â¬œ Pending", in_progress: "ðŸ”µ In Progress", completed: "âœ… Done",
 };
 const MILESTONE_STATUS_COLORS: Record<string, React.CSSProperties> = {
   pending: { background: "rgba(18,16,12,.08)", color: MUTED },
@@ -2164,11 +2262,11 @@ function MilestonePanel({ matterId, token, matter, onClose, inline }: {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <div>
             <div style={{ fontFamily: "var(--serif, Georgia, serif)", fontWeight: 700, color: GREEN, fontSize: "1.1rem" }}>
-              Milestones — {matter?.ref}
+              Milestones â€” {matter?.ref}
             </div>
             {matter?.client_name && <div style={{ color: MUTED, fontSize: ".82rem", marginTop: 2 }}>{matter.client_name}</div>}
           </div>
-          <button type="button" onClick={onClose} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "#888" }}>×</button>
+          <button type="button" onClick={onClose} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "#888" }}>Ã—</button>
         </div>
       )}
 
@@ -2177,12 +2275,12 @@ function MilestonePanel({ matterId, token, matter, onClose, inline }: {
           <span style={{ fontSize: ".78rem", fontWeight: 700, color: GREEN, textTransform: "uppercase", letterSpacing: "0.08em" }}>
             Milestones
           </span>
-          <button type="button" onClick={onClose} style={{ background: "none", border: "none", fontSize: 16, cursor: "pointer", color: MUTED }}>✕ Close</button>
+          <button type="button" onClick={onClose} style={{ background: "none", border: "none", fontSize: 16, cursor: "pointer", color: MUTED }}>âœ• Close</button>
         </div>
       )}
 
       {loading ? (
-        <div style={{ color: MUTED, fontSize: ".85rem", padding: "8px 0" }}>Loading…</div>
+        <div style={{ color: MUTED, fontSize: ".85rem", padding: "8px 0" }}>Loadingâ€¦</div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
           {milestones.length === 0 && (
@@ -2227,7 +2325,7 @@ function MilestonePanel({ matterId, token, matter, onClose, inline }: {
                         <span style={{ fontSize: ".72rem", color: MUTED }}>Due {ms.due_date}</span>
                       )}
                       {ms.notify_client && (
-                        <span style={{ fontSize: ".7rem", color: GOLD, fontWeight: 600 }}>📧 Notifies client</span>
+                        <span style={{ fontSize: ".7rem", color: GOLD, fontWeight: 600 }}>ðŸ“§ Notifies client</span>
                       )}
                     </div>
                     {ms.description && <div style={{ fontSize: ".8rem", color: MUTED, marginTop: 3 }}>{ms.description}</div>}
@@ -2236,12 +2334,12 @@ function MilestonePanel({ matterId, token, matter, onClose, inline }: {
                   <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
                     {ms.status !== "completed" && (
                       <button type="button" onClick={() => updateMilestone(ms.id, { status: "completed" })}
-                        style={{ ...S.ghostBtn, fontSize: ".72rem", color: GREEN, border: `1px solid rgba(16,42,30,.25)` }} title="Mark done">✓</button>
+                        style={{ ...S.ghostBtn, fontSize: ".72rem", color: GREEN, border: `1px solid rgba(16,42,30,.25)` }} title="Mark done">âœ“</button>
                     )}
                     <button type="button" onClick={() => { setEditingId(ms.id); setEditForm({ ...ms }); }}
-                      style={{ ...S.ghostBtn, fontSize: ".72rem" }} title="Edit">✎</button>
+                      style={{ ...S.ghostBtn, fontSize: ".72rem" }} title="Edit">âœŽ</button>
                     <button type="button" onClick={() => deleteMilestone(ms.id)}
-                      style={{ ...S.ghostBtn, fontSize: ".72rem", color: "#a23b3b" }} title="Remove milestone">✕</button>
+                      style={{ ...S.ghostBtn, fontSize: ".72rem", color: "#a23b3b" }} title="Remove milestone">âœ•</button>
                   </div>
                 </div>
               )}
@@ -2267,7 +2365,7 @@ function MilestonePanel({ matterId, token, matter, onClose, inline }: {
             </label>
             <button type="button" onClick={() => void addMilestone()} disabled={saving || !form.title.trim()}
               style={{ ...S.btn, background: GREEN, color: CREAM, fontSize: ".78rem", marginLeft: "auto", opacity: saving || !form.title.trim() ? 0.5 : 1 }}>
-              {saving ? "Adding…" : "+ Add"}
+              {saving ? "Addingâ€¦" : "+ Add"}
             </button>
           </div>
         </div>
@@ -2289,7 +2387,7 @@ function MilestonePanel({ matterId, token, matter, onClose, inline }: {
 }
 
 // ---------------------------------------------------------------------------
-// Calendar — current week view
+// Calendar â€” current week view
 // ---------------------------------------------------------------------------
 function CalendarTab({ appts, token, onStatus, onRefresh }: { appts: Appointment[]; token: string; onStatus: (id: string, s: string) => void; onRefresh: () => void }) {
   const [weekOffset, setWeekOffset] = useState(0);
@@ -2338,14 +2436,14 @@ function CalendarTab({ appts, token, onStatus, onRefresh }: { appts: Appointment
     });
   }
 
-  const weekLabel = `${formatInTimeZone(days[0], TZ, "d MMM")} – ${formatInTimeZone(days[6], TZ, "d MMM yyyy")}`;
+  const weekLabel = `${formatInTimeZone(days[0], TZ, "d MMM")} â€“ ${formatInTimeZone(days[6], TZ, "d MMM yyyy")}`;
 
   return (
     <div style={{ padding: 20 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 16 }}>
-        <button type="button" onClick={() => setWeekOffset((w) => w - 1)} style={{ ...S.ghostBtn, color: GREEN, border: `1px solid rgba(16,42,30,.3)` }}>← Prev</button>
+        <button type="button" onClick={() => setWeekOffset((w) => w - 1)} style={{ ...S.ghostBtn, color: GREEN, border: `1px solid rgba(16,42,30,.3)` }}>â† Prev</button>
         <span style={{ fontWeight: 700, color: GREEN, fontFamily: "var(--serif, Georgia, serif)" }}>{weekLabel}</span>
-        <button type="button" onClick={() => setWeekOffset((w) => w + 1)} style={{ ...S.ghostBtn, color: GREEN, border: `1px solid rgba(16,42,30,.3)` }}>Next →</button>
+        <button type="button" onClick={() => setWeekOffset((w) => w + 1)} style={{ ...S.ghostBtn, color: GREEN, border: `1px solid rgba(16,42,30,.3)` }}>Next â†’</button>
       </div>
 
       <div style={{ overflowX: "auto" }}>
@@ -2451,7 +2549,7 @@ function AvailabilityTab({ availability, onSave, token }: {
     if (!err) setTimeout(() => setMsgs((m) => { const n = { ...m }; delete n[row.day_of_week]; return n; }), 2000);
   };
 
-  if (rows.length === 0) return <Empty>{availability.length === 0 ? "Loading availability…" : "No schedule rows."}</Empty>;
+  if (rows.length === 0) return <Empty>{availability.length === 0 ? "Loading availabilityâ€¦" : "No schedule rows."}</Empty>;
 
   return (
     <div style={{ padding: 20 }}>
@@ -2482,7 +2580,7 @@ function AvailabilityTab({ availability, onSave, token }: {
                   </div>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10 }}>
-                  <button type="button" onClick={() => void save(row)} disabled={saving === row.day_of_week} style={{ ...S.waBtn, ...(saving === row.day_of_week ? S.btnOff : null) }}>{saving === row.day_of_week ? "Saving…" : "Save"}</button>
+                  <button type="button" onClick={() => void save(row)} disabled={saving === row.day_of_week} style={{ ...S.waBtn, ...(saving === row.day_of_week ? S.btnOff : null) }}>{saving === row.day_of_week ? "Savingâ€¦" : "Save"}</button>
                   {msg && <span style={{ fontSize: ".78rem", color: msg.kind === "ok" ? "#2e7d4f" : "#a23b3b" }}>{msg.text}</span>}
                 </div>
               </div>
@@ -2529,7 +2627,7 @@ function AvailabilityTab({ availability, onSave, token }: {
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <button type="button" onClick={() => void save(row)} disabled={saving === row.day_of_week}
                         style={{ ...S.waBtn, ...(saving === row.day_of_week ? S.btnOff : null) }}>
-                        {saving === row.day_of_week ? "Saving…" : "Save"}
+                        {saving === row.day_of_week ? "Savingâ€¦" : "Save"}
                       </button>
                       {msg && <span style={{ fontSize: ".78rem", color: msg.kind === "ok" ? "#2e7d4f" : "#a23b3b" }}>{msg.text}</span>}
                     </div>
@@ -2640,7 +2738,7 @@ function BlockedDatesPanel({ token }: { token: string }) {
           min={new Date().toISOString().slice(0, 10)}
           onChange={e => setPickedDate(e.target.value)}
           style={{ ...S.fieldInput, width: 170 }} />
-        {loadingSlots && <span style={{ color: MUTED, fontSize: ".82rem" }}>Loading slots…</span>}
+        {loadingSlots && <span style={{ color: MUTED, fontSize: ".82rem" }}>Loading slotsâ€¦</span>}
       </div>
 
       {pickedDate && !loadingSlots && daySlots.length > 0 && (
@@ -2675,7 +2773,7 @@ function BlockedDatesPanel({ token }: { token: string }) {
                         color: isBlocked ? "#a23b3b" : "#3a3a3a",
                         textDecoration: isBlocked ? "line-through" : "none",
                       }}>
-                      {fmtTime(iso)}{isBlocked ? " ✕" : ""}
+                      {fmtTime(iso)}{isBlocked ? " âœ•" : ""}
                     </button>
                   );
                 })}
@@ -2693,7 +2791,7 @@ function BlockedDatesPanel({ token }: { token: string }) {
         return (
           <>
             <div style={{ fontWeight: 600, fontSize: ".82rem", color: MUTED, marginBottom: 10 }}>
-              Blocked slots ({upcoming.length}{pastCount > 0 ? ` · ${pastCount} past hidden` : ""})
+              Blocked slots ({upcoming.length}{pastCount > 0 ? ` Â· ${pastCount} past hidden` : ""})
             </div>
             {upcoming.length === 0
               ? <p style={{ color: MUTED, fontSize: ".82rem" }}>None blocked.</p>
@@ -2706,7 +2804,7 @@ function BlockedDatesPanel({ token }: { token: string }) {
               }}>
                 <span>{fmtFull(b.starts_at)}</span>
                 <button onClick={() => void unblock(b.id)}
-                  style={{ background: "none", border: "none", cursor: "pointer", color: "#a23b3b", fontWeight: 700, fontSize: 15, lineHeight: 1, padding: 0 }}>×</button>
+                  style={{ background: "none", border: "none", cursor: "pointer", color: "#a23b3b", fontWeight: 700, fontSize: 15, lineHeight: 1, padding: 0 }}>Ã—</button>
               </div>
             ))}
                 </div>
@@ -2808,7 +2906,7 @@ function ChatsTable({ convos, loading }: { convos: Conversation[]; loading: bool
   const roleLabel = (r: ChatMessage["role"]) =>
     r === "visitor" ? "Visitor" : r === "agent" ? "Agent" : r === "bot" ? "Bot" : "System";
 
-  if (loading && convos.length === 0) return <Empty>Loading chats…</Empty>;
+  if (loading && convos.length === 0) return <Empty>Loading chatsâ€¦</Empty>;
   if (convos.length === 0) return <Empty>No conversations yet.</Empty>;
   return (
     <div style={{ display: "flex", height: isMobile ? "auto" : "calc(100vh - 300px)", minHeight: isMobile ? 0 : 400, overflow: "hidden", flexDirection: isMobile ? "column" : "row" }}>
@@ -2835,12 +2933,12 @@ function ChatsTable({ convos, loading }: { convos: Conversation[]; loading: bool
         ))}
       </div>
 
-      {/* Detail — full history */}
+      {/* Detail â€” full history */}
       <div style={{ flex: 1, display: isMobile && !selected ? "none" : "flex", flexDirection: "column", overflow: "hidden" }}>
         {isMobile && !!selected && (
           <button type="button" onClick={() => { setSelected(null); setWaResult(null); }}
             style={{ margin: "12px 16px 0", padding: "8px 16px", border: "1px solid rgba(18,16,12,.2)", borderRadius: 999, background: "#fff", fontSize: ".82rem", cursor: "pointer", color: MUTED, display: "inline-flex", alignItems: "center", gap: 6, alignSelf: "flex-start" }}>
-            ← Chats
+            â† Chats
           </button>
         )}
         {!selected ? (
@@ -2859,7 +2957,7 @@ function ChatsTable({ convos, loading }: { convos: Conversation[]; loading: bool
 
             {/* Message thread */}
             <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px", display: "flex", flexDirection: "column", gap: 10 }}>
-              {msgLoading && <div style={{ color: MUTED, fontSize: ".85rem", textAlign: "center" }}>Loading messages…</div>}
+              {msgLoading && <div style={{ color: MUTED, fontSize: ".85rem", textAlign: "center" }}>Loading messagesâ€¦</div>}
               {!msgLoading && messages.length === 0 && <div style={{ color: MUTED, fontSize: ".85rem", textAlign: "center" }}>No messages in this conversation.</div>}
               {messages.map((m) => (
                 <div key={m.id} style={{ display: "flex", flexDirection: "column", maxWidth: "72%", ...(m.role === "agent" ? { alignSelf: "flex-end" } : { alignSelf: "flex-start" }) }}>
@@ -2884,12 +2982,12 @@ function ChatsTable({ convos, loading }: { convos: Conversation[]; loading: bool
                 <div style={{ fontSize: ".72rem", fontWeight: 700, textTransform: "uppercase", color: MUTED, marginBottom: 6 }}>Reply via WhatsApp</div>
                 <div style={{ display: "flex", gap: 8 }}>
                   <textarea value={waText} onChange={(e) => setWaText(e.target.value)} rows={2}
-                    placeholder="Type a WhatsApp message…"
+                    placeholder="Type a WhatsApp messageâ€¦"
                     style={{ flex: 1, resize: "none", borderRadius: 10, border: "1px solid rgba(18,16,12,.2)", padding: "8px 12px", fontSize: ".88rem", fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
                   <button type="button" onClick={() => void sendWhatsApp()} disabled={waSending || !waText.trim()}
                     style={{ padding: "8px 16px", borderRadius: 10, border: "none", cursor: waSending || !waText.trim() ? "default" : "pointer",
                       background: waSending || !waText.trim() ? "#e2d5b0" : GOLD, color: GREEN, fontWeight: 700, fontSize: ".82rem", alignSelf: "flex-end" }}>
-                    {waSending ? "…" : "Send"}
+                    {waSending ? "â€¦" : "Send"}
                   </button>
                 </div>
                 {waResult && <div style={{ fontSize: ".78rem", color: waResult.ok ? "#2e7d4f" : "#a23b3b", marginTop: 4 }}>{waResult.msg}</div>}
@@ -2965,20 +3063,7 @@ function OverviewPanel({ leads, appts, convos, matters, homePros, emails, inquir
         ))}
       </div>
 
-      {/* QR Fullscreen Modal */}
-      {expandedQr && (
-        <div onClick={() => setExpandedQr(null)}
-          style={{ position: "fixed", inset: 0, background: "#000", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <button type="button" onClick={() => setExpandedQr(null)}
-            style={{ position: "absolute", top: 20, right: 24, background: "none", border: "none", color: "#fff", fontSize: "1.8rem", lineHeight: 1, cursor: "pointer", opacity: .7, padding: 4 }}>
-            ✕
-          </button>
-          <img src={expandedQr} alt="QR Code" onClick={e => e.stopPropagation()} style={{ width: "min(80vw, 360px)", height: "min(80vw, 360px)", borderRadius: 12 }} />
-        </div>
-      )}
-
-
-            <AttentionOverview
+      <AttentionOverview
         appts={appts}
         token={token}
         accountEmail={accountEmail}
@@ -2990,13 +3075,13 @@ function OverviewPanel({ leads, appts, convos, matters, homePros, emails, inquir
       {staleLeads.length > 0 && (
         <div style={{ background: "rgba(200,166,92,.1)", border: "1px solid rgba(200,166,92,.35)", borderRadius: 10, padding: "14px 18px", marginBottom: 24 }}>
           <div style={{ fontWeight: 700, fontSize: ".72rem", textTransform: "uppercase", letterSpacing: ".07em", color: "#8a6a22", marginBottom: 10 }}>
-            ⚠ Follow-up needed — {staleLeads.length} lead{staleLeads.length > 1 ? "s" : ""} not contacted in 48h
+            âš  Follow-up needed â€” {staleLeads.length} lead{staleLeads.length > 1 ? "s" : ""} not contacted in 48h
           </div>
           {staleLeads.slice(0, 4).map((l) => (
             <div key={l.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderTop: "1px solid rgba(200,166,92,.2)" }}>
               <div>
-                <span style={{ fontWeight: 600, fontSize: ".88rem", color: GREEN }}>{l.name || "—"}</span>
-                <span style={{ color: MUTED, fontSize: ".78rem" }}> · {l.service || "—"}</span>
+                <span style={{ fontWeight: 600, fontSize: ".88rem", color: GREEN }}>{l.name || "â€”"}</span>
+                <span style={{ color: MUTED, fontSize: ".78rem" }}> Â· {l.service || "â€”"}</span>
               </div>
               <span style={{ fontSize: ".72rem", color: "#8a6a22" }}>
                 {Math.floor((Date.now() - new Date(l.created_at).getTime()) / (3600 * 1000))}h ago
@@ -3005,7 +3090,7 @@ function OverviewPanel({ leads, appts, convos, matters, homePros, emails, inquir
           ))}
           <button type="button" onClick={() => onTab("leads")}
             style={{ marginTop: 10, fontSize: ".78rem", fontWeight: 600, color: "#8a6a22", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-            View all leads →
+            View all leads â†’
           </button>
         </div>
       )}
@@ -3021,8 +3106,8 @@ function OverviewPanel({ leads, appts, convos, matters, homePros, emails, inquir
         {leads.slice(0, 5).map((l, i) => (
           <div key={l.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderTop: i > 0 ? "1px solid rgba(18,16,12,.06)" : "none" }}>
             <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 600, fontSize: ".88rem", color: GREEN }}>{l.name || "—"}</div>
-              <div style={{ fontSize: ".78rem", color: MUTED }}>{l.service || "—"} · {fmtDate(l.created_at)}</div>
+              <div style={{ fontWeight: 600, fontSize: ".88rem", color: GREEN }}>{l.name || "â€”"}</div>
+              <div style={{ fontSize: ".78rem", color: MUTED }}>{l.service || "â€”"} Â· {fmtDate(l.created_at)}</div>
             </div>
             <StatusBadge status={l.status} />
           </div>
@@ -3035,8 +3120,8 @@ function OverviewPanel({ leads, appts, convos, matters, homePros, emails, inquir
         {appts.filter(a => new Date(a.starts_at).getTime() >= now && a.status !== "cancelled").sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime()).slice(0, 5).map((a, i) => (
           <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderTop: i > 0 ? "1px solid rgba(18,16,12,.06)" : "none" }}>
             <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 600, fontSize: ".88rem", color: GREEN }}>{a.name || "—"}</div>
-              <div style={{ fontSize: ".78rem", color: MUTED }}>{a.service || "—"} · {fmtWhen(a.starts_at)}</div>
+              <div style={{ fontWeight: 600, fontSize: ".88rem", color: GREEN }}>{a.name || "â€”"}</div>
+              <div style={{ fontSize: ".78rem", color: MUTED }}>{a.service || "â€”"} Â· {fmtWhen(a.starts_at)}</div>
             </div>
             <StatusBadge status={a.status} />
           </div>
@@ -3055,14 +3140,14 @@ function OverviewPanel({ leads, appts, convos, matters, homePros, emails, inquir
               return (
                 <button key={a.activity_id} type="button" onClick={() => onTab("cms")}
                   style={{ width: "100%", textAlign: "left", display: "flex", alignItems: "flex-start", gap: 10, padding: "12px 16px", borderTop: i > 0 ? "1px solid rgba(18,16,12,.06)" : "none", borderLeft: "none", borderRight: "none", borderBottom: "none", background: unread ? "rgba(18,16,12,.025)" : "#fff", cursor: "pointer" }}>
-                  <span style={{ fontSize: 16, marginTop: 1 }}>{a.kind === "file" ? "📎" : "💬"}</span>
+                  <span style={{ fontSize: 16, marginTop: 1 }}>{a.kind === "file" ? "ðŸ“Ž" : "ðŸ’¬"}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                       <span style={{ fontWeight: unread ? 700 : 600, fontSize: ".88rem", color: GREEN }}>{a.client_name}</span>
                       {unread && <span style={{ background: "#c0392b", color: "#fff", fontSize: 9, fontWeight: 700, borderRadius: 999, padding: "1px 5px" }}>NEW</span>}
                     </div>
                     <div style={{ fontSize: ".78rem", color: INK, marginTop: 1 }}>{a.kind === "file" ? `Uploaded: ${a.body}` : a.body}</div>
-                    <div style={{ fontSize: ".72rem", color: MUTED, marginTop: 2 }}>{a.matter_title} · {fmtDate(a.created_at)}</div>
+                    <div style={{ fontSize: ".72rem", color: MUTED, marginTop: 2 }}>{a.matter_title} Â· {fmtDate(a.created_at)}</div>
                   </div>
                 </button>
               );
@@ -3388,7 +3473,7 @@ function EmailTab({ emails, token, leads, onMarkRead, onMarkAllRead, onDelete, o
                   style={{ border: "none", background: "transparent", cursor: "pointer", color: "#c94b4b", padding: "0 10px", fontSize: ".85rem", flexShrink: 0, opacity: 0.6 }}
                   onMouseEnter={(ev) => { (ev.currentTarget as HTMLButtonElement).style.opacity = "1"; }}
                   onMouseLeave={(ev) => { (ev.currentTarget as HTMLButtonElement).style.opacity = "0.6"; }}>
-                  ✕
+                  âœ•
                 </button>
               </div>
             ));
@@ -3399,7 +3484,7 @@ function EmailTab({ emails, token, leads, onMarkRead, onMarkAllRead, onDelete, o
         {isMobile && (!!selected || composing || !!selectedSent) && (
           <button type="button" onClick={() => { setSelected(null); setSelectedSent(null); setComposing(false); setSendResult(null); }}
             style={{ marginBottom: 16, padding: "8px 16px", border: "1px solid rgba(18,16,12,.2)", borderRadius: 999, background: "#fff", fontSize: ".82rem", cursor: "pointer", color: MUTED, display: "inline-flex", alignItems: "center", gap: 6 }}>
-            ← Inbox
+            â† Inbox
           </button>
         )}
         {pane === "sent" && selectedSent ? (
@@ -3408,7 +3493,7 @@ function EmailTab({ emails, token, leads, onMarkRead, onMarkAllRead, onDelete, o
               <div style={{ fontFamily: "var(--serif, Georgia, serif)", fontWeight: 700, fontSize: "1.15rem", color: GREEN }}>{selectedSent.subject || "(no subject)"}</div>
               <div style={{ fontSize: ".8rem", color: MUTED, marginTop: 4 }}>
                 To: <strong style={{ color: INK }}>{selectedSent.to_name ? `${selectedSent.to_name} <${selectedSent.to_email}>` : selectedSent.to_email}</strong>
-                &nbsp;·&nbsp;{fmtDate(selectedSent.created_at)}
+                &nbsp;Â·&nbsp;{fmtDate(selectedSent.created_at)}
               </div>
               {selectedSent.context && <div style={{ fontSize: ".78rem", color: MUTED, marginTop: 4 }}>Context: {selectedSent.context}</div>}
               <div style={{ display: "inline-block", marginTop: 6, fontSize: ".72rem", background: "rgba(47,122,82,.1)", color: GREEN, borderRadius: 999, padding: "2px 10px" }}>{selectedSent.status}</div>
@@ -3416,7 +3501,7 @@ function EmailTab({ emails, token, leads, onMarkRead, onMarkAllRead, onDelete, o
             <SentEmailBody body={selectedSent.body_full || selectedSent.body_preview || "(no content available)"} />
             {!selectedSent.body_full && selectedSent.body_preview && (
               <div style={{ fontSize: ".76rem", color: MUTED, marginTop: 8 }}>
-                Sent before full-body logging was added — only the first 300 characters were saved for this one.
+                Sent before full-body logging was added â€” only the first 300 characters were saved for this one.
               </div>
             )}
             <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid rgba(18,16,12,.1)', display: 'flex', gap: 10, flexWrap: 'wrap' }}>
@@ -3435,12 +3520,12 @@ function EmailTab({ emails, token, leads, onMarkRead, onMarkAllRead, onDelete, o
             <div style={{ ...S.field, marginBottom: 16 }}>
               <label style={S.fieldLabel}>Message</label>
               <textarea style={{ ...S.fieldInput, resize: "vertical", minHeight: 160, fontFamily: "inherit" }}
-                value={newBody} onChange={(e) => setNewBody(e.target.value)} placeholder="Your message…" />
+                value={newBody} onChange={(e) => setNewBody(e.target.value)} placeholder="Your messageâ€¦" />
             </div>
             <div style={{ ...S.field, marginBottom: 16 }}>
               <label style={S.fieldLabel}>Attachments</label>
               <label htmlFor="compose-file-input" style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 16px", borderRadius: 999, border: "1px solid rgba(18,16,12,.18)", background: newFiles.length > 0 ? "rgba(200,166,92,.12)" : "#faf8f3", cursor: "pointer", fontSize: ".82rem", fontWeight: 600, color: INK, userSelect: "none" as const }}>
-                📎 {newFiles.length > 0 ? `${newFiles.length} file${newFiles.length !== 1 ? "s" : ""} attached` : "Attach files"}
+                ðŸ“Ž {newFiles.length > 0 ? `${newFiles.length} file${newFiles.length !== 1 ? "s" : ""} attached` : "Attach files"}
               </label>
               <input
                 id="compose-file-input"
@@ -3465,7 +3550,7 @@ function EmailTab({ emails, token, leads, onMarkRead, onMarkAllRead, onDelete, o
             <div style={{ display: "flex", gap: 10 }}>
               <button type="button" onClick={() => void sendCompose()} disabled={sending || !newTo.trim() || !newBody.trim()}
                 style={{ ...S.authBtn, width: "auto", padding: "10px 22px", ...(sending || !newTo.trim() || !newBody.trim() ? S.btnOff : null) }}>
-                {sending ? "Sending…" : "Send"}
+                {sending ? "Sendingâ€¦" : "Send"}
               </button>
               <button type="button" onClick={() => { setComposing(false); setSendResult(null); setNewFiles([]); }}
                 style={{ padding: "10px 18px", border: "1px solid rgba(18,16,12,.2)", borderRadius: 999, background: "#fff", fontSize: ".88rem", cursor: "pointer" }}>
@@ -3480,14 +3565,14 @@ function EmailTab({ emails, token, leads, onMarkRead, onMarkAllRead, onDelete, o
             {isMobile && (
               <button type="button" onClick={() => setSelected(null)}
                 style={{ background: "none", border: "none", color: GOLD, fontWeight: 700, fontSize: ".88rem", cursor: "pointer", padding: "0 0 12px 0", display: "flex", alignItems: "center", gap: 4 }}>
-                ← Inbox
+                â† Inbox
               </button>
             )}
             <div style={{ marginBottom: 16 }}>
               <div style={{ fontFamily: "var(--serif, Georgia, serif)", fontWeight: 700, fontSize: "1.15rem", color: GREEN }}>{selected.subject || "(no subject)"}</div>
               <div style={{ fontSize: ".8rem", color: MUTED, marginTop: 4 }}>
                 From: <strong style={{ color: INK }}>{selected.from_name ? `${selected.from_name} <${selected.from_email}>` : selected.from_email}</strong>
-                &nbsp;·&nbsp;{fmtDate(selected.created_at)}
+                &nbsp;Â·&nbsp;{fmtDate(selected.created_at)}
               </div>
               {selected.to_email && <div style={{ fontSize: ".8rem", color: MUTED }}>To: {selected.to_email}</div>}
             </div>
@@ -3516,7 +3601,7 @@ function EmailTab({ emails, token, leads, onMarkRead, onMarkAllRead, onDelete, o
                     value={bodyDraft}
                     onChange={(e) => setBodyDraft(e.target.value)}
                     rows={8}
-                    placeholder="Paste the email body here…"
+                    placeholder="Paste the email body hereâ€¦"
                     style={{ width: "100%", resize: "vertical", borderRadius: 8, border: "1px solid rgba(18,16,12,.2)", padding: "10px 12px", fontSize: ".88rem", fontFamily: "inherit", outline: "none", boxSizing: "border-box", marginBottom: 10 }}
                   />
                   <div style={{ display: "flex", gap: 8 }}>
@@ -3528,7 +3613,7 @@ function EmailTab({ emails, token, leads, onMarkRead, onMarkAllRead, onDelete, o
                       if (json.ok) { setSelected({ ...selected, body_text: bodyDraft.trim() }); setEditingBody(false); setBodyDraft(""); }
                       setSavingBody(false);
                     }} style={{ ...S.authBtn, width: "auto", padding: "8px 18px", ...(savingBody || !bodyDraft.trim() ? S.btnOff : null) }}>
-                      {savingBody ? "Saving…" : "Save"}
+                      {savingBody ? "Savingâ€¦" : "Save"}
                     </button>
                     <button type="button" onClick={() => { setEditingBody(false); setBodyDraft(""); }} style={{ padding: "8px 16px", borderRadius: 999, border: "1px solid rgba(18,16,12,.2)", background: "#fff", fontSize: ".85rem", cursor: "pointer" }}>Cancel</button>
                   </div>
@@ -3549,12 +3634,12 @@ function EmailTab({ emails, token, leads, onMarkRead, onMarkAllRead, onDelete, o
                   attachment.url ? (
                     <a key={`${attachment.filename}-${attachment.url}`} href={attachment.url} target="_blank" rel="noopener noreferrer"
                       style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "7px 0", color: "#8a6a22", fontSize: ".85rem", textDecoration: "none" }}>
-                      <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>📎 {attachment.filename}</span>
-                      <span style={{ flexShrink: 0 }}>{(attachment.size / 1024).toFixed(1)} KB ↗</span>
+                      <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>ðŸ“Ž {attachment.filename}</span>
+                      <span style={{ flexShrink: 0 }}>{(attachment.size / 1024).toFixed(1)} KB â†—</span>
                     </a>
                   ) : (
                     <div key={`${attachment.filename}-unavailable`} role="alert" style={{ padding: "7px 0", color: "#a23b3b", fontSize: ".82rem" }}>
-                      📎 {attachment.filename} — unavailable: {attachment.error || "file could not be retrieved"}
+                      ðŸ“Ž {attachment.filename} â€” unavailable: {attachment.error || "file could not be retrieved"}
                     </div>
                   )
                 ))}
@@ -3572,12 +3657,12 @@ function EmailTab({ emails, token, leads, onMarkRead, onMarkAllRead, onDelete, o
                 </button>
                 <button type="button" onClick={() => void suggestReply()} disabled={suggesting}
                   style={{ padding: "9px 18px", borderRadius: 999, border: `1px solid ${GOLD}`, background: "rgba(200,166,92,.08)", color: "#8a6a22", fontWeight: 600, fontSize: ".82rem", cursor: "pointer", ...(suggesting ? S.btnOff : null) }}>
-                  {suggesting ? "Thinking…" : "✦ AI draft"}
+                  {suggesting ? "Thinkingâ€¦" : "âœ¦ AI draft"}
                 </button>
                 {suggestError && <p role="alert" style={{ width: "100%", margin: 0, color: "#a23b3b", fontSize: ".82rem" }}>{suggestError}</p>}
                 <button type="button" onClick={() => void deleteEmail(selected)} disabled={deleting}
                   style={{ padding: "9px 16px", borderRadius: 999, border: "1px solid rgba(160,40,40,.3)", background: "rgba(180,50,50,.06)", color: "#a02828", fontWeight: 600, fontSize: ".82rem", cursor: "pointer", marginLeft: "auto", ...(deleting ? S.btnOff : null) }}>
-                  {deleting ? "Deleting…" : "Delete"}
+                  {deleting ? "Deletingâ€¦" : "Delete"}
                 </button>
               </div>
             ) : (
@@ -3586,15 +3671,15 @@ function EmailTab({ emails, token, leads, onMarkRead, onMarkAllRead, onDelete, o
                   Reply to {selected.reply_to || selected.from_email}
                 </div>
                 <textarea value={replyBody} onChange={(e) => setReplyBody(e.target.value)} rows={5}
-                  placeholder="Your reply…"
+                  placeholder="Your replyâ€¦"
                   style={{ width: "100%", resize: "vertical", borderRadius: 10, border: "1px solid rgba(18,16,12,.2)", padding: "10px 12px", fontSize: ".9rem", fontFamily: "inherit", outline: "none", boxSizing: "border-box", marginBottom: 10 }} />
                 <p style={{ margin: "-4px 0 10px", color: MUTED, fontSize: ".78rem" }}>
-                  The sent email automatically includes Owen’s handwritten-style signature.
+                  The sent email automatically includes Owenâ€™s handwritten-style signature.
                 </p>
                 <div style={{ marginBottom: 10 }}>
                   <label style={{ display: 'block', fontSize: '.76rem', fontWeight: 700, color: MUTED, marginBottom: 4, textTransform: 'uppercase' }}>Attachments (optional)</label>
                   <label htmlFor="reply-file-input" style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "7px 14px", borderRadius: 999, border: "1px solid rgba(18,16,12,.18)", background: replyFiles.length > 0 ? "rgba(200,166,92,.12)" : "#faf8f3", cursor: "pointer", fontSize: ".78rem", fontWeight: 600, color: INK, userSelect: "none" as const }}>
-                    📎 {replyFiles.length > 0 ? `${replyFiles.length} file${replyFiles.length !== 1 ? "s" : ""} attached` : "Attach files"}
+                    ðŸ“Ž {replyFiles.length > 0 ? `${replyFiles.length} file${replyFiles.length !== 1 ? "s" : ""} attached` : "Attach files"}
                   </label>
                   <input id="reply-file-input" type='file' multiple onChange={(e) => setReplyFiles(prev => [...prev, ...Array.from(e.target.files ?? [])])} style={{ display: 'none' }} />
                   {replyFiles.length > 0 && (
@@ -3612,7 +3697,7 @@ function EmailTab({ emails, token, leads, onMarkRead, onMarkAllRead, onDelete, o
                 <div style={{ display: "flex", gap: 10 }}>
                   <button type="button" onClick={() => void sendReply()} disabled={sending || !replyBody.trim()}
                     style={{ ...S.authBtn, width: "auto", padding: "10px 20px", ...(sending || !replyBody.trim() ? S.btnOff : null) }}>
-                    {sending ? "Sending…" : "Send reply"}
+                    {sending ? "Sendingâ€¦" : "Send reply"}
                   </button>
                   <button type="button" onClick={() => setReplyOpen(false)}
                     style={{ padding: "10px 18px", border: "1px solid rgba(18,16,12,.2)", borderRadius: 999, background: "#fff", fontSize: ".88rem", cursor: "pointer" }}>
@@ -3655,16 +3740,16 @@ function InquiriesTab({ inquiries, token, onStatus }: {
           {inquiries.map((q) => (
             <tr key={q.id} style={S.tr}>
               <Td>{fmtDate(q.created_at)}</Td>
-              <Td><span style={S.strong}>{q.property_title || "—"}</span></Td>
-              <Td>{q.from_name || "—"}</Td>
+              <Td><span style={S.strong}>{q.property_title || "â€”"}</span></Td>
+              <Td>{q.from_name || "â€”"}</Td>
               <Td>
                 <div style={S.contactCol}>
                   {q.from_email && <span>{q.from_email}</span>}
                   {q.from_phone && <span style={S.muted}>{q.from_phone}</span>}
-                  {!q.from_email && !q.from_phone && <span style={S.muted}>—</span>}
+                  {!q.from_email && !q.from_phone && <span style={S.muted}>â€”</span>}
                 </div>
               </Td>
-              <Td><div style={S.msgCell} title={q.message ?? ""}>{q.message || "—"}</div></Td>
+              <Td><div style={S.msgCell} title={q.message ?? ""}>{q.message || "â€”"}</div></Td>
               <Td><StatusBadge status={q.status} /></Td>
               <Td>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
@@ -3752,7 +3837,7 @@ function ReferralsTab({ leads, appts }: { leads: Lead[]; appts: Appointment[] })
 }
 
 // ---------------------------------------------------------------------------
-// Workflow Templates Tab — global step editor (affects NEW matters only)
+// Workflow Templates Tab â€” global step editor (affects NEW matters only)
 // ---------------------------------------------------------------------------
 interface WfTemplate { id: string; type: string; name: string; phases: WfPhase[]; }
 interface WfPhase { name: string; order: number; milestones: string[]; }
@@ -3836,7 +3921,7 @@ function WorkflowTemplatesTab({ token }: { token: string }) {
 
   const tpl = templates.find(t => t.id === selected);
 
-  if (loading) return <div style={{ padding: 24, color: MUTED }}>Loading templates…</div>;
+  if (loading) return <div style={{ padding: 24, color: MUTED }}>Loading templatesâ€¦</div>;
 
   return (
     <div style={{ padding: "1.25rem" }}>
@@ -3856,7 +3941,7 @@ function WorkflowTemplatesTab({ token }: { token: string }) {
             Undo
           </button>
           <button type="button" onClick={() => { if (undoTimerRef.current) clearTimeout(undoTimerRef.current); setUndoStack(null); }}
-            style={{ background: "none", border: "none", color: CREAM, opacity: 0.6, cursor: "pointer", fontSize: 16, lineHeight: 1 }}>✕</button>
+            style={{ background: "none", border: "none", color: CREAM, opacity: 0.6, cursor: "pointer", fontSize: 16, lineHeight: 1 }}>âœ•</button>
         </div>
       )}
 
@@ -3876,15 +3961,15 @@ function WorkflowTemplatesTab({ token }: { token: string }) {
           <button type="button" onClick={() => setEditMode(true)}
             style={{ padding: "6px 16px", borderRadius: 8, border: `1px solid ${GOLD}`,
               background: "transparent", color: "#8a6a22", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-            ✎ Edit Template
+            âœŽ Edit Template
           </button>
         ) : (
           <>
-            <span style={{ fontSize: 12, color: GOLD, fontWeight: 600 }}>EDIT MODE — changes save immediately</span>
+            <span style={{ fontSize: 12, color: GOLD, fontWeight: 600 }}>EDIT MODE â€” changes save immediately</span>
             <button type="button" onClick={() => { setEditMode(false); setEditingStep(null); }}
               style={{ padding: "6px 16px", borderRadius: 8, border: "none",
                 background: GREEN, color: CREAM, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
-              ✓ Done Editing
+              âœ“ Done Editing
             </button>
           </>
         )}
@@ -3921,21 +4006,21 @@ function WorkflowTemplatesTab({ token }: { token: string }) {
                         <button type="button" onClick={() => void renameStep(phase.order, idx, editingStep.value)}
                           disabled={saving || !editingStep.value.trim()}
                           style={{ padding: "3px 10px", borderRadius: 6, border: "none", background: GREEN, color: CREAM, fontSize: 12, fontWeight: 700, cursor: "pointer", opacity: saving ? 0.5 : 1 }}>
-                          {saving ? "…" : "Save"}
+                          {saving ? "â€¦" : "Save"}
                         </button>
                         <button type="button" onClick={() => setEditingStep(null)}
                           style={{ background: "none", border: "none", color: MUTED, fontSize: 12, cursor: "pointer" }}>Cancel</button>
                       </>
                     ) : (
                       <>
-                        <span style={{ fontSize: 13, flex: 1, color: INK }}>• {ms}</span>
+                        <span style={{ fontSize: 13, flex: 1, color: INK }}>â€¢ {ms}</span>
                         {editMode && (
                           <>
                             <button type="button"
                               onClick={() => setEditingStep({ phaseOrder: phase.order, idx, value: ms })}
-                              title="Rename" style={{ background: "none", border: "none", cursor: "pointer", color: GOLD, fontSize: 12, padding: "0 3px" }}>✎</button>
+                              title="Rename" style={{ background: "none", border: "none", cursor: "pointer", color: GOLD, fontSize: 12, padding: "0 3px" }}>âœŽ</button>
                             <button type="button" onClick={() => void removeStep(phase.order, idx)}
-                              title="Remove" style={{ background: "none", border: "none", cursor: "pointer", color: "#ccc", fontSize: 13, padding: "0 4px" }}>✕</button>
+                              title="Remove" style={{ background: "none", border: "none", cursor: "pointer", color: "#ccc", fontSize: 13, padding: "0 4px" }}>âœ•</button>
                           </>
                         )}
                       </>
@@ -3946,11 +4031,11 @@ function WorkflowTemplatesTab({ token }: { token: string }) {
                   <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
                     <input autoFocus value={newStepName} onChange={e => setNewStepName(e.target.value)}
                       onKeyDown={e => { if (e.key === "Enter") void addStep(phase.order); if (e.key === "Escape") { setAddingStep(null); setNewStepName(""); } }}
-                      placeholder="New step name…"
+                      placeholder="New step nameâ€¦"
                       style={{ flex: 1, fontSize: 13, padding: "6px 10px", borderRadius: 8, border: `1px solid ${GOLD}`, outline: "none" }} />
                     <button type="button" onClick={() => void addStep(phase.order)} disabled={saving || !newStepName.trim()}
                       style={{ padding: "6px 14px", borderRadius: 8, border: "none", background: GREEN, color: CREAM, fontSize: 13, fontWeight: 600, cursor: "pointer", opacity: saving || !newStepName.trim() ? 0.5 : 1 }}>
-                      {saving ? "…" : "Add"}
+                      {saving ? "â€¦" : "Add"}
                     </button>
                   </div>
                 )}
@@ -3958,7 +4043,7 @@ function WorkflowTemplatesTab({ token }: { token: string }) {
             </div>
           ))}
 
-          {/* Add phase — only in edit mode */}
+          {/* Add phase â€” only in edit mode */}
           {editMode && <div style={{ marginTop: 12 }}>
             {!addingPhase ? (
               <button type="button" onClick={() => setAddingPhase(true)}
@@ -3969,11 +4054,11 @@ function WorkflowTemplatesTab({ token }: { token: string }) {
               <div style={{ display: "flex", gap: 6 }}>
                 <input autoFocus value={newPhaseName} onChange={e => setNewPhaseName(e.target.value)}
                   onKeyDown={e => { if (e.key === "Enter") void addPhase(); if (e.key === "Escape") { setAddingPhase(false); setNewPhaseName(""); } }}
-                  placeholder="Phase name…"
+                  placeholder="Phase nameâ€¦"
                   style={{ flex: 1, fontSize: 13, padding: "6px 10px", borderRadius: 8, border: `1px solid ${GOLD}`, outline: "none" }} />
                 <button type="button" onClick={() => void addPhase()} disabled={saving || !newPhaseName.trim()}
                   style={{ padding: "6px 14px", borderRadius: 8, border: "none", background: GREEN, color: CREAM, fontSize: 13, fontWeight: 600, cursor: "pointer", opacity: saving || !newPhaseName.trim() ? 0.5 : 1 }}>
-                  {saving ? "…" : "Add Phase"}
+                  {saving ? "â€¦" : "Add Phase"}
                 </button>
                 <button type="button" onClick={() => { setAddingPhase(false); setNewPhaseName(""); }}
                   style={{ ...S.ghostBtn, fontSize: 13 }}>Cancel</button>
@@ -4006,7 +4091,7 @@ function RecycleBinTab({ items, onRestore, onPurge }: {
   if (items.length === 0) {
     return (
       <div style={{ padding: "3rem", textAlign: "center", color: MUTED }}>
-        <div style={{ fontSize: "2.5rem", marginBottom: 12 }}>🗑</div>
+        <div style={{ fontSize: "2.5rem", marginBottom: 12 }}>ðŸ—‘</div>
         <div style={{ fontWeight: 600, fontSize: "1rem", color: INK }}>Recycle bin is empty</div>
         <div style={{ marginTop: 6, fontSize: ".85rem" }}>Deleted items appear here and are permanently removed after 30 days.</div>
       </div>
@@ -4032,7 +4117,7 @@ function RecycleBinTab({ items, onRestore, onPurge }: {
               {TABLE_LABEL[item.source_table] ?? item.source_table}
             </span>
             <span style={{ flex: 1, fontWeight: 500, fontSize: ".88rem", color: INK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {item.label ?? "—"}
+              {item.label ?? "â€”"}
             </span>
             <span style={{ fontSize: ".78rem", color: MUTED, whiteSpace: "nowrap" }}>
               Deleted {fmtDate(item.deleted_at)}
@@ -4109,7 +4194,7 @@ function InvitesPanel({ invites, loading, onCreate, onDeactivate, onDelete }: {
     <div style={{ padding: 20 }}>
       <div style={S.inviteForm}>
         <div style={S.inviteFormGrid}>
-          {[["Label", label, setLabel, "text", "e.g. Owen — referral"], ["Code (optional)", code, setCode, "text", "auto-generate"]].map(([lbl, val, setter, t, ph]) => (
+          {[["Label", label, setLabel, "text", "e.g. Owen â€” referral"], ["Code (optional)", code, setCode, "text", "auto-generate"]].map(([lbl, val, setter, t, ph]) => (
             <div key={lbl as string} style={S.field}>
               <label style={S.fieldLabel}>{lbl as string}</label>
               <input style={S.fieldInput} type={t as string} placeholder={ph as string} value={val as string} onChange={(e) => (setter as (v: string) => void)(e.target.value)} />
@@ -4121,12 +4206,12 @@ function InvitesPanel({ invites, loading, onCreate, onDeactivate, onDelete }: {
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 12 }}>
           <button type="button" onClick={() => void submit()} disabled={busy}
             style={{ ...S.authBtn, width: "auto", padding: "10px 22px", ...(busy ? S.btnOff : null) }}>
-            {busy ? "Creating…" : "Create invite"}
+            {busy ? "Creatingâ€¦" : "Create invite"}
           </button>
           {err && <span style={{ color: "#a23b3b", fontSize: ".82rem" }}>{err}</span>}
         </div>
       </div>
-      {loading && invites.length === 0 ? <Empty>Loading invites…</Empty> :
+      {loading && invites.length === 0 ? <Empty>Loading invitesâ€¦</Empty> :
         invites.length === 0 ? <Empty>No invites yet. Create one above to share a free-booking link.</Empty> : (
           <div style={S.tableWrap}>
             <table style={S.table}>
@@ -4139,11 +4224,11 @@ function InvitesPanel({ invites, loading, onCreate, onDeactivate, onDelete }: {
                   return (
                     <tr key={iv.code} style={S.tr}>
                       <Td><span style={S.mono}>{iv.code}</span></Td>
-                      <Td>{iv.label || "—"}</Td>
+                      <Td>{iv.label || "â€”"}</Td>
                       <Td><span style={spent ? S.muted : S.strong}>{iv.used_count}/{iv.max_uses}</span></Td>
                       <Td>{iv.expires_at ? fmtDate(iv.expires_at) : "Never"}</Td>
                       <Td><span style={{ ...S.statusBadge, ...(live ? { background: "rgba(47,122,82,.16)", color: "#2f7a52" } : { background: "rgba(18,16,12,.1)", color: MUTED }) }}>{live ? "live" : expired ? "expired" : spent ? "spent" : "off"}</span></Td>
-                      <Td><button type="button" onClick={() => copy(iv.code)} style={S.waBtn}>{copied === iv.code ? "Copied ✓" : "Copy link"}</button></Td>
+                      <Td><button type="button" onClick={() => copy(iv.code)} style={S.waBtn}>{copied === iv.code ? "Copied âœ“" : "Copy link"}</button></Td>
                       <Td>
                         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                           {iv.active && (
@@ -4173,12 +4258,12 @@ function InvitesPanel({ invites, loading, onCreate, onDeactivate, onDelete }: {
 // Directory
 // ---------------------------------------------------------------------------
 function ListingsPanel({ listings, loading, onStatus }: { listings: Listing[]; loading: boolean; onStatus: (id: string, s: string) => void }) {
-  if (loading && listings.length === 0) return <Empty>Loading partners…</Empty>;
+  if (loading && listings.length === 0) return <Empty>Loading partnersâ€¦</Empty>;
   if (listings.length === 0) return <Empty>No professional sign-ups yet.</Empty>;
   return (
     <div>
       <div style={{ margin: "16px 16px 0", padding: "10px 14px", background: "rgba(200,166,92,.1)", borderRadius: 10, border: "1px solid rgba(200,166,92,.3)", fontSize: 13, color: "#6b5210" }}>
-        <strong>Ferguson Law Directory Partners</strong> — professionals who signed up via the /directory partner application form on fergusonlawja.com. These are your own referral network (solicitors, surveyors, realtors, valuers, etc.).
+        <strong>Ferguson Law Directory Partners</strong> â€” professionals who signed up via the /directory partner application form on fergusonlawja.com. These are your own referral network (solicitors, surveyors, realtors, valuers, etc.).
       </div>
     <div style={{ display: "grid", gap: 14, marginTop: 14 }}>
       {listings.map((l) => {
@@ -4199,12 +4284,12 @@ function ListingsPanel({ listings, loading, onStatus }: { listings: Listing[]; l
               </div>
             </div>
             <div style={S.listTitle}>{l.business_name}</div>
-            <div style={S.muted}>{l.contact_name || "—"}{l.parishes?.length ? ` · ${l.parishes.join(", ")}` : ""}</div>
+            <div style={S.muted}>{l.contact_name || "â€”"}{l.parishes?.length ? ` Â· ${l.parishes.join(", ")}` : ""}</div>
             {l.bio && <div style={{ fontSize: 13, color: INK, marginTop: 4, whiteSpace: "pre-wrap" }}>{l.bio}</div>}
-            <div style={{ ...S.muted, marginTop: 6 }}>{l.email || "—"}{l.phone ? ` · ${l.phone}` : ""}{l.website ? ` · ${l.website}` : ""}</div>
+            <div style={{ ...S.muted, marginTop: 6 }}>{l.email || "â€”"}{l.phone ? ` Â· ${l.phone}` : ""}{l.website ? ` Â· ${l.website}` : ""}</div>
             {status === "approved" && l.slug && (
               <div style={{ marginTop: 6 }}>
-                <a href={`/directory/${l.slug}`} target="_blank" rel="noopener" style={{ color: "#8a6a22", fontSize: 13 }}>View public page →</a>
+                <a href={`/directory/${l.slug}`} target="_blank" rel="noopener" style={{ color: "#8a6a22", fontSize: 13 }}>View public page â†’</a>
               </div>
             )}
           </div>
@@ -4260,9 +4345,9 @@ function AccountPanel({ token, email, onClose, onEmailChange }: {
       <div onClick={(e) => e.stopPropagation()} style={{ background: "#fff", borderRadius: 16, padding: 26, width: "100%", maxWidth: 460, maxHeight: "90vh", overflow: "auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
           <h2 style={{ ...h, margin: 0 }}>Your account</h2>
-          <button type="button" onClick={onClose} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "#888", lineHeight: 1 }}>×</button>
+          <button type="button" onClick={onClose} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "#888", lineHeight: 1 }}>Ã—</button>
         </div>
-        <p style={{ color: "#6a6a6a", fontSize: ".82rem", margin: "0 0 18px" }}>Administrator · {email}</p>
+        <p style={{ color: "#6a6a6a", fontSize: ".82rem", margin: "0 0 18px" }}>Administrator Â· {email}</p>
         {msg && <p style={{ fontSize: ".82rem", margin: "0 0 14px", color: msg.kind === "ok" ? "#2e7d4f" : "#a23b3b" }}>{msg.text}</p>}
         <h3 style={h}>Change password</h3>
         <input type="password" placeholder="Current password" autoComplete="current-password" value={cur} onChange={(e) => setCur(e.target.value)} style={fld} />
@@ -4352,13 +4437,13 @@ function KanbanView({ matters, onStage, onExpand }: {
         return (
           <div key={col.key} style={{ minWidth: 180, flex: "0 0 180px" }}>
             <div style={{ fontSize: ".68rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".08em", color: MUTED, marginBottom: 10, padding: "0 2px" }}>
-              {col.label} <span style={{ color: GOLD }}>·{cards.length}</span>
+              {col.label} <span style={{ color: GOLD }}>Â·{cards.length}</span>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {cards.map(m => (
                 <div key={m.id} style={{ background: "#fff", border: "1px solid rgba(18,16,12,.09)", borderRadius: 8, padding: "12px 14px", boxShadow: "0 2px 8px -4px rgba(0,0,0,.15)" }}>
-                  <div style={{ fontWeight: 600, fontSize: ".82rem", color: GREEN, marginBottom: 3 }}>{m.client_name || "—"}</div>
-                  <div style={{ fontSize: ".7rem", color: MUTED, marginBottom: 8 }}>{m.matter_type || "—"} · {m.ref}</div>
+                  <div style={{ fontWeight: 600, fontSize: ".82rem", color: GREEN, marginBottom: 3 }}>{m.client_name || "â€”"}</div>
+                  <div style={{ fontSize: ".7rem", color: MUTED, marginBottom: 8 }}>{m.matter_type || "â€”"} Â· {m.ref}</div>
                   <select value={m.stage} onChange={e => onStage(m.id, e.target.value)}
                     style={{ width: "100%", fontSize: ".7rem", padding: "4px 6px", borderRadius: 6, border: "1px solid rgba(18,16,12,.15)", background: "#faf8f2", color: INK, cursor: "pointer" }}>
                     {MATTER_STAGES.map(s => <option key={s} value={s}>{s.replace(/_/g," ")}</option>)}
@@ -4366,12 +4451,12 @@ function KanbanView({ matters, onStage, onExpand }: {
                   {onExpand && (
                     <button type="button" onClick={() => onExpand(m.id)}
                       style={{ marginTop: 8, width: "100%", fontSize: ".68rem", fontWeight: 600, color: GOLD, background: "rgba(200,166,92,.1)", border: "1px solid rgba(200,166,92,.3)", borderRadius: 6, padding: "4px 0", cursor: "pointer" }}>
-                      ≡ Milestones
+                      â‰¡ Milestones
                     </button>
                   )}
                 </div>
               ))}
-              {cards.length === 0 && <div style={{ padding: "14px 10px", fontSize: ".75rem", color: "rgba(18,16,12,.25)", textAlign: "center", border: "1px dashed rgba(18,16,12,.1)", borderRadius: 8 }}>—</div>}
+              {cards.length === 0 && <div style={{ padding: "14px 10px", fontSize: ".75rem", color: "rgba(18,16,12,.25)", textAlign: "center", border: "1px dashed rgba(18,16,12,.1)", borderRadius: 8 }}>â€”</div>}
             </div>
           </div>
         );
@@ -4444,7 +4529,7 @@ const S: Record<string, React.CSSProperties> = {
 };
 
 // ---------------------------------------------------------------------------
-// H.O.M.E. — Professional Approvals
+// H.O.M.E. â€” Professional Approvals
 // ---------------------------------------------------------------------------
 function HomeProsPanel({ pros, loading, onApprove }: {
   pros: HomePro[]; loading: boolean; onApprove: (userId: string) => void;
@@ -4464,12 +4549,12 @@ function HomeProsPanel({ pros, loading, onApprove }: {
   }, []);
 
   const visiblePros = pros.filter(p => !rejectedIds.has(p.user_id));
-  if (loading && pros.length === 0) return <Empty>Loading H.O.M.E. professionals…</Empty>;
+  if (loading && pros.length === 0) return <Empty>Loading H.O.M.E. professionalsâ€¦</Empty>;
   if (visiblePros.length === 0) return <Empty>No professionals awaiting verification.</Empty>;
   return (
     <div style={{ padding: 20 }}>
       <div style={{ marginBottom: 16, padding: "10px 14px", background: "rgba(200,166,92,.1)", borderRadius: 10, border: "1px solid rgba(200,166,92,.3)", fontSize: 13, color: "#6b5210" }}>
-        <strong>H.O.M.E. Platform Professionals</strong> — professionals who applied via the H.O.M.E. by Ferguson Law platform (home.fergusonlawja.com). These serve homebuyers on the H.O.M.E. marketplace and are separate from your Directory partners.
+        <strong>H.O.M.E. Platform Professionals</strong> â€” professionals who applied via the H.O.M.E. by Ferguson Law platform (home.fergusonlawja.com). These serve homebuyers on the H.O.M.E. marketplace and are separate from your Directory partners.
       </div>
     <div style={{ display: "grid", gap: 14 }}>
       {visiblePros.map((p) => (
@@ -4485,12 +4570,12 @@ function HomeProsPanel({ pros, loading, onApprove }: {
               <button type="button" onClick={() => void rejectPro(p.user_id)} style={S.rejectBtn}>Reject</button>
             </div>
           </div>
-          <div style={S.listTitle}>{p.business_name || "—"}</div>
+          <div style={S.listTitle}>{p.business_name || "â€”"}</div>
           {p.headline && <div style={{ fontSize: 13, color: INK, marginTop: 2 }}>{p.headline}</div>}
           <div style={{ ...S.muted, marginTop: 4 }}>
             {p.license_number ? `Licence: ${p.license_number}` : "No licence number"}
-            {p.parishes?.length ? ` · ${p.parishes.join(", ")}` : ""}
-            {p.phone ? ` · ${p.phone}` : ""}
+            {p.parishes?.length ? ` Â· ${p.parishes.join(", ")}` : ""}
+            {p.phone ? ` Â· ${p.phone}` : ""}
           </div>
         </div>
       ))}
@@ -4500,7 +4585,7 @@ function HomeProsPanel({ pros, loading, onApprove }: {
 }
 
 // ---------------------------------------------------------------------------
-// H.O.M.E. — Property Listings (CRUD)
+// H.O.M.E. â€” Property Listings (CRUD)
 // ---------------------------------------------------------------------------
 const HR_PARISHES = ["Kingston","St. Andrew","St. Catherine","St. Thomas","Portland","St. Mary","St. Ann","Trelawny","St. James","Hanover","Westmoreland","St. Elizabeth","Manchester","Clarendon"];
 
@@ -4544,7 +4629,7 @@ function HomeListingsPanel({ listings, loading }: { listings: HomeProperty[]; lo
 
   const fld: React.CSSProperties = { ...S.fieldInput, width: "100%", marginBottom: 10, boxSizing: "border-box" };
 
-  if (loading && rows.length === 0) return <Empty>Loading H.O.M.E. listings…</Empty>;
+  if (loading && rows.length === 0) return <Empty>Loading H.O.M.E. listingsâ€¦</Empty>;
   if (rows.length === 0) return <Empty>No active property listings found.</Empty>;
 
   return (
@@ -4566,7 +4651,7 @@ function HomeListingsPanel({ listings, loading }: { listings: HomeProperty[]; lo
                   <div style={{ display: "flex", gap: 6 }}>
                     <button type="button" onClick={() => openEdit(l)} style={{ ...S.waBtn, background: GOLD, color: "#10211c" }}>Edit</button>
                     <button type="button" onClick={() => setDeleteId(l.id)} style={S.rejectBtn}>Delete</button>
-                    <a href={`${HR_BASE}/properties/${l.id}`} target="_blank" rel="noopener noreferrer" style={S.waBtn}>View →</a>
+                    <a href={`${HR_BASE}/properties/${l.id}`} target="_blank" rel="noopener noreferrer" style={S.waBtn}>View â†’</a>
                   </div>
                 </Td>
               </tr>
@@ -4581,7 +4666,7 @@ function HomeListingsPanel({ listings, loading }: { listings: HomeProperty[]; lo
           <div onClick={(e) => e.stopPropagation()} style={{ background: "#fff", borderRadius: 18, padding: 28, width: "100%", maxWidth: 480, maxHeight: "90vh", overflowY: "auto" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
               <span style={{ fontFamily: "var(--serif,Georgia,serif)", fontWeight: 700, fontSize: "1.1rem", color: GREEN }}>Edit listing</span>
-              <button type="button" onClick={() => setEditing(null)} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "#888" }}>×</button>
+              <button type="button" onClick={() => setEditing(null)} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "#888" }}>Ã—</button>
             </div>
             <label style={S.fieldLabel}>Title</label>
             <input style={fld} value={editForm.title ?? ""} onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))} />
@@ -4598,7 +4683,7 @@ function HomeListingsPanel({ listings, loading }: { listings: HomeProperty[]; lo
             <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
               <button type="button" onClick={() => void saveEdit()} disabled={busy}
                 style={{ ...S.authBtn, width: "auto", padding: "10px 22px", ...(busy ? S.btnOff : null) }}>
-                {busy ? "Saving…" : "Save changes"}
+                {busy ? "Savingâ€¦" : "Save changes"}
               </button>
               <button type="button" onClick={() => setEditing(null)}
                 style={{ padding: "10px 18px", border: "1px solid rgba(18,16,12,.2)", borderRadius: 999, background: "#fff", fontSize: ".88rem", cursor: "pointer" }}>
@@ -4620,7 +4705,7 @@ function HomeListingsPanel({ listings, loading }: { listings: HomeProperty[]; lo
             <div style={{ display: "flex", gap: 10 }}>
               <button type="button" onClick={() => void confirmDelete()} disabled={busy}
                 style={{ ...S.rejectBtn, padding: "10px 20px", borderRadius: 999, ...(busy ? S.btnOff : null) }}>
-                {busy ? "Deleting…" : "Delete"}
+                {busy ? "Deletingâ€¦" : "Delete"}
               </button>
               <button type="button" onClick={() => setDeleteId(null)}
                 style={{ padding: "10px 18px", border: "1px solid rgba(18,16,12,.2)", borderRadius: 999, background: "#fff", fontSize: ".88rem", cursor: "pointer" }}>
@@ -4634,9 +4719,9 @@ function HomeListingsPanel({ listings, loading }: { listings: HomeProperty[]; lo
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CMS Tab — workflow-based case management
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// CMS Tab â€” workflow-based case management
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface CmsMatter {
   id: string;
@@ -4896,7 +4981,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token, matterId, kind, milestoneName }),
       });
-    } catch { /* best-effort — notification failure never blocks the action */ }
+    } catch { /* best-effort â€” notification failure never blocks the action */ }
   }
 
   async function updateMilestone(id: string, status: string) {
@@ -4997,11 +5082,11 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
   async function deleteClientData(m: CmsMatter) {
     if (!confirm(
       `Permanently delete ALL data for ${m.client_name} (${m.client_email})?\n\n` +
-      `This removes their login, client profile, every matter, KYC/ID documents, uploaded files, messages, payments, appointments, and email history — everywhere, not just this matter. This cannot be undone.`
+      `This removes their login, client profile, every matter, KYC/ID documents, uploaded files, messages, payments, appointments, and email history â€” everywhere, not just this matter. This cannot be undone.`
     )) return;
-    const typed = prompt(`Type the client's email to confirm — ${m.client_email}`);
+    const typed = prompt(`Type the client's email to confirm â€” ${m.client_email}`);
     if (typed?.trim().toLowerCase() !== m.client_email.toLowerCase()) {
-      if (typed !== null) alert("Email didn't match — nothing was deleted.");
+      if (typed !== null) alert("Email didn't match â€” nothing was deleted.");
       return;
     }
     setPurging(true);
@@ -5097,7 +5182,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
   }
 
   async function sendMessage() {
-    const clean = msgText.replace(/[﻿​‌‍⁠]/g, "").trim();
+    const clean = msgText.replace(/[ï»¿â€‹â€Œâ€â ]/g, "").trim();
     if (!clean || !selected) return;
     setSending(true);
     try {
@@ -5137,9 +5222,9 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
         p_client_email: emailParam,
       });
       if (error) throw error;
-      if (!data) throw new Error("No matter ID returned — check the RPC returned a value.");
+      if (!data) throw new Error("No matter ID returned â€” check the RPC returned a value.");
 
-      // Do NOT send a portal invite here — if the matter was created successfully the
+      // Do NOT send a portal invite here â€” if the matter was created successfully the
       // client already has an auth account (fl_admin_cms_open_matter looks them up by
       // email). An invite is sent only from the catch block when "client not found".
 
@@ -5150,7 +5235,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
       void loadDetail(data as string);
     } catch (err) {
       const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? String(err);
-      // Client has no portal account — send invite and guide admin
+      // Client has no portal account â€” send invite and guide admin
       if (msg.toLowerCase().includes("client not found") && (newClientEmail.trim() || newClientId.trim())) {
         const email = newClientEmail.trim() || "";
         if (email) {
@@ -5180,7 +5265,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
   }, {});
   const phaseList = Object.entries(phases).sort(([a], [b]) => Number(a) - Number(b));
 
-  if (loading) return <div style={{ padding: 20, color: MUTED }}>Loading CMS matters…</div>;
+  if (loading) return <div style={{ padding: 20, color: MUTED }}>Loading CMS mattersâ€¦</div>;
 
   return (
     <div style={{ display: "flex", height: isMobile ? "auto" : "calc(100vh - 260px)", minHeight: isMobile ? 0 : 500, overflow: "hidden", flexDirection: isMobile ? "column" : "row" }}>
@@ -5224,7 +5309,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                     m.kyc_status === "pending"
                       ? "Client has not yet submitted their Client Intake Form (CIF). This is separate from matter milestones."
                       : m.kyc_status === "submitted"
-                      ? "Client submitted their CIF — go to the Client Intake Form tab to review and approve."
+                      ? "Client submitted their CIF â€” go to the Client Intake Form tab to review and approve."
                       : m.kyc_status === "flagged"
                       ? "CIF flagged for review. Check the Client Intake Form tab."
                       : ""
@@ -5251,7 +5336,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
             Select a matter to view details
           </div>
         ) : detailLoading ? (
-          <div style={{ padding: 40, color: MUTED }}>Loading…</div>
+          <div style={{ padding: 40, color: MUTED }}>Loadingâ€¦</div>
         ) : activeMatter ? (
           <>
             {/* Matter header */}
@@ -5284,7 +5369,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                     })()}
                   </div>
                   <div style={{ fontSize: 12.5, color: MUTED, marginTop: 2 }}>
-                    {activeMatter.client_name} · {activeMatter.client_email}
+                    {activeMatter.client_name} Â· {activeMatter.client_email}
                   </div>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
@@ -5310,12 +5395,13 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                     }}
                     style={{ fontSize: 12, padding: "5px 10px", borderRadius: 8, border: "1px solid " + (activeSummary ? "rgba(200,166,92,.7)" : "rgba(18,16,12,.3)"), background: activeSummary ? "rgba(200,166,92,.12)" : "#fff", color: activeSummary ? "#8a6a22" : INK, cursor: "pointer", fontWeight: 600 }}
                   >
-                    {activeSummary ? "✓ Preliminary Summary" : "Generate Preliminary Summary"}
+                    {activeSummary ? "âœ“ Preliminary Summary" : "Generate Preliminary Summary"}
                   </button>
                   {activeSummary && selected && (
-                    <a href={"/preliminary-summary/" + selected + "?token=" + encodeURIComponent(token)} target="_blank" rel="noopener noreferrer"
-                      style={{ fontSize: 12, padding: "5px 10px", borderRadius: 8, border: "1px solid #8a6a22", background: "#8a6a22", color: "#fff", textDecoration: "none", fontWeight: 600 }}
-                    >View →</a>
+                    <button
+                      onClick={() => window.open("/preliminary-summary/" + selected + "?token=" + encodeURIComponent(token), "_blank", "noopener,noreferrer")}
+                      style={{ fontSize: 12, padding: "5px 10px", borderRadius: 8, border: "1px solid #8a6a22", background: "#8a6a22", color: "#fff", cursor: "pointer", fontWeight: 600 }}
+                    >View â†’</button>
                   )}
                   {activeSummary && selected && (
                     <button
@@ -5342,7 +5428,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                       }}
                       style={{ fontSize: 12, padding: "5px 10px", borderRadius: 8, border: "1px solid #8a6a22", background: (activeSummary as { sent_at?: string }).sent_at ? "rgba(200,166,92,.12)" : "#8a6a22", color: (activeSummary as { sent_at?: string }).sent_at ? "#8a6a22" : "#fff", cursor: sendBusy ? "default" : "pointer", fontWeight: 600, opacity: sendBusy ? 0.7 : 1 }}
                     >
-                      {sendBusy ? "Sending…" : (activeSummary as { sent_at?: string }).sent_at ? "↺ Resend to Client" : "✉ Send to Client"}
+                      {sendBusy ? "Sendingâ€¦" : (activeSummary as { sent_at?: string }).sent_at ? "â†º Resend to Client" : "âœ‰ Send to Client"}
                     </button>
                   )}
                   {sendResult && (
@@ -5356,7 +5442,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                         if (!selected || !confirm("Archive this matter? It will be hidden from the active list but not deleted.")) return;
                         await updateMatterStatus(selected, "archived");
                       }}
-                      title="Hide this matter from the active list — reversible"
+                      title="Hide this matter from the active list â€” reversible"
                       style={{ fontSize: 12, padding: "5px 10px", borderRadius: 8, border: "1px solid rgba(162,59,59,.35)", background: "rgba(162,59,59,.07)", color: "#a23b3b", cursor: "pointer", fontWeight: 600 }}
                     >
                       Archive matter
@@ -5376,10 +5462,10 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                   <button
                     onClick={() => deleteClientData(activeMatter!)}
                     disabled={purging}
-                    title="Permanently delete this client's login, profile, matters, files, and messages — everywhere"
+                    title="Permanently delete this client's login, profile, matters, files, and messages â€” everywhere"
                     style={{ fontSize: 12, padding: "5px 10px", borderRadius: 8, border: "1px solid #d33", background: "#fff", color: "#d33", cursor: purging ? "default" : "pointer", fontWeight: 600 }}
                   >
-                    {purging ? "Deleting…" : "Delete client & all data"}
+                    {purging ? "Deletingâ€¦" : "Delete client & all data"}
                   </button>
                 </div>
               </div>
@@ -5415,7 +5501,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                 }}>
                   {t === "messages" ? `Messages${unreadClientMsgs > 0 ? ` (${unreadClientMsgs})` : ""}`
                     : t === "files" ? `Files (${files.length})`
-                    : t === "kyc" ? `Client Intake Form (CIF)${kyc && kyc.status !== "approved" ? " •" : ""}`
+                    : t === "kyc" ? `Client Intake Form (CIF)${kyc && kyc.status !== "approved" ? " â€¢" : ""}`
                     : t === "payments" ? `Payments (${payments.length})`
                     : "Timeline"}
                 </button>
@@ -5476,7 +5562,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                                     />
                                     <button type="button" onClick={() => void saveEditStep(m.id)} disabled={savingEditStep || !editingStepName.trim()}
                                       style={{ padding: "3px 10px", borderRadius: 7, border: "none", background: GREEN, color: CREAM, fontSize: 12, fontWeight: 600, cursor: "pointer", opacity: savingEditStep ? 0.5 : 1 }}>
-                                      {savingEditStep ? "…" : "Save"}
+                                      {savingEditStep ? "â€¦" : "Save"}
                                     </button>
                                     <button type="button" onClick={() => { setEditingStepId(null); setEditingStepName(""); }}
                                       style={{ padding: "3px 8px", borderRadius: 7, border: `1px solid rgba(18,16,12,.15)`, background: "#fff", color: MUTED, fontSize: 12, cursor: "pointer" }}>
@@ -5491,8 +5577,8 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                                       fontWeight: m.status === "done" ? 600 : 400,
                                       textDecoration: m.status === "not_applicable" ? "line-through" : "none",
                                     }}>
-                                      {m.status === "done" && <span style={{ fontSize: 12, color: "#2e7d32" }}>✅</span>}
-                                      {m.status === "not_applicable" && <span style={{ fontSize: 12 }}>—</span>}
+                                      {m.status === "done" && <span style={{ fontSize: 12, color: "#2e7d32" }}>âœ…</span>}
+                                      {m.status === "not_applicable" && <span style={{ fontSize: 12 }}>â€”</span>}
                                       <span style={{ cursor: "default" }}>
                                         {m.name}
                                       </span>
@@ -5520,9 +5606,9 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                                   {MILESTONE_STATUS_OPTS.map(o => <option key={o} value={o}>{MS_LABELS[o] ?? o}</option>)}
                                 </select>
                                 <button type="button" onClick={() => deleteStep(m.id)}
-                                  title="Remove step" style={{ background: "none", border: "none", cursor: "pointer", color: "#ccc", fontSize: 14, padding: "0 2px" }}>✕</button>
+                                  title="Remove step" style={{ background: "none", border: "none", cursor: "pointer", color: "#ccc", fontSize: 14, padding: "0 2px" }}>âœ•</button>
                               </div>
-                              {/* Result note editor — step name stays read-only here */}
+                              {/* Result note editor â€” step name stays read-only here */}
                               {isAddingNote && (
                                 <div style={{ padding: "0 10px 10px", display: "flex", flexDirection: "column", gap: 6 }}>
                                   <textarea
@@ -5536,7 +5622,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                                   <div style={{ display: "flex", gap: 6 }}>
                                     <button type="button" onClick={() => void saveNote(m.id)} disabled={savingNote}
                                       style={{ padding: "5px 14px", borderRadius: 7, border: "none", background: GREEN, color: CREAM, fontSize: 12, fontWeight: 600, cursor: "pointer", opacity: savingNote ? 0.5 : 1 }}>
-                                      {savingNote ? "…" : "Save"}
+                                      {savingNote ? "â€¦" : "Save"}
                                     </button>
                                     <button type="button" onClick={() => { setAddingNoteForId(null); setNoteText(""); }}
                                       style={{ padding: "5px 10px", borderRadius: 7, border: `1px solid rgba(18,16,12,.15)`, background: "#fff", color: MUTED, fontSize: 12, cursor: "pointer" }}>
@@ -5567,12 +5653,12 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                                 value={newStepName}
                                 onChange={e => setNewStepName(e.target.value)}
                                 onKeyDown={e => { if (e.key === "Enter") void addStep(); if (e.key === "Escape") { setAddingStepPhase(null); setNewStepName(""); setStepScope("matter"); } }}
-                                placeholder="Step name…"
+                                placeholder="Step nameâ€¦"
                                 style={{ flex: 1, fontSize: 13, padding: "6px 10px", borderRadius: 8, border: `1px solid ${GOLD}`, outline: "none" }}
                               />
                               <button type="button" onClick={() => void addStep()} disabled={savingStep || !newStepName.trim()}
                                 style={{ padding: "6px 14px", borderRadius: 8, border: "none", background: GREEN, color: CREAM, fontSize: 13, fontWeight: 600, cursor: "pointer", opacity: savingStep || !newStepName.trim() ? 0.5 : 1 }}>
-                                {savingStep ? "…" : "Add"}
+                                {savingStep ? "â€¦" : "Add"}
                               </button>
                             </div>
                           </div>
@@ -5617,12 +5703,12 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                       onChange={e => setMsgText(e.target.value)}
                       onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void sendMessage(); } }}
                       rows={2}
-                      placeholder="Reply to client… (Enter to send)"
+                      placeholder="Reply to clientâ€¦ (Enter to send)"
                       style={{ flex: 1, resize: "none", borderRadius: 10, border: "1px solid rgba(18,16,12,.2)", padding: "9px 12px", fontSize: 13.5, fontFamily: "inherit", outline: "none" }}
                     />
                     <button onClick={() => void sendMessage()} disabled={sending || !msgText.trim()}
                       style={{ background: GREEN, color: CREAM, border: "none", borderRadius: 10, padding: "10px 18px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
-                      {sending ? "…" : "Send"}
+                      {sending ? "â€¦" : "Send"}
                     </button>
                   </div>
                 </div>
@@ -5639,7 +5725,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                       background: uploading ? "#eee" : GREEN, color: uploading ? MUTED : CREAM,
                       borderRadius: 999, padding: "8px 16px", fontSize: 12.5, fontWeight: 700,
                     }}>
-                      {uploading ? "Uploading…" : "↑ Upload file to client"}
+                      {uploading ? "Uploadingâ€¦" : "â†‘ Upload file to client"}
                     </label>
                   </div>
                   {files.length === 0 ? (
@@ -5647,15 +5733,15 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                   ) : files.map(f => (
                     <a key={f.id} href={f.file_url} target="_blank" rel="noopener"
                       style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 10, border: "1px solid rgba(18,16,12,.1)", background: "#fafaf8", textDecoration: "none", marginBottom: 6 }}>
-                      <span style={{ fontSize: 20 }}>{f.mime_type?.includes("pdf") ? "📄" : f.mime_type?.includes("image") ? "🖼️" : "📎"}</span>
+                      <span style={{ fontSize: 20 }}>{f.mime_type?.includes("pdf") ? "ðŸ“„" : f.mime_type?.includes("image") ? "ðŸ–¼ï¸" : "ðŸ“Ž"}</span>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 13.5, fontWeight: 600, color: INK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.file_name}</div>
                         <div style={{ fontSize: 11.5, color: MUTED }}>
-                          {f.uploader_type === "client" ? activeMatter.client_name : "Ferguson Law"} · {fmtDate(f.created_at)}
-                          {f.file_size ? ` · ${(f.file_size / 1024).toFixed(1)} KB` : ""}
+                          {f.uploader_type === "client" ? activeMatter.client_name : "Ferguson Law"} Â· {fmtDate(f.created_at)}
+                          {f.file_size ? ` Â· ${(f.file_size / 1024).toFixed(1)} KB` : ""}
                         </div>
                       </div>
-                      <span style={{ fontSize: 12, color: "#8a6a22", fontWeight: 600 }}>↓</span>
+                      <span style={{ fontSize: 12, color: "#8a6a22", fontWeight: 600 }}>â†“</span>
                     </a>
                   ))}
                 </div>
@@ -5669,7 +5755,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                     padding: "10px 16px", borderRadius: 999, background: GREEN, color: CREAM,
                     fontSize: 13, fontWeight: 700, textDecoration: "none",
                   }}>
-                    ↓ Download fillable CIF PDF
+                    â†“ Download fillable CIF PDF
                   </a>
                   {!kyc ? (
                     <div>
@@ -5723,12 +5809,12 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                               {[["Full legal name", kyc.full_legal_name], ["Date of birth", kyc.date_of_birth], ["Nationality", kyc.nationality], ["Country of residence", kyc.country_of_residence], ["Occupation", kyc.occupation], ["TRN", kyc.trn]].map(([label, val]) => (
                                 <div key={label as string}>
                                   <div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 2 }}>{label}</div>
-                                  <div style={{ fontSize: 13.5, color: INK }}>{val || "—"}</div>
+                                  <div style={{ fontSize: 13.5, color: INK }}>{val || "â€”"}</div>
                                 </div>
                               ))}
                               <div style={{ gridColumn: "1/-1" }}>
                                 <div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 2 }}>Address</div>
-                                <div style={{ fontSize: 13.5, color: INK }}>{kyc.address || "—"}</div>
+                                <div style={{ fontSize: 13.5, color: INK }}>{kyc.address || "â€”"}</div>
                               </div>
                             </div>
                           </div>
@@ -5736,7 +5822,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: MUTED, borderBottom: "1px solid rgba(18,16,12,.1)", paddingBottom: 6, marginBottom: 12 }}>2. Identity Document</div>
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                               {[["ID type", kyc.id_type], ["ID number", kyc.id_number], ["Expiry", kyc.id_expiry_date]].map(([label, val]) => (
-                                <div key={label as string}><div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 2 }}>{label}</div><div style={{ fontSize: 13.5, color: INK }}>{val || "—"}</div></div>
+                                <div key={label as string}><div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 2 }}>{label}</div><div style={{ fontSize: 13.5, color: INK }}>{val || "â€”"}</div></div>
                               ))}
                             </div>
                             {kyc.id_doc_url && <a href={kyc.id_doc_url} target="_blank" rel="noopener" style={{ display: "inline-block", marginTop: 10, fontSize: 12.5, color: "#8a6a22", fontWeight: 600, textDecoration: "none", border: "1px solid rgba(201,168,106,.4)", background: "rgba(201,168,106,.08)", borderRadius: 6, padding: "5px 12px" }}>View primary ID</a>}
@@ -5745,7 +5831,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                                 <div style={{ fontSize: 10, fontWeight: 700, color: MUTED, marginBottom: 8 }}>SECONDARY ID</div>
                                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                                   {[["Type", kyc.id2_type], ["Number", kyc.id2_number], ["Expiry", kyc.id2_expiry_date]].map(([label, val]) => (
-                                    <div key={label as string}><div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 2 }}>{label}</div><div style={{ fontSize: 13.5, color: INK }}>{val || "—"}</div></div>
+                                    <div key={label as string}><div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 2 }}>{label}</div><div style={{ fontSize: 13.5, color: INK }}>{val || "â€”"}</div></div>
                                   ))}
                                 </div>
                                 {kyc.id2_doc_url && <a href={kyc.id2_doc_url} target="_blank" rel="noopener" style={{ display: "inline-block", marginTop: 8, fontSize: 12.5, color: "#8a6a22", fontWeight: 600, textDecoration: "none", border: "1px solid rgba(201,168,106,.4)", background: "rgba(201,168,106,.08)", borderRadius: 6, padding: "5px 12px" }}>View secondary ID</a>}
@@ -5755,12 +5841,12 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                           <div style={{ marginBottom: 20 }}>
                             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: MUTED, borderBottom: "1px solid rgba(18,16,12,.1)", paddingBottom: 6, marginBottom: 12 }}>3. Source of Funds</div>
                             {[["Source of funds", kyc.source_of_funds], ["Source of wealth", kyc.source_of_wealth], ["Purpose of transaction", kyc.purpose_of_transaction]].map(([label, val]) => (
-                              <div key={label as string} style={{ marginBottom: 10 }}><div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 2 }}>{label}</div><div style={{ fontSize: 13.5, color: INK }}>{val || "—"}</div></div>
+                              <div key={label as string} style={{ marginBottom: 10 }}><div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 2 }}>{label}</div><div style={{ fontSize: 13.5, color: INK }}>{val || "â€”"}</div></div>
                             ))}
                           </div>
                           <div style={{ marginBottom: 20 }}>
                             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: MUTED, borderBottom: "1px solid rgba(18,16,12,.1)", paddingBottom: 6, marginBottom: 12 }}>4. PEP Declaration</div>
-                            <span style={{ fontSize: 13.5, color: kyc.is_pep ? "#7a2020" : INK, fontWeight: kyc.is_pep ? 700 : 400 }}>{kyc.is_pep ? "Yes — Politically Exposed Person" : "No"}</span>
+                            <span style={{ fontSize: 13.5, color: kyc.is_pep ? "#7a2020" : INK, fontWeight: kyc.is_pep ? 700 : 400 }}>{kyc.is_pep ? "Yes â€” Politically Exposed Person" : "No"}</span>
                             {kyc.is_pep && kyc.pep_details && <div style={{ marginTop: 10, padding: "10px 14px", background: "rgba(122,32,32,.06)", border: "1px solid rgba(122,32,32,.14)", borderRadius: 8, fontSize: 13 }}>{kyc.pep_details}</div>}
                           </div>
                         </>
@@ -5773,10 +5859,10 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: MUTED, borderBottom: "1px solid rgba(18,16,12,.1)", paddingBottom: 6, marginBottom: 12 }}>1. Entity Registration</div>
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                               {[["Entity name", kyc.entity_name], ["Entity type", kyc.entity_type], ["Registration no.", kyc.entity_registration_number], ["TRN", kyc.entity_trn], ["Date of incorporation", kyc.entity_date_of_incorporation], ["Country of incorporation", kyc.entity_country_of_incorporation]].map(([label, val]) => (
-                                <div key={label as string}><div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 2 }}>{label}</div><div style={{ fontSize: 13.5, color: INK }}>{val || "—"}</div></div>
+                                <div key={label as string}><div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 2 }}>{label}</div><div style={{ fontSize: 13.5, color: INK }}>{val || "â€”"}</div></div>
                               ))}
                               {[["Registered address", kyc.entity_registered_address], ["Principal address", kyc.entity_principal_address], ["Nature of business", kyc.entity_nature_of_business]].map(([label, val]) => (
-                                <div key={label as string} style={{ gridColumn: "1/-1" }}><div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 2 }}>{label}</div><div style={{ fontSize: 13.5, color: INK }}>{val || "—"}</div></div>
+                                <div key={label as string} style={{ gridColumn: "1/-1" }}><div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 2 }}>{label}</div><div style={{ fontSize: 13.5, color: INK }}>{val || "â€”"}</div></div>
                               ))}
                             </div>
                             {kyc.entity_resolution_url && <a href={kyc.entity_resolution_url} target="_blank" rel="noopener" style={{ display: "inline-block", marginTop: 10, fontSize: 12.5, color: "#8a6a22", fontWeight: 600, textDecoration: "none", border: "1px solid rgba(201,168,106,.4)", background: "rgba(201,168,106,.08)", borderRadius: 6, padding: "5px 12px" }}>View corporate resolution</a>}
@@ -5787,7 +5873,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                               {kyc.entity_directors.map((d, i) => (
                                 <div key={i} style={{ padding: "8px 12px", background: "#fafaf8", borderRadius: 8, border: "1px solid rgba(18,16,12,.08)", marginBottom: 8, display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 10 }}>
                                   {[["Name", d.name], ["Nationality", d.nationality], ["DOB", d.dob], ["Role", d.role]].map(([label, val]) => (
-                                    <div key={label as string}><div style={{ fontSize: 10, textTransform: "uppercase", color: MUTED, marginBottom: 1 }}>{label}</div><div style={{ fontSize: 13, color: INK }}>{val || "—"}</div></div>
+                                    <div key={label as string}><div style={{ fontSize: 10, textTransform: "uppercase", color: MUTED, marginBottom: 1 }}>{label}</div><div style={{ fontSize: 13, color: INK }}>{val || "â€”"}</div></div>
                                   ))}
                                 </div>
                               ))}
@@ -5800,7 +5886,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                                 <div key={i} style={{ padding: "8px 12px", background: "#fafaf8", borderRadius: 8, border: "1px solid rgba(18,16,12,.08)", marginBottom: 8 }}>
                                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 10, marginBottom: o.is_pep ? 8 : 0 }}>
                                     {[["Name", o.name], ["Nationality", o.nationality], ["DOB", o.dob], ["Ownership %", o.ownership_pct]].map(([label, val]) => (
-                                      <div key={label as string}><div style={{ fontSize: 10, textTransform: "uppercase", color: MUTED, marginBottom: 1 }}>{label}</div><div style={{ fontSize: 13, color: INK }}>{val || "—"}</div></div>
+                                      <div key={label as string}><div style={{ fontSize: 10, textTransform: "uppercase", color: MUTED, marginBottom: 1 }}>{label}</div><div style={{ fontSize: 13, color: INK }}>{val || "â€”"}</div></div>
                                     ))}
                                   </div>
                                   {o.is_pep && <div style={{ padding: "6px 10px", background: "rgba(122,32,32,.06)", borderRadius: 6, fontSize: 12.5, color: "#7a2020", fontWeight: 600 }}>PEP{o.pep_details ? ": " + o.pep_details : ""}</div>}
@@ -5814,7 +5900,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                               {kyc.entity_authorised_signatories.map((s, i) => (
                                 <div key={i} style={{ padding: "8px 12px", background: "#fafaf8", borderRadius: 8, border: "1px solid rgba(18,16,12,.08)", marginBottom: 8, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
                                   {[["Name", s.name], ["ID type", s.id_type], ["ID number", s.id_number]].map(([label, val]) => (
-                                    <div key={label as string}><div style={{ fontSize: 10, textTransform: "uppercase", color: MUTED, marginBottom: 1 }}>{label}</div><div style={{ fontSize: 13, color: INK }}>{val || "—"}</div></div>
+                                    <div key={label as string}><div style={{ fontSize: 10, textTransform: "uppercase", color: MUTED, marginBottom: 1 }}>{label}</div><div style={{ fontSize: 13, color: INK }}>{val || "â€”"}</div></div>
                                   ))}
                                 </div>
                               ))}
@@ -5823,12 +5909,12 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                           <div style={{ marginBottom: 20 }}>
                             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: MUTED, borderBottom: "1px solid rgba(18,16,12,.1)", paddingBottom: 6, marginBottom: 12 }}>5. Source of Funds</div>
                             {[["Source of funds", kyc.source_of_funds], ["Source of wealth", kyc.source_of_wealth], ["Purpose of transaction", kyc.purpose_of_transaction]].map(([label, val]) => (
-                              <div key={label as string} style={{ marginBottom: 10 }}><div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 2 }}>{label}</div><div style={{ fontSize: 13.5, color: INK }}>{val || "—"}</div></div>
+                              <div key={label as string} style={{ marginBottom: 10 }}><div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 2 }}>{label}</div><div style={{ fontSize: 13.5, color: INK }}>{val || "â€”"}</div></div>
                             ))}
                           </div>
                           <div style={{ marginBottom: 20 }}>
                             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: MUTED, borderBottom: "1px solid rgba(18,16,12,.1)", paddingBottom: 6, marginBottom: 12 }}>6. PEP Declaration</div>
-                            <span style={{ fontSize: 13.5, color: kyc.entity_has_pep_director ? "#7a2020" : INK, fontWeight: kyc.entity_has_pep_director ? 700 : 400 }}>{kyc.entity_has_pep_director ? "Yes — PEP director / owner" : "No"}</span>
+                            <span style={{ fontSize: 13.5, color: kyc.entity_has_pep_director ? "#7a2020" : INK, fontWeight: kyc.entity_has_pep_director ? 700 : 400 }}>{kyc.entity_has_pep_director ? "Yes â€” PEP director / owner" : "No"}</span>
                             {kyc.entity_has_pep_director && kyc.entity_pep_details && <div style={{ marginTop: 10, padding: "10px 14px", background: "rgba(122,32,32,.06)", border: "1px solid rgba(122,32,32,.14)", borderRadius: 8, fontSize: 13 }}>{kyc.entity_pep_details}</div>}
                           </div>
                         </>
@@ -5842,7 +5928,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                       <div style={S.field}>
                         <label style={S.fieldLabel}>Reviewer notes</label>
                         <textarea value={kycNotes} onChange={e => setKycNotes(e.target.value)} rows={3}
-                          style={{ ...S.fieldInput, resize: "vertical", fontFamily: "inherit" }} placeholder="Notes for the compliance file…" />
+                          style={{ ...S.fieldInput, resize: "vertical", fontFamily: "inherit" }} placeholder="Notes for the compliance fileâ€¦" />
                       </div>
                       <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
                         <button onClick={() => void reviewKyc("approved")} disabled={kycReviewing}
@@ -5875,7 +5961,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                       style={{ fontSize: 12.5, padding: "8px 10px", borderRadius: 8, border: "1px solid rgba(18,16,12,.2)" }} />
                     <button onClick={() => void addPayment()} disabled={addingPayment || !payAmount.trim()}
                       style={{ gridColumn: "1/-1", background: GREEN, color: CREAM, border: "none", borderRadius: 8, padding: "9px", fontSize: 12.5, fontWeight: 700, cursor: "pointer" }}>
-                      {addingPayment ? "Recording…" : "Record payment"}
+                      {addingPayment ? "Recordingâ€¦" : "Record payment"}
                     </button>
                   </div>
                   {payments.length === 0 ? (
@@ -5884,16 +5970,16 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                     <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 10, border: "1px solid rgba(18,16,12,.1)", background: "#fff", marginBottom: 8 }}>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: 13.5, fontWeight: 700, color: INK, textTransform: "capitalize" }}>
-                          {p.kind} · JMD ${p.amount_jmd.toLocaleString("en-JM")}
+                          {p.kind} Â· JMD ${p.amount_jmd.toLocaleString("en-JM")}
                         </div>
                         <div style={{ fontSize: 11.5, color: MUTED }}>
-                          {p.method?.replace("_"," ") || "—"}{p.reference ? ` · ${p.reference}` : ""} · {fmtDate(p.created_at)}
+                          {p.method?.replace("_"," ") || "â€”"}{p.reference ? ` Â· ${p.reference}` : ""} Â· {fmtDate(p.created_at)}
                         </div>
                         {p.receipt_number && (
                           <div style={{ fontSize: 11.5, color: "#2f7a52", fontWeight: 600, marginTop: 2, display: "flex", alignItems: "center", gap: 8 }}>
                             Receipt {p.receipt_number}
                             <a href={`/receipt?id=${p.id}&admin=1&token=${encodeURIComponent(token)}`} target="_blank" rel="noopener noreferrer"
-                              style={{ fontSize: 11, color: "#c9a86a", fontWeight: 600, textDecoration: "none" }}>View / Print ↗</a>
+                              style={{ fontSize: 11, color: "#c9a86a", fontWeight: 600, textDecoration: "none" }}>View / Print â†—</a>
                           </div>
                         )}
                       </div>
@@ -5951,7 +6037,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
               )}
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
                 <span style={{ color: "#7a7a6a" }}>Date confirmed</span>
-                <span style={{ color: "#10211c" }}>{receiptPreview.confirmed_at ? new Date(receiptPreview.confirmed_at).toLocaleDateString("en-JM") : "—"}</span>
+                <span style={{ color: "#10211c" }}>{receiptPreview.confirmed_at ? new Date(receiptPreview.confirmed_at).toLocaleDateString("en-JM") : "â€”"}</span>
               </div>
             </div>
             <p style={{ fontSize: 12, color: "#9a9a8a", marginBottom: 18 }}>A receipt will be emailed to the client. This cannot be undone.</p>
@@ -5983,12 +6069,12 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 12px", borderRadius: 10, border: `1px solid ${GOLD}`, background: "#fffbf0" }}>
                     <span style={{ fontSize: 13, fontWeight: 600, color: INK }}>{newClientLabel}</span>
                     <button type="button" onClick={() => { setNewClientId(""); setNewClientLabel(""); setNewClientEmail(""); setClientQuery(""); setNewClientName(""); }}
-                      style={{ background: "none", border: "none", cursor: "pointer", color: MUTED, fontSize: 16 }}>×</button>
+                      style={{ background: "none", border: "none", cursor: "pointer", color: MUTED, fontSize: 16 }}>Ã—</button>
                   </div>
                 ) : (
                   <>
                     <input value={clientQuery} onChange={e => setClientQuery(e.target.value)}
-                      placeholder="Search by email (or enter name below)…"
+                      placeholder="Search by email (or enter name below)â€¦"
                       style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid rgba(18,16,12,.2)", fontSize: 13, outline: "none" }} />
                     {clientHits.length > 0 && (
                       <div style={{ position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, background: "#fff", border: "1px solid rgba(18,16,12,.15)", borderRadius: 10, boxShadow: "0 6px 18px rgba(0,0,0,.1)", zIndex: 5, maxHeight: 180, overflowY: "auto" }}>
@@ -6001,7 +6087,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                         ))}
                       </div>
                     )}
-                    <div style={{ fontSize: 11, color: MUTED, textAlign: "center", margin: "4px 0" }}>— or enter manually —</div>
+                    <div style={{ fontSize: 11, color: MUTED, textAlign: "center", margin: "4px 0" }}>â€” or enter manually â€”</div>
                     <input value={newClientName} onChange={e => setNewClientName(e.target.value)}
                       placeholder="Client name"
                       style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid rgba(18,16,12,.2)", fontSize: 13, outline: "none" }} />
@@ -6055,7 +6141,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
             <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
               <button onClick={() => void createMatter()} disabled={creating || (!newClientId.trim() && !newClientName.trim() && !newClientLabel.trim())}
                 style={{ flex: 1, background: GREEN, color: CREAM, border: "none", borderRadius: 10, padding: "12px", fontSize: 14, fontWeight: 700, cursor: "pointer", opacity: creating || (!newClientId.trim() && !newClientName.trim()) ? 0.6 : 1 }}>
-                {creating ? "Creating…" : "Open Matter"}
+                {creating ? "Creatingâ€¦" : "Open Matter"}
               </button>
               <button onClick={() => { setOpenMatter(false); setCreateError(null); }}
                 style={{ padding: "12px 20px", border: "1px solid rgba(18,16,12,.2)", borderRadius: 10, background: "#fff", fontSize: 13, cursor: "pointer" }}>
@@ -6105,9 +6191,9 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                   }}
                   style={{ padding: "7px 14px", borderRadius: 8, border: "1.5px solid #8a6a22", background: draftBusy ? "rgba(200,166,92,.08)" : "rgba(200,166,92,.06)", color: "#8a6a22", fontSize: 12.5, cursor: draftBusy ? "default" : "pointer", fontWeight: 700, whiteSpace: "nowrap" }}
                 >
-                  {draftBusy ? "Drafting…" : "✦ Draft with AI"}
+                  {draftBusy ? "Draftingâ€¦" : "âœ¦ Draft with AI"}
                 </button>
-                <button onClick={() => setSummaryModal(false)} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: MUTED, lineHeight: 1 }}>✕</button>
+                <button onClick={() => setSummaryModal(false)} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: MUTED, lineHeight: 1 }}>âœ•</button>
               </div>
             </div>
             <div style={{ padding: "22px 28px", display: "flex", flexDirection: "column", gap: 18 }}>
@@ -6129,12 +6215,12 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                 </div>
               ))}
               <div style={{ borderTop: "1.5px dashed rgba(18,16,12,.12)", paddingTop: 18, marginTop: 4 }}>
-                <label style={{ display: "block", fontSize: 11, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: "#888", marginBottom: 4 }}>Internal Notes <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0, fontSize: 11, color: "#aaa" }}>— not shown to client</span></label>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: "#888", marginBottom: 4 }}>Internal Notes <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0, fontSize: 11, color: "#aaa" }}>â€” not shown to client</span></label>
                 <textarea
                   value={summaryFields.internal_notes}
                   onChange={e => setSummaryFields(prev => ({ ...prev, internal_notes: e.target.value }))}
                   rows={3}
-                  placeholder="Notes for your records only…"
+                  placeholder="Notes for your records onlyâ€¦"
                   style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1.5px dashed rgba(18,16,12,.18)", fontSize: 13.5, lineHeight: 1.6, resize: "vertical", outline: "none", fontFamily: "inherit", boxSizing: "border-box", background: "#fafafa" }}
                 />
               </div>
@@ -6160,7 +6246,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                     else if (j.error) alert("Save failed: " + j.error);
                   } catch (e) {
                     const msg = e instanceof Error ? e.message : "Unknown error";
-                    alert(msg.includes("abort") ? "Save timed out — please try again" : "Save failed: " + msg);
+                    alert(msg.includes("abort") ? "Save timed out â€” please try again" : "Save failed: " + msg);
                   } finally {
                     clearTimeout(timeout);
                     setSummaryBusy(false);
@@ -6168,7 +6254,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                 }}
                 style={{ padding: "10px 28px", borderRadius: 10, border: "none", background: GREEN, color: CREAM, fontSize: 13.5, cursor: summaryBusy ? "default" : "pointer", fontWeight: 700, opacity: summaryBusy ? 0.7 : 1 }}
               >
-                {summaryBusy ? "Saving…" : "Save & Generate"}
+                {summaryBusy ? "Savingâ€¦" : "Save & Generate"}
               </button>
             </div>
           </div>
@@ -6230,7 +6316,7 @@ function MeetingRow({ meeting: m, token, onJoinIframe, onChange }: {
   async function reschedule() {
     if (!newTime) return;
     setBusy("reschedule"); setErr(null);
-    // newTime is a wall-clock "YYYY-MM-DDTHH:mm" with no zone — the server
+    // newTime is a wall-clock "YYYY-MM-DDTHH:mm" with no zone â€” the server
     // interprets it as Jamaica time, so this works regardless of the admin's
     // own browser timezone.
     const d = await call("reschedule", { starts_at_wall: newTime });
@@ -6244,7 +6330,7 @@ function MeetingRow({ meeting: m, token, onJoinIframe, onChange }: {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
         <div>
           <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: INK }}>{m.name ?? "Client"}</p>
-          <p style={{ margin: "2px 0 0", fontSize: 12, color: MUTED }}>{m.service} · {when}</p>
+          <p style={{ margin: "2px 0 0", fontSize: 12, color: MUTED }}>{m.service} Â· {when}</p>
         </div>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
           {m.meeting_url ? (
@@ -6256,24 +6342,24 @@ function MeetingRow({ meeting: m, token, onJoinIframe, onChange }: {
             ) : (
               <a href={m.meeting_url} target="_blank" rel="noopener noreferrer"
                 style={{ display: "inline-block", background: GOLD, color: CREAM, borderRadius: 7, padding: "8px 18px", fontWeight: 700, fontSize: 13, textDecoration: "none", flexShrink: 0 }}>
-                Join call ↗
+                Join call â†—
               </a>
             )
           ) : (
             <span style={{ fontSize: 12, color: MUTED, fontStyle: "italic" }}>No link yet</span>
           )}
           <button onClick={() => void resend()} disabled={!!busy} style={{ ...BTN, opacity: busy ? 0.6 : 1 }}>
-            {busy === "resend" ? "Sending…" : "Resend link"}
+            {busy === "resend" ? "Sendingâ€¦" : "Resend link"}
           </button>
           <button onClick={() => void recreate()} disabled={!!busy} style={{ ...BTN, opacity: busy ? 0.6 : 1 }}>
-            {busy === "recreate" ? "Generating…" : "New link"}
+            {busy === "recreate" ? "Generatingâ€¦" : "New link"}
           </button>
           <button onClick={() => setRescheduling(v => !v)} disabled={!!busy} style={{ ...BTN, opacity: busy ? 0.6 : 1 }}>
             Reschedule
           </button>
           <button onClick={() => void cancel()} disabled={!!busy}
             style={{ ...BTN, color: "#a23b3b", borderColor: "rgba(162,59,59,.3)", opacity: busy ? 0.6 : 1 }}>
-            {busy === "cancel" ? "Cancelling…" : "Cancel"}
+            {busy === "cancel" ? "Cancellingâ€¦" : "Cancel"}
           </button>
         </div>
       </div>
@@ -6283,9 +6369,9 @@ function MeetingRow({ meeting: m, token, onJoinIframe, onChange }: {
             style={{ border: "1px solid rgba(18,16,12,.2)", borderRadius: 7, padding: "7px 10px", fontSize: 13 }} />
           <button onClick={() => void reschedule()} disabled={!newTime || !!busy}
             style={{ ...BTN, background: GOLD, color: CREAM, opacity: !newTime || busy ? 0.6 : 1 }}>
-            {busy === "reschedule" ? "Moving…" : "Confirm new time"}
+            {busy === "reschedule" ? "Movingâ€¦" : "Confirm new time"}
           </button>
-          <span style={{ fontSize: 11.5, color: MUTED }}>Jamaica time · client is emailed the new time.</span>
+          <span style={{ fontSize: 11.5, color: MUTED }}>Jamaica time Â· client is emailed the new time.</span>
         </div>
       )}
       {err && <p style={{ margin: "8px 0 0", fontSize: 12, color: "#a23b3b" }}>{err}</p>}
@@ -6364,13 +6450,13 @@ function ZoomSetupTab({ token, appts = [] }: { token: string; appts?: Appointmen
         <p style={{ marginTop: 6, color: MUTED, fontSize: 14 }}>Clients get a video call link in their confirmation email. Join from here or start an instant call below.</p>
       </div>
 
-      {/* ── LIVE CALL IFRAME ── */}
+      {/* â”€â”€ LIVE CALL IFRAME â”€â”€ */}
       {activeIframe && (
         <div style={{ ...SECTION, padding: 0, overflow: "hidden" }}>
           <div style={{ padding: "12px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid rgba(0,0,0,.07)" }}>
             <span style={{ fontWeight: 700, fontSize: 14, color: INK }}>Live consultation</span>
             <div style={{ display: "flex", gap: 10 }}>
-              <a href={activeIframe} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: GOLD }}>Open in new tab ↗</a>
+              <a href={activeIframe} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: GOLD }}>Open in new tab â†—</a>
               <button onClick={() => setActiveIframe(null)} style={{ fontSize: 12, background: "none", border: "1px solid #ddd", borderRadius: 6, padding: "4px 10px", cursor: "pointer", color: MUTED }}>Close</button>
             </div>
           </div>
@@ -6379,26 +6465,26 @@ function ZoomSetupTab({ token, appts = [] }: { token: string; appts?: Appointmen
         </div>
       )}
 
-      {/* ── INSTANT MEETING ── */}
+      {/* â”€â”€ INSTANT MEETING â”€â”€ */}
       <div style={{ ...SECTION, display: "flex", flexDirection: "column", gap: 14 }}>
         <p style={{ fontWeight: 700, fontSize: 15, margin: 0, color: INK }}>Start an instant consultation</p>
-        <p style={{ fontSize: 13, color: MUTED, margin: 0 }}>Generates a video call room instantly — click Join to enter.</p>
+        <p style={{ fontSize: 13, color: MUTED, margin: 0 }}>Generates a video call room instantly â€” click Join to enter.</p>
         <button
           onClick={() => void createMeeting()}
           disabled={creating}
           style={{ background: GOLD, color: CREAM, border: "none", borderRadius: 8, padding: "12px 24px", fontWeight: 700, fontSize: 14, cursor: "pointer", opacity: creating ? 0.7 : 1, alignSelf: "flex-start" }}
         >
-          {creating ? "Creating meeting…" : "Create instant meeting"}
+          {creating ? "Creating meetingâ€¦" : "Create instant meeting"}
         </button>
         {instantMeeting && (
           <div style={{ background: "#f0f7f0", border: "1px solid #b2dfb5", borderRadius: 10, padding: "16px 20px" }}>
             <p style={{ margin: "0 0 10px", fontWeight: 700, fontSize: 14, color: "#1e5c22" }}>
-              Meeting ready{instantMeeting.provider === "daily" ? " · embedded below" : ""}{instantMeeting.provider === "jitsi" ? " · via Jitsi Meet" : ""}
+              Meeting ready{instantMeeting.provider === "daily" ? " Â· embedded below" : ""}{instantMeeting.provider === "jitsi" ? " Â· via Jitsi Meet" : ""}
             </p>
             {(instantMeeting.provider === "zoom" || instantMeeting.provider === "jitsi") && (
               <a href={instantMeeting.url} target="_blank" rel="noopener noreferrer"
                 style={{ display: "inline-block", background: GOLD, color: CREAM, borderRadius: 8, padding: "10px 22px", fontWeight: 700, fontSize: 14, textDecoration: "none" }}>
-                Join call ↗
+                Join call â†—
               </a>
             )}
             {instantMeeting.provider === "daily" && !activeIframe && (
@@ -6412,12 +6498,12 @@ function ZoomSetupTab({ token, appts = [] }: { token: string; appts?: Appointmen
         {createErr && <p style={{ color: "#c0392b", fontSize: 13, margin: 0 }}>{createErr}</p>}
       </div>
 
-      {/* ── UPCOMING MEETINGS ── */}
+      {/* â”€â”€ UPCOMING MEETINGS â”€â”€ */}
       <div style={SECTION}>
         <p style={{ fontWeight: 700, fontSize: 15, marginBottom: 4, color: INK }}>Upcoming consultations</p>
-        <p style={{ fontSize: 12, color: MUTED, margin: "0 0 16px" }}>Resend the link, generate a fresh one, move the time, or cancel — the client is emailed automatically for each.</p>
+        <p style={{ fontSize: 12, color: MUTED, margin: "0 0 16px" }}>Resend the link, generate a fresh one, move the time, or cancel â€” the client is emailed automatically for each.</p>
         {loadingUpcoming ? (
-          <p style={{ fontSize: 13, color: MUTED }}>Loading…</p>
+          <p style={{ fontSize: 13, color: MUTED }}>Loadingâ€¦</p>
         ) : upcoming.length === 0 ? (
           <p style={{ fontSize: 13, color: MUTED }}>No upcoming confirmed bookings. Video call links appear here automatically when clients book and pay.</p>
         ) : (
@@ -6434,11 +6520,11 @@ function ZoomSetupTab({ token, appts = [] }: { token: string; appts?: Appointmen
         )}
       </div>
 
-      {/* ── STATUS ── */}
+      {/* â”€â”€ STATUS â”€â”€ */}
       {status && (
         <div style={{ borderRadius: 10, padding: "14px 18px", marginBottom: 18, fontSize: 14, background: status.ok ? "#edf7ee" : "#fdf0f0", border: `1px solid ${status.ok ? "#b2dfb5" : "#f5c6c6"}`, color: status.ok ? "#1e5c22" : "#7a1515" }}>
           {status.ok
-            ? `Connected — video calling active`
+            ? `Connected â€” video calling active`
             : status.status === "not_configured"
               ? `Not configured yet.`
               : `Error: ${status.error}`}
@@ -6449,8 +6535,8 @@ function ZoomSetupTab({ token, appts = [] }: { token: string; appts?: Appointmen
         <p style={{ fontWeight: 700, fontSize: 14, marginBottom: 10, color: INK }}>How it works</p>
         <ul style={{ fontSize: 13.5, lineHeight: 1.9, color: MUTED, paddingLeft: 18, margin: 0 }}>
           <li>When a client books and pays, a video room is auto-created and the join link goes in their confirmation email.</li>
-          <li>Upcoming bookings appear above — click "Join call" to enter. Clients use their own link from the confirmation email to join the same call.</li>
-          <li>Clients can enter before you — no waiting room.</li>
+          <li>Upcoming bookings appear above â€” click "Join call" to enter. Clients use their own link from the confirmation email to join the same call.</li>
+          <li>Clients can enter before you â€” no waiting room.</li>
         </ul>
       </div>
 
@@ -6463,7 +6549,7 @@ function ZoomSetupTab({ token, appts = [] }: { token: string; appts?: Appointmen
           <p style={{ fontWeight: 700, fontSize: 15, marginBottom: 18, color: INK }}>Setup (one-time, technical)</p>
           {[
             { n: 1, body: <>In your video-calling provider&apos;s developer console, copy the <strong>Account ID</strong>, <strong>Client ID</strong>, and <strong>Client Secret</strong>.</> },
-            { n: 2, body: <>Go to your <a href="https://vercel.com/dashboard" target="_blank" rel="noopener noreferrer" style={{ color: GOLD }}>Vercel dashboard</a> → <strong>ferguson-law</strong> → <strong>Settings → Environment Variables</strong> → add these three:<br /><br />
+            { n: 2, body: <>Go to your <a href="https://vercel.com/dashboard" target="_blank" rel="noopener noreferrer" style={{ color: GOLD }}>Vercel dashboard</a> â†’ <strong>ferguson-law</strong> â†’ <strong>Settings â†’ Environment Variables</strong> â†’ add these three:<br /><br />
               <span style={CODE}>ZOOM_ACCOUNT_ID</span><br />
               <span style={CODE}>ZOOM_CLIENT_ID</span><br />
               <span style={CODE}>ZOOM_CLIENT_SECRET</span><br /><br />
@@ -6476,7 +6562,7 @@ function ZoomSetupTab({ token, appts = [] }: { token: string; appts?: Appointmen
             </div>
           ))}
           <button onClick={() => void testConnection()} disabled={testing} style={{ marginTop: 8, background: GOLD, color: CREAM, border: "none", borderRadius: 10, padding: "11px 24px", fontWeight: 700, fontSize: 14, cursor: "pointer", opacity: testing ? 0.7 : 1 }}>
-            {testing ? "Testing…" : "Test Connection"}
+            {testing ? "Testingâ€¦" : "Test Connection"}
           </button>
         </div>
       )}
@@ -6519,15 +6605,15 @@ function TesterFeedbackTab({ token }: { token: string }) {
                 <span style={{ color: "#888", fontSize: 12, marginLeft: 8 }}>{r.tester_role}</span>
               </div>
               <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                <span style={{ background: "#f0ede6", borderRadius: 6, padding: "3px 10px", fontSize: 12, fontWeight: 600, color: "#10211c" }}>{r.persona?.split(" — ")[0]}</span>
+                <span style={{ background: "#f0ede6", borderRadius: 6, padding: "3px 10px", fontSize: 12, fontWeight: 600, color: "#10211c" }}>{r.persona?.split(" â€” ")[0]}</span>
                 {r.device_type && <span style={{ background: "#f0ede6", borderRadius: 6, padding: "3px 10px", fontSize: 12, color: "#555" }}>{r.device_type}</span>}
-                <span style={{ background: "#c9a86a", color: "#10211c", borderRadius: 6, padding: "3px 10px", fontSize: 12, fontWeight: 700 }}>{"★".repeat(r.rating)}</span>
+                <span style={{ background: "#c9a86a", color: "#10211c", borderRadius: 6, padding: "3px 10px", fontSize: 12, fontWeight: 700 }}>{"â˜…".repeat(r.rating)}</span>
               </div>
             </div>
             <div style={{ fontSize: 11.5, color: "#888", marginBottom: 8 }}>
-              {r.site_tested && <span>{r.site_tested} &nbsp;·&nbsp; </span>}
+              {r.site_tested && <span>{r.site_tested} &nbsp;Â·&nbsp; </span>}
               {new Date(r.created_at).toLocaleDateString("en-JM", { day: "numeric", month: "short", year: "numeric" })}
-              {r.would_use !== null && <span> &nbsp;·&nbsp; Would use: <strong>{r.would_use ? "Yes" : "No"}</strong></span>}
+              {r.would_use !== null && <span> &nbsp;Â·&nbsp; Would use: <strong>{r.would_use ? "Yes" : "No"}</strong></span>}
             </div>
             {r.what_worked && <p style={{ fontSize: 13, color: "#333", margin: "6px 0 0" }}><strong>Worked:</strong> {r.what_worked}</p>}
             {r.what_didnt && <p style={{ fontSize: 13, color: "#333", margin: "6px 0 0" }}><strong>Didn&apos;t work:</strong> {r.what_didnt}</p>}
