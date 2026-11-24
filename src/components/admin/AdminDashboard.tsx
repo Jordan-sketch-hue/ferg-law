@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 /**
  * Consultation CRM â€” the Ferguson Law back office.
