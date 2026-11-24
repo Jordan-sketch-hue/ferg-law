@@ -1,18 +1,16 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+﻿import { NextRequest, NextResponse } from "next/server";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const VALID = new Set([
+  process.env.FL_ADMIN_TOKEN_1,
+  process.env.FL_ADMIN_TOKEN_2,
+  process.env.FL_ADMIN_TOKEN,
+].filter(Boolean) as string[]);
 
 export async function POST(req: NextRequest) {
   try {
     const { token } = await req.json();
     if (!token || typeof token !== "string") return NextResponse.json({ ok: false }, { status: 400 });
-    const { data, error } = await supabase.rpc("fl_is_admin", { p_token: token.trim() });
-    if (error || !data) return NextResponse.json({ ok: false });
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: VALID.has(token.trim()) });
   } catch {
     return NextResponse.json({ ok: false }, { status: 500 });
   }

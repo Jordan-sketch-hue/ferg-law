@@ -1,4 +1,4 @@
-import type { Metadata, Viewport } from "next";
+﻿import type { Metadata, Viewport } from "next";
 import { Fraunces } from "next/font/google";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -15,6 +15,7 @@ import SplashScreen from "@/components/site/SplashScreen";
 import BottomNav from "@/components/site/BottomNav";
 import PushPromptGlobal from "@/components/pwa/PushPromptGlobal";
 import { CmsEditBar } from "@/components/cms/CmsEditBar";
+import { ServiceNotice } from "@/components/site/ServiceNotice";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -210,6 +211,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: `try{if(window.matchMedia('(display-mode:standalone)').matches&&!sessionStorage.getItem('fl_splashed')){sessionStorage.setItem('fl_splashed','1');document.documentElement.setAttribute('data-splashing','1');}}catch(e){}` }} />
       </head>
       <body>
+        <ServiceNotice />
         {children}
         <PageTracker />
         <ChatWidget />
