@@ -170,7 +170,7 @@ export default function Nav() {
           </nav>
 
           <div className="nav-right">
-            {/* Utility â€” search first */}
+            {/* Utility — search first */}
             <button
               className="nav-search-btn nav-search-desktop"
               aria-label="Search"
@@ -197,7 +197,7 @@ export default function Nav() {
                 </div>
               )}
             </div>
-            {/* Book here â€” desktop */}
+            {/* Book here — desktop */}
             <a
               href="/booking"
               className="btn btn-gold nav-consult-btn"
@@ -205,7 +205,7 @@ export default function Nav() {
             >
               <CalIcon /><span className="btn-label" data-edit="nav.bookHere">Book here</span>
             </a>
-            {/* Book here â€” mobile only */}
+            {/* Book here — mobile only */}
             <a
               href="/booking"
               className="btn btn-gold nav-consult-mobile"
@@ -232,7 +232,7 @@ export default function Nav() {
         </div>
       </header>
 
-      {/* Mobile drawer + overlay â€” wrapper clips fixed drawer to viewport so iOS doesn't zoom */}
+      {/* Mobile drawer + overlay — wrapper clips fixed drawer to viewport so iOS doesn't zoom */}
       <div className={`nav-drawer-clip${menuOpen ? " active" : ""}`} aria-hidden="true">
         <div
           className={`nav-overlay${menuOpen ? " show" : ""}`}
@@ -296,7 +296,7 @@ export default function Nav() {
       </div>
 
       <style>{`
-        /* Drawer clip wrapper â€” position:fixed; overflow:hidden clips drawer to viewport
+        /* Drawer clip wrapper — position:fixed; overflow:hidden clips drawer to viewport
            so iOS Safari doesn't detect off-screen translateX and zoom out the page */
         .nav-drawer-clip{
           position:fixed; inset:0; pointer-events:none;
@@ -333,14 +333,14 @@ export default function Nav() {
         }
         a.nav-home-inline:hover{ opacity:.72; }
 
-        /* Drawer section label â€” sits between links, no extra border */
+        /* Drawer section label — sits between links, no extra border */
         .drawer-section-label{
           font-size:.65rem; font-weight:700; letter-spacing:.13em; text-transform:uppercase;
           color:var(--gold-deep,#8a6d1f); padding:14px 28px 6px;
           background:rgba(201,168,106,.06);
         }
 
-        /* Sub-links inherit .nav-drawer a border â€” just tweak padding + size */
+        /* Sub-links inherit .nav-drawer a border — just tweak padding + size */
         .nav-drawer a.drawer-sub-link{
           font-size:.9rem; padding:13px 28px; display:flex;
           align-items:center; justify-content:space-between;
@@ -349,7 +349,7 @@ export default function Nav() {
         /* H.O.M.E. gold tint */
         .nav-drawer a.drawer-home-pill{ color:var(--gold-deep,#8a6d1f) !important; font-weight:600 !important; }
 
-        /* Cost Estimator â€” slightly bolder */
+        /* Cost Estimator — slightly bolder */
         .nav-drawer a.drawer-featured-link{ font-weight:700 !important; }
 
         /* "Tool" badge */
@@ -399,7 +399,7 @@ export default function Nav() {
         .nav-right{ display:flex; align-items:center; gap:12px; flex-shrink:0; margin-left:1rem; }
         .nav-get-started{ display:inline-flex; align-items:center; gap:6px; font-size:.85rem; padding:.45rem 1.1rem; white-space:nowrap; }
 
-        /* Log in â€” prominent, beside Get started (Owen's ask) */
+        /* Log in — prominent, beside Get started (Owen's ask) */
         .nav-login-wrap{ position:relative; }
         .nav-login-btn{
           background:none; cursor:pointer; font:inherit;
@@ -428,7 +428,7 @@ export default function Nav() {
         }
         .drawer-search-btn:hover{ color:var(--gold-deep); }
 
-        /* Consultation button â€” desktop nav-right */
+        /* Consultation button — desktop nav-right */
         .nav-consult-btn{
           font-size:.82rem; padding:.42rem 1rem; white-space:nowrap;
           display:inline-flex; align-items:center; gap:6px;
@@ -443,7 +443,7 @@ export default function Nav() {
             font-size:.85rem; padding:.45rem 1.1rem; white-space:nowrap;
           }
         }
-        /* Mobile: compact text pills â€” labels visible, just tighter sizing */
+        /* Mobile: compact text pills — labels visible, just tighter sizing */
         @media(max-width:760px){
           .nav-consult-mobile, .nav-get-started{
             font-size:.76rem !important; padding:.35rem .7rem !important;

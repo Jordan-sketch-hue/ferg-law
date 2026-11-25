@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 const OWEN_JID = "18768405862@s.whatsapp.net";
 
 const ACK_MESSAGE =
-  "Message received. Jordan will get back to you shortly. â€” Ferguson Law / J Supreme Tech";
+  "Message received. Jordan will get back to you shortly. — Ferguson Law / J Supreme Tech";
 
 async function sendWAReply(jid: string, text: string): Promise<void> {
   const secret =
@@ -29,7 +29,7 @@ async function sendWAReply(jid: string, text: string): Promise<void> {
   }
 }
 
-// GET â€” webhook verification
+// GET — webhook verification
 export async function GET(req: NextRequest) {
   const challenge = req.nextUrl.searchParams.get("hub.challenge");
   const mode = req.nextUrl.searchParams.get("hub.mode");
@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ ok: true, status: "webhook active" });
 }
 
-// POST â€” incoming message from the WA bot server
+// POST — incoming message from the WA bot server
 export async function POST(req: NextRequest) {
   try {
     const secret =

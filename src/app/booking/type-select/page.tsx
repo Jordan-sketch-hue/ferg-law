@@ -109,7 +109,7 @@ function Splash({ onDone }: { onDone: () => void }) {
           <CmsText page="booking-type-select" block="splash_firm_name" fallback="Ferguson Law" />
         </p>
         <p style={{ fontSize: "0.82rem", color: "rgba(255,255,255,.45)", margin: 0 }}>
-          <CmsText page="booking-type-select" block="splash_tagline" fallback="Counsel Ãƒâ€šÃ‚Â· Care Ãƒâ€šÃ‚Â· Competence" />
+          <CmsText page="booking-type-select" block="splash_tagline" fallback="Counsel · Care · Competence" />
         </p>
       </div>
       {/* Pulse ring */}
@@ -247,7 +247,7 @@ export default function TypeSelectPage() {
       </div>
 
       <p style={{ marginTop: "2rem", fontSize: "0.72rem", color: "#9a937f", letterSpacing: "0.06em" }}>
-        <CmsText page="booking-type-select" block="footer_note" fallback="20-min consultation Ãƒâ€šÃ‚Â· No obligation Ãƒâ€šÃ‚Â· Online or in-person" />
+        <CmsText page="booking-type-select" block="footer_note" fallback="20-min consultation · No obligation · Online or in-person" />
       </p>
     </div>
     </>

@@ -1,4 +1,5 @@
 {
+  "buildCommand": "next build",
   "crons": [
     { "path": "/api/cron/reminders",        "schedule": "*/15 * * * *" },
     { "path": "/api/cron/nurture",          "schedule": "0 */6 * * *"  },
