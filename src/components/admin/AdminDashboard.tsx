@@ -1,10 +1,10 @@
 "use client";
 
 /**
- * Consultation CRM â€” the Ferguson Law back office.
+ * Consultation CRM — the Ferguson Law back office.
  *
  * One pane of glass over every lead, booking and chat. Reads/writes go through
- * the token-gated SECURITY DEFINER RPCs using the browser anon client â€” there
+ * the token-gated SECURITY DEFINER RPCs using the browser anon client — there
  * is NO service-role key in the browser. The shared admin token (verified
  * server-side by public.fl_is_admin) is the gate; we keep it in localStorage
  * and pass it as the `p_token` arg on every call.
@@ -277,15 +277,15 @@ const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Frid
 // Formatting helpers
 // ---------------------------------------------------------------------------
 function fmtDate(iso: string | null): string {
-  if (!iso) return "â€”";
+  if (!iso) return "—";
   try { return formatInTimeZone(new Date(iso), TZ, "d MMM yyyy, h:mm a"); } catch { return iso; }
 }
 function fmtWhen(iso: string | null): string {
-  if (!iso) return "â€”";
+  if (!iso) return "—";
   try { return formatInTimeZone(new Date(iso), TZ, "EEE d MMM yyyy · h:mm a"); } catch { return iso; }
 }
 function fmtTime(iso: string | null): string {
-  if (!iso) return "â€”";
+  if (!iso) return "—";
   try { return formatInTimeZone(new Date(iso), TZ, "h:mm a"); } catch { return iso; }
 }
 
@@ -300,7 +300,7 @@ const QR_ITEMS = [
     label: "Main Website",
     sub: "fergusonlawja.com",
     url: "https://fergusonlawja.com",
-    desc: "Homepage â€” share for general inquiries",
+    desc: "Homepage — share for general inquiries",
   },
   {
     label: "Directory / Join",
@@ -309,7 +309,7 @@ const QR_ITEMS = [
     desc: "Professional directory sign-up page",
   },
   {
-    label: "NYC 2026 â€” Diaspora",
+    label: "NYC 2026 — Diaspora",
     sub: "fergusonlawja.com/nyc2026",
     url: "https://fergusonlawja.com/nyc2026?utm_source=qr&utm_campaign=nyc2026",
     desc: "Diaspora landing page for NYC outreach",
@@ -541,7 +541,7 @@ export default function AdminDashboard() {
     return () => { cancelled = true; };
   }, [token, fetchAll]);
 
-  // Realtime subscription â€” re-fetch partner/home-pro queues instantly on any change
+  // Realtime subscription — re-fetch partner/home-pro queues instantly on any change
   useEffect(() => {
     if (!token) return;
     if (tab !== "directory" && tab !== "home_pros") return;
@@ -568,7 +568,7 @@ export default function AdminDashboard() {
     return () => { void supabase.removeChannel(channel); };
   }, [token, tab]);
 
-  // Per-tab refresh â€” re-fetch stale data whenever the admin switches to a key tab
+  // Per-tab refresh — re-fetch stale data whenever the admin switches to a key tab
   useEffect(() => {
     if (!token) return;
     const supabase = createClient();
@@ -604,7 +604,7 @@ export default function AdminDashboard() {
     })();
   }, [tab, token]);
 
-  // Email tab polling â€” auto-refresh every 60 s while the email tab is active
+  // Email tab polling — auto-refresh every 60 s while the email tab is active
   useEffect(() => {
     if (!token || tab !== "email") return;
     const supabase = createClient();
@@ -788,7 +788,7 @@ export default function AdminDashboard() {
     setBinItems((prev) => prev.filter((b) => b.id !== binId));
   }, [token]);
 
-  // H.O.M.E. data â€” fetched directly from the homeready Supabase project
+  // H.O.M.E. data — fetched directly from the homeready Supabase project
   useEffect(() => {
     if (!token) return;
     let cancelled = false;
@@ -833,10 +833,10 @@ export default function AdminDashboard() {
   }, []);
 
 
-  // Role â€” Jordan sees everything; Owen gets a simplified label on his greeting
+  // Role — Jordan sees everything; Owen gets a simplified label on his greeting
   const isJordan = accountEmail === "jordanrmorris01@icloud.com";
 
-  // Badge seen â€” clears tab count when the tab is opened
+  // Badge seen — clears tab count when the tab is opened
   const switchTab = useCallback((t: Tab) => {
     setTab(t);
     setSeenCounts(prev => {
@@ -866,7 +866,7 @@ export default function AdminDashboard() {
   const openChats = convos.filter((c) => c.status === "waiting_agent" || c.status === "agent").length;
   const pendingListings = listings.filter((l) => (l.status ?? "pending") === "pending").length;
 
-  // Follow-up queue â€” leads not contacted in 48h
+  // Follow-up queue — leads not contacted in 48h
   const staleLeads = leads.filter((l) => {
     if ((l.status ?? "new") !== "new") return false;
     return Date.now() - new Date(l.created_at).getTime() > 48 * 60 * 60 * 1000;
@@ -1096,19 +1096,19 @@ function TabBtn({ active, onClick, label, count }: { active: boolean; onClick: (
 }
 
 function StatusBadge({ status }: { status: string | null }) {
-  const s = status ?? "â€”";
+  const s = status ?? "—";
   const tone = STATUS_TONE[s] ?? S.badgeNeutral;
   return <span style={{ ...S.statusBadge, ...tone }}>{s}</span>;
 }
 
 function TypeBadge({ type, colors }: { type: string | null; colors?: Record<string, React.CSSProperties> }) {
-  if (!type) return <span style={S.muted}>â€”</span>;
+  if (!type) return <span style={S.muted}>—</span>;
   const tone = colors?.[type] ?? { background: "rgba(18,16,12,.08)", color: MUTED };
   return <span style={{ ...S.statusBadge, ...tone }}>{type}</span>;
 }
 
 function SourceBadge({ source }: { source: string | null }) {
-  if (!source) return <span style={S.muted}>â€”</span>;
+  if (!source) return <span style={S.muted}>—</span>;
   return <span style={S.sourceBadge}>{source}</span>;
 }
 
@@ -1237,12 +1237,12 @@ function EmailComposeModal({ to, toName, defaultSubject, context, service, token
 }
 
 // ---------------------------------------------------------------------------
-// PurgeModal Ã¢â‚¬â€ shared deletion modal with editable message + reason selector
+// PurgeModal Ã¢â‚¬” shared deletion modal with editable message + reason selector
 // ---------------------------------------------------------------------------
 interface PurgeTarget { email: string; name: string | null; clientId?: string | null; }
 function PurgeModal({ target, token, onDone, onClose }: { target: PurgeTarget; token: string; onDone: () => void; onClose: () => void }) {
-  const defaultClientBody = `Following your request to our team, we have permanently removed your account and all associated information from Ferguson Law's systems Ã¢â‚¬â€ your login, client profile, matter records, uploaded documents, KYC information, messages, appointment history, and correspondence log. This action is irreversible and cannot be undone.\n\nThis deletion was carried out in accordance with the Jamaica Data Protection Act. If you did not request this, or believe this was done in error, please contact us immediately at the details below.`;
-  const defaultFirmBody = `Your records have been permanently removed from Ferguson Law's systems Ã¢â‚¬â€ your login, client profile, matter records, uploaded documents, KYC information, messages, appointment history, and correspondence log. This action is irreversible and cannot be undone.\n\nThis was carried out in accordance with the Jamaica Data Protection Act. If you believe this was done in error, please contact us immediately at the details below.`;
+  const defaultClientBody = `Following your request to our team, we have permanently removed your account and all associated information from Ferguson Law's systems Ã¢â‚¬” your login, client profile, matter records, uploaded documents, KYC information, messages, appointment history, and correspondence log. This action is irreversible and cannot be undone.\n\nThis deletion was carried out in accordance with the Jamaica Data Protection Act. If you did not request this, or believe this was done in error, please contact us immediately at the details below.`;
+  const defaultFirmBody = `Your records have been permanently removed from Ferguson Law's systems Ã¢â‚¬” your login, client profile, matter records, uploaded documents, KYC information, messages, appointment history, and correspondence log. This action is irreversible and cannot be undone.\n\nThis was carried out in accordance with the Jamaica Data Protection Act. If you believe this was done in error, please contact us immediately at the details below.`;
   const [reason, setReason] = useState<"admin" | "firm_decision">("admin");
   const [body, setBody] = useState(defaultClientBody);
   const [busy, setBusy] = useState(false);
@@ -1296,7 +1296,7 @@ function PurgeModal({ target, token, onDone, onClose }: { target: PurgeTarget; t
         <select value={reason} onChange={(e) => setReason(e.target.value as "admin" | "firm_decision")}
           style={{ width: "100%", padding: "7px 10px", borderRadius: 8, border: "1px solid #ccc", fontSize: ".82rem", marginBottom: 14 }}>
           <option value="admin">Client requested deletion</option>
-          <option value="firm_decision">Firm decision Ã¢â‚¬â€ we are not proceeding</option>
+          <option value="firm_decision">Firm decision Ã¢â‚¬” we are not proceeding</option>
         </select>
 
         <label style={{ fontSize: ".78rem", fontWeight: 600, color: "#333", display: "block", marginBottom: 4 }}>Email message to client</label>
@@ -1367,7 +1367,7 @@ function LeadsTable({ leads, loading, token, onStatus, onDelete, onRestore, onCo
             return (
               <div key={l.id} style={{ background: "#fff", border: "1px solid rgba(18,16,12,.1)", borderRadius: 12, padding: "14px 16px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginBottom: 6 }}>
-                  <span style={{ fontWeight: 700, fontSize: ".92rem", color: GREEN }}>{l.name || "â€”"}</span>
+                  <span style={{ fontWeight: 700, fontSize: ".92rem", color: GREEN }}>{l.name || "—"}</span>
                   <StatusSelect value={l.status} options={LEAD_STATUSES} onChange={(v) => onStatus(l.id, v)} />
                 </div>
                 {(l.email || l.phone) && (<div style={{ fontSize: ".8rem", color: MUTED, marginBottom: 4 }}>{l.email && <div>{l.email}</div>}{l.phone && <div>{l.phone}</div>}</div>)}
@@ -1378,7 +1378,7 @@ function LeadsTable({ leads, loading, token, onStatus, onDelete, onRestore, onCo
                   {l.email && <button type="button" onClick={() => setComposing(l)} style={{ ...S.waBtn, background: "#c9a86a", color: "#10211c" }}>Email</button>}
                   {wa && <a href={wa} target="_blank" rel="noopener noreferrer" style={S.waBtn}>WhatsApp</a>}
                   {l.status === "new" && <button type="button" onClick={() => onStatus(l.id, "contacted")} style={{ ...S.waBtn, background: "rgba(47,122,82,.12)", color: "#2f7a52", border: "1px solid rgba(47,122,82,.25)" }}>Contacted</button>}
-                  <button type="button" onClick={() => onConvert(l.id)} style={{ ...S.waBtn, background: "rgba(12,80,60,.1)", color: "#0c503c", border: "1px solid rgba(12,80,60,.2)" }}>â†’ Client</button>
+                  <button type="button" onClick={() => onConvert(l.id)} style={{ ...S.waBtn, background: "rgba(12,80,60,.1)", color: "#0c503c", border: "1px solid rgba(12,80,60,.2)" }}>→ Client</button>
                   {l.archived_at ? (
                     <button type="button" onClick={() => onRestore(l.id)} style={{ ...S.waBtn, background: "rgba(47,122,82,.12)", color: "#2f7a52", border: "1px solid rgba(47,122,82,.25)", gridColumn: "span 2" }}>Restore</button>
                   ) : (
@@ -1400,11 +1400,11 @@ function LeadsTable({ leads, loading, token, onStatus, onDelete, onRestore, onCo
               return (
                 <tr key={l.id} style={S.tr}>
                   <Td>{fmtDate(l.created_at)}</Td>
-                  <Td><span style={S.strong}>{l.name || "â€”"}</span></Td>
-                  <Td><div style={S.contactCol}>{l.email && <span>{l.email}</span>}{l.phone && <span style={S.muted}>{l.phone}</span>}{!l.email && !l.phone && <span style={S.muted}>â€”</span>}</div></Td>
-                  <Td>{l.service || "â€”"}</Td>
+                  <Td><span style={S.strong}>{l.name || "—"}</span></Td>
+                  <Td><div style={S.contactCol}>{l.email && <span>{l.email}</span>}{l.phone && <span style={S.muted}>{l.phone}</span>}{!l.email && !l.phone && <span style={S.muted}>—</span>}</div></Td>
+                  <Td>{l.service || "—"}</Td>
                   <Td><SourceBadge source={l.source} /></Td>
-                  <Td><div style={S.msgCell} title={l.message ?? ""}>{l.message || "â€”"}</div></Td>
+                  <Td><div style={S.msgCell} title={l.message ?? ""}>{l.message || "—"}</div></Td>
                   <Td><StatusSelect value={l.status} options={LEAD_STATUSES} onChange={(v) => onStatus(l.id, v)} /></Td>
                   <Td>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5, minWidth: 200 }}>
@@ -1425,7 +1425,7 @@ function LeadsTable({ leads, loading, token, onStatus, onDelete, onRestore, onCo
                       )}
                       <button type="button" onClick={() => onConvert(l.id)}
                         style={{ ...S.waBtn, background: "rgba(12,80,60,.1)", color: "#0c503c", border: "1px solid rgba(12,80,60,.2)" }}>
-                        â†’ Client
+                        → Client
                       </button>
                       {l.archived_at ? (
                         <button type="button" onClick={() => onRestore(l.id)}
@@ -1457,7 +1457,7 @@ function LeadsTable({ leads, loading, token, onStatus, onDelete, onRestore, onCo
         <EmailComposeModal
           to={composing.email}
           toName={composing.name ?? "Client"}
-          defaultSubject={composing.service ? `Re: Your ${composing.service} enquiry â€” Ferguson Law` : `Re: Your enquiry â€” Ferguson Law`}
+          defaultSubject={composing.service ? `Re: Your ${composing.service} enquiry — Ferguson Law` : `Re: Your enquiry — Ferguson Law`}
           context={composing.message ?? undefined}
           service={composing.service ?? undefined}
           token={token}
@@ -1536,7 +1536,7 @@ function NewBookingModal({ token, onClose, onCreated }: { token: string; onClose
 
         {result?.ok ? (
           <div>
-            <div style={{ color: "#2f7a52", fontWeight: 600, marginBottom: 12 }}>Booking created â€” Ref {result.ref}</div>
+            <div style={{ color: "#2f7a52", fontWeight: 600, marginBottom: 12 }}>Booking created — Ref {result.ref}</div>
             {result.meetingUrl && (
               <div style={{ marginBottom: 16 }}>
                 <div style={{ ...lbl }}>Meeting link</div>
@@ -1548,11 +1548,11 @@ function NewBookingModal({ token, onClose, onCreated }: { token: string; onClose
                   </button>
                 </div>
                 <div style={{ marginTop: 8, fontSize: ".78rem", color: "#9fb3ab" }}>
-                  {sendEmail ? "Email with this link was sent to the client." : "Email not sent â€” share this link manually."}
+                  {sendEmail ? "Email with this link was sent to the client." : "Email not sent — share this link manually."}
                 </div>
               </div>
             )}
-            {!result.meetingUrl && <div style={{ color: "#9fb3ab", fontSize: ".85rem", marginBottom: 12 }}>No meeting link generated â€” you can send one from the Bookings table.</div>}
+            {!result.meetingUrl && <div style={{ color: "#9fb3ab", fontSize: ".85rem", marginBottom: 12 }}>No meeting link generated — you can send one from the Bookings table.</div>}
             <button type="button" onClick={onClose} style={{ ...S.waBtn, background: GOLD, color: "#0e2518" }}>Done</button>
           </div>
         ) : (
@@ -1716,7 +1716,7 @@ function BookingsTable({ appts, loading, token, onStatus, onCancel, onRefresh }:
                 <div key={a.id} style={{ background: "#fff", border: "1px solid rgba(18,16,12,.1)", borderRadius: 12, padding: "14px 16px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginBottom: 6 }}>
                     <div>
-                      <div style={{ fontWeight: 700, fontSize: ".88rem", color: GREEN }}>{a.name || "â€”"}</div>
+                      <div style={{ fontWeight: 700, fontSize: ".88rem", color: GREEN }}>{a.name || "—"}</div>
                       <div style={{ fontSize: ".78rem", color: MUTED }}>{fmtWhen(a.starts_at)}</div>
                     </div>
                     <StatusSelect value={a.status} options={APPT_STATUSES} onChange={(v) => onStatus(a.id, v)} />
@@ -1745,10 +1745,10 @@ function BookingsTable({ appts, loading, token, onStatus, onCancel, onRefresh }:
               {sorted.map((a) => (
                 <tr key={a.id} style={S.tr}>
                   <Td><span style={S.strong}>{fmtWhen(a.starts_at)}</span></Td>
-                  <Td>{a.service || "â€”"}</Td>
-                  <Td>{a.name || "â€”"}</Td>
-                  <Td><div style={S.contactCol}>{a.email && <span>{a.email}</span>}{a.phone && <span style={S.muted}>{a.phone}</span>}{!a.email && !a.phone && <span style={S.muted}>â€”</span>}</div></Td>
-                  <Td><span style={S.mono}>{a.ref || "â€”"}</span></Td>
+                  <Td>{a.service || "—"}</Td>
+                  <Td>{a.name || "—"}</Td>
+                  <Td><div style={S.contactCol}>{a.email && <span>{a.email}</span>}{a.phone && <span style={S.muted}>{a.phone}</span>}{!a.email && !a.phone && <span style={S.muted}>—</span>}</div></Td>
+                  <Td><span style={S.mono}>{a.ref || "—"}</span></Td>
                   <Td><StatusSelect value={a.status} options={APPT_STATUSES} onChange={(v) => onStatus(a.id, v)} /></Td>
                   <Td>
                     <button type="button" onClick={() => setAttentionAppt(a)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
@@ -1782,7 +1782,7 @@ function BookingsTable({ appts, loading, token, onStatus, onCancel, onRefresh }:
                             Cancel
                           </button>
                         )}
-                        {!a.email && a.status === "cancelled" && <span style={S.muted}>â€”</span>}
+                        {!a.email && a.status === "cancelled" && <span style={S.muted}>—</span>}
                       </div>
                       {linkResult[a.id] && (
                         <span style={{ fontSize: ".72rem", color: linkResult[a.id].ok ? "#2f7a52" : "#a23b3b" }}>{linkResult[a.id].msg}</span>
@@ -1800,7 +1800,7 @@ function BookingsTable({ appts, loading, token, onStatus, onCancel, onRefresh }:
         <EmailComposeModal
           to={composing.email}
           toName={composing.name ?? "Client"}
-          defaultSubject={`Your ${composing.service ?? "consultation"} booking â€” Ferguson Law`}
+          defaultSubject={`Your ${composing.service ?? "consultation"} booking — Ferguson Law`}
           service={composing.service ?? undefined}
           token={token}
           onClose={() => setComposing(null)}
@@ -1902,7 +1902,7 @@ function DataPrivacyModal({ client, token, onDelete, onClose }: {
         <div style={{ display: "grid", gap: 12 }}>
           <div style={{ border: "1px solid #e8e8e8", borderRadius: 10, padding: "16px 18px" }}>
             <div style={{ fontWeight: 700, fontSize: ".85rem", color: "#10211c", marginBottom: 4 }}>Export client data</div>
-            <div style={{ fontSize: ".78rem", color: "#888", marginBottom: 12 }}>Download a JSON file of all data Ferguson Law holds for this client â€” profile, matters, documents, KYC, messages, and payment history.</div>
+            <div style={{ fontSize: ".78rem", color: "#888", marginBottom: 12 }}>Download a JSON file of all data Ferguson Law holds for this client — profile, matters, documents, KYC, messages, and payment history.</div>
             {exportErr && <p style={{ color: "#b00", fontSize: ".75rem", marginBottom: 8 }}>{exportErr}</p>}
             <button onClick={() => void exportData()} disabled={exporting || !client.email}
               style={{ padding: "9px 18px", borderRadius: 8, border: "1px solid #ccc", background: "#fff", color: "#10211c", fontSize: ".82rem", fontWeight: 600, cursor: (exporting || !client.email) ? "default" : "pointer", opacity: !client.email ? 0.5 : 1 }}>
@@ -2023,7 +2023,7 @@ function ClientsTab({ clients, matters, loading, onUpsert, onDelete, token }: {
                         <Td><span title={pushSubs.has(c.id) ? 'Push ON' : 'Push OFF'} style={{ fontSize: '1rem', opacity: pushSubs.has(c.id) ? 1 : 0.25 }}>{pushSubs.has(c.id) ? String.fromCharCode(0x1F514) : String.fromCharCode(0x1F515)}</span></Td>
                         <Td><div style={S.contactCol}>{c.email && <span>{c.email}</span>}{c.phone && <span style={S.muted}>{c.phone}</span>}</div></Td>
                         <Td><TypeBadge type={c.client_type} colors={CLIENT_TYPE_COLORS} /></Td>
-                        <Td>{c.country_of_residence || <span style={S.muted}>â€”</span>}</Td>
+                        <Td>{c.country_of_residence || <span style={S.muted}>—</span>}</Td>
                         <Td><TypeBadge type={c.status} colors={CLIENT_STATUS_COLORS} /></Td>
                         <Td><SourceBadge source={c.source} /></Td>
                         <Td>{fmtDate(c.created_at)}</Td>
@@ -2033,7 +2033,7 @@ function ClientsTab({ clients, matters, loading, onUpsert, onDelete, token }: {
                               style={{ ...S.waBtn, background: "transparent", color: GREEN, border: `1px solid ${GREEN}` }}>
                               {cms.length} matter{cms.length > 1 ? "s" : ""} {expanded === c.id ? "â–²" : "â–¼"}
                             </button>
-                          ) : <span style={S.muted}>â€”</span>}
+                          ) : <span style={S.muted}>—</span>}
                         </Td>
                         <Td>
                           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
@@ -2045,7 +2045,7 @@ function ClientsTab({ clients, matters, loading, onUpsert, onDelete, token }: {
                                   disabled={alreadySent}
                                   title={c.portal_invited_at ? `Sent ${new Date(c.portal_invited_at).toLocaleDateString()}` : undefined}
                                   style={{ ...S.waBtn, background: alreadySent ? "rgba(47,122,82,.08)" : "rgba(201,168,106,.12)", color: alreadySent ? GREEN : "#8a6a22", border: `1px solid ${alreadySent ? GREEN : "rgba(201,168,106,.4)"}`, cursor: alreadySent ? "default" : "pointer" }}>
-                                  {alreadySent ? "âœ“ Login Email Sent" : "Send Login Email"}
+                                  {alreadySent ? "✓ Login Email Sent" : "Send Login Email"}
                                 </button>
                               );
                             })()}
@@ -2148,12 +2148,12 @@ function MattersTab({ matters, loading, token, onStage, onPayment, onDelete }: {
                   <tr key={m.id} style={{ ...S.tr, cursor: "pointer" }} onClick={() => toggleExpand(m.id)}>
                     <Td><span style={{ color: GOLD, fontWeight: 700, fontSize: ".8rem" }}>{expandedId === m.id ? "â–¼" : "â–¶"}</span></Td>
                     <Td><span style={S.mono}>{m.ref}</span></Td>
-                    <Td><span style={S.strong}>{m.client_name || "â€”"}</span></Td>
+                    <Td><span style={S.strong}>{m.client_name || "—"}</span></Td>
                     <Td><TypeBadge type={m.matter_type} colors={MATTER_TYPE_COLORS} /></Td>
                     <Td onClick={e => e.stopPropagation()}><StatusSelect value={m.stage} options={MATTER_STAGES} onChange={(v) => onStage(m.id, v)} /></Td>
                     <Td><TypeBadge type={m.priority} colors={PRIORITY_COLORS} /></Td>
                     <Td onClick={e => e.stopPropagation()}><StatusSelect value={m.payment_status} options={PAYMENT_STATUSES} onChange={(v) => onPayment(m.id, v)} /></Td>
-                    <Td><div style={S.msgCell} title={m.description ?? ""}>{m.description || "â€”"}</div></Td>
+                    <Td><div style={S.msgCell} title={m.description ?? ""}>{m.description || "—"}</div></Td>
                     <Td>{fmtDate(m.created_at)}</Td>
                     <Td onClick={e => e.stopPropagation()}><button type="button" title="Delete matter" onClick={() => onDelete(m.id)} style={{ background: "none", border: "none", cursor: "pointer", color: "#c94b4b", fontSize: "1rem", padding: "2px 6px" }}>ðŸ—‘</button></Td>
                   </tr>
@@ -2175,7 +2175,7 @@ function MattersTab({ matters, loading, token, onStage, onPayment, onDelete }: {
 }
 
 // ---------------------------------------------------------------------------
-// Milestone panel â€” shown inline (table) or as modal overlay (kanban)
+// Milestone panel — shown inline (table) or as modal overlay (kanban)
 // ---------------------------------------------------------------------------
 const MILESTONE_STATUSES = ["pending", "in_progress", "completed"] as const;
 const MILESTONE_STATUS_LABELS: Record<string, string> = {
@@ -2262,7 +2262,7 @@ function MilestonePanel({ matterId, token, matter, onClose, inline }: {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <div>
             <div style={{ fontFamily: "var(--serif, Georgia, serif)", fontWeight: 700, color: GREEN, fontSize: "1.1rem" }}>
-              Milestones â€” {matter?.ref}
+              Milestones — {matter?.ref}
             </div>
             {matter?.client_name && <div style={{ color: MUTED, fontSize: ".82rem", marginTop: 2 }}>{matter.client_name}</div>}
           </div>
@@ -2334,7 +2334,7 @@ function MilestonePanel({ matterId, token, matter, onClose, inline }: {
                   <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
                     {ms.status !== "completed" && (
                       <button type="button" onClick={() => updateMilestone(ms.id, { status: "completed" })}
-                        style={{ ...S.ghostBtn, fontSize: ".72rem", color: GREEN, border: `1px solid rgba(16,42,30,.25)` }} title="Mark done">âœ“</button>
+                        style={{ ...S.ghostBtn, fontSize: ".72rem", color: GREEN, border: `1px solid rgba(16,42,30,.25)` }} title="Mark done">✓</button>
                     )}
                     <button type="button" onClick={() => { setEditingId(ms.id); setEditForm({ ...ms }); }}
                       style={{ ...S.ghostBtn, fontSize: ".72rem" }} title="Edit">âœŽ</button>
@@ -2387,7 +2387,7 @@ function MilestonePanel({ matterId, token, matter, onClose, inline }: {
 }
 
 // ---------------------------------------------------------------------------
-// Calendar â€” current week view
+// Calendar — current week view
 // ---------------------------------------------------------------------------
 function CalendarTab({ appts, token, onStatus, onRefresh }: { appts: Appointment[]; token: string; onStatus: (id: string, s: string) => void; onRefresh: () => void }) {
   const [weekOffset, setWeekOffset] = useState(0);
@@ -2441,9 +2441,9 @@ function CalendarTab({ appts, token, onStatus, onRefresh }: { appts: Appointment
   return (
     <div style={{ padding: 20 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 16 }}>
-        <button type="button" onClick={() => setWeekOffset((w) => w - 1)} style={{ ...S.ghostBtn, color: GREEN, border: `1px solid rgba(16,42,30,.3)` }}>â† Prev</button>
+        <button type="button" onClick={() => setWeekOffset((w) => w - 1)} style={{ ...S.ghostBtn, color: GREEN, border: `1px solid rgba(16,42,30,.3)` }}>← Prev</button>
         <span style={{ fontWeight: 700, color: GREEN, fontFamily: "var(--serif, Georgia, serif)" }}>{weekLabel}</span>
-        <button type="button" onClick={() => setWeekOffset((w) => w + 1)} style={{ ...S.ghostBtn, color: GREEN, border: `1px solid rgba(16,42,30,.3)` }}>Next â†’</button>
+        <button type="button" onClick={() => setWeekOffset((w) => w + 1)} style={{ ...S.ghostBtn, color: GREEN, border: `1px solid rgba(16,42,30,.3)` }}>Next →</button>
       </div>
 
       <div style={{ overflowX: "auto" }}>
@@ -2933,12 +2933,12 @@ function ChatsTable({ convos, loading }: { convos: Conversation[]; loading: bool
         ))}
       </div>
 
-      {/* Detail â€” full history */}
+      {/* Detail — full history */}
       <div style={{ flex: 1, display: isMobile && !selected ? "none" : "flex", flexDirection: "column", overflow: "hidden" }}>
         {isMobile && !!selected && (
           <button type="button" onClick={() => { setSelected(null); setWaResult(null); }}
             style={{ margin: "12px 16px 0", padding: "8px 16px", border: "1px solid rgba(18,16,12,.2)", borderRadius: 999, background: "#fff", fontSize: ".82rem", cursor: "pointer", color: MUTED, display: "inline-flex", alignItems: "center", gap: 6, alignSelf: "flex-start" }}>
-            â† Chats
+            ← Chats
           </button>
         )}
         {!selected ? (
@@ -3075,13 +3075,13 @@ function OverviewPanel({ leads, appts, convos, matters, homePros, emails, inquir
       {staleLeads.length > 0 && (
         <div style={{ background: "rgba(200,166,92,.1)", border: "1px solid rgba(200,166,92,.35)", borderRadius: 10, padding: "14px 18px", marginBottom: 24 }}>
           <div style={{ fontWeight: 700, fontSize: ".72rem", textTransform: "uppercase", letterSpacing: ".07em", color: "#8a6a22", marginBottom: 10 }}>
-            âš  Follow-up needed â€” {staleLeads.length} lead{staleLeads.length > 1 ? "s" : ""} not contacted in 48h
+            ⚠ Follow-up needed — {staleLeads.length} lead{staleLeads.length > 1 ? "s" : ""} not contacted in 48h
           </div>
           {staleLeads.slice(0, 4).map((l) => (
             <div key={l.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderTop: "1px solid rgba(200,166,92,.2)" }}>
               <div>
-                <span style={{ fontWeight: 600, fontSize: ".88rem", color: GREEN }}>{l.name || "â€”"}</span>
-                <span style={{ color: MUTED, fontSize: ".78rem" }}> · {l.service || "â€”"}</span>
+                <span style={{ fontWeight: 600, fontSize: ".88rem", color: GREEN }}>{l.name || "—"}</span>
+                <span style={{ color: MUTED, fontSize: ".78rem" }}> · {l.service || "—"}</span>
               </div>
               <span style={{ fontSize: ".72rem", color: "#8a6a22" }}>
                 {Math.floor((Date.now() - new Date(l.created_at).getTime()) / (3600 * 1000))}h ago
@@ -3090,7 +3090,7 @@ function OverviewPanel({ leads, appts, convos, matters, homePros, emails, inquir
           ))}
           <button type="button" onClick={() => onTab("leads")}
             style={{ marginTop: 10, fontSize: ".78rem", fontWeight: 600, color: "#8a6a22", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-            View all leads â†’
+            View all leads →
           </button>
         </div>
       )}
@@ -3106,8 +3106,8 @@ function OverviewPanel({ leads, appts, convos, matters, homePros, emails, inquir
         {leads.slice(0, 5).map((l, i) => (
           <div key={l.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderTop: i > 0 ? "1px solid rgba(18,16,12,.06)" : "none" }}>
             <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 600, fontSize: ".88rem", color: GREEN }}>{l.name || "â€”"}</div>
-              <div style={{ fontSize: ".78rem", color: MUTED }}>{l.service || "â€”"} · {fmtDate(l.created_at)}</div>
+              <div style={{ fontWeight: 600, fontSize: ".88rem", color: GREEN }}>{l.name || "—"}</div>
+              <div style={{ fontSize: ".78rem", color: MUTED }}>{l.service || "—"} · {fmtDate(l.created_at)}</div>
             </div>
             <StatusBadge status={l.status} />
           </div>
@@ -3120,8 +3120,8 @@ function OverviewPanel({ leads, appts, convos, matters, homePros, emails, inquir
         {appts.filter(a => new Date(a.starts_at).getTime() >= now && a.status !== "cancelled").sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime()).slice(0, 5).map((a, i) => (
           <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderTop: i > 0 ? "1px solid rgba(18,16,12,.06)" : "none" }}>
             <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 600, fontSize: ".88rem", color: GREEN }}>{a.name || "â€”"}</div>
-              <div style={{ fontSize: ".78rem", color: MUTED }}>{a.service || "â€”"} · {fmtWhen(a.starts_at)}</div>
+              <div style={{ fontWeight: 600, fontSize: ".88rem", color: GREEN }}>{a.name || "—"}</div>
+              <div style={{ fontSize: ".78rem", color: MUTED }}>{a.service || "—"} · {fmtWhen(a.starts_at)}</div>
             </div>
             <StatusBadge status={a.status} />
           </div>
@@ -3484,7 +3484,7 @@ function EmailTab({ emails, token, leads, onMarkRead, onMarkAllRead, onDelete, o
         {isMobile && (!!selected || composing || !!selectedSent) && (
           <button type="button" onClick={() => { setSelected(null); setSelectedSent(null); setComposing(false); setSendResult(null); }}
             style={{ marginBottom: 16, padding: "8px 16px", border: "1px solid rgba(18,16,12,.2)", borderRadius: 999, background: "#fff", fontSize: ".82rem", cursor: "pointer", color: MUTED, display: "inline-flex", alignItems: "center", gap: 6 }}>
-            â† Inbox
+            ← Inbox
           </button>
         )}
         {pane === "sent" && selectedSent ? (
@@ -3501,7 +3501,7 @@ function EmailTab({ emails, token, leads, onMarkRead, onMarkAllRead, onDelete, o
             <SentEmailBody body={selectedSent.body_full || selectedSent.body_preview || "(no content available)"} />
             {!selectedSent.body_full && selectedSent.body_preview && (
               <div style={{ fontSize: ".76rem", color: MUTED, marginTop: 8 }}>
-                Sent before full-body logging was added â€” only the first 300 characters were saved for this one.
+                Sent before full-body logging was added — only the first 300 characters were saved for this one.
               </div>
             )}
             <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid rgba(18,16,12,.1)', display: 'flex', gap: 10, flexWrap: 'wrap' }}>
@@ -3565,7 +3565,7 @@ function EmailTab({ emails, token, leads, onMarkRead, onMarkAllRead, onDelete, o
             {isMobile && (
               <button type="button" onClick={() => setSelected(null)}
                 style={{ background: "none", border: "none", color: GOLD, fontWeight: 700, fontSize: ".88rem", cursor: "pointer", padding: "0 0 12px 0", display: "flex", alignItems: "center", gap: 4 }}>
-                â† Inbox
+                ← Inbox
               </button>
             )}
             <div style={{ marginBottom: 16 }}>
@@ -3635,11 +3635,11 @@ function EmailTab({ emails, token, leads, onMarkRead, onMarkAllRead, onDelete, o
                     <a key={`${attachment.filename}-${attachment.url}`} href={attachment.url} target="_blank" rel="noopener noreferrer"
                       style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "7px 0", color: "#8a6a22", fontSize: ".85rem", textDecoration: "none" }}>
                       <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>ðŸ“Ž {attachment.filename}</span>
-                      <span style={{ flexShrink: 0 }}>{(attachment.size / 1024).toFixed(1)} KB â†—</span>
+                      <span style={{ flexShrink: 0 }}>{(attachment.size / 1024).toFixed(1)} KB ↗</span>
                     </a>
                   ) : (
                     <div key={`${attachment.filename}-unavailable`} role="alert" style={{ padding: "7px 0", color: "#a23b3b", fontSize: ".82rem" }}>
-                      ðŸ“Ž {attachment.filename} â€” unavailable: {attachment.error || "file could not be retrieved"}
+                      ðŸ“Ž {attachment.filename} — unavailable: {attachment.error || "file could not be retrieved"}
                     </div>
                   )
                 ))}
@@ -3674,7 +3674,7 @@ function EmailTab({ emails, token, leads, onMarkRead, onMarkAllRead, onDelete, o
                   placeholder="Your reply..."
                   style={{ width: "100%", resize: "vertical", borderRadius: 10, border: "1px solid rgba(18,16,12,.2)", padding: "10px 12px", fontSize: ".9rem", fontFamily: "inherit", outline: "none", boxSizing: "border-box", marginBottom: 10 }} />
                 <p style={{ margin: "-4px 0 10px", color: MUTED, fontSize: ".78rem" }}>
-                  The sent email automatically includes Owenâ€™s handwritten-style signature.
+                  The sent email automatically includes Owen’s handwritten-style signature.
                 </p>
                 <div style={{ marginBottom: 10 }}>
                   <label style={{ display: 'block', fontSize: '.76rem', fontWeight: 700, color: MUTED, marginBottom: 4, textTransform: 'uppercase' }}>Attachments (optional)</label>
@@ -3740,16 +3740,16 @@ function InquiriesTab({ inquiries, token, onStatus }: {
           {inquiries.map((q) => (
             <tr key={q.id} style={S.tr}>
               <Td>{fmtDate(q.created_at)}</Td>
-              <Td><span style={S.strong}>{q.property_title || "â€”"}</span></Td>
-              <Td>{q.from_name || "â€”"}</Td>
+              <Td><span style={S.strong}>{q.property_title || "—"}</span></Td>
+              <Td>{q.from_name || "—"}</Td>
               <Td>
                 <div style={S.contactCol}>
                   {q.from_email && <span>{q.from_email}</span>}
                   {q.from_phone && <span style={S.muted}>{q.from_phone}</span>}
-                  {!q.from_email && !q.from_phone && <span style={S.muted}>â€”</span>}
+                  {!q.from_email && !q.from_phone && <span style={S.muted}>—</span>}
                 </div>
               </Td>
-              <Td><div style={S.msgCell} title={q.message ?? ""}>{q.message || "â€”"}</div></Td>
+              <Td><div style={S.msgCell} title={q.message ?? ""}>{q.message || "—"}</div></Td>
               <Td><StatusBadge status={q.status} /></Td>
               <Td>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
@@ -3837,7 +3837,7 @@ function ReferralsTab({ leads, appts }: { leads: Lead[]; appts: Appointment[] })
 }
 
 // ---------------------------------------------------------------------------
-// Workflow Templates Tab â€” global step editor (affects NEW matters only)
+// Workflow Templates Tab — global step editor (affects NEW matters only)
 // ---------------------------------------------------------------------------
 interface WfTemplate { id: string; type: string; name: string; phases: WfPhase[]; }
 interface WfPhase { name: string; order: number; milestones: string[]; }
@@ -3965,11 +3965,11 @@ function WorkflowTemplatesTab({ token }: { token: string }) {
           </button>
         ) : (
           <>
-            <span style={{ fontSize: 12, color: GOLD, fontWeight: 600 }}>EDIT MODE â€” changes save immediately</span>
+            <span style={{ fontSize: 12, color: GOLD, fontWeight: 600 }}>EDIT MODE — changes save immediately</span>
             <button type="button" onClick={() => { setEditMode(false); setEditingStep(null); }}
               style={{ padding: "6px 16px", borderRadius: 8, border: "none",
                 background: GREEN, color: CREAM, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
-              âœ“ Done Editing
+              ✓ Done Editing
             </button>
           </>
         )}
@@ -4013,7 +4013,7 @@ function WorkflowTemplatesTab({ token }: { token: string }) {
                       </>
                     ) : (
                       <>
-                        <span style={{ fontSize: 13, flex: 1, color: INK }}>â€¢ {ms}</span>
+                        <span style={{ fontSize: 13, flex: 1, color: INK }}>• {ms}</span>
                         {editMode && (
                           <>
                             <button type="button"
@@ -4043,7 +4043,7 @@ function WorkflowTemplatesTab({ token }: { token: string }) {
             </div>
           ))}
 
-          {/* Add phase â€” only in edit mode */}
+          {/* Add phase — only in edit mode */}
           {editMode && <div style={{ marginTop: 12 }}>
             {!addingPhase ? (
               <button type="button" onClick={() => setAddingPhase(true)}
@@ -4117,7 +4117,7 @@ function RecycleBinTab({ items, onRestore, onPurge }: {
               {TABLE_LABEL[item.source_table] ?? item.source_table}
             </span>
             <span style={{ flex: 1, fontWeight: 500, fontSize: ".88rem", color: INK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {item.label ?? "â€”"}
+              {item.label ?? "—"}
             </span>
             <span style={{ fontSize: ".78rem", color: MUTED, whiteSpace: "nowrap" }}>
               Deleted {fmtDate(item.deleted_at)}
@@ -4194,7 +4194,7 @@ function InvitesPanel({ invites, loading, onCreate, onDeactivate, onDelete }: {
     <div style={{ padding: 20 }}>
       <div style={S.inviteForm}>
         <div style={S.inviteFormGrid}>
-          {[["Label", label, setLabel, "text", "e.g. Owen â€” referral"], ["Code (optional)", code, setCode, "text", "auto-generate"]].map(([lbl, val, setter, t, ph]) => (
+          {[["Label", label, setLabel, "text", "e.g. Owen — referral"], ["Code (optional)", code, setCode, "text", "auto-generate"]].map(([lbl, val, setter, t, ph]) => (
             <div key={lbl as string} style={S.field}>
               <label style={S.fieldLabel}>{lbl as string}</label>
               <input style={S.fieldInput} type={t as string} placeholder={ph as string} value={val as string} onChange={(e) => (setter as (v: string) => void)(e.target.value)} />
@@ -4224,11 +4224,11 @@ function InvitesPanel({ invites, loading, onCreate, onDeactivate, onDelete }: {
                   return (
                     <tr key={iv.code} style={S.tr}>
                       <Td><span style={S.mono}>{iv.code}</span></Td>
-                      <Td>{iv.label || "â€”"}</Td>
+                      <Td>{iv.label || "—"}</Td>
                       <Td><span style={spent ? S.muted : S.strong}>{iv.used_count}/{iv.max_uses}</span></Td>
                       <Td>{iv.expires_at ? fmtDate(iv.expires_at) : "Never"}</Td>
                       <Td><span style={{ ...S.statusBadge, ...(live ? { background: "rgba(47,122,82,.16)", color: "#2f7a52" } : { background: "rgba(18,16,12,.1)", color: MUTED }) }}>{live ? "live" : expired ? "expired" : spent ? "spent" : "off"}</span></Td>
-                      <Td><button type="button" onClick={() => copy(iv.code)} style={S.waBtn}>{copied === iv.code ? "Copied âœ“" : "Copy link"}</button></Td>
+                      <Td><button type="button" onClick={() => copy(iv.code)} style={S.waBtn}>{copied === iv.code ? "Copied ✓" : "Copy link"}</button></Td>
                       <Td>
                         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                           {iv.active && (
@@ -4263,7 +4263,7 @@ function ListingsPanel({ listings, loading, onStatus }: { listings: Listing[]; l
   return (
     <div>
       <div style={{ margin: "16px 16px 0", padding: "10px 14px", background: "rgba(200,166,92,.1)", borderRadius: 10, border: "1px solid rgba(200,166,92,.3)", fontSize: 13, color: "#6b5210" }}>
-        <strong>Ferguson Law Directory Partners</strong> â€” professionals who signed up via the /directory partner application form on fergusonlawja.com. These are your own referral network (solicitors, surveyors, realtors, valuers, etc.).
+        <strong>Ferguson Law Directory Partners</strong> — professionals who signed up via the /directory partner application form on fergusonlawja.com. These are your own referral network (solicitors, surveyors, realtors, valuers, etc.).
       </div>
     <div style={{ display: "grid", gap: 14, marginTop: 14 }}>
       {listings.map((l) => {
@@ -4284,12 +4284,12 @@ function ListingsPanel({ listings, loading, onStatus }: { listings: Listing[]; l
               </div>
             </div>
             <div style={S.listTitle}>{l.business_name}</div>
-            <div style={S.muted}>{l.contact_name || "â€”"}{l.parishes?.length ? ` · ${l.parishes.join(", ")}` : ""}</div>
+            <div style={S.muted}>{l.contact_name || "—"}{l.parishes?.length ? ` · ${l.parishes.join(", ")}` : ""}</div>
             {l.bio && <div style={{ fontSize: 13, color: INK, marginTop: 4, whiteSpace: "pre-wrap" }}>{l.bio}</div>}
-            <div style={{ ...S.muted, marginTop: 6 }}>{l.email || "â€”"}{l.phone ? ` · ${l.phone}` : ""}{l.website ? ` · ${l.website}` : ""}</div>
+            <div style={{ ...S.muted, marginTop: 6 }}>{l.email || "—"}{l.phone ? ` · ${l.phone}` : ""}{l.website ? ` · ${l.website}` : ""}</div>
             {status === "approved" && l.slug && (
               <div style={{ marginTop: 6 }}>
-                <a href={`/directory/${l.slug}`} target="_blank" rel="noopener" style={{ color: "#8a6a22", fontSize: 13 }}>View public page â†’</a>
+                <a href={`/directory/${l.slug}`} target="_blank" rel="noopener" style={{ color: "#8a6a22", fontSize: 13 }}>View public page →</a>
               </div>
             )}
           </div>
@@ -4442,8 +4442,8 @@ function KanbanView({ matters, onStage, onExpand }: {
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {cards.map(m => (
                 <div key={m.id} style={{ background: "#fff", border: "1px solid rgba(18,16,12,.09)", borderRadius: 8, padding: "12px 14px", boxShadow: "0 2px 8px -4px rgba(0,0,0,.15)" }}>
-                  <div style={{ fontWeight: 600, fontSize: ".82rem", color: GREEN, marginBottom: 3 }}>{m.client_name || "â€”"}</div>
-                  <div style={{ fontSize: ".7rem", color: MUTED, marginBottom: 8 }}>{m.matter_type || "â€”"} · {m.ref}</div>
+                  <div style={{ fontWeight: 600, fontSize: ".82rem", color: GREEN, marginBottom: 3 }}>{m.client_name || "—"}</div>
+                  <div style={{ fontSize: ".7rem", color: MUTED, marginBottom: 8 }}>{m.matter_type || "—"} · {m.ref}</div>
                   <select value={m.stage} onChange={e => onStage(m.id, e.target.value)}
                     style={{ width: "100%", fontSize: ".7rem", padding: "4px 6px", borderRadius: 6, border: "1px solid rgba(18,16,12,.15)", background: "#faf8f2", color: INK, cursor: "pointer" }}>
                     {MATTER_STAGES.map(s => <option key={s} value={s}>{s.replace(/_/g," ")}</option>)}
@@ -4456,7 +4456,7 @@ function KanbanView({ matters, onStage, onExpand }: {
                   )}
                 </div>
               ))}
-              {cards.length === 0 && <div style={{ padding: "14px 10px", fontSize: ".75rem", color: "rgba(18,16,12,.25)", textAlign: "center", border: "1px dashed rgba(18,16,12,.1)", borderRadius: 8 }}>â€”</div>}
+              {cards.length === 0 && <div style={{ padding: "14px 10px", fontSize: ".75rem", color: "rgba(18,16,12,.25)", textAlign: "center", border: "1px dashed rgba(18,16,12,.1)", borderRadius: 8 }}>—</div>}
             </div>
           </div>
         );
@@ -4529,7 +4529,7 @@ const S: Record<string, React.CSSProperties> = {
 };
 
 // ---------------------------------------------------------------------------
-// H.O.M.E. â€” Professional Approvals
+// H.O.M.E. — Professional Approvals
 // ---------------------------------------------------------------------------
 function HomeProsPanel({ pros, loading, onApprove }: {
   pros: HomePro[]; loading: boolean; onApprove: (userId: string) => void;
@@ -4554,7 +4554,7 @@ function HomeProsPanel({ pros, loading, onApprove }: {
   return (
     <div style={{ padding: 20 }}>
       <div style={{ marginBottom: 16, padding: "10px 14px", background: "rgba(200,166,92,.1)", borderRadius: 10, border: "1px solid rgba(200,166,92,.3)", fontSize: 13, color: "#6b5210" }}>
-        <strong>H.O.M.E. Platform Professionals</strong> â€” professionals who applied via the H.O.M.E. by Ferguson Law platform (home.fergusonlawja.com). These serve homebuyers on the H.O.M.E. marketplace and are separate from your Directory partners.
+        <strong>H.O.M.E. Platform Professionals</strong> — professionals who applied via the H.O.M.E. by Ferguson Law platform (home.fergusonlawja.com). These serve homebuyers on the H.O.M.E. marketplace and are separate from your Directory partners.
       </div>
     <div style={{ display: "grid", gap: 14 }}>
       {visiblePros.map((p) => (
@@ -4570,7 +4570,7 @@ function HomeProsPanel({ pros, loading, onApprove }: {
               <button type="button" onClick={() => void rejectPro(p.user_id)} style={S.rejectBtn}>Reject</button>
             </div>
           </div>
-          <div style={S.listTitle}>{p.business_name || "â€”"}</div>
+          <div style={S.listTitle}>{p.business_name || "—"}</div>
           {p.headline && <div style={{ fontSize: 13, color: INK, marginTop: 2 }}>{p.headline}</div>}
           <div style={{ ...S.muted, marginTop: 4 }}>
             {p.license_number ? `Licence: ${p.license_number}` : "No licence number"}
@@ -4585,7 +4585,7 @@ function HomeProsPanel({ pros, loading, onApprove }: {
 }
 
 // ---------------------------------------------------------------------------
-// H.O.M.E. â€” Property Listings (CRUD)
+// H.O.M.E. — Property Listings (CRUD)
 // ---------------------------------------------------------------------------
 const HR_PARISHES = ["Kingston","St. Andrew","St. Catherine","St. Thomas","Portland","St. Mary","St. Ann","Trelawny","St. James","Hanover","Westmoreland","St. Elizabeth","Manchester","Clarendon"];
 
@@ -4651,7 +4651,7 @@ function HomeListingsPanel({ listings, loading }: { listings: HomeProperty[]; lo
                   <div style={{ display: "flex", gap: 6 }}>
                     <button type="button" onClick={() => openEdit(l)} style={{ ...S.waBtn, background: GOLD, color: "#10211c" }}>Edit</button>
                     <button type="button" onClick={() => setDeleteId(l.id)} style={S.rejectBtn}>Delete</button>
-                    <a href={`${HR_BASE}/properties/${l.id}`} target="_blank" rel="noopener noreferrer" style={S.waBtn}>View â†’</a>
+                    <a href={`${HR_BASE}/properties/${l.id}`} target="_blank" rel="noopener noreferrer" style={S.waBtn}>View →</a>
                   </div>
                 </Td>
               </tr>
@@ -4720,7 +4720,7 @@ function HomeListingsPanel({ listings, loading }: { listings: HomeProperty[]; lo
 }
 
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// CMS Tab â€” workflow-based case management
+// CMS Tab — workflow-based case management
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface CmsMatter {
@@ -4981,7 +4981,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token, matterId, kind, milestoneName }),
       });
-    } catch { /* best-effort â€” notification failure never blocks the action */ }
+    } catch { /* best-effort — notification failure never blocks the action */ }
   }
 
   async function updateMilestone(id: string, status: string) {
@@ -5082,11 +5082,11 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
   async function deleteClientData(m: CmsMatter) {
     if (!confirm(
       `Permanently delete ALL data for ${m.client_name} (${m.client_email})?\n\n` +
-      `This removes their login, client profile, every matter, KYC/ID documents, uploaded files, messages, payments, appointments, and email history â€” everywhere, not just this matter. This cannot be undone.`
+      `This removes their login, client profile, every matter, KYC/ID documents, uploaded files, messages, payments, appointments, and email history — everywhere, not just this matter. This cannot be undone.`
     )) return;
-    const typed = prompt(`Type the client's email to confirm â€” ${m.client_email}`);
+    const typed = prompt(`Type the client's email to confirm — ${m.client_email}`);
     if (typed?.trim().toLowerCase() !== m.client_email.toLowerCase()) {
-      if (typed !== null) alert("Email didn't match â€” nothing was deleted.");
+      if (typed !== null) alert("Email didn't match — nothing was deleted.");
       return;
     }
     setPurging(true);
@@ -5222,9 +5222,9 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
         p_client_email: emailParam,
       });
       if (error) throw error;
-      if (!data) throw new Error("No matter ID returned â€” check the RPC returned a value.");
+      if (!data) throw new Error("No matter ID returned — check the RPC returned a value.");
 
-      // Do NOT send a portal invite here â€” if the matter was created successfully the
+      // Do NOT send a portal invite here — if the matter was created successfully the
       // client already has an auth account (fl_admin_cms_open_matter looks them up by
       // email). An invite is sent only from the catch block when "client not found".
 
@@ -5235,7 +5235,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
       void loadDetail(data as string);
     } catch (err) {
       const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? String(err);
-      // Client has no portal account â€” send invite and guide admin
+      // Client has no portal account — send invite and guide admin
       if (msg.toLowerCase().includes("client not found") && (newClientEmail.trim() || newClientId.trim())) {
         const email = newClientEmail.trim() || "";
         if (email) {
@@ -5309,7 +5309,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                     m.kyc_status === "pending"
                       ? "Client has not yet submitted their Client Intake Form (CIF). This is separate from matter milestones."
                       : m.kyc_status === "submitted"
-                      ? "Client submitted their CIF â€” go to the Client Intake Form tab to review and approve."
+                      ? "Client submitted their CIF — go to the Client Intake Form tab to review and approve."
                       : m.kyc_status === "flagged"
                       ? "CIF flagged for review. Check the Client Intake Form tab."
                       : ""
@@ -5395,13 +5395,13 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                     }}
                     style={{ fontSize: 12, padding: "5px 10px", borderRadius: 8, border: "1px solid " + (activeSummary ? "rgba(200,166,92,.7)" : "rgba(18,16,12,.3)"), background: activeSummary ? "rgba(200,166,92,.12)" : "#fff", color: activeSummary ? "#8a6a22" : INK, cursor: "pointer", fontWeight: 600 }}
                   >
-                    {activeSummary ? "âœ“ Preliminary Summary" : "Generate Preliminary Summary"}
+                    {activeSummary ? "✓ Preliminary Summary" : "Generate Preliminary Summary"}
                   </button>
                   {activeSummary && selected && (
                     <button
                       onClick={() => window.open("/preliminary-summary/" + selected + "?token=" + encodeURIComponent(token), "_blank", "noopener,noreferrer")}
                       style={{ fontSize: 12, padding: "5px 10px", borderRadius: 8, border: "1px solid #8a6a22", background: "#8a6a22", color: "#fff", cursor: "pointer", fontWeight: 600 }}
-                    >View â†’</button>
+                    >View →</button>
                   )}
                   {activeSummary && selected && (
                     <button
@@ -5428,7 +5428,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                       }}
                       style={{ fontSize: 12, padding: "5px 10px", borderRadius: 8, border: "1px solid #8a6a22", background: (activeSummary as { sent_at?: string }).sent_at ? "rgba(200,166,92,.12)" : "#8a6a22", color: (activeSummary as { sent_at?: string }).sent_at ? "#8a6a22" : "#fff", cursor: sendBusy ? "default" : "pointer", fontWeight: 600, opacity: sendBusy ? 0.7 : 1 }}
                     >
-                      {sendBusy ? "Sending..." : (activeSummary as { sent_at?: string }).sent_at ? "â†º Resend to Client" : "âœ‰ Send to Client"}
+                      {sendBusy ? "Sending..." : (activeSummary as { sent_at?: string }).sent_at ? "↺ Resend to Client" : "✉ Send to Client"}
                     </button>
                   )}
                   {sendResult && (
@@ -5442,7 +5442,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                         if (!selected || !confirm("Archive this matter? It will be hidden from the active list but not deleted.")) return;
                         await updateMatterStatus(selected, "archived");
                       }}
-                      title="Hide this matter from the active list â€” reversible"
+                      title="Hide this matter from the active list — reversible"
                       style={{ fontSize: 12, padding: "5px 10px", borderRadius: 8, border: "1px solid rgba(162,59,59,.35)", background: "rgba(162,59,59,.07)", color: "#a23b3b", cursor: "pointer", fontWeight: 600 }}
                     >
                       Archive matter
@@ -5462,7 +5462,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                   <button
                     onClick={() => deleteClientData(activeMatter!)}
                     disabled={purging}
-                    title="Permanently delete this client's login, profile, matters, files, and messages â€” everywhere"
+                    title="Permanently delete this client's login, profile, matters, files, and messages — everywhere"
                     style={{ fontSize: 12, padding: "5px 10px", borderRadius: 8, border: "1px solid #d33", background: "#fff", color: "#d33", cursor: purging ? "default" : "pointer", fontWeight: 600 }}
                   >
                     {purging ? "Deleting..." : "Delete client & all data"}
@@ -5501,7 +5501,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                 }}>
                   {t === "messages" ? `Messages${unreadClientMsgs > 0 ? ` (${unreadClientMsgs})` : ""}`
                     : t === "files" ? `Files (${files.length})`
-                    : t === "kyc" ? `Client Intake Form (CIF)${kyc && kyc.status !== "approved" ? " â€¢" : ""}`
+                    : t === "kyc" ? `Client Intake Form (CIF)${kyc && kyc.status !== "approved" ? " •" : ""}`
                     : t === "payments" ? `Payments (${payments.length})`
                     : "Timeline"}
                 </button>
@@ -5578,7 +5578,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                                       textDecoration: m.status === "not_applicable" ? "line-through" : "none",
                                     }}>
                                       {m.status === "done" && <span style={{ fontSize: 12, color: "#2e7d32" }}>âœ...</span>}
-                                      {m.status === "not_applicable" && <span style={{ fontSize: 12 }}>â€”</span>}
+                                      {m.status === "not_applicable" && <span style={{ fontSize: 12 }}>—</span>}
                                       <span style={{ cursor: "default" }}>
                                         {m.name}
                                       </span>
@@ -5608,7 +5608,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                                 <button type="button" onClick={() => deleteStep(m.id)}
                                   title="Remove step" style={{ background: "none", border: "none", cursor: "pointer", color: "#ccc", fontSize: 14, padding: "0 2px" }}>âœ•</button>
                               </div>
-                              {/* Result note editor â€” step name stays read-only here */}
+                              {/* Result note editor — step name stays read-only here */}
                               {isAddingNote && (
                                 <div style={{ padding: "0 10px 10px", display: "flex", flexDirection: "column", gap: 6 }}>
                                   <textarea
@@ -5725,7 +5725,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                       background: uploading ? "#eee" : GREEN, color: uploading ? MUTED : CREAM,
                       borderRadius: 999, padding: "8px 16px", fontSize: 12.5, fontWeight: 700,
                     }}>
-                      {uploading ? "Uploading..." : "â†‘ Upload file to client"}
+                      {uploading ? "Uploading..." : "↑ Upload file to client"}
                     </label>
                   </div>
                   {files.length === 0 ? (
@@ -5741,7 +5741,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                           {f.file_size ? ` · ${(f.file_size / 1024).toFixed(1)} KB` : ""}
                         </div>
                       </div>
-                      <span style={{ fontSize: 12, color: "#8a6a22", fontWeight: 600 }}>â†“</span>
+                      <span style={{ fontSize: 12, color: "#8a6a22", fontWeight: 600 }}>↓</span>
                     </a>
                   ))}
                 </div>
@@ -5755,7 +5755,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                     padding: "10px 16px", borderRadius: 999, background: GREEN, color: CREAM,
                     fontSize: 13, fontWeight: 700, textDecoration: "none",
                   }}>
-                    â†“ Download fillable CIF PDF
+                    ↓ Download fillable CIF PDF
                   </a>
                   {!kyc ? (
                     <div>
@@ -5809,12 +5809,12 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                               {[["Full legal name", kyc.full_legal_name], ["Date of birth", kyc.date_of_birth], ["Nationality", kyc.nationality], ["Country of residence", kyc.country_of_residence], ["Occupation", kyc.occupation], ["TRN", kyc.trn]].map(([label, val]) => (
                                 <div key={label as string}>
                                   <div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 2 }}>{label}</div>
-                                  <div style={{ fontSize: 13.5, color: INK }}>{val || "â€”"}</div>
+                                  <div style={{ fontSize: 13.5, color: INK }}>{val || "—"}</div>
                                 </div>
                               ))}
                               <div style={{ gridColumn: "1/-1" }}>
                                 <div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 2 }}>Address</div>
-                                <div style={{ fontSize: 13.5, color: INK }}>{kyc.address || "â€”"}</div>
+                                <div style={{ fontSize: 13.5, color: INK }}>{kyc.address || "—"}</div>
                               </div>
                             </div>
                           </div>
@@ -5822,7 +5822,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: MUTED, borderBottom: "1px solid rgba(18,16,12,.1)", paddingBottom: 6, marginBottom: 12 }}>2. Identity Document</div>
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                               {[["ID type", kyc.id_type], ["ID number", kyc.id_number], ["Expiry", kyc.id_expiry_date]].map(([label, val]) => (
-                                <div key={label as string}><div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 2 }}>{label}</div><div style={{ fontSize: 13.5, color: INK }}>{val || "â€”"}</div></div>
+                                <div key={label as string}><div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 2 }}>{label}</div><div style={{ fontSize: 13.5, color: INK }}>{val || "—"}</div></div>
                               ))}
                             </div>
                             {kyc.id_doc_url && <a href={kyc.id_doc_url} target="_blank" rel="noopener" style={{ display: "inline-block", marginTop: 10, fontSize: 12.5, color: "#8a6a22", fontWeight: 600, textDecoration: "none", border: "1px solid rgba(201,168,106,.4)", background: "rgba(201,168,106,.08)", borderRadius: 6, padding: "5px 12px" }}>View primary ID</a>}
@@ -5831,7 +5831,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                                 <div style={{ fontSize: 10, fontWeight: 700, color: MUTED, marginBottom: 8 }}>SECONDARY ID</div>
                                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                                   {[["Type", kyc.id2_type], ["Number", kyc.id2_number], ["Expiry", kyc.id2_expiry_date]].map(([label, val]) => (
-                                    <div key={label as string}><div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 2 }}>{label}</div><div style={{ fontSize: 13.5, color: INK }}>{val || "â€”"}</div></div>
+                                    <div key={label as string}><div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 2 }}>{label}</div><div style={{ fontSize: 13.5, color: INK }}>{val || "—"}</div></div>
                                   ))}
                                 </div>
                                 {kyc.id2_doc_url && <a href={kyc.id2_doc_url} target="_blank" rel="noopener" style={{ display: "inline-block", marginTop: 8, fontSize: 12.5, color: "#8a6a22", fontWeight: 600, textDecoration: "none", border: "1px solid rgba(201,168,106,.4)", background: "rgba(201,168,106,.08)", borderRadius: 6, padding: "5px 12px" }}>View secondary ID</a>}
@@ -5841,12 +5841,12 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                           <div style={{ marginBottom: 20 }}>
                             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: MUTED, borderBottom: "1px solid rgba(18,16,12,.1)", paddingBottom: 6, marginBottom: 12 }}>3. Source of Funds</div>
                             {[["Source of funds", kyc.source_of_funds], ["Source of wealth", kyc.source_of_wealth], ["Purpose of transaction", kyc.purpose_of_transaction]].map(([label, val]) => (
-                              <div key={label as string} style={{ marginBottom: 10 }}><div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 2 }}>{label}</div><div style={{ fontSize: 13.5, color: INK }}>{val || "â€”"}</div></div>
+                              <div key={label as string} style={{ marginBottom: 10 }}><div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 2 }}>{label}</div><div style={{ fontSize: 13.5, color: INK }}>{val || "—"}</div></div>
                             ))}
                           </div>
                           <div style={{ marginBottom: 20 }}>
                             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: MUTED, borderBottom: "1px solid rgba(18,16,12,.1)", paddingBottom: 6, marginBottom: 12 }}>4. PEP Declaration</div>
-                            <span style={{ fontSize: 13.5, color: kyc.is_pep ? "#7a2020" : INK, fontWeight: kyc.is_pep ? 700 : 400 }}>{kyc.is_pep ? "Yes â€” Politically Exposed Person" : "No"}</span>
+                            <span style={{ fontSize: 13.5, color: kyc.is_pep ? "#7a2020" : INK, fontWeight: kyc.is_pep ? 700 : 400 }}>{kyc.is_pep ? "Yes — Politically Exposed Person" : "No"}</span>
                             {kyc.is_pep && kyc.pep_details && <div style={{ marginTop: 10, padding: "10px 14px", background: "rgba(122,32,32,.06)", border: "1px solid rgba(122,32,32,.14)", borderRadius: 8, fontSize: 13 }}>{kyc.pep_details}</div>}
                           </div>
                         </>
@@ -5859,10 +5859,10 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: MUTED, borderBottom: "1px solid rgba(18,16,12,.1)", paddingBottom: 6, marginBottom: 12 }}>1. Entity Registration</div>
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                               {[["Entity name", kyc.entity_name], ["Entity type", kyc.entity_type], ["Registration no.", kyc.entity_registration_number], ["TRN", kyc.entity_trn], ["Date of incorporation", kyc.entity_date_of_incorporation], ["Country of incorporation", kyc.entity_country_of_incorporation]].map(([label, val]) => (
-                                <div key={label as string}><div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 2 }}>{label}</div><div style={{ fontSize: 13.5, color: INK }}>{val || "â€”"}</div></div>
+                                <div key={label as string}><div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 2 }}>{label}</div><div style={{ fontSize: 13.5, color: INK }}>{val || "—"}</div></div>
                               ))}
                               {[["Registered address", kyc.entity_registered_address], ["Principal address", kyc.entity_principal_address], ["Nature of business", kyc.entity_nature_of_business]].map(([label, val]) => (
-                                <div key={label as string} style={{ gridColumn: "1/-1" }}><div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 2 }}>{label}</div><div style={{ fontSize: 13.5, color: INK }}>{val || "â€”"}</div></div>
+                                <div key={label as string} style={{ gridColumn: "1/-1" }}><div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 2 }}>{label}</div><div style={{ fontSize: 13.5, color: INK }}>{val || "—"}</div></div>
                               ))}
                             </div>
                             {kyc.entity_resolution_url && <a href={kyc.entity_resolution_url} target="_blank" rel="noopener" style={{ display: "inline-block", marginTop: 10, fontSize: 12.5, color: "#8a6a22", fontWeight: 600, textDecoration: "none", border: "1px solid rgba(201,168,106,.4)", background: "rgba(201,168,106,.08)", borderRadius: 6, padding: "5px 12px" }}>View corporate resolution</a>}
@@ -5873,7 +5873,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                               {kyc.entity_directors.map((d, i) => (
                                 <div key={i} style={{ padding: "8px 12px", background: "#fafaf8", borderRadius: 8, border: "1px solid rgba(18,16,12,.08)", marginBottom: 8, display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 10 }}>
                                   {[["Name", d.name], ["Nationality", d.nationality], ["DOB", d.dob], ["Role", d.role]].map(([label, val]) => (
-                                    <div key={label as string}><div style={{ fontSize: 10, textTransform: "uppercase", color: MUTED, marginBottom: 1 }}>{label}</div><div style={{ fontSize: 13, color: INK }}>{val || "â€”"}</div></div>
+                                    <div key={label as string}><div style={{ fontSize: 10, textTransform: "uppercase", color: MUTED, marginBottom: 1 }}>{label}</div><div style={{ fontSize: 13, color: INK }}>{val || "—"}</div></div>
                                   ))}
                                 </div>
                               ))}
@@ -5886,7 +5886,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                                 <div key={i} style={{ padding: "8px 12px", background: "#fafaf8", borderRadius: 8, border: "1px solid rgba(18,16,12,.08)", marginBottom: 8 }}>
                                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 10, marginBottom: o.is_pep ? 8 : 0 }}>
                                     {[["Name", o.name], ["Nationality", o.nationality], ["DOB", o.dob], ["Ownership %", o.ownership_pct]].map(([label, val]) => (
-                                      <div key={label as string}><div style={{ fontSize: 10, textTransform: "uppercase", color: MUTED, marginBottom: 1 }}>{label}</div><div style={{ fontSize: 13, color: INK }}>{val || "â€”"}</div></div>
+                                      <div key={label as string}><div style={{ fontSize: 10, textTransform: "uppercase", color: MUTED, marginBottom: 1 }}>{label}</div><div style={{ fontSize: 13, color: INK }}>{val || "—"}</div></div>
                                     ))}
                                   </div>
                                   {o.is_pep && <div style={{ padding: "6px 10px", background: "rgba(122,32,32,.06)", borderRadius: 6, fontSize: 12.5, color: "#7a2020", fontWeight: 600 }}>PEP{o.pep_details ? ": " + o.pep_details : ""}</div>}
@@ -5900,7 +5900,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                               {kyc.entity_authorised_signatories.map((s, i) => (
                                 <div key={i} style={{ padding: "8px 12px", background: "#fafaf8", borderRadius: 8, border: "1px solid rgba(18,16,12,.08)", marginBottom: 8, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
                                   {[["Name", s.name], ["ID type", s.id_type], ["ID number", s.id_number]].map(([label, val]) => (
-                                    <div key={label as string}><div style={{ fontSize: 10, textTransform: "uppercase", color: MUTED, marginBottom: 1 }}>{label}</div><div style={{ fontSize: 13, color: INK }}>{val || "â€”"}</div></div>
+                                    <div key={label as string}><div style={{ fontSize: 10, textTransform: "uppercase", color: MUTED, marginBottom: 1 }}>{label}</div><div style={{ fontSize: 13, color: INK }}>{val || "—"}</div></div>
                                   ))}
                                 </div>
                               ))}
@@ -5909,12 +5909,12 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                           <div style={{ marginBottom: 20 }}>
                             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: MUTED, borderBottom: "1px solid rgba(18,16,12,.1)", paddingBottom: 6, marginBottom: 12 }}>5. Source of Funds</div>
                             {[["Source of funds", kyc.source_of_funds], ["Source of wealth", kyc.source_of_wealth], ["Purpose of transaction", kyc.purpose_of_transaction]].map(([label, val]) => (
-                              <div key={label as string} style={{ marginBottom: 10 }}><div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 2 }}>{label}</div><div style={{ fontSize: 13.5, color: INK }}>{val || "â€”"}</div></div>
+                              <div key={label as string} style={{ marginBottom: 10 }}><div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".06em", color: MUTED, marginBottom: 2 }}>{label}</div><div style={{ fontSize: 13.5, color: INK }}>{val || "—"}</div></div>
                             ))}
                           </div>
                           <div style={{ marginBottom: 20 }}>
                             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: MUTED, borderBottom: "1px solid rgba(18,16,12,.1)", paddingBottom: 6, marginBottom: 12 }}>6. PEP Declaration</div>
-                            <span style={{ fontSize: 13.5, color: kyc.entity_has_pep_director ? "#7a2020" : INK, fontWeight: kyc.entity_has_pep_director ? 700 : 400 }}>{kyc.entity_has_pep_director ? "Yes â€” PEP director / owner" : "No"}</span>
+                            <span style={{ fontSize: 13.5, color: kyc.entity_has_pep_director ? "#7a2020" : INK, fontWeight: kyc.entity_has_pep_director ? 700 : 400 }}>{kyc.entity_has_pep_director ? "Yes — PEP director / owner" : "No"}</span>
                             {kyc.entity_has_pep_director && kyc.entity_pep_details && <div style={{ marginTop: 10, padding: "10px 14px", background: "rgba(122,32,32,.06)", border: "1px solid rgba(122,32,32,.14)", borderRadius: 8, fontSize: 13 }}>{kyc.entity_pep_details}</div>}
                           </div>
                         </>
@@ -5973,13 +5973,13 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                           {p.kind} · JMD ${p.amount_jmd.toLocaleString("en-JM")}
                         </div>
                         <div style={{ fontSize: 11.5, color: MUTED }}>
-                          {p.method?.replace("_"," ") || "â€”"}{p.reference ? ` · ${p.reference}` : ""} · {fmtDate(p.created_at)}
+                          {p.method?.replace("_"," ") || "—"}{p.reference ? ` · ${p.reference}` : ""} · {fmtDate(p.created_at)}
                         </div>
                         {p.receipt_number && (
                           <div style={{ fontSize: 11.5, color: "#2f7a52", fontWeight: 600, marginTop: 2, display: "flex", alignItems: "center", gap: 8 }}>
                             Receipt {p.receipt_number}
                             <a href={`/receipt?id=${p.id}&admin=1&token=${encodeURIComponent(token)}`} target="_blank" rel="noopener noreferrer"
-                              style={{ fontSize: 11, color: "#c9a86a", fontWeight: 600, textDecoration: "none" }}>View / Print â†—</a>
+                              style={{ fontSize: 11, color: "#c9a86a", fontWeight: 600, textDecoration: "none" }}>View / Print ↗</a>
                           </div>
                         )}
                       </div>
@@ -6037,7 +6037,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
               )}
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
                 <span style={{ color: "#7a7a6a" }}>Date confirmed</span>
-                <span style={{ color: "#10211c" }}>{receiptPreview.confirmed_at ? new Date(receiptPreview.confirmed_at).toLocaleDateString("en-JM") : "â€”"}</span>
+                <span style={{ color: "#10211c" }}>{receiptPreview.confirmed_at ? new Date(receiptPreview.confirmed_at).toLocaleDateString("en-JM") : "—"}</span>
               </div>
             </div>
             <p style={{ fontSize: 12, color: "#9a9a8a", marginBottom: 18 }}>A receipt will be emailed to the client. This cannot be undone.</p>
@@ -6087,7 +6087,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                         ))}
                       </div>
                     )}
-                    <div style={{ fontSize: 11, color: MUTED, textAlign: "center", margin: "4px 0" }}>â€” or enter manually â€”</div>
+                    <div style={{ fontSize: 11, color: MUTED, textAlign: "center", margin: "4px 0" }}>— or enter manually —</div>
                     <input value={newClientName} onChange={e => setNewClientName(e.target.value)}
                       placeholder="Client name"
                       style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid rgba(18,16,12,.2)", fontSize: 13, outline: "none" }} />
@@ -6215,7 +6215,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                 </div>
               ))}
               <div style={{ borderTop: "1.5px dashed rgba(18,16,12,.12)", paddingTop: 18, marginTop: 4 }}>
-                <label style={{ display: "block", fontSize: 11, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: "#888", marginBottom: 4 }}>Internal Notes <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0, fontSize: 11, color: "#aaa" }}>â€” not shown to client</span></label>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: "#888", marginBottom: 4 }}>Internal Notes <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0, fontSize: 11, color: "#aaa" }}>— not shown to client</span></label>
                 <textarea
                   value={summaryFields.internal_notes}
                   onChange={e => setSummaryFields(prev => ({ ...prev, internal_notes: e.target.value }))}
@@ -6246,7 +6246,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                     else if (j.error) alert("Save failed: " + j.error);
                   } catch (e) {
                     const msg = e instanceof Error ? e.message : "Unknown error";
-                    alert(msg.includes("abort") ? "Save timed out â€” please try again" : "Save failed: " + msg);
+                    alert(msg.includes("abort") ? "Save timed out — please try again" : "Save failed: " + msg);
                   } finally {
                     clearTimeout(timeout);
                     setSummaryBusy(false);
@@ -6316,7 +6316,7 @@ function MeetingRow({ meeting: m, token, onJoinIframe, onChange }: {
   async function reschedule() {
     if (!newTime) return;
     setBusy("reschedule"); setErr(null);
-    // newTime is a wall-clock "YYYY-MM-DDTHH:mm" with no zone â€” the server
+    // newTime is a wall-clock "YYYY-MM-DDTHH:mm" with no zone — the server
     // interprets it as Jamaica time, so this works regardless of the admin's
     // own browser timezone.
     const d = await call("reschedule", { starts_at_wall: newTime });
@@ -6342,7 +6342,7 @@ function MeetingRow({ meeting: m, token, onJoinIframe, onChange }: {
             ) : (
               <a href={m.meeting_url} target="_blank" rel="noopener noreferrer"
                 style={{ display: "inline-block", background: GOLD, color: CREAM, borderRadius: 7, padding: "8px 18px", fontWeight: 700, fontSize: 13, textDecoration: "none", flexShrink: 0 }}>
-                Join call â†—
+                Join call ↗
               </a>
             )
           ) : (
@@ -6456,7 +6456,7 @@ function ZoomSetupTab({ token, appts = [] }: { token: string; appts?: Appointmen
           <div style={{ padding: "12px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid rgba(0,0,0,.07)" }}>
             <span style={{ fontWeight: 700, fontSize: 14, color: INK }}>Live consultation</span>
             <div style={{ display: "flex", gap: 10 }}>
-              <a href={activeIframe} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: GOLD }}>Open in new tab â†—</a>
+              <a href={activeIframe} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: GOLD }}>Open in new tab ↗</a>
               <button onClick={() => setActiveIframe(null)} style={{ fontSize: 12, background: "none", border: "1px solid #ddd", borderRadius: 6, padding: "4px 10px", cursor: "pointer", color: MUTED }}>Close</button>
             </div>
           </div>
@@ -6468,7 +6468,7 @@ function ZoomSetupTab({ token, appts = [] }: { token: string; appts?: Appointmen
       {/* â”€â”€ INSTANT MEETING â”€â”€ */}
       <div style={{ ...SECTION, display: "flex", flexDirection: "column", gap: 14 }}>
         <p style={{ fontWeight: 700, fontSize: 15, margin: 0, color: INK }}>Start an instant consultation</p>
-        <p style={{ fontSize: 13, color: MUTED, margin: 0 }}>Generates a video call room instantly â€” click Join to enter.</p>
+        <p style={{ fontSize: 13, color: MUTED, margin: 0 }}>Generates a video call room instantly — click Join to enter.</p>
         <button
           onClick={() => void createMeeting()}
           disabled={creating}
@@ -6484,7 +6484,7 @@ function ZoomSetupTab({ token, appts = [] }: { token: string; appts?: Appointmen
             {(instantMeeting.provider === "zoom" || instantMeeting.provider === "jitsi") && (
               <a href={instantMeeting.url} target="_blank" rel="noopener noreferrer"
                 style={{ display: "inline-block", background: GOLD, color: CREAM, borderRadius: 8, padding: "10px 22px", fontWeight: 700, fontSize: 14, textDecoration: "none" }}>
-                Join call â†—
+                Join call ↗
               </a>
             )}
             {instantMeeting.provider === "daily" && !activeIframe && (
@@ -6501,7 +6501,7 @@ function ZoomSetupTab({ token, appts = [] }: { token: string; appts?: Appointmen
       {/* â”€â”€ UPCOMING MEETINGS â”€â”€ */}
       <div style={SECTION}>
         <p style={{ fontWeight: 700, fontSize: 15, marginBottom: 4, color: INK }}>Upcoming consultations</p>
-        <p style={{ fontSize: 12, color: MUTED, margin: "0 0 16px" }}>Resend the link, generate a fresh one, move the time, or cancel â€” the client is emailed automatically for each.</p>
+        <p style={{ fontSize: 12, color: MUTED, margin: "0 0 16px" }}>Resend the link, generate a fresh one, move the time, or cancel — the client is emailed automatically for each.</p>
         {loadingUpcoming ? (
           <p style={{ fontSize: 13, color: MUTED }}>Loading...</p>
         ) : upcoming.length === 0 ? (
@@ -6524,7 +6524,7 @@ function ZoomSetupTab({ token, appts = [] }: { token: string; appts?: Appointmen
       {status && (
         <div style={{ borderRadius: 10, padding: "14px 18px", marginBottom: 18, fontSize: 14, background: status.ok ? "#edf7ee" : "#fdf0f0", border: `1px solid ${status.ok ? "#b2dfb5" : "#f5c6c6"}`, color: status.ok ? "#1e5c22" : "#7a1515" }}>
           {status.ok
-            ? `Connected â€” video calling active`
+            ? `Connected — video calling active`
             : status.status === "not_configured"
               ? `Not configured yet.`
               : `Error: ${status.error}`}
@@ -6535,8 +6535,8 @@ function ZoomSetupTab({ token, appts = [] }: { token: string; appts?: Appointmen
         <p style={{ fontWeight: 700, fontSize: 14, marginBottom: 10, color: INK }}>How it works</p>
         <ul style={{ fontSize: 13.5, lineHeight: 1.9, color: MUTED, paddingLeft: 18, margin: 0 }}>
           <li>When a client books and pays, a video room is auto-created and the join link goes in their confirmation email.</li>
-          <li>Upcoming bookings appear above â€” click "Join call" to enter. Clients use their own link from the confirmation email to join the same call.</li>
-          <li>Clients can enter before you â€” no waiting room.</li>
+          <li>Upcoming bookings appear above — click "Join call" to enter. Clients use their own link from the confirmation email to join the same call.</li>
+          <li>Clients can enter before you — no waiting room.</li>
         </ul>
       </div>
 
@@ -6549,7 +6549,7 @@ function ZoomSetupTab({ token, appts = [] }: { token: string; appts?: Appointmen
           <p style={{ fontWeight: 700, fontSize: 15, marginBottom: 18, color: INK }}>Setup (one-time, technical)</p>
           {[
             { n: 1, body: <>In your video-calling provider&apos;s developer console, copy the <strong>Account ID</strong>, <strong>Client ID</strong>, and <strong>Client Secret</strong>.</> },
-            { n: 2, body: <>Go to your <a href="https://vercel.com/dashboard" target="_blank" rel="noopener noreferrer" style={{ color: GOLD }}>Vercel dashboard</a> â†’ <strong>ferguson-law</strong> â†’ <strong>Settings â†’ Environment Variables</strong> â†’ add these three:<br /><br />
+            { n: 2, body: <>Go to your <a href="https://vercel.com/dashboard" target="_blank" rel="noopener noreferrer" style={{ color: GOLD }}>Vercel dashboard</a> → <strong>ferguson-law</strong> → <strong>Settings → Environment Variables</strong> → add these three:<br /><br />
               <span style={CODE}>ZOOM_ACCOUNT_ID</span><br />
               <span style={CODE}>ZOOM_CLIENT_ID</span><br />
               <span style={CODE}>ZOOM_CLIENT_SECRET</span><br /><br />
@@ -6605,7 +6605,7 @@ function TesterFeedbackTab({ token }: { token: string }) {
                 <span style={{ color: "#888", fontSize: 12, marginLeft: 8 }}>{r.tester_role}</span>
               </div>
               <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                <span style={{ background: "#f0ede6", borderRadius: 6, padding: "3px 10px", fontSize: 12, fontWeight: 600, color: "#10211c" }}>{r.persona?.split(" â€” ")[0]}</span>
+                <span style={{ background: "#f0ede6", borderRadius: 6, padding: "3px 10px", fontSize: 12, fontWeight: 600, color: "#10211c" }}>{r.persona?.split(" — ")[0]}</span>
                 {r.device_type && <span style={{ background: "#f0ede6", borderRadius: 6, padding: "3px 10px", fontSize: 12, color: "#555" }}>{r.device_type}</span>}
                 <span style={{ background: "#c9a86a", color: "#10211c", borderRadius: 6, padding: "3px 10px", fontSize: 12, fontWeight: 700 }}>{"â˜...".repeat(r.rating)}</span>
               </div>

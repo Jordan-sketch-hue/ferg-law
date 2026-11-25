@@ -325,17 +325,17 @@ export function sendDataDeletionConfirmed(
     bodyText = escapeHtml(customBody);
   } else if (requestedBy === "firm_decision") {
     bodyText =
-      `Your records have been permanently removed from Ferguson Law's systems â€” your login, client profile, matter records, uploaded documents, KYC information, messages, appointment history, and correspondence log. This action is irreversible and cannot be undone.<br/><br/>This was carried out in accordance with the Jamaica Data Protection Act. If you believe this was done in error, please contact us immediately at the details below.`;
+      `Your records have been permanently removed from Ferguson Law's systems — your login, client profile, matter records, uploaded documents, KYC information, messages, appointment history, and correspondence log. This action is irreversible and cannot be undone.<br/><br/>This was carried out in accordance with the Jamaica Data Protection Act. If you believe this was done in error, please contact us immediately at the details below.`;
   } else {
     const originLine =
       requestedBy === "client"
         ? "Following your request, we have"
         : "Following your request to our team, we have";
-    bodyText = `${originLine} permanently removed your account and all associated information from Ferguson Law's systems â€” your login, client profile, matter records, uploaded documents, KYC information, messages, appointment history, and correspondence log. This action is irreversible and cannot be undone.<br/><br/>This deletion was carried out in accordance with the Jamaica Data Protection Act. If you did not request this, or believe this was done in error, please contact us immediately at the details below.`;
+    bodyText = `${originLine} permanently removed your account and all associated information from Ferguson Law's systems — your login, client profile, matter records, uploaded documents, KYC information, messages, appointment history, and correspondence log. This action is irreversible and cannot be undone.<br/><br/>This deletion was carried out in accordance with the Jamaica Data Protection Act. If you did not request this, or believe this was done in error, please contact us immediately at the details below.`;
   }
   return send(
     to,
-    "Confirmation â€” your Ferguson Law data has been deleted",
+    "Confirmation — your Ferguson Law data has been deleted",
     shell(
       `Hi ${escapeHtml(firstName)}, your data has been deleted.`,
       bodyText,

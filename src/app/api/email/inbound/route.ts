@@ -90,7 +90,7 @@ async function fetchResendEmailBody(emailId: string): Promise<{
   const key = process.env.RESEND_API_KEY;
   if (!key || !emailId) return { html: "", text: "", attachments: [] };
   // Received mail lives at /emails/receiving/{id}; /emails/{id} is sent-mail only (404s here).
-  // Retry briefly â€” the webhook can fire a moment before the body is queryable.
+  // Retry briefly — the webhook can fire a moment before the body is queryable.
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
       const r = await fetch(`https://api.resend.com/emails/receiving/${emailId}`, {
@@ -215,7 +215,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Resend inbound payload: { type: "email.received", data: { from, to, subject, email_id, html, text, ... } }
-    // Always prefer body.data when it exists â€” do NOT gate on typeof from === "string"
+    // Always prefer body.data when it exists — do NOT gate on typeof from === "string"
     // because Resend may send `from` as either a plain string or an {email, name} object.
     const payload: Record<string, unknown> = (body.data && typeof body.data === "object")
       ? (body.data as Record<string, unknown>)
@@ -253,7 +253,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing from" }, { status: 400 });
     }
 
-    // Extract body from webhook payload â€” Resend includes html/text in data when available
+    // Extract body from webhook payload — Resend includes html/text in data when available
     const payloadHtml = typeof payload.html === "string" ? payload.html.trim() : "";
     const payloadText = typeof payload.text === "string" ? payload.text.trim() : "";
 
@@ -368,7 +368,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Forward notification email to Owen (and BCC Jordan) so they're alerted in their inbox.
-    // Skip if the sender is our own domain â€” prevents infinite loops when system emails
+    // Skip if the sender is our own domain — prevents infinite loops when system emails
     // (morning digest, notification forwards) land at contact@fergusonlawja.com.
     const isInternalSender = fromEmail.toLowerCase().endsWith("@fergusonlawja.com");
     // ALL domain mailboxes forward to FERGUSON_STAFF_EMAIL (Owen's hotmail) so he
@@ -385,7 +385,7 @@ export async function POST(req: NextRequest) {
       const cleanSubject = rawSubject.replace(/^(New enquiry:\s*)+/i, "");
       const fullBodyText = (bodyText || bodyHtml.replace(/<[^>]+>/g, "")).trim() || "(no body)";
       const attLines = storedAttachments.length > 0
-        ? `\n\nAttachments (${storedAttachments.length}):\n` + storedAttachments.map((a) => `  â€¢ ${a.filename} â€” ${a.url}`).join("\n")
+        ? `\n\nAttachments (${storedAttachments.length}):\n` + storedAttachments.map((a) => `  • ${a.filename} — ${a.url}`).join("\n")
         : "";
       fetch("https://api.resend.com/emails", {
         method: "POST",
@@ -401,17 +401,17 @@ export async function POST(req: NextRequest) {
 
       // Route alerts for Owen's mailbox only to Owen; all other inbox alerts stay with Jordan.
       const attNote = storedAttachments.length > 0
-        ? ` (${storedAttachments.length} attachment${storedAttachments.length > 1 ? "s" : ""} attached â€” check admin inbox)`
+        ? ` (${storedAttachments.length} attachment${storedAttachments.length > 1 ? "s" : ""} attached — check admin inbox)`
         : "";
       const emailAlert =
-        `Ferguson Law â€” new email from ${fromName ? `${fromName} <${fromEmail}>` : fromEmail}\nSubject: ${cleanSubject}${attNote}\n\nAdmin inbox: https://ferguson-law.com/admin?tab=email`;
+        `Ferguson Law — new email from ${fromName ? `${fromName} <${fromEmail}>` : fromEmail}\nSubject: ${cleanSubject}${attNote}\n\nAdmin inbox: https://ferguson-law.com/admin?tab=email`;
       if (isOwenMailbox) void notifyOwenBusinessWA(emailAlert);
       else void notifyJordanWA(emailAlert);
     }
 
     if (!isInternalSender && !spam) {
       void pushToAdmins(
-        `New Email${fromName ? ` â€” ${fromName}` : ""}`,
+        `New Email${fromName ? ` — ${fromName}` : ""}`,
         String(payload.subject ?? "(no subject)"),
         "/admin?tab=email",
         "fl-email",
@@ -452,7 +452,7 @@ export async function POST(req: NextRequest) {
         console.log(`[inbound] ops_ticket created ${ticketId}`);
         // ACK email back to sender
         if (resendKey) {
-          const senderFirst = (fromName || "").split(/[\sâ€”-]+/).filter(Boolean)[0] || "there";
+          const senderFirst = (fromName || "").split(/[\s—-]+/).filter(Boolean)[0] || "there";
           fetch("https://api.resend.com/emails", {
             method: "POST",
             headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
