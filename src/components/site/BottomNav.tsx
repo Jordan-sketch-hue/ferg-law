@@ -1,8 +1,8 @@
-"use client";
+﻿"use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Calendar, BookOpen, User } from "lucide-react";
+import { Home, Calendar, BookOpen, User, Lock } from "lucide-react";
 
 const PenIcon = () => (
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -29,6 +29,7 @@ export default function BottomNav() {
   const isResources = pathname === "/buyers-guide" || pathname === "/explainers" || pathname.startsWith("/explainers/") || pathname === "/cost-estimator" || pathname === "/glossary" || pathname === "/faq";
   const isStart = pathname === "/get-started";
   const isAccount = pathname === "/auth" || pathname.startsWith("/directory/client") || pathname.startsWith("/auth/");
+  const isAdmin = pathname === "/admin" || pathname.startsWith("/admin/");
 
   const tab: React.CSSProperties = {
     flex: 1, display: "flex", flexDirection: "column", alignItems: "center",
@@ -97,6 +98,11 @@ export default function BottomNav() {
         <Link href="/auth" style={{ ...tab, color: isAccount ? "#C8A65C" : "rgba(200,166,92,0.42)" }}>
           <User size={24} strokeWidth={isAccount ? 2.5 : 1.8} />
           <span style={{ fontSize: "0.66rem", letterSpacing: "0.03em", fontWeight: isAccount ? 600 : 400 }}>Account</span>
+        </Link>
+
+        {/* Staff-only admin entry */}
+        <Link href="/admin" style={{ ...tab, flex: "0 0 44px", color: isAdmin ? "#C8A65C" : "rgba(200,166,92,0.2)" }}>
+          <Lock size={18} strokeWidth={isAdmin ? 2.5 : 1.6} />
         </Link>
       </nav>
     </>

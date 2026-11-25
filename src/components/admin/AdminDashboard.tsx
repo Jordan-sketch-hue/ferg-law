@@ -57,6 +57,7 @@ interface Lead {
   message: string | null;
   ref: string | null;
   status: string | null;
+  archived_at?: string | null;
 }
 
 interface Appointment {
@@ -131,6 +132,7 @@ interface Client {
   status: string;
   meta: Record<string, unknown>;
   portal_invited_at: string | null;
+  archived_at?: string | null;
 }
 
 interface Matter {
@@ -200,11 +202,11 @@ interface HomeProperty {
   status: string;
 }
 
-type Tab = "overview" | "leads" | "bookings" | "clients" | "matters" | "cms" | "calendar" | "chats" | "invites" | "directory" | "availability" | "home_pros" | "home_listings" | "email" | "inquiries" | "referrals" | "recycle_bin" | "workflows" | "zoom" | "feedback" | "analytics" | "ebook_leads" | "site_content";
+type Tab = "overview" | "leads" | "bookings" | "clients" | "matters" | "cms" | "calendar" | "chats" | "invites" | "directory" | "availability" | "home_pros" | "home_listings" | "email" | "inquiries" | "referrals" | "recycle_bin" | "workflows" | "zoom" | "feedback" | "analytics" | "ebook_leads" | "site_content" | "qr_codes";
 // ── Admin tab groups ──────────────────────────────────────────────────────────
 type TabGroup = "dashboard" | "crm" | "email" | "directory" | "home";
 const TAB_GROUPS: Record<TabGroup, { label: string; tabs: Tab[] }> = {
-  dashboard: { label: "Dashboard", tabs: ["overview","analytics","calendar","zoom","site_content"] },
+  dashboard: { label: "Dashboard", tabs: ["overview","analytics","calendar","zoom","site_content","qr_codes"] },
   crm:       { label: "CRM",       tabs: ["leads","bookings","clients","matters","chats","cms","ebook_leads"] },
   email:     { label: "Email",     tabs: ["email","feedback"] },
   directory: { label: "Directory", tabs: ["invites","directory","availability","referrals","workflows"] },
@@ -290,6 +292,78 @@ function fmtTime(iso: string | null): string {
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
+// ===========================================================================
+// QR Codes Tab
+// ===========================================================================
+const QR_ITEMS = [
+  {
+    label: "Main Website",
+    sub: "fergusonlawja.com",
+    url: "https://fergusonlawja.com",
+    desc: "Homepage — share for general inquiries",
+  },
+  {
+    label: "Directory / Join",
+    sub: "fergusonlawja.com/directory/join",
+    url: "https://fergusonlawja.com/directory/join",
+    desc: "Professional directory sign-up page",
+  },
+  {
+    label: "NYC 2026 — Diaspora",
+    sub: "fergusonlawja.com/nyc2026",
+    url: "https://fergusonlawja.com/nyc2026?utm_source=qr&utm_campaign=nyc2026",
+    desc: "Diaspora landing page for NYC outreach",
+  },
+  {
+    label: "Book a Consultation",
+    sub: "fergusonlawja.com/booking",
+    url: "https://fergusonlawja.com/booking",
+    desc: "Direct booking link",
+  },
+];
+
+function QrCodesTab() {
+  const [copied, setCopied] = useState<string | null>(null);
+  const copy = (url: string) => {
+    void navigator.clipboard.writeText(url);
+    setCopied(url);
+    setTimeout(() => setCopied(null), 1800);
+  };
+  return (
+    <div style={{ maxWidth: 900, margin: "0 auto", padding: "24px 20px" }}>
+      <div style={{ fontFamily: "var(--serif, Georgia, serif)", fontSize: "1.1rem", fontWeight: 700, color: GREEN, marginBottom: 6 }}>QR Codes</div>
+      <div style={{ fontSize: ".82rem", color: MUTED, marginBottom: 28 }}>Print or screen-share these codes at events, in presentations, or on printed materials.</div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 20 }}>
+        {QR_ITEMS.map((item) => (
+          <div key={item.url} style={{ background: "#fff", border: "1px solid rgba(18,16,12,.08)", borderRadius: 14, padding: "20px", display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
+            <img
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(item.url)}&color=102A1E&bgcolor=ffffff&margin=6`}
+              alt={item.label + " QR Code"}
+              width={160} height={160}
+              style={{ borderRadius: 10, border: "1px solid rgba(18,16,12,.06)" }}
+            />
+            <div style={{ textAlign: "center", width: "100%" }}>
+              <div style={{ fontWeight: 700, fontSize: ".88rem", color: GREEN, marginBottom: 2 }}>{item.label}</div>
+              <div style={{ fontSize: ".74rem", color: MUTED, marginBottom: 8 }}>{item.desc}</div>
+              <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
+                <a href={item.url} target="_blank" rel="noopener"
+                  style={{ fontSize: ".76rem", fontWeight: 600, color: GREEN, background: "rgba(16,42,30,.07)", border: "1px solid rgba(16,42,30,.12)", borderRadius: 6, padding: "5px 12px", textDecoration: "none" }}>
+                  Open
+                </a>
+                <button type="button" onClick={() => copy(item.url)}
+                  style={{ fontSize: ".76rem", fontWeight: 600, color: "#8a6a22", background: "rgba(200,166,92,.1)", border: "1px solid rgba(200,166,92,.3)", borderRadius: 6, padding: "5px 12px", cursor: "pointer" }}>
+                  {copied === item.url ? "Copied!" : "Copy link"}
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
 export default function AdminDashboard() {
   const [token, setToken] = useState<string | null>(null);
   const [checking, setChecking] = useState(true);
@@ -645,18 +719,31 @@ export default function AdminDashboard() {
   }, [token]);
 
   const deleteClient = useCallback(async (id: string) => {
-    if (!token || !confirm("Archive this client? They'll move to the Recycle Bin and be permanently removed after 30 days. You can restore them anytime before then.")) return;
+    if (!token || !confirm("Archive this client? They will be hidden from the active list. You can restore them from the Archived tab.")) return;
     const supabase = createClient();
     await supabase.rpc("fl_admin_delete_client", { p_token: token, p_id: id });
-    setClients((prev) => prev.filter((c) => c.id !== id));
-    setMatters((prev) => prev.filter((m) => m.client_id !== id));
+    setClients((prev) => prev.map((c) => c.id === id ? { ...c, archived_at: new Date().toISOString() } : c));
+  }, [token]);
+
+  const restoreClient = useCallback(async (id: string) => {
+    if (!token) return;
+    const supabase = createClient();
+    await supabase.rpc("fl_admin_restore_client", { p_token: token, p_id: id });
+    setClients((prev) => prev.map((c) => c.id === id ? { ...c, archived_at: null } : c));
   }, [token]);
 
   const deleteLead = useCallback(async (id: string) => {
-    if (!token || !confirm("Archive this lead? They'll move to the Recycle Bin and be permanently removed after 30 days. You can restore them anytime before then.")) return;
+    if (!token || !confirm("Archive this lead? They will be hidden from the active list. You can restore them from the Archived tab.")) return;
     const supabase = createClient();
     await supabase.rpc("fl_admin_delete_lead", { p_token: token, p_id: id });
-    setLeads((prev) => prev.filter((l) => l.id !== id));
+    setLeads((prev) => prev.map((l) => l.id === id ? { ...l, archived_at: new Date().toISOString() } : l));
+  }, [token]);
+
+  const restoreLead = useCallback(async (id: string) => {
+    if (!token) return;
+    const supabase = createClient();
+    await supabase.rpc("fl_admin_restore_lead", { p_token: token, p_id: id });
+    setLeads((prev) => prev.map((l) => l.id === id ? { ...l, archived_at: null } : l));
   }, [token]);
 
   const cancelBooking = useCallback(async (id: string) => {
@@ -916,7 +1003,7 @@ export default function AdminDashboard() {
           <div style={{ display:"flex", gap:6, padding:"7px 10px", background:"rgba(18,16,12,.02)", overflowX:"auto", scrollbarWidth:"none" as React.CSSProperties["scrollbarWidth"] }}>
             {TAB_GROUPS[group].tabs.map((t) => {
               const isActive = tab === t;
-              const label = t==="overview"?"Overview":t==="cms"?(cmsUnread>0?"CMS ("+cmsUnread+")":"CMS"):t==="home_pros"?"Pros":t==="home_listings"?"Listings":t==="inquiries"?"Inquiries":t==="analytics"?"Analytics":t==="ebook_leads"?"Ebook Leads":t==="site_content"?"Site Content":t==="referrals"?"Referrals":t==="recycle_bin"?"🗑 Bin":t==="workflows"?"Workflows":t==="zoom"?"Meetings":t==="feedback"?"Feedback":t.charAt(0).toUpperCase()+t.slice(1);
+              const label = t==="overview"?"Overview":t==="cms"?(cmsUnread>0?"CMS ("+cmsUnread+")":"CMS"):t==="home_pros"?"Pros":t==="home_listings"?"Listings":t==="inquiries"?"Inquiries":t==="analytics"?"Analytics":t==="ebook_leads"?"Ebook Leads":t==="site_content"?"Site Content":t==="qr_codes"?"QR Codes":t==="referrals"?"Referrals":t==="recycle_bin"?"🗑 Bin":t==="workflows"?"Workflows":t==="zoom"?"Meetings":t==="feedback"?"Feedback":t.charAt(0).toUpperCase()+t.slice(1);
               const raw = t==="leads"?leads.length:t==="bookings"?appts.length:t==="clients"?clients.length:t==="matters"?matters.length:t==="chats"?convos.length:t==="email"?emails.filter(e=>!e.read).length:t==="invites"?invites.length:t==="directory"?listings.length:t==="availability"?availability.length:t==="home_pros"?homePros.length:t==="home_listings"?homeListings.length:t==="inquiries"?inquiries.filter(i=>i.status==="new").length:t==="recycle_bin"?binItems.length:0;
               const count = Math.max(0, raw - (seenCounts[t] ?? 0));
               return (
@@ -943,7 +1030,7 @@ export default function AdminDashboard() {
               onRefresh={() => { if (token) void fetchAll(token); }}
             />
           )}
-          {tab === "leads" && <LeadsTable leads={leads} loading={loading} token={token} onStatus={setLeadStatus} onDelete={deleteLead} onConvert={convertLeadToClient} />}
+          {tab === "leads" && <LeadsTable leads={leads.filter(l => !l.archived_at)} loading={loading} token={token} onStatus={setLeadStatus} onDelete={deleteLead} onRestore={restoreLead} onConvert={convertLeadToClient} archivedLeads={leads.filter(l => !!l.archived_at)} />}
           {tab === "bookings" && <BookingsTable appts={appts} loading={loading} token={token ?? ""} onStatus={setApptStatus} onCancel={cancelBooking} onRefresh={() => { if (token) void fetchAll(token); }} />}
           {tab === "clients" && <ClientsTab clients={clients} matters={matters} loading={loading} token={token ?? ""} onUpsert={upsertClient} onDelete={deleteClient} />}
           {tab === "matters" && <MattersTab matters={matters} loading={loading} token={token ?? ""} onStage={setMatterStage} onPayment={setMatterPayment} onDelete={deleteMatter} />}
@@ -972,6 +1059,7 @@ export default function AdminDashboard() {
           {tab === "analytics" && token && <AnalyticsTab token={token} />}
           {tab === "ebook_leads" && token && <EbookLeadsTab token={token} />}
           {tab === "site_content" && token && <SiteContentTab token={token} />}
+          {tab === "qr_codes" && <QrCodesTab />}
         </div>
       </div>
     </div>
@@ -1238,10 +1326,11 @@ function PurgeModal({ target, token, onDone, onClose }: { target: PurgeTarget; t
 // ---------------------------------------------------------------------------
 // Leads
 // ---------------------------------------------------------------------------
-function LeadsTable({ leads, loading, token, onStatus, onDelete, onConvert }: { leads: Lead[]; loading: boolean; token: string; onStatus: (id: string, s: string) => void; onDelete: (id: string) => void; onConvert: (id: string) => void }) {
+function LeadsTable({ leads, loading, token, onStatus, onDelete, onRestore, onConvert, archivedLeads }: { leads: Lead[]; loading: boolean; token: string; onStatus: (id: string, s: string) => void; onDelete: (id: string) => void; onRestore: (id: string) => void; onConvert: (id: string) => void; archivedLeads?: Lead[] }) {
   const [composing, setComposing] = useState<Lead | null>(null);
   const [purgeTarget, setPurgeTarget] = useState<PurgeTarget | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 640);
     check();
@@ -1249,17 +1338,29 @@ function LeadsTable({ leads, loading, token, onStatus, onDelete, onConvert }: { 
     return () => window.removeEventListener("resize", check);
   }, []);
   async function deleteLead(id: string, name: string | null) {
-    if (!confirm(`Delete lead "${name || "this lead"}"? This cannot be undone.`)) return;
-    await createClient().rpc("fl_admin_delete_lead", { p_token: token, p_id: id });
+    if (!confirm(`Archive lead "${name || "this lead"}"? They will be hidden from active leads.`)) return;
     onDelete(id);
   }
+  const displayLeads = showArchived ? (archivedLeads ?? []) : leads;
   if (loading && leads.length === 0) return <Empty>Loading leads…</Empty>;
-  if (leads.length === 0) return <Empty>No leads yet.</Empty>;
+  if (displayLeads.length === 0 && !loading) return (
+    <>
+      <div style={{ display: "flex", gap: 8, padding: "8px 16px 0", alignItems: "center" }}>
+        <button type="button" onClick={() => setShowArchived(false)} style={{ padding: "4px 14px", borderRadius: 6, border: "none", cursor: "pointer", fontWeight: 600, fontSize: 13, background: !showArchived ? "#102A1E" : "rgba(18,16,12,.07)", color: !showArchived ? "#fff" : "#24211b" }}>Active ({leads.length})</button>
+        <button type="button" onClick={() => setShowArchived(true)} style={{ padding: "4px 14px", borderRadius: 6, border: "none", cursor: "pointer", fontWeight: 600, fontSize: 13, background: showArchived ? "#a23b3b" : "rgba(18,16,12,.07)", color: showArchived ? "#fff" : "#24211b" }}>Archived ({archivedLeads?.length ?? 0})</button>
+      </div>
+      <Empty>{showArchived ? "No archived leads." : "No leads yet."}</Empty>
+    </>
+  );
   return (
     <>
+      <div style={{ display: "flex", gap: 8, padding: "8px 16px 0", alignItems: "center" }}>
+        <button type="button" onClick={() => setShowArchived(false)} style={{ padding: "4px 14px", borderRadius: 6, border: "none", cursor: "pointer", fontWeight: 600, fontSize: 13, background: !showArchived ? "#102A1E" : "rgba(18,16,12,.07)", color: !showArchived ? "#fff" : "#24211b" }}>Active ({leads.length})</button>
+        <button type="button" onClick={() => setShowArchived(true)} style={{ padding: "4px 14px", borderRadius: 6, border: "none", cursor: "pointer", fontWeight: 600, fontSize: 13, background: showArchived ? "#a23b3b" : "rgba(18,16,12,.07)", color: showArchived ? "#fff" : "#24211b" }}>Archived ({archivedLeads?.length ?? 0})</button>
+      </div>
       {isMobile ? (
         <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "12px 16px" }}>
-          {leads.map((l) => {
+          {displayLeads.map((l) => {
             const wa = l.phone ? waLinkTo(l.phone, "Hello " + (l.name ?? "") + ", this is Ferguson Law following up on your enquiry.") : null;
             return (
               <div key={l.id} style={{ background: "#fff", border: "1px solid rgba(18,16,12,.1)", borderRadius: 12, padding: "14px 16px" }}>
@@ -1271,13 +1372,17 @@ function LeadsTable({ leads, loading, token, onStatus, onDelete, onConvert }: { 
                 {l.service && <div style={{ fontSize: ".78rem", color: INK, marginBottom: 4 }}>{l.service} <SourceBadge source={l.source} /></div>}
                 {l.message && <div style={{ fontSize: ".76rem", color: MUTED, marginBottom: 8, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as React.CSSProperties["WebkitBoxOrient"] }}>{l.message}</div>}
                 <div style={{ fontSize: ".7rem", color: MUTED, marginBottom: 10 }}>{fmtDate(l.created_at)}</div>
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5 }}>
                   {l.email && <button type="button" onClick={() => setComposing(l)} style={{ ...S.waBtn, background: "#c9a86a", color: "#10211c" }}>Email</button>}
                   {wa && <a href={wa} target="_blank" rel="noopener noreferrer" style={S.waBtn}>WhatsApp</a>}
                   {l.status === "new" && <button type="button" onClick={() => onStatus(l.id, "contacted")} style={{ ...S.waBtn, background: "rgba(47,122,82,.12)", color: "#2f7a52", border: "1px solid rgba(47,122,82,.25)" }}>Contacted</button>}
-                  <button type="button" onClick={() => onDelete(l.id)} style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)" }}>Archive</button>
-                  <button type="button" onClick={() => onConvert(l.id)} style={{ ...S.waBtn, background: "rgba(12,80,60,.12)", color: "#0c503c", border: "1px solid rgba(12,80,60,.25)" }}>Convert to Client</button>
-                  {l.email && <button type="button" onClick={() => setPurgeTarget({ email: l.email!, name: l.name, clientId: null })} style={{ ...S.waBtn, background: "#c0392b", color: "#fff", border: "none" }}>Delete Record</button>}
+                  <button type="button" onClick={() => onConvert(l.id)} style={{ ...S.waBtn, background: "rgba(12,80,60,.1)", color: "#0c503c", border: "1px solid rgba(12,80,60,.2)" }}>→ Client</button>
+                  {l.archived_at ? (
+                    <button type="button" onClick={() => onRestore(l.id)} style={{ ...S.waBtn, background: "rgba(47,122,82,.12)", color: "#2f7a52", border: "1px solid rgba(47,122,82,.25)", gridColumn: "span 2" }}>Restore</button>
+                  ) : (
+                    <button type="button" onClick={() => onDelete(l.id)} style={{ ...S.waBtn, background: "rgba(162,59,59,.08)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)", gridColumn: "span 2" }}>Archive</button>
+                  )}
+                  {l.email && <button type="button" onClick={() => setPurgeTarget({ email: l.email!, name: l.name, clientId: null })} style={{ ...S.waBtn, background: "rgba(162,59,59,.18)", color: "#7a1515", border: "1px solid rgba(162,59,59,.4)", fontWeight: 700, gridColumn: "span 2" }}>Delete Record</button>}
                 </div>
               </div>
             );
@@ -1286,9 +1391,9 @@ function LeadsTable({ leads, loading, token, onStatus, onDelete, onConvert }: { 
       ) : (
       <div style={S.tableWrap}>
         <table style={S.table}>
-          <thead><tr><Th>Date</Th><Th>Name</Th><Th>Contact</Th><Th>Service</Th><Th>Source</Th><Th>Message</Th><Th>Status</Th><Th>Actions</Th></tr></thead>
+              <thead><tr><Th>Name</Th><Th>Contact</Th><Th>Type</Th><Th>Country</Th><Th>Status</Th><Th>Source</Th><Th>Date</Th><Th>Matters</Th><Th>Actions</Th></tr></thead>
           <tbody>
-            {leads.map((l) => {
+            {displayLeads.map((l) => {
               const wa = l.phone ? waLinkTo(l.phone, `Hello ${l.name ?? ""}, this is Ferguson Law following up on your enquiry.`) : null;
               return (
                 <tr key={l.id} style={S.tr}>
@@ -1300,27 +1405,43 @@ function LeadsTable({ leads, loading, token, onStatus, onDelete, onConvert }: { 
                   <Td><div style={S.msgCell} title={l.message ?? ""}>{l.message || "—"}</div></Td>
                   <Td><StatusSelect value={l.status} options={LEAD_STATUSES} onChange={(v) => onStatus(l.id, v)} /></Td>
                   <Td>
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5, minWidth: 200 }}>
                       {l.email && (
                         <button type="button" onClick={() => setComposing(l)}
                           style={{ ...S.waBtn, background: "#c9a86a", color: "#10211c" }}>
                           Email
                         </button>
                       )}
-                      {wa && <a href={wa} target="_blank" rel="noopener noreferrer" style={S.waBtn}>WhatsApp</a>}
+                      {wa ? (
+                        <a href={wa} target="_blank" rel="noopener noreferrer" style={S.waBtn}>WhatsApp</a>
+                      ) : <span />}
                       {l.status === "new" && (
                         <button type="button" onClick={() => onStatus(l.id, "contacted")}
                           style={{ ...S.waBtn, background: "rgba(47,122,82,.12)", color: "#2f7a52", border: "1px solid rgba(47,122,82,.25)" }}>
                           ✓ Contacted
                         </button>
                       )}
-                      {!l.email && !wa && l.status !== "new" && <span style={S.muted}>—</span>}
-                      <button type="button" onClick={() => onDelete(l.id)}
-                        style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)" }}>
-                        Archive
+                      <button type="button" onClick={() => onConvert(l.id)}
+                        style={{ ...S.waBtn, background: "rgba(12,80,60,.1)", color: "#0c503c", border: "1px solid rgba(12,80,60,.2)" }}>
+                        → Client
                       </button>
-                      <button type="button" onClick={() => onConvert(l.id)} style={{ ...S.waBtn, background: "rgba(12,80,60,.12)", color: "#0c503c", border: "1px solid rgba(12,80,60,.25)" }}>Convert to Client</button>
-                      {l.email && <button type="button" onClick={() => setPurgeTarget({ email: l.email!, name: l.name, clientId: null })} style={{ ...S.waBtn, background: "#c0392b", color: "#fff", border: "none", fontWeight: 700 }}>Delete Record</button>}
+                      {l.archived_at ? (
+                        <button type="button" onClick={() => onRestore(l.id)}
+                          style={{ ...S.waBtn, background: "rgba(47,122,82,.12)", color: "#2f7a52", border: "1px solid rgba(47,122,82,.25)", gridColumn: "span 2" }}>
+                          Restore
+                        </button>
+                      ) : (
+                        <button type="button" onClick={() => onDelete(l.id)}
+                          style={{ ...S.waBtn, background: "rgba(162,59,59,.08)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)", gridColumn: "span 2" }}>
+                          Archive
+                        </button>
+                      )}
+                      {l.email && (
+                        <button type="button" onClick={() => setPurgeTarget({ email: l.email!, name: l.name, clientId: null })}
+                          style={{ ...S.waBtn, background: "rgba(162,59,59,.18)", color: "#7a1515", border: "1px solid rgba(162,59,59,.4)", fontWeight: 700, gridColumn: "span 2" }}>
+                          Delete Record
+                        </button>
+                      )}
                     </div>
                   </Td>
                 </tr>
@@ -1718,6 +1839,94 @@ const CLIENT_STATUS_COLORS: Record<string, React.CSSProperties> = {
   prospect: { background: "rgba(200,166,92,.22)", color: "#8a6a22" },
 };
 
+// ---------------------------------------------------------------------------
+// Data Privacy (admin tool for client profile)
+// ---------------------------------------------------------------------------
+function DataPrivacyModal({ client, token, onDelete, onClose }: {
+  client: Client; token: string; onDelete: (id: string) => void; onClose: () => void;
+}) {
+  const [exporting, setExporting] = useState(false);
+  const [exportErr, setExportErr] = useState<string | null>(null);
+  const [showPurge, setShowPurge] = useState(false);
+
+  async function exportData() {
+    if (!client.email) { setExportErr("No email on file for this client."); return; }
+    setExporting(true); setExportErr(null);
+    try {
+      const res = await fetch(`/api/admin/cms/export-client-data?email=${encodeURIComponent(client.email)}`, {
+        headers: { "x-admin-token": token },
+      });
+      if (!res.ok) { const j = await res.json(); throw new Error(j.error || "Export failed."); }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `ferguson-law-${client.email}-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) { setExportErr(e instanceof Error ? e.message : "Export failed."); }
+    finally { setExporting(false); }
+  }
+
+  const overlay: React.CSSProperties = { position: "fixed", inset: 0, background: "rgba(0,0,0,.45)", zIndex: 9000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 };
+  const modal: React.CSSProperties = { background: "#fff", borderRadius: 14, padding: "28px 28px 24px", maxWidth: 540, width: "100%", boxShadow: "0 8px 40px rgba(0,0,0,.22)" };
+
+  if (showPurge && client.email) {
+    return (
+      <PurgeModal
+        target={{ clientId: client.id, email: client.email, name: client.name }}
+        token={token}
+        onDone={() => { onDelete(client.id); onClose(); }}
+        onClose={() => setShowPurge(false)}
+      />
+    );
+  }
+
+  return (
+    <div style={overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div style={modal}>
+        <div style={{ fontWeight: 700, fontSize: "1rem", color: "#10211c", marginBottom: 4 }}>Data Privacy</div>
+        <div style={{ fontSize: ".82rem", color: "#888", marginBottom: 18 }}>
+          {client.name} {client.email && <span>({client.email})</span>}
+        </div>
+
+        <div style={{ background: "#f5f9f5", borderRadius: 10, border: "1px solid rgba(47,122,82,.2)", padding: "14px 16px", marginBottom: 20 }}>
+          <div style={{ fontSize: ".75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em", color: GREEN, marginBottom: 6 }}>Jamaica Data Protection Act 2020</div>
+          <div style={{ fontSize: ".8rem", color: "#444", lineHeight: 1.6 }}>
+            Under the Jamaica Data Protection Act 2020, clients have the right to access a copy of their personal data and to request its deletion. These tools allow you to fulfil those requests on behalf of the firm. All actions are logged for compliance purposes.
+          </div>
+        </div>
+
+        <div style={{ display: "grid", gap: 12 }}>
+          <div style={{ border: "1px solid #e8e8e8", borderRadius: 10, padding: "16px 18px" }}>
+            <div style={{ fontWeight: 700, fontSize: ".85rem", color: "#10211c", marginBottom: 4 }}>Export client data</div>
+            <div style={{ fontSize: ".78rem", color: "#888", marginBottom: 12 }}>Download a JSON file of all data Ferguson Law holds for this client — profile, matters, documents, KYC, messages, and payment history.</div>
+            {exportErr && <p style={{ color: "#b00", fontSize: ".75rem", marginBottom: 8 }}>{exportErr}</p>}
+            <button onClick={() => void exportData()} disabled={exporting || !client.email}
+              style={{ padding: "9px 18px", borderRadius: 8, border: "1px solid #ccc", background: "#fff", color: "#10211c", fontSize: ".82rem", fontWeight: 600, cursor: (exporting || !client.email) ? "default" : "pointer", opacity: !client.email ? 0.5 : 1 }}>
+              {exporting ? "Preparing…" : "Export data"}
+            </button>
+          </div>
+
+          <div style={{ border: "1px solid #f0d5d5", borderRadius: 10, padding: "16px 18px" }}>
+            <div style={{ fontWeight: 700, fontSize: ".85rem", color: "#c0392b", marginBottom: 4 }}>Delete account & data</div>
+            <div style={{ fontSize: ".78rem", color: "#888", marginBottom: 12 }}>Permanently remove this client's account, all matter records, documents, KYC, messages, and history. This action is irreversible and will send a confirmation email to the client.</div>
+            <button onClick={() => setShowPurge(true)} disabled={!client.email}
+              style={{ padding: "9px 18px", borderRadius: 8, border: "1px solid #d33", background: "#fff", color: "#d33", fontSize: ".82rem", fontWeight: 600, cursor: !client.email ? "default" : "pointer", opacity: !client.email ? 0.5 : 1 }}>
+              Delete account & data
+            </button>
+          </div>
+        </div>
+
+        <button onClick={onClose}
+          style={{ marginTop: 20, padding: "9px 18px", borderRadius: 8, border: "1px solid #ddd", background: "#f5f5f5", color: "#555", fontSize: ".82rem", cursor: "pointer", width: "100%" }}>
+          Close
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function ClientsTab({ clients, matters, loading, onUpsert, onDelete, token }: {
   clients: Client[]; matters: Matter[]; loading: boolean; token: string;
   onUpsert: (f: { name: string; email: string; phone: string; type: string; country: string; notes: string }) => Promise<string | null>;
@@ -1729,7 +1938,15 @@ function ClientsTab({ clients, matters, loading, onUpsert, onDelete, token }: {
   const [busy, setBusy] = useState(false); const [err, setErr] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [inviteSent, setInviteSent] = useState<Record<string, boolean>>({});
+  const [privacyTarget, setPrivacyTarget] = useState<Client | null>(null);
 
+  const [pushSubs, setPushSubs] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    const sb = createClient();
+    void sb.from('fl_push_subscriptions').select('user_ref').eq('user_role', 'client').then(({ data }) => {
+      if (data) setPushSubs(new Set(data.map((r: { user_ref: string }) => r.user_ref)));
+    });
+  }, []);
   const sendInvite = async (clientEmail: string, clientName: string, clientId: string) => {
     setInviteSent((p) => ({ ...p, [clientId]: true }));
     await fetch("/api/admin/cms/invite-client", {
@@ -1781,11 +1998,19 @@ function ClientsTab({ clients, matters, loading, onUpsert, onDelete, token }: {
         </div>
       </div>
 
+      {privacyTarget && (
+        <DataPrivacyModal
+          client={privacyTarget}
+          token={token}
+          onDelete={onDelete}
+          onClose={() => setPrivacyTarget(null)}
+        />
+      )}
       {loading && clients.length === 0 ? <Empty>Loading clients…</Empty> :
         clients.length === 0 ? <Empty>No clients yet. Add one above.</Empty> : (
           <div style={S.tableWrap}>
             <table style={S.table}>
-              <thead><tr><Th>Name</Th><Th>Contact</Th><Th>Type</Th><Th>Country</Th><Th>Status</Th><Th>Source</Th><Th>Date</Th><Th>Matters</Th><Th>Actions</Th></tr></thead>
+              <thead><tr><Th>Name</Th><Th>Notif</Th><Th>Contact</Th><Th>Type</Th><Th>Country</Th><Th>Status</Th><Th>Source</Th><Th>Date</Th><Th>Matters</Th><Th>Actions</Th></tr></thead>
               <tbody>
                 {clients.map((c) => {
                   const cms = clientMatters(c.id);
@@ -1793,6 +2018,7 @@ function ClientsTab({ clients, matters, loading, onUpsert, onDelete, token }: {
                     <>
                       <tr key={c.id} style={S.tr}>
                         <Td><span style={S.strong}>{c.name}</span></Td>
+                        <Td><span title={pushSubs.has(c.id) ? 'Push ON' : 'Push OFF'} style={{ fontSize: '1rem', opacity: pushSubs.has(c.id) ? 1 : 0.25 }}>{pushSubs.has(c.id) ? String.fromCharCode(0x1F514) : String.fromCharCode(0x1F515)}</span></Td>
                         <Td><div style={S.contactCol}>{c.email && <span>{c.email}</span>}{c.phone && <span style={S.muted}>{c.phone}</span>}</div></Td>
                         <Td><TypeBadge type={c.client_type} colors={CLIENT_TYPE_COLORS} /></Td>
                         <Td>{c.country_of_residence || <span style={S.muted}>—</span>}</Td>
@@ -1821,6 +2047,10 @@ function ClientsTab({ clients, matters, loading, onUpsert, onDelete, token }: {
                                 </button>
                               );
                             })()}
+                            <button type="button" onClick={() => setPrivacyTarget(c)}
+                              style={{ ...S.waBtn, background: "rgba(47,122,82,.08)", color: GREEN, border: "1px solid rgba(47,122,82,.2)" }}>
+                              Data Privacy
+                            </button>
                             <button type="button" onClick={() => onDelete(c.id)}
                               style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)" }}>
                               Archive
@@ -2831,6 +3061,7 @@ function OverviewPanel({ leads, appts, convos, matters, homePros, emails, inquir
         ))}
       </div>
 
+<<<<<<< HEAD
       {/* QR Fullscreen Modal */}
       {expandedQr && (
         <div onClick={() => setExpandedQr(null)}
@@ -2912,6 +3143,9 @@ function OverviewPanel({ leads, appts, convos, matters, homePros, emails, inquir
         )}
       </div>
             <AttentionOverview
+=======
+      <AttentionOverview
+>>>>>>> 1dba48d6fcacf963fc36a1dfbc472b725602bd02
         appts={appts}
         token={token}
         accountEmail={accountEmail}
@@ -5221,9 +5455,10 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                     {activeSummary ? "✓ Preliminary Summary" : "Generate Preliminary Summary"}
                   </button>
                   {activeSummary && selected && (
-                    <a href={"/preliminary-summary/" + selected + "?token=" + encodeURIComponent(token)} target="_blank" rel="noopener noreferrer"
-                      style={{ fontSize: 12, padding: "5px 10px", borderRadius: 8, border: "1px solid #8a6a22", background: "#8a6a22", color: "#fff", textDecoration: "none", fontWeight: 600 }}
-                    >View →</a>
+                    <button
+                      onClick={() => window.open("/preliminary-summary/" + selected + "?token=" + encodeURIComponent(token), "_blank", "noopener,noreferrer")}
+                      style={{ fontSize: 12, padding: "5px 10px", borderRadius: 8, border: "1px solid #8a6a22", background: "#8a6a22", color: "#fff", cursor: "pointer", fontWeight: 600 }}
+                    >View →</button>
                   )}
                   {activeSummary && selected && (
                     <button
