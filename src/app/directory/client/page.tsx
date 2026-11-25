@@ -59,6 +59,22 @@ interface KycRecord {
   submitted_at: string | null;
   status: string;
   reviewer_notes: string | null;
+  // GLC AML v2 — Individual
+  previous_name: string | null;
+  employer: string | null;
+  mailing_address: string | null;
+  phone_1: string | null;
+  phone_2: string | null;
+  estimated_transaction_value: string | null;
+  funds_country_origin: string | null;
+  third_party_name: string | null;
+  third_party_relationship: string | null;
+  third_party_reason: string | null;
+  beneficial_own_declaration: "self" | "other" | null;
+  // GLC AML v2 — Entity
+  entity_mailing_address: string | null;
+  entity_phone: string | null;
+  entity_principal_contact: { name: string; title: string; phone: string; email: string } | null;
 }
 
 interface Payment {
