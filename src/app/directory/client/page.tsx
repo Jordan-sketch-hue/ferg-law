@@ -1342,6 +1342,17 @@ function KycTab({ kyc, loading, submitting, error, submitted, onSubmit }: {
     is_pep: kyc?.is_pep ?? false,
     pep_details: kyc?.pep_details ?? "",
     aml_declared: kyc?.aml_declared ?? false,
+    previous_name: kyc?.previous_name ?? "",
+    employer: kyc?.employer ?? "",
+    mailing_address: kyc?.mailing_address ?? "",
+    phone_1: kyc?.phone_1 ?? "",
+    phone_2: kyc?.phone_2 ?? "",
+    estimated_transaction_value: kyc?.estimated_transaction_value ?? "",
+    funds_country_origin: kyc?.funds_country_origin ?? "",
+    third_party_name: kyc?.third_party_name ?? "",
+    third_party_relationship: kyc?.third_party_relationship ?? "",
+    third_party_reason: kyc?.third_party_reason ?? "",
+    beneficial_own_declaration: (kyc?.beneficial_own_declaration ?? "self") as "self" | "other",
   });
 
   const [ent, setEnt] = useState({
@@ -1360,6 +1371,18 @@ function KycTab({ kyc, loading, submitting, error, submitted, onSubmit }: {
     entity_has_pep_director: kyc?.entity_has_pep_director ?? false,
     entity_pep_details: kyc?.entity_pep_details ?? "",
     aml_declared: kyc?.aml_declared ?? false,
+    entity_mailing_address: kyc?.entity_mailing_address ?? "",
+    entity_phone: kyc?.entity_phone ?? "",
+    entity_principal_contact_name: kyc?.entity_principal_contact?.name ?? "",
+    entity_principal_contact_title: kyc?.entity_principal_contact?.title ?? "",
+    entity_principal_contact_phone: kyc?.entity_principal_contact?.phone ?? "",
+    entity_principal_contact_email: kyc?.entity_principal_contact?.email ?? "",
+    estimated_transaction_value: kyc?.estimated_transaction_value ?? "",
+    funds_country_origin: kyc?.funds_country_origin ?? "",
+    third_party_name: kyc?.third_party_name ?? "",
+    third_party_relationship: kyc?.third_party_relationship ?? "",
+    third_party_reason: kyc?.third_party_reason ?? "",
+    beneficial_own_declaration: (kyc?.beneficial_own_declaration ?? "self") as "self" | "other",
   });
   const [directors, setDirectors] = useState<Director[]>(kyc?.entity_directors?.length ? kyc.entity_directors : [emptyDirector()]);
   const [owners, setOwners] = useState<BeneficialOwner[]>(kyc?.entity_beneficial_owners?.length ? kyc.entity_beneficial_owners : [emptyOwner()]);
