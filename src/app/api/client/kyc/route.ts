@@ -13,6 +13,9 @@ const INDIVIDUAL_SELECT = [
   "id2_type","id2_number","id2_expiry_date","id2_doc_url",
   "source_of_funds","source_of_wealth","purpose_of_transaction",
   "is_pep","pep_details","aml_declared","submitted_at","status","reviewer_notes",
+  "previous_name","employer","mailing_address","phone_1","phone_2",
+  "estimated_transaction_value","funds_country_origin",
+  "third_party_name","third_party_relationship","third_party_reason","beneficial_own_declaration",
 ];
 const ENTITY_SELECT = [
   ...INDIVIDUAL_SELECT,
@@ -100,6 +103,7 @@ export async function POST(req: NextRequest) {
     try { fields.entity_directors = JSON.parse(getString("entity_directors") || "null"); } catch { fields.entity_directors = null; }
     try { fields.entity_beneficial_owners = JSON.parse(getString("entity_beneficial_owners") || "null"); } catch { fields.entity_beneficial_owners = null; }
     try { fields.entity_authorised_signatories = JSON.parse(getString("entity_authorised_signatories") || "null"); } catch { fields.entity_authorised_signatories = null; }
+    try { fields.entity_principal_contact = JSON.parse(getString("entity_principal_contact") || "null"); } catch { fields.entity_principal_contact = null; }
 
     // File uploads
     const uploadFile = async (file: File, subPath: string): Promise<string | null> => {

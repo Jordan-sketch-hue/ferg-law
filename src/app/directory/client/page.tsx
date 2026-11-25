@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 export const dynamic = "force-dynamic";
 
@@ -1785,7 +1785,44 @@ function KycTab({ kyc, loading, submitting, error, submitted, onSubmit }: {
                 )}
               </KycSection>
 
-              <KycSection label="G. Corporate Resolution / Board Minutes">
+              <KycSection label="G. Third Party &amp; Beneficial Ownership">
+                <p style={{ fontSize: 12.5, color: "var(--muted)", marginBottom: 10, lineHeight: 1.5 }}>
+                  Confirm beneficial ownership and declare any third-party arrangement.
+                </p>
+                <KycField label="Are the funds/assets in this matter beneficially owned by the entity itself?">
+                  <div style={{ display: "flex", gap: 20, marginTop: 4 }}>
+                    <label style={{ display: "flex", alignItems: "center", gap: 7, cursor: "pointer", fontSize: 13 }}>
+                      <input type="radio" name="ent_beneficial_own" value="self"
+                        checked={ent.beneficial_own_declaration === "self"}
+                        onChange={() => setE("beneficial_own_declaration", "self")}
+                        style={{ accentColor: "var(--gold)" }} />
+                      Yes — the entity is the beneficial owner
+                    </label>
+                    <label style={{ display: "flex", alignItems: "center", gap: 7, cursor: "pointer", fontSize: 13 }}>
+                      <input type="radio" name="ent_beneficial_own" value="other"
+                        checked={ent.beneficial_own_declaration === "other"}
+                        onChange={() => setE("beneficial_own_declaration", "other")}
+                        style={{ accentColor: "var(--gold)" }} />
+                      No — acting on behalf of another
+                    </label>
+                  </div>
+                </KycField>
+                {ent.beneficial_own_declaration === "other" && (
+                  <>
+                    <KycField label="Third party full name">
+                      <input style={inpStyle} value={ent.third_party_name} onChange={e => setE("third_party_name", e.target.value)} placeholder="Full legal name of beneficial owner" />
+                    </KycField>
+                    <KycField label="Relationship to third party">
+                      <input style={inpStyle} value={ent.third_party_relationship} onChange={e => setE("third_party_relationship", e.target.value)} placeholder="e.g. Principal, Ultimate Beneficial Owner" />
+                    </KycField>
+                    <KycField label="Reason for acting on their behalf">
+                      <textarea rows={2} style={taStyle} value={ent.third_party_reason} onChange={e => setE("third_party_reason", e.target.value)} placeholder="Briefly explain the arrangement" />
+                    </KycField>
+                  </>
+                )}
+              </KycSection>
+
+              <KycSection label="H. Corporate Resolution / Board Minutes">
                 <p style={{ fontSize: 12.5, color: "var(--muted)", marginBottom: 10, lineHeight: 1.5 }}>
                   Upload a signed board resolution or minutes authorising this transaction and the named signatories.
                 </p>

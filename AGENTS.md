@@ -575,3 +575,60 @@ Injected via `next/font` in `layout.tsx` as CSS vars `--font-fraunces` and `--fo
 8. Run QA checklist critical paths
 9. Basis post-encode: `POST https://reality-encoder.vercel.app/api/encode`
 
+
+
+---
+
+## Commit Comment SOP — MANDATORY
+
+Every git commit to this repository **must** include a detailed description of exactly what changed. This is non-negotiable: future agents and developers must be able to understand the full scope of a commit without crawling source code.
+
+### Required commit message format
+
+```
+<short imperative summary (50 chars max)>
+
+Files changed:
+- src/path/to/file.tsx — <what was added/removed/modified in this file>
+- src/path/to/other.ts — <what was added/removed/modified in this file>
+
+What changed:
+- <Specific component or function name>: <exact change — added X field, removed Y block, renamed Z>
+- <Any DB migration file>: <columns added, table altered>
+- <Any API route>: <new fields accepted/returned>
+
+Why:
+<One sentence explaining the reason — e.g. "GLC AML KYC requirement" or "QR Codes tab was wiped by bad merge resolution in c4020af">
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+```
+
+### Rules
+
+1. **Never** write a commit that just says "fix" or "update" with no detail
+2. **Always** list every file that was meaningfully changed
+3. **Always** name the specific component, function, or column that changed
+4. **If a component was removed**, say what it was and from which file
+5. **If a component was added**, say what it does and in which file
+6. **If a migration was applied**, document the exact SQL columns added
+7. **After a merge conflict resolution**, explicitly state which version was kept and why — this is how the QR Codes tab was lost (commit `c4020af` discarded the entire local AdminDashboard version without documenting it)
+
+### Why this matters
+
+On 2026-11-25, the QR Codes tab (added in `98bc5cf`) was completely wiped because a merge conflict resolution (`c4020af`) discarded all local AdminDashboard changes without any commit message explaining what was kept or discarded. The next agent session had to run a full source crawl across git history to recover it. Detailed commit messages prevent this.
+
+---
+
+## QR Codes — Current State (Nov 2026)
+
+The canonical QR code UI lives in `src/components/admin/AdminDashboard.tsx` as the `QrCodesTab` component and is accessible via the `qr_codes` tab in `TAB_GROUPS`. This was restored in a session on 2026-11-25 after being wiped by `c4020af`.
+
+The QR items are:
+- Main Website → `https://fergusonlawja.com`
+- Directory / Join → `https://fergusonlawja.com/directory/join`
+- NYC 2026 — Diaspora → `https://fergusonlawja.com/nyc2026?utm_source=qr&utm_campaign=nyc2026`
+- Book a Consultation → `https://fergusonlawja.com/booking`
+
+The Overview tab also had legacy inline QR cards (`showNycQr` / `showPartnerQr` state at ~lines 2786–2917). These are **duplicates** and should be removed in a future cleanup commit.
+
+---
