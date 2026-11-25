@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 /**
  * Consultation CRM — the Ferguson Law back office.
@@ -1531,7 +1531,7 @@ function NewBookingModal({ token, onClose, onCreated }: { token: string; onClose
       <div style={box}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
           <span style={{ fontWeight: 700, fontSize: "1.05rem", color: GOLD }}>New Booking</span>
-          <button type="button" onClick={onClose} style={{ background: "none", border: "none", color: "#9fb3ab", fontSize: "1.2rem", cursor: "pointer" }}>âœ•</button>
+          <button type="button" onClick={onClose} style={{ background: "none", border: "none", color: "#9fb3ab", fontSize: "1.2rem", cursor: "pointer" }}>&#10005;</button>
         </div>
 
         {result?.ok ? (
@@ -2141,7 +2141,7 @@ function MattersTab({ matters, loading, token, onStage, onPayment, onDelete }: {
       ) : (
         <div style={S.tableWrap}>
           <table style={S.table}>
-            <thead><tr><Th>â€‹</Th><Th>Ref</Th><Th>Client</Th><Th>Type</Th><Th>Stage</Th><Th>Priority</Th><Th>Payment</Th><Th>Description</Th><Th>Date</Th><Th>&#160;</Th></tr></thead>
+            <thead><tr><Th>&#8203;</Th><Th>Ref</Th><Th>Client</Th><Th>Type</Th><Th>Stage</Th><Th>Priority</Th><Th>Payment</Th><Th>Description</Th><Th>Date</Th><Th>&#160;</Th></tr></thead>
             <tbody>
               {matters.filter((m) => m.stage !== "archived").map((m) => (
                 <>
@@ -2275,7 +2275,7 @@ function MilestonePanel({ matterId, token, matter, onClose, inline }: {
           <span style={{ fontSize: ".78rem", fontWeight: 700, color: GREEN, textTransform: "uppercase", letterSpacing: "0.08em" }}>
             Milestones
           </span>
-          <button type="button" onClick={onClose} style={{ background: "none", border: "none", fontSize: 16, cursor: "pointer", color: MUTED }}>âœ• Close</button>
+          <button type="button" onClick={onClose} style={{ background: "none", border: "none", fontSize: 16, cursor: "pointer", color: MUTED }}>&#10005; Close</button>
         </div>
       )}
 
@@ -2339,7 +2339,7 @@ function MilestonePanel({ matterId, token, matter, onClose, inline }: {
                     <button type="button" onClick={() => { setEditingId(ms.id); setEditForm({ ...ms }); }}
                       style={{ ...S.ghostBtn, fontSize: ".72rem" }} title="Edit">âœŽ</button>
                     <button type="button" onClick={() => deleteMilestone(ms.id)}
-                      style={{ ...S.ghostBtn, fontSize: ".72rem", color: "#a23b3b" }} title="Remove milestone">âœ•</button>
+                      style={{ ...S.ghostBtn, fontSize: ".72rem", color: "#a23b3b" }} title="Remove milestone">&#10005;</button>
                   </div>
                 </div>
               )}
@@ -2773,7 +2773,7 @@ function BlockedDatesPanel({ token }: { token: string }) {
                         color: isBlocked ? "#a23b3b" : "#3a3a3a",
                         textDecoration: isBlocked ? "line-through" : "none",
                       }}>
-                      {fmtTime(iso)}{isBlocked ? " âœ•" : ""}
+                      {fmtTime(iso)}{isBlocked ? " &#10005;" : ""}
                     </button>
                   );
                 })}
@@ -3473,7 +3473,7 @@ function EmailTab({ emails, token, leads, onMarkRead, onMarkAllRead, onDelete, o
                   style={{ border: "none", background: "transparent", cursor: "pointer", color: "#c94b4b", padding: "0 10px", fontSize: ".85rem", flexShrink: 0, opacity: 0.6 }}
                   onMouseEnter={(ev) => { (ev.currentTarget as HTMLButtonElement).style.opacity = "1"; }}
                   onMouseLeave={(ev) => { (ev.currentTarget as HTMLButtonElement).style.opacity = "0.6"; }}>
-                  âœ•
+                  &#10005;
                 </button>
               </div>
             ));
@@ -3941,7 +3941,7 @@ function WorkflowTemplatesTab({ token }: { token: string }) {
             Undo
           </button>
           <button type="button" onClick={() => { if (undoTimerRef.current) clearTimeout(undoTimerRef.current); setUndoStack(null); }}
-            style={{ background: "none", border: "none", color: CREAM, opacity: 0.6, cursor: "pointer", fontSize: 16, lineHeight: 1 }}>âœ•</button>
+            style={{ background: "none", border: "none", color: CREAM, opacity: 0.6, cursor: "pointer", fontSize: 16, lineHeight: 1 }}>&#10005;</button>
         </div>
       )}
 
@@ -4020,7 +4020,7 @@ function WorkflowTemplatesTab({ token }: { token: string }) {
                               onClick={() => setEditingStep({ phaseOrder: phase.order, idx, value: ms })}
                               title="Rename" style={{ background: "none", border: "none", cursor: "pointer", color: GOLD, fontSize: 12, padding: "0 3px" }}>âœŽ</button>
                             <button type="button" onClick={() => void removeStep(phase.order, idx)}
-                              title="Remove" style={{ background: "none", border: "none", cursor: "pointer", color: "#ccc", fontSize: 13, padding: "0 4px" }}>âœ•</button>
+                              title="Remove" style={{ background: "none", border: "none", cursor: "pointer", color: "#ccc", fontSize: 13, padding: "0 4px" }}>&#10005;</button>
                           </>
                         )}
                       </>
@@ -5182,7 +5182,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
   }
 
   async function sendMessage() {
-    const clean = msgText.replace(/[ï»¿â€‹â€Œâ€â ]/g, "").trim();
+    const clean = msgText.replace(/[ï»¿&#8203;â€Œâ€â ]/g, "").trim();
     if (!clean || !selected) return;
     setSending(true);
     try {
@@ -5606,7 +5606,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                                   {MILESTONE_STATUS_OPTS.map(o => <option key={o} value={o}>{MS_LABELS[o] ?? o}</option>)}
                                 </select>
                                 <button type="button" onClick={() => deleteStep(m.id)}
-                                  title="Remove step" style={{ background: "none", border: "none", cursor: "pointer", color: "#ccc", fontSize: 14, padding: "0 2px" }}>âœ•</button>
+                                  title="Remove step" style={{ background: "none", border: "none", cursor: "pointer", color: "#ccc", fontSize: 14, padding: "0 2px" }}>&#10005;</button>
                               </div>
                               {/* Result note editor — step name stays read-only here */}
                               {isAddingNote && (
@@ -6193,7 +6193,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                 >
                   {draftBusy ? "Drafting..." : "âœ¦ Draft with AI"}
                 </button>
-                <button onClick={() => setSummaryModal(false)} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: MUTED, lineHeight: 1 }}>âœ•</button>
+                <button onClick={() => setSummaryModal(false)} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: MUTED, lineHeight: 1 }}>&#10005;</button>
               </div>
             </div>
             <div style={{ padding: "22px 28px", display: "flex", flexDirection: "column", gap: 18 }}>
