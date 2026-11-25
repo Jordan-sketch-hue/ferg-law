@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
 </table></td></tr></table>
 </body></html>`;
 
-    const { error: sendErr } = await resend.emails.send({
+    const { data: sendData, error: sendErr } = await resend.emails.send({
       from: FROM,
       to: [to],
       subject,
@@ -68,6 +68,18 @@ export async function POST(req: NextRequest) {
     if (sendErr) {
       return NextResponse.json({ error: sendErr.message }, { status: 502 });
     }
+
+    // Log to fl_email_log so sent emails appear in admin
+    await supabase.from("fl_email_log").insert({
+      to_email: to,
+      subject,
+      body_preview: body.slice(0, 300),
+      body_full: body,
+      status: "sent",
+      resend_id: sendData?.id ?? null,
+      context: replyToId ? `reply:${replyToId}` : "admin_compose",
+      from_mailbox: "contact",
+    });
 
     // Mark the source email as replied if provided
     if (replyToId) {
