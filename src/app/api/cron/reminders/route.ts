@@ -126,12 +126,12 @@ export async function GET(req: NextRequest) {
         const kindLabel: Record<string, string> = { "24h": "tomorrow", "2h": "in 2 hours", "1h": "in 1 hour", "30m": "in 30 min", "15m": "in 15 min" };
         await pushToAdmins(
           `Reminder sent â€” ${row.name || "Client"}`,
-          `${row.service || "Consultation"} ${kindLabel[kind] ?? kind} Â· ${fullWhenLabel(row.starts_at)}`,
+          `${row.service || "Consultation"} ${kindLabel[kind] ?? kind} · ${fullWhenLabel(row.starts_at)}`,
           "/admin?tab=bookings",
         );
         const waLines = [
           `REMINDER SENT - ${row.name || "Client"}`,
-          `${row.service || "Consultation"} Â· ${kindLabel[kind] ?? kind}`,
+          `${row.service || "Consultation"} · ${kindLabel[kind] ?? kind}`,
           fullWhenLabel(row.starts_at),
           ...(meetingUrl ? [`Zoom: ${meetingUrl}`] : []),
         ];
@@ -213,7 +213,7 @@ export async function GET(req: NextRequest) {
     const timeLabel = formatInTimeZone(new Date(a.starts_at), TZ, "h:mm a");
     await pushToAdmins(
       "Attendance confirmation required",
-      `${a.name || "A client"} Â· ${a.service || "Consultation"} at ${timeLabel} â€” mark completed or no-show.`,
+      `${a.name || "A client"} · ${a.service || "Consultation"} at ${timeLabel} â€” mark completed or no-show.`,
     );
     const adminEmail = process.env.FERGUSON_ADMIN_EMAIL || process.env.FERGUSON_STAFF_EMAIL || "contact@fergusonlawja.com";
     if (adminEmail) {

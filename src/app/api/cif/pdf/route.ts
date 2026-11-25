@@ -239,7 +239,7 @@ export async function GET() {
     thickness: 0.6,
     color: BORDER,
   });
-  pageTwo.drawText("Ferguson Law  Â·  Jamaica  Â·  contact@fergusonlawja.com", {
+  pageTwo.drawText("Ferguson Law  ·  Jamaica  ·  contact@fergusonlawja.com", {
     x: LEFT,
     y: 64,
     size: 8,

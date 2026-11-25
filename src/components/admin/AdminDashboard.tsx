@@ -282,7 +282,7 @@ function fmtDate(iso: string | null): string {
 }
 function fmtWhen(iso: string | null): string {
   if (!iso) return "â€”";
-  try { return formatInTimeZone(new Date(iso), TZ, "EEE d MMM yyyy Â· h:mm a"); } catch { return iso; }
+  try { return formatInTimeZone(new Date(iso), TZ, "EEE d MMM yyyy · h:mm a"); } catch { return iso; }
 }
 function fmtTime(iso: string | null): string {
   if (!iso) return "â€”";
@@ -628,7 +628,7 @@ export default function AdminDashboard() {
     const supabase = createClient();
     const { error } = await supabase.rpc("fl_admin_convert_lead_to_client", { p_token: token, p_lead_id: id });
     if (!error) setLeads((prev) => prev.filter((l) => l.id !== id));
-    else alert("Could not convert lead: " + error.message);
+    else alert("Could not convert lead. Please try again or refresh the page.");
   }, [token]);
 
   const setApptStatus = useCallback(async (id: string, status: string) => {
@@ -679,7 +679,7 @@ export default function AdminDashboard() {
       p_phone: fields.phone || null, p_type: fields.type || "individual",
       p_country: fields.country || null, p_notes: fields.notes || null,
     });
-    if (error) return error.message || "Could not save client.";
+    if (error) return "Could not save client. Please try again.";
     const list = await supabase.rpc("fl_admin_clients", { p_token: token });
     if (list.data) setClients(list.data as Client[]);
     if (isNew && fields.email) {
@@ -700,7 +700,7 @@ export default function AdminDashboard() {
       p_start: row.start_time, p_end: row.end_time,
       p_duration: row.slot_duration_minutes, p_active: row.active,
     });
-    if (error) return error.message || "Could not save.";
+    if (error) return "Could not save. Please try again.";
     const list = await supabase.rpc("fl_admin_get_availability", { p_token: token });
     setAvailability((list.data as Availability[] | null) ?? []);
     return null;
@@ -715,7 +715,7 @@ export default function AdminDashboard() {
       p_token: token, p_code: args.code, p_label: args.label || null,
       p_max_uses: args.maxUses, p_expires: args.expires ? new Date(args.expires).toISOString() : null,
     });
-    if (error) return error.message || "Could not create invite.";
+    if (error) return "Could not create invite. Please try again.";
     const list = await supabase.rpc("fl_admin_list_invites", { p_token: token });
     setInvites((list.data as Invite[] | null) ?? []);
     return null;
@@ -776,7 +776,7 @@ export default function AdminDashboard() {
     if (!token) return;
     const supabase = createClient();
     const { error } = await supabase.rpc("fl_admin_restore_from_bin", { p_token: token, p_bin_id: binId });
-    if (error) { alert("Restore failed: " + error.message); return; }
+    if (error) { alert("Restore failed. Please try again or contact support."); return; }
     setBinItems((prev) => prev.filter((b) => b.id !== binId));
     void refresh();
   }, [token, refresh]);
@@ -876,7 +876,7 @@ export default function AdminDashboard() {
     return (
       <div style={S.authWrap}>
         <div style={S.brandMark}>Ferguson Law</div>
-        <p style={{ color: "#b9b099", marginTop: 8 }}>Loadingâ€¦</p>
+        <p style={{ color: "#b9b099", marginTop: 8 }}>Loading...</p>
       </div>
     );
   }
@@ -911,7 +911,7 @@ export default function AdminDashboard() {
               <button type="button" onClick={() => void submitLogin()}
                 disabled={verifying || !emailInput.trim() || !pwInput}
                 style={{ ...S.authBtn, ...(verifying || !emailInput.trim() || !pwInput ? S.btnOff : null) }}>
-                {verifying ? "Signing inâ€¦" : "Sign in"}
+                {verifying ? "Signing in..." : "Sign in"}
               </button>
               <div style={S.authLinks}>
                 <a href="/reset?request=admin" style={S.authLink}>Forgot password?</a>
@@ -929,7 +929,7 @@ export default function AdminDashboard() {
               {authError && <p style={S.authErr}>{authError}</p>}
               <button type="button" onClick={() => void submitCode()} disabled={verifying || !codeInput.trim()}
                 style={{ ...S.authBtn, ...(verifying || !codeInput.trim() ? S.btnOff : null) }}>
-                {verifying ? "Checkingâ€¦" : "Enter"}
+                {verifying ? "Checking..." : "Enter"}
               </button>
               <div style={S.authLinks}>
                 <button type="button" onClick={() => { setLoginMode("account"); setAuthError(null); }} style={S.authLinkBtn}>
@@ -948,12 +948,12 @@ export default function AdminDashboard() {
       <header className="fl-admin-topbar" style={S.topbar}>
         <div>
           <div style={S.brandMarkSm}>Ferguson Law</div>
-          <div style={S.topSub}>Consultation CRM Â· Back office</div>
+          <div style={S.topSub}>Consultation CRM · Back office</div>
         </div>
         <div style={S.topActions}>
           <button type="button" onClick={() => void refresh()} disabled={loading}
             style={{ ...S.ghostBtn, ...(loading ? S.btnOff : null) }}>
-            {loading ? "Refreshingâ€¦" : "Refresh"}
+            {loading ? "Refreshing..." : "Refresh"}
           </button>
           {accountEmail && (
             <button type="button" onClick={() => setShowAccount(true)} style={S.ghostBtn}>Account</button>
@@ -1130,11 +1130,11 @@ function Empty({ children }: { children: React.ReactNode }) { return <div style=
 // ---------------------------------------------------------------------------
 const TEMPLATES: Record<string, (name: string, service?: string) => string> = {
   acknowledge: (name) =>
-    `Dear ${name.split(" ")[0]},\n\nThank you for reaching out to Ferguson Law. We have received your enquiry and a member of our team will be in touch shortly.\n\nShould you have any immediate questions, please feel free to reply to this email or reach us via WhatsApp at (876) 320-0235.\n\nWarm regards,\nOwen K. Ferguson, JP\nFerguson Law\n(876) 320-0235 Â· contact@fergusonlawja.com`,
+    `Dear ${name.split(" ")[0]},\n\nThank you for reaching out to Ferguson Law. We have received your enquiry and a member of our team will be in touch shortly.\n\nShould you have any immediate questions, please feel free to reply to this email or reach us via WhatsApp at (876) 320-0235.\n\nWarm regards,\nOwen K. Ferguson, JP\nFerguson Law\n(876) 320-0235 · contact@fergusonlawja.com`,
   followup: (name, service) =>
-    `Dear ${name.split(" ")[0]},\n\nI hope this message finds you well. I wanted to follow up on your recent enquiry${service ? ` regarding ${service}` : ""} and ensure that we have addressed all of your questions.\n\nPlease do not hesitate to reach out if you need any further assistance. We look forward to working with you.\n\nWarm regards,\nOwen K. Ferguson, JP\nFerguson Law\n(876) 320-0235 Â· contact@fergusonlawja.com`,
+    `Dear ${name.split(" ")[0]},\n\nI hope this message finds you well. I wanted to follow up on your recent enquiry${service ? ` regarding ${service}` : ""} and ensure that we have addressed all of your questions.\n\nPlease do not hesitate to reach out if you need any further assistance. We look forward to working with you.\n\nWarm regards,\nOwen K. Ferguson, JP\nFerguson Law\n(876) 320-0235 · contact@fergusonlawja.com`,
   booking: (name) =>
-    `Dear ${name.split(" ")[0]},\n\nThank you for booking a consultation with Ferguson Law. Your appointment has been confirmed and you will receive a calendar invitation shortly.\n\nIf you have any questions before your appointment, please do not hesitate to contact us.\n\nWarm regards,\nOwen K. Ferguson, JP\nFerguson Law\n(876) 320-0235 Â· contact@fergusonlawja.com`,
+    `Dear ${name.split(" ")[0]},\n\nThank you for booking a consultation with Ferguson Law. Your appointment has been confirmed and you will receive a calendar invitation shortly.\n\nIf you have any questions before your appointment, please do not hesitate to contact us.\n\nWarm regards,\nOwen K. Ferguson, JP\nFerguson Law\n(876) 320-0235 · contact@fergusonlawja.com`,
 };
 
 function EmailComposeModal({ to, toName, defaultSubject, context, service, token, onClose }: {
@@ -1179,7 +1179,7 @@ function EmailComposeModal({ to, toName, defaultSubject, context, service, token
           <button type="button" onClick={onClose} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "#888" }}>Ã—</button>
         </div>
         <div style={{ fontSize: ".78rem", color: MUTED, marginBottom: 14 }}>
-          To: <strong style={{ color: INK }}>{toName}</strong> &lt;{to}&gt;&nbsp;&nbsp;Â·&nbsp;&nbsp;From: contact@fergusonlawja.com
+          To: <strong style={{ color: INK }}>{toName}</strong> &lt;{to}&gt;&nbsp;&nbsp;·&nbsp;&nbsp;From: contact@fergusonlawja.com
         </div>
 
         {/* Templates */}
@@ -1204,7 +1204,7 @@ function EmailComposeModal({ to, toName, defaultSubject, context, service, token
               style={{ ...S.fieldInput, resize: "vertical", minHeight: 180, fontFamily: "inherit" }}
               value={body}
               onChange={(e) => setBody(e.target.value)}
-              placeholder={`Dear ${toName.split(" ")[0]},\n\nThank you for reaching out to Ferguson Lawâ€¦`}
+              placeholder={`Dear ${toName.split(" ")[0]},\n\nThank you for reaching out to Ferguson Law...`}
               autoFocus
             />
           </div>
@@ -1224,7 +1224,7 @@ function EmailComposeModal({ to, toName, defaultSubject, context, service, token
         <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
           <button type="button" onClick={() => void send()} disabled={sending || !body.trim()}
             style={{ ...S.authBtn, width: "auto", padding: "11px 26px", ...(sending || !body.trim() ? S.btnOff : null) }}>
-            {sending ? "Sendingâ€¦" : "Send email"}
+            {sending ? "Sending..." : "Send email"}
           </button>
           <button type="button" onClick={onClose}
             style={{ padding: "11px 18px", border: "1px solid rgba(18,16,12,.2)", borderRadius: 999, background: "#fff", fontSize: ".88rem", cursor: "pointer" }}>
@@ -1344,7 +1344,7 @@ function LeadsTable({ leads, loading, token, onStatus, onDelete, onRestore, onCo
     onDelete(id);
   }
   const displayLeads = showArchived ? (archivedLeads ?? []) : leads;
-  if (loading && leads.length === 0) return <Empty>Loading leadsâ€¦</Empty>;
+  if (loading && leads.length === 0) return <Empty>Loading leads...</Empty>;
   if (displayLeads.length === 0 && !loading) return (
     <>
       <div style={{ display: "flex", gap: 8, padding: "8px 16px 0", alignItems: "center" }}>
@@ -1587,7 +1587,7 @@ function NewBookingModal({ token, onClose, onCreated }: { token: string; onClose
             </div>
             <div style={row}>
               <label style={lbl}>Notes</label>
-              <textarea value={notes} onChange={e => setNotes(e.target.value)} style={{ ...inp, minHeight: 64, resize: "vertical" }} placeholder="Any context for Owenâ€¦" />
+              <textarea value={notes} onChange={e => setNotes(e.target.value)} style={{ ...inp, minHeight: 64, resize: "vertical" }} placeholder="Any context for Owen..." />
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 18 }}>
               <input type="checkbox" id="sendEmail" checked={sendEmail} onChange={e => setSendEmail(e.target.checked)} style={{ accentColor: GOLD, width: 16, height: 16 }} />
@@ -1596,7 +1596,7 @@ function NewBookingModal({ token, onClose, onCreated }: { token: string; onClose
             {result && !result.ok && <div style={{ color: "#a23b3b", fontSize: ".85rem", marginBottom: 10 }}>{result.error}</div>}
             <div style={{ display: "flex", gap: 10 }}>
               <button type="submit" disabled={saving} style={{ ...S.waBtn, background: GOLD, color: "#0e2518", flex: 1, opacity: saving ? 0.7 : 1 }}>
-                {saving ? "Creatingâ€¦" : "Create booking & generate link"}
+                {saving ? "Creating..." : "Create booking & generate link"}
               </button>
               <button type="button" onClick={onClose} style={{ ...S.waBtn }}>Cancel</button>
             </div>
@@ -1707,7 +1707,7 @@ function BookingsTable({ appts, loading, token, onStatus, onCancel, onRefresh }:
           </button>
         </div>
       </div>
-      {loading && appts.length === 0 ? <Empty>Loading bookingsâ€¦</Empty> : sorted.length === 0 ? <Empty>No bookings match this filter.</Empty> : (
+      {loading && appts.length === 0 ? <Empty>Loading bookings...</Empty> : sorted.length === 0 ? <Empty>No bookings match this filter.</Empty> : (
         isMobile ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "12px 16px" }}>
             {sorted.map((a) => {
@@ -1728,7 +1728,7 @@ function BookingsTable({ appts, loading, token, onStatus, onCancel, onRefresh }:
                   </div>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     {a.email && <button type="button" onClick={() => setComposing(a)} style={{ ...S.waBtn, background: "#c9a86a", color: "#10211c" }}>Email</button>}
-                    {a.email && a.status === "confirmed" && <button type="button" onClick={() => void sendMeetingLink(a)} disabled={linkSending === a.id} style={{ ...S.waBtn, background: "rgba(16,42,30,.1)", color: GREEN, opacity: linkSending === a.id ? 0.6 : 1 }}>{linkSending === a.id ? "Sendingâ€¦" : "Meeting link"}</button>}
+                    {a.email && a.status === "confirmed" && <button type="button" onClick={() => void sendMeetingLink(a)} disabled={linkSending === a.id} style={{ ...S.waBtn, background: "rgba(16,42,30,.1)", color: GREEN, opacity: linkSending === a.id ? 0.6 : 1 }}>{linkSending === a.id ? "Sending..." : "Meeting link"}</button>}
                     {(a.status === "pending" || a.status === "confirmed") && new Date(a.starts_at) > new Date() && <button type="button" onClick={() => onCancel(a.id)} style={{ ...S.waBtn, background: "rgba(162,59,59,.1)", color: "#a23b3b", border: "1px solid rgba(162,59,59,.2)" }}>Cancel</button>}
                     {a.email && <button type="button" onClick={() => setPurgeTarget({ email: a.email!, name: a.name, clientId: null })} style={{ ...S.waBtn, background: "#c0392b", color: "#fff", border: "none" }}>Delete Record</button>}
                     {linkResult[a.id] && <span style={{ fontSize: ".72rem", color: linkResult[a.id].ok ? "#2f7a52" : "#a23b3b" }}>{linkResult[a.id].msg}</span>}
@@ -1773,7 +1773,7 @@ function BookingsTable({ appts, loading, token, onStatus, onCancel, onRefresh }:
                             onClick={() => void sendMeetingLink(a)}
                             disabled={linkSending === a.id}
                             style={{ ...S.waBtn, background: "rgba(16,42,30,.1)", color: GREEN, border: `1px solid ${GREEN}30`, opacity: linkSending === a.id ? 0.6 : 1 }}>
-                            {linkSending === a.id ? "Sendingâ€¦" : "Send meeting link"}
+                            {linkSending === a.id ? "Sending..." : "Send meeting link"}
                           </button>
                         )}
                         {(a.status === "pending" || a.status === "confirmed") && new Date(a.starts_at) > new Date() && (
@@ -1906,7 +1906,7 @@ function DataPrivacyModal({ client, token, onDelete, onClose }: {
             {exportErr && <p style={{ color: "#b00", fontSize: ".75rem", marginBottom: 8 }}>{exportErr}</p>}
             <button onClick={() => void exportData()} disabled={exporting || !client.email}
               style={{ padding: "9px 18px", borderRadius: 8, border: "1px solid #ccc", background: "#fff", color: "#10211c", fontSize: ".82rem", fontWeight: 600, cursor: (exporting || !client.email) ? "default" : "pointer", opacity: !client.email ? 0.5 : 1 }}>
-              {exporting ? "Preparingâ€¦" : "Export data"}
+              {exporting ? "Preparing..." : "Export data"}
             </button>
           </div>
 
@@ -1994,7 +1994,7 @@ function ClientsTab({ clients, matters, loading, onUpsert, onDelete, token }: {
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 12 }}>
           <button type="button" onClick={() => void submit()} disabled={busy || !name.trim()}
             style={{ ...S.authBtn, width: "auto", padding: "10px 22px", ...(busy || !name.trim() ? S.btnOff : null) }}>
-            {busy ? "Savingâ€¦" : "Save client"}
+            {busy ? "Saving..." : "Save client"}
           </button>
           {err && <span style={{ color: "#a23b3b", fontSize: ".82rem" }}>{err}</span>}
         </div>
@@ -2008,7 +2008,7 @@ function ClientsTab({ clients, matters, loading, onUpsert, onDelete, token }: {
           onClose={() => setPrivacyTarget(null)}
         />
       )}
-      {loading && clients.length === 0 ? <Empty>Loading clientsâ€¦</Empty> :
+      {loading && clients.length === 0 ? <Empty>Loading clients...</Empty> :
         clients.length === 0 ? <Empty>No clients yet. Add one above.</Empty> : (
           <div style={S.tableWrap}>
             <table style={S.table}>
@@ -2064,10 +2064,10 @@ function ClientsTab({ clients, matters, loading, onUpsert, onDelete, token }: {
                         <tr key={m.id} style={{ ...S.tr, background: "#faf8f2" }}>
                           <td colSpan={10} style={{ ...S.td, paddingLeft: 32 }}>
                             <span style={S.mono}>{m.ref}</span>
-                            {" Â· "}<strong>{m.matter_type || "matter"}</strong>
-                            {" Â· stage: "}{m.stage}
-                            {" Â· "}{m.payment_status}
-                            {m.description ? ` Â· ${m.description.slice(0, 80)}` : ""}
+                            {" · "}<strong>{m.matter_type || "matter"}</strong>
+                            {" · stage: "}{m.stage}
+                            {" · "}{m.payment_status}
+                            {m.description ? ` · ${m.description.slice(0, 80)}` : ""}
                           </td>
                         </tr>
                       ))}
@@ -2113,7 +2113,7 @@ function MattersTab({ matters, loading, token, onStage, onPayment, onDelete }: {
   }, []);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  if (loading && matters.length === 0) return <Empty>Loading mattersâ€¦</Empty>;
+  if (loading && matters.length === 0) return <Empty>Loading matters...</Empty>;
   if (matters.length === 0) return <Empty>No matters yet. Use the CMS tab to open a new matter for any client.</Empty>;
 
   function toggleExpand(id: string) {
@@ -2179,7 +2179,7 @@ function MattersTab({ matters, loading, token, onStage, onPayment, onDelete }: {
 // ---------------------------------------------------------------------------
 const MILESTONE_STATUSES = ["pending", "in_progress", "completed"] as const;
 const MILESTONE_STATUS_LABELS: Record<string, string> = {
-  pending: "â¬œ Pending", in_progress: "ðŸ”µ In Progress", completed: "âœ… Done",
+  pending: "â¬œ Pending", in_progress: "ðŸ”µ In Progress", completed: "âœ... Done",
 };
 const MILESTONE_STATUS_COLORS: Record<string, React.CSSProperties> = {
   pending: { background: "rgba(18,16,12,.08)", color: MUTED },
@@ -2280,7 +2280,7 @@ function MilestonePanel({ matterId, token, matter, onClose, inline }: {
       )}
 
       {loading ? (
-        <div style={{ color: MUTED, fontSize: ".85rem", padding: "8px 0" }}>Loadingâ€¦</div>
+        <div style={{ color: MUTED, fontSize: ".85rem", padding: "8px 0" }}>Loading...</div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
           {milestones.length === 0 && (
@@ -2365,7 +2365,7 @@ function MilestonePanel({ matterId, token, matter, onClose, inline }: {
             </label>
             <button type="button" onClick={() => void addMilestone()} disabled={saving || !form.title.trim()}
               style={{ ...S.btn, background: GREEN, color: CREAM, fontSize: ".78rem", marginLeft: "auto", opacity: saving || !form.title.trim() ? 0.5 : 1 }}>
-              {saving ? "Addingâ€¦" : "+ Add"}
+              {saving ? "Adding..." : "+ Add"}
             </button>
           </div>
         </div>
@@ -2436,7 +2436,7 @@ function CalendarTab({ appts, token, onStatus, onRefresh }: { appts: Appointment
     });
   }
 
-  const weekLabel = `${formatInTimeZone(days[0], TZ, "d MMM")} â€“ ${formatInTimeZone(days[6], TZ, "d MMM yyyy")}`;
+  const weekLabel = `${formatInTimeZone(days[0], TZ, "d MMM")} — ${formatInTimeZone(days[6], TZ, "d MMM yyyy")}`;
 
   return (
     <div style={{ padding: 20 }}>
@@ -2549,7 +2549,7 @@ function AvailabilityTab({ availability, onSave, token }: {
     if (!err) setTimeout(() => setMsgs((m) => { const n = { ...m }; delete n[row.day_of_week]; return n; }), 2000);
   };
 
-  if (rows.length === 0) return <Empty>{availability.length === 0 ? "Loading availabilityâ€¦" : "No schedule rows."}</Empty>;
+  if (rows.length === 0) return <Empty>{availability.length === 0 ? "Loading availability..." : "No schedule rows."}</Empty>;
 
   return (
     <div style={{ padding: 20 }}>
@@ -2580,7 +2580,7 @@ function AvailabilityTab({ availability, onSave, token }: {
                   </div>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10 }}>
-                  <button type="button" onClick={() => void save(row)} disabled={saving === row.day_of_week} style={{ ...S.waBtn, ...(saving === row.day_of_week ? S.btnOff : null) }}>{saving === row.day_of_week ? "Savingâ€¦" : "Save"}</button>
+                  <button type="button" onClick={() => void save(row)} disabled={saving === row.day_of_week} style={{ ...S.waBtn, ...(saving === row.day_of_week ? S.btnOff : null) }}>{saving === row.day_of_week ? "Saving..." : "Save"}</button>
                   {msg && <span style={{ fontSize: ".78rem", color: msg.kind === "ok" ? "#2e7d4f" : "#a23b3b" }}>{msg.text}</span>}
                 </div>
               </div>
@@ -2627,7 +2627,7 @@ function AvailabilityTab({ availability, onSave, token }: {
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <button type="button" onClick={() => void save(row)} disabled={saving === row.day_of_week}
                         style={{ ...S.waBtn, ...(saving === row.day_of_week ? S.btnOff : null) }}>
-                        {saving === row.day_of_week ? "Savingâ€¦" : "Save"}
+                        {saving === row.day_of_week ? "Saving..." : "Save"}
                       </button>
                       {msg && <span style={{ fontSize: ".78rem", color: msg.kind === "ok" ? "#2e7d4f" : "#a23b3b" }}>{msg.text}</span>}
                     </div>
@@ -2684,7 +2684,7 @@ function BlockedDatesPanel({ token }: { token: string }) {
     } else {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error } = await (supabase as any).rpc("fl_admin_block_slot", { p_token: token, p_starts_at: iso }) as { error: { message: string } | null };
-      if (error) { setErr(error.message); setSaving(false); return; }
+      if (error) { setErr("Could not save. Please try again."); setSaving(false); return; }
     }
     await loadBlocked();
     setSaving(false);
@@ -2738,7 +2738,7 @@ function BlockedDatesPanel({ token }: { token: string }) {
           min={new Date().toISOString().slice(0, 10)}
           onChange={e => setPickedDate(e.target.value)}
           style={{ ...S.fieldInput, width: 170 }} />
-        {loadingSlots && <span style={{ color: MUTED, fontSize: ".82rem" }}>Loading slotsâ€¦</span>}
+        {loadingSlots && <span style={{ color: MUTED, fontSize: ".82rem" }}>Loading slots...</span>}
       </div>
 
       {pickedDate && !loadingSlots && daySlots.length > 0 && (
@@ -2791,7 +2791,7 @@ function BlockedDatesPanel({ token }: { token: string }) {
         return (
           <>
             <div style={{ fontWeight: 600, fontSize: ".82rem", color: MUTED, marginBottom: 10 }}>
-              Blocked slots ({upcoming.length}{pastCount > 0 ? ` Â· ${pastCount} past hidden` : ""})
+              Blocked slots ({upcoming.length}{pastCount > 0 ? ` · ${pastCount} past hidden` : ""})
             </div>
             {upcoming.length === 0
               ? <p style={{ color: MUTED, fontSize: ".82rem" }}>None blocked.</p>
@@ -2906,7 +2906,7 @@ function ChatsTable({ convos, loading }: { convos: Conversation[]; loading: bool
   const roleLabel = (r: ChatMessage["role"]) =>
     r === "visitor" ? "Visitor" : r === "agent" ? "Agent" : r === "bot" ? "Bot" : "System";
 
-  if (loading && convos.length === 0) return <Empty>Loading chatsâ€¦</Empty>;
+  if (loading && convos.length === 0) return <Empty>Loading chats...</Empty>;
   if (convos.length === 0) return <Empty>No conversations yet.</Empty>;
   return (
     <div style={{ display: "flex", height: isMobile ? "auto" : "calc(100vh - 300px)", minHeight: isMobile ? 0 : 400, overflow: "hidden", flexDirection: isMobile ? "column" : "row" }}>
@@ -2957,7 +2957,7 @@ function ChatsTable({ convos, loading }: { convos: Conversation[]; loading: bool
 
             {/* Message thread */}
             <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px", display: "flex", flexDirection: "column", gap: 10 }}>
-              {msgLoading && <div style={{ color: MUTED, fontSize: ".85rem", textAlign: "center" }}>Loading messagesâ€¦</div>}
+              {msgLoading && <div style={{ color: MUTED, fontSize: ".85rem", textAlign: "center" }}>Loading messages...</div>}
               {!msgLoading && messages.length === 0 && <div style={{ color: MUTED, fontSize: ".85rem", textAlign: "center" }}>No messages in this conversation.</div>}
               {messages.map((m) => (
                 <div key={m.id} style={{ display: "flex", flexDirection: "column", maxWidth: "72%", ...(m.role === "agent" ? { alignSelf: "flex-end" } : { alignSelf: "flex-start" }) }}>
@@ -2982,12 +2982,12 @@ function ChatsTable({ convos, loading }: { convos: Conversation[]; loading: bool
                 <div style={{ fontSize: ".72rem", fontWeight: 700, textTransform: "uppercase", color: MUTED, marginBottom: 6 }}>Reply via WhatsApp</div>
                 <div style={{ display: "flex", gap: 8 }}>
                   <textarea value={waText} onChange={(e) => setWaText(e.target.value)} rows={2}
-                    placeholder="Type a WhatsApp messageâ€¦"
+                    placeholder="Type a WhatsApp message..."
                     style={{ flex: 1, resize: "none", borderRadius: 10, border: "1px solid rgba(18,16,12,.2)", padding: "8px 12px", fontSize: ".88rem", fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
                   <button type="button" onClick={() => void sendWhatsApp()} disabled={waSending || !waText.trim()}
                     style={{ padding: "8px 16px", borderRadius: 10, border: "none", cursor: waSending || !waText.trim() ? "default" : "pointer",
                       background: waSending || !waText.trim() ? "#e2d5b0" : GOLD, color: GREEN, fontWeight: 700, fontSize: ".82rem", alignSelf: "flex-end" }}>
-                    {waSending ? "â€¦" : "Send"}
+                    {waSending ? "..." : "Send"}
                   </button>
                 </div>
                 {waResult && <div style={{ fontSize: ".78rem", color: waResult.ok ? "#2e7d4f" : "#a23b3b", marginTop: 4 }}>{waResult.msg}</div>}
@@ -3081,7 +3081,7 @@ function OverviewPanel({ leads, appts, convos, matters, homePros, emails, inquir
             <div key={l.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderTop: "1px solid rgba(200,166,92,.2)" }}>
               <div>
                 <span style={{ fontWeight: 600, fontSize: ".88rem", color: GREEN }}>{l.name || "â€”"}</span>
-                <span style={{ color: MUTED, fontSize: ".78rem" }}> Â· {l.service || "â€”"}</span>
+                <span style={{ color: MUTED, fontSize: ".78rem" }}> · {l.service || "â€”"}</span>
               </div>
               <span style={{ fontSize: ".72rem", color: "#8a6a22" }}>
                 {Math.floor((Date.now() - new Date(l.created_at).getTime()) / (3600 * 1000))}h ago
@@ -3107,7 +3107,7 @@ function OverviewPanel({ leads, appts, convos, matters, homePros, emails, inquir
           <div key={l.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderTop: i > 0 ? "1px solid rgba(18,16,12,.06)" : "none" }}>
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 600, fontSize: ".88rem", color: GREEN }}>{l.name || "â€”"}</div>
-              <div style={{ fontSize: ".78rem", color: MUTED }}>{l.service || "â€”"} Â· {fmtDate(l.created_at)}</div>
+              <div style={{ fontSize: ".78rem", color: MUTED }}>{l.service || "â€”"} · {fmtDate(l.created_at)}</div>
             </div>
             <StatusBadge status={l.status} />
           </div>
@@ -3121,7 +3121,7 @@ function OverviewPanel({ leads, appts, convos, matters, homePros, emails, inquir
           <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderTop: i > 0 ? "1px solid rgba(18,16,12,.06)" : "none" }}>
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 600, fontSize: ".88rem", color: GREEN }}>{a.name || "â€”"}</div>
-              <div style={{ fontSize: ".78rem", color: MUTED }}>{a.service || "â€”"} Â· {fmtWhen(a.starts_at)}</div>
+              <div style={{ fontSize: ".78rem", color: MUTED }}>{a.service || "â€”"} · {fmtWhen(a.starts_at)}</div>
             </div>
             <StatusBadge status={a.status} />
           </div>
@@ -3147,7 +3147,7 @@ function OverviewPanel({ leads, appts, convos, matters, homePros, emails, inquir
                       {unread && <span style={{ background: "#c0392b", color: "#fff", fontSize: 9, fontWeight: 700, borderRadius: 999, padding: "1px 5px" }}>NEW</span>}
                     </div>
                     <div style={{ fontSize: ".78rem", color: INK, marginTop: 1 }}>{a.kind === "file" ? `Uploaded: ${a.body}` : a.body}</div>
-                    <div style={{ fontSize: ".72rem", color: MUTED, marginTop: 2 }}>{a.matter_title} Â· {fmtDate(a.created_at)}</div>
+                    <div style={{ fontSize: ".72rem", color: MUTED, marginTop: 2 }}>{a.matter_title} · {fmtDate(a.created_at)}</div>
                   </div>
                 </button>
               );
@@ -3493,7 +3493,7 @@ function EmailTab({ emails, token, leads, onMarkRead, onMarkAllRead, onDelete, o
               <div style={{ fontFamily: "var(--serif, Georgia, serif)", fontWeight: 700, fontSize: "1.15rem", color: GREEN }}>{selectedSent.subject || "(no subject)"}</div>
               <div style={{ fontSize: ".8rem", color: MUTED, marginTop: 4 }}>
                 To: <strong style={{ color: INK }}>{selectedSent.to_name ? `${selectedSent.to_name} <${selectedSent.to_email}>` : selectedSent.to_email}</strong>
-                &nbsp;Â·&nbsp;{fmtDate(selectedSent.created_at)}
+                &nbsp;·&nbsp;{fmtDate(selectedSent.created_at)}
               </div>
               {selectedSent.context && <div style={{ fontSize: ".78rem", color: MUTED, marginTop: 4 }}>Context: {selectedSent.context}</div>}
               <div style={{ display: "inline-block", marginTop: 6, fontSize: ".72rem", background: "rgba(47,122,82,.1)", color: GREEN, borderRadius: 999, padding: "2px 10px" }}>{selectedSent.status}</div>
@@ -3520,7 +3520,7 @@ function EmailTab({ emails, token, leads, onMarkRead, onMarkAllRead, onDelete, o
             <div style={{ ...S.field, marginBottom: 16 }}>
               <label style={S.fieldLabel}>Message</label>
               <textarea style={{ ...S.fieldInput, resize: "vertical", minHeight: 160, fontFamily: "inherit" }}
-                value={newBody} onChange={(e) => setNewBody(e.target.value)} placeholder="Your messageâ€¦" />
+                value={newBody} onChange={(e) => setNewBody(e.target.value)} placeholder="Your message..." />
             </div>
             <div style={{ ...S.field, marginBottom: 16 }}>
               <label style={S.fieldLabel}>Attachments</label>
@@ -3550,7 +3550,7 @@ function EmailTab({ emails, token, leads, onMarkRead, onMarkAllRead, onDelete, o
             <div style={{ display: "flex", gap: 10 }}>
               <button type="button" onClick={() => void sendCompose()} disabled={sending || !newTo.trim() || !newBody.trim()}
                 style={{ ...S.authBtn, width: "auto", padding: "10px 22px", ...(sending || !newTo.trim() || !newBody.trim() ? S.btnOff : null) }}>
-                {sending ? "Sendingâ€¦" : "Send"}
+                {sending ? "Sending..." : "Send"}
               </button>
               <button type="button" onClick={() => { setComposing(false); setSendResult(null); setNewFiles([]); }}
                 style={{ padding: "10px 18px", border: "1px solid rgba(18,16,12,.2)", borderRadius: 999, background: "#fff", fontSize: ".88rem", cursor: "pointer" }}>
@@ -3572,7 +3572,7 @@ function EmailTab({ emails, token, leads, onMarkRead, onMarkAllRead, onDelete, o
               <div style={{ fontFamily: "var(--serif, Georgia, serif)", fontWeight: 700, fontSize: "1.15rem", color: GREEN }}>{selected.subject || "(no subject)"}</div>
               <div style={{ fontSize: ".8rem", color: MUTED, marginTop: 4 }}>
                 From: <strong style={{ color: INK }}>{selected.from_name ? `${selected.from_name} <${selected.from_email}>` : selected.from_email}</strong>
-                &nbsp;Â·&nbsp;{fmtDate(selected.created_at)}
+                &nbsp;·&nbsp;{fmtDate(selected.created_at)}
               </div>
               {selected.to_email && <div style={{ fontSize: ".8rem", color: MUTED }}>To: {selected.to_email}</div>}
             </div>
@@ -3601,7 +3601,7 @@ function EmailTab({ emails, token, leads, onMarkRead, onMarkAllRead, onDelete, o
                     value={bodyDraft}
                     onChange={(e) => setBodyDraft(e.target.value)}
                     rows={8}
-                    placeholder="Paste the email body hereâ€¦"
+                    placeholder="Paste the email body here..."
                     style={{ width: "100%", resize: "vertical", borderRadius: 8, border: "1px solid rgba(18,16,12,.2)", padding: "10px 12px", fontSize: ".88rem", fontFamily: "inherit", outline: "none", boxSizing: "border-box", marginBottom: 10 }}
                   />
                   <div style={{ display: "flex", gap: 8 }}>
@@ -3613,7 +3613,7 @@ function EmailTab({ emails, token, leads, onMarkRead, onMarkAllRead, onDelete, o
                       if (json.ok) { setSelected({ ...selected, body_text: bodyDraft.trim() }); setEditingBody(false); setBodyDraft(""); }
                       setSavingBody(false);
                     }} style={{ ...S.authBtn, width: "auto", padding: "8px 18px", ...(savingBody || !bodyDraft.trim() ? S.btnOff : null) }}>
-                      {savingBody ? "Savingâ€¦" : "Save"}
+                      {savingBody ? "Saving..." : "Save"}
                     </button>
                     <button type="button" onClick={() => { setEditingBody(false); setBodyDraft(""); }} style={{ padding: "8px 16px", borderRadius: 999, border: "1px solid rgba(18,16,12,.2)", background: "#fff", fontSize: ".85rem", cursor: "pointer" }}>Cancel</button>
                   </div>
@@ -3657,12 +3657,12 @@ function EmailTab({ emails, token, leads, onMarkRead, onMarkAllRead, onDelete, o
                 </button>
                 <button type="button" onClick={() => void suggestReply()} disabled={suggesting}
                   style={{ padding: "9px 18px", borderRadius: 999, border: `1px solid ${GOLD}`, background: "rgba(200,166,92,.08)", color: "#8a6a22", fontWeight: 600, fontSize: ".82rem", cursor: "pointer", ...(suggesting ? S.btnOff : null) }}>
-                  {suggesting ? "Thinkingâ€¦" : "âœ¦ AI draft"}
+                  {suggesting ? "Thinking..." : "âœ¦ AI draft"}
                 </button>
                 {suggestError && <p role="alert" style={{ width: "100%", margin: 0, color: "#a23b3b", fontSize: ".82rem" }}>{suggestError}</p>}
                 <button type="button" onClick={() => void deleteEmail(selected)} disabled={deleting}
                   style={{ padding: "9px 16px", borderRadius: 999, border: "1px solid rgba(160,40,40,.3)", background: "rgba(180,50,50,.06)", color: "#a02828", fontWeight: 600, fontSize: ".82rem", cursor: "pointer", marginLeft: "auto", ...(deleting ? S.btnOff : null) }}>
-                  {deleting ? "Deletingâ€¦" : "Delete"}
+                  {deleting ? "Deleting..." : "Delete"}
                 </button>
               </div>
             ) : (
@@ -3671,7 +3671,7 @@ function EmailTab({ emails, token, leads, onMarkRead, onMarkAllRead, onDelete, o
                   Reply to {selected.reply_to || selected.from_email}
                 </div>
                 <textarea value={replyBody} onChange={(e) => setReplyBody(e.target.value)} rows={5}
-                  placeholder="Your replyâ€¦"
+                  placeholder="Your reply..."
                   style={{ width: "100%", resize: "vertical", borderRadius: 10, border: "1px solid rgba(18,16,12,.2)", padding: "10px 12px", fontSize: ".9rem", fontFamily: "inherit", outline: "none", boxSizing: "border-box", marginBottom: 10 }} />
                 <p style={{ margin: "-4px 0 10px", color: MUTED, fontSize: ".78rem" }}>
                   The sent email automatically includes Owenâ€™s handwritten-style signature.
@@ -3697,7 +3697,7 @@ function EmailTab({ emails, token, leads, onMarkRead, onMarkAllRead, onDelete, o
                 <div style={{ display: "flex", gap: 10 }}>
                   <button type="button" onClick={() => void sendReply()} disabled={sending || !replyBody.trim()}
                     style={{ ...S.authBtn, width: "auto", padding: "10px 20px", ...(sending || !replyBody.trim() ? S.btnOff : null) }}>
-                    {sending ? "Sendingâ€¦" : "Send reply"}
+                    {sending ? "Sending..." : "Send reply"}
                   </button>
                   <button type="button" onClick={() => setReplyOpen(false)}
                     style={{ padding: "10px 18px", border: "1px solid rgba(18,16,12,.2)", borderRadius: 999, background: "#fff", fontSize: ".88rem", cursor: "pointer" }}>
@@ -3921,7 +3921,7 @@ function WorkflowTemplatesTab({ token }: { token: string }) {
 
   const tpl = templates.find(t => t.id === selected);
 
-  if (loading) return <div style={{ padding: 24, color: MUTED }}>Loading templatesâ€¦</div>;
+  if (loading) return <div style={{ padding: 24, color: MUTED }}>Loading templates...</div>;
 
   return (
     <div style={{ padding: "1.25rem" }}>
@@ -4006,7 +4006,7 @@ function WorkflowTemplatesTab({ token }: { token: string }) {
                         <button type="button" onClick={() => void renameStep(phase.order, idx, editingStep.value)}
                           disabled={saving || !editingStep.value.trim()}
                           style={{ padding: "3px 10px", borderRadius: 6, border: "none", background: GREEN, color: CREAM, fontSize: 12, fontWeight: 700, cursor: "pointer", opacity: saving ? 0.5 : 1 }}>
-                          {saving ? "â€¦" : "Save"}
+                          {saving ? "..." : "Save"}
                         </button>
                         <button type="button" onClick={() => setEditingStep(null)}
                           style={{ background: "none", border: "none", color: MUTED, fontSize: 12, cursor: "pointer" }}>Cancel</button>
@@ -4031,11 +4031,11 @@ function WorkflowTemplatesTab({ token }: { token: string }) {
                   <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
                     <input autoFocus value={newStepName} onChange={e => setNewStepName(e.target.value)}
                       onKeyDown={e => { if (e.key === "Enter") void addStep(phase.order); if (e.key === "Escape") { setAddingStep(null); setNewStepName(""); } }}
-                      placeholder="New step nameâ€¦"
+                      placeholder="New step name..."
                       style={{ flex: 1, fontSize: 13, padding: "6px 10px", borderRadius: 8, border: `1px solid ${GOLD}`, outline: "none" }} />
                     <button type="button" onClick={() => void addStep(phase.order)} disabled={saving || !newStepName.trim()}
                       style={{ padding: "6px 14px", borderRadius: 8, border: "none", background: GREEN, color: CREAM, fontSize: 13, fontWeight: 600, cursor: "pointer", opacity: saving || !newStepName.trim() ? 0.5 : 1 }}>
-                      {saving ? "â€¦" : "Add"}
+                      {saving ? "..." : "Add"}
                     </button>
                   </div>
                 )}
@@ -4054,11 +4054,11 @@ function WorkflowTemplatesTab({ token }: { token: string }) {
               <div style={{ display: "flex", gap: 6 }}>
                 <input autoFocus value={newPhaseName} onChange={e => setNewPhaseName(e.target.value)}
                   onKeyDown={e => { if (e.key === "Enter") void addPhase(); if (e.key === "Escape") { setAddingPhase(false); setNewPhaseName(""); } }}
-                  placeholder="Phase nameâ€¦"
+                  placeholder="Phase name..."
                   style={{ flex: 1, fontSize: 13, padding: "6px 10px", borderRadius: 8, border: `1px solid ${GOLD}`, outline: "none" }} />
                 <button type="button" onClick={() => void addPhase()} disabled={saving || !newPhaseName.trim()}
                   style={{ padding: "6px 14px", borderRadius: 8, border: "none", background: GREEN, color: CREAM, fontSize: 13, fontWeight: 600, cursor: "pointer", opacity: saving || !newPhaseName.trim() ? 0.5 : 1 }}>
-                  {saving ? "â€¦" : "Add Phase"}
+                  {saving ? "..." : "Add Phase"}
                 </button>
                 <button type="button" onClick={() => { setAddingPhase(false); setNewPhaseName(""); }}
                   style={{ ...S.ghostBtn, fontSize: 13 }}>Cancel</button>
@@ -4206,12 +4206,12 @@ function InvitesPanel({ invites, loading, onCreate, onDeactivate, onDelete }: {
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 12 }}>
           <button type="button" onClick={() => void submit()} disabled={busy}
             style={{ ...S.authBtn, width: "auto", padding: "10px 22px", ...(busy ? S.btnOff : null) }}>
-            {busy ? "Creatingâ€¦" : "Create invite"}
+            {busy ? "Creating..." : "Create invite"}
           </button>
           {err && <span style={{ color: "#a23b3b", fontSize: ".82rem" }}>{err}</span>}
         </div>
       </div>
-      {loading && invites.length === 0 ? <Empty>Loading invitesâ€¦</Empty> :
+      {loading && invites.length === 0 ? <Empty>Loading invites...</Empty> :
         invites.length === 0 ? <Empty>No invites yet. Create one above to share a free-booking link.</Empty> : (
           <div style={S.tableWrap}>
             <table style={S.table}>
@@ -4258,7 +4258,7 @@ function InvitesPanel({ invites, loading, onCreate, onDeactivate, onDelete }: {
 // Directory
 // ---------------------------------------------------------------------------
 function ListingsPanel({ listings, loading, onStatus }: { listings: Listing[]; loading: boolean; onStatus: (id: string, s: string) => void }) {
-  if (loading && listings.length === 0) return <Empty>Loading partnersâ€¦</Empty>;
+  if (loading && listings.length === 0) return <Empty>Loading partners...</Empty>;
   if (listings.length === 0) return <Empty>No professional sign-ups yet.</Empty>;
   return (
     <div>
@@ -4284,9 +4284,9 @@ function ListingsPanel({ listings, loading, onStatus }: { listings: Listing[]; l
               </div>
             </div>
             <div style={S.listTitle}>{l.business_name}</div>
-            <div style={S.muted}>{l.contact_name || "â€”"}{l.parishes?.length ? ` Â· ${l.parishes.join(", ")}` : ""}</div>
+            <div style={S.muted}>{l.contact_name || "â€”"}{l.parishes?.length ? ` · ${l.parishes.join(", ")}` : ""}</div>
             {l.bio && <div style={{ fontSize: 13, color: INK, marginTop: 4, whiteSpace: "pre-wrap" }}>{l.bio}</div>}
-            <div style={{ ...S.muted, marginTop: 6 }}>{l.email || "â€”"}{l.phone ? ` Â· ${l.phone}` : ""}{l.website ? ` Â· ${l.website}` : ""}</div>
+            <div style={{ ...S.muted, marginTop: 6 }}>{l.email || "â€”"}{l.phone ? ` · ${l.phone}` : ""}{l.website ? ` · ${l.website}` : ""}</div>
             {status === "approved" && l.slug && (
               <div style={{ marginTop: 6 }}>
                 <a href={`/directory/${l.slug}`} target="_blank" rel="noopener" style={{ color: "#8a6a22", fontSize: 13 }}>View public page â†’</a>
@@ -4347,7 +4347,7 @@ function AccountPanel({ token, email, onClose, onEmailChange }: {
           <h2 style={{ ...h, margin: 0 }}>Your account</h2>
           <button type="button" onClick={onClose} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "#888", lineHeight: 1 }}>Ã—</button>
         </div>
-        <p style={{ color: "#6a6a6a", fontSize: ".82rem", margin: "0 0 18px" }}>Administrator Â· {email}</p>
+        <p style={{ color: "#6a6a6a", fontSize: ".82rem", margin: "0 0 18px" }}>Administrator · {email}</p>
         {msg && <p style={{ fontSize: ".82rem", margin: "0 0 14px", color: msg.kind === "ok" ? "#2e7d4f" : "#a23b3b" }}>{msg.text}</p>}
         <h3 style={h}>Change password</h3>
         <input type="password" placeholder="Current password" autoComplete="current-password" value={cur} onChange={(e) => setCur(e.target.value)} style={fld} />
@@ -4437,13 +4437,13 @@ function KanbanView({ matters, onStage, onExpand }: {
         return (
           <div key={col.key} style={{ minWidth: 180, flex: "0 0 180px" }}>
             <div style={{ fontSize: ".68rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".08em", color: MUTED, marginBottom: 10, padding: "0 2px" }}>
-              {col.label} <span style={{ color: GOLD }}>Â·{cards.length}</span>
+              {col.label} <span style={{ color: GOLD }}>·{cards.length}</span>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {cards.map(m => (
                 <div key={m.id} style={{ background: "#fff", border: "1px solid rgba(18,16,12,.09)", borderRadius: 8, padding: "12px 14px", boxShadow: "0 2px 8px -4px rgba(0,0,0,.15)" }}>
                   <div style={{ fontWeight: 600, fontSize: ".82rem", color: GREEN, marginBottom: 3 }}>{m.client_name || "â€”"}</div>
-                  <div style={{ fontSize: ".7rem", color: MUTED, marginBottom: 8 }}>{m.matter_type || "â€”"} Â· {m.ref}</div>
+                  <div style={{ fontSize: ".7rem", color: MUTED, marginBottom: 8 }}>{m.matter_type || "â€”"} · {m.ref}</div>
                   <select value={m.stage} onChange={e => onStage(m.id, e.target.value)}
                     style={{ width: "100%", fontSize: ".7rem", padding: "4px 6px", borderRadius: 6, border: "1px solid rgba(18,16,12,.15)", background: "#faf8f2", color: INK, cursor: "pointer" }}>
                     {MATTER_STAGES.map(s => <option key={s} value={s}>{s.replace(/_/g," ")}</option>)}
@@ -4549,7 +4549,7 @@ function HomeProsPanel({ pros, loading, onApprove }: {
   }, []);
 
   const visiblePros = pros.filter(p => !rejectedIds.has(p.user_id));
-  if (loading && pros.length === 0) return <Empty>Loading H.O.M.E. professionalsâ€¦</Empty>;
+  if (loading && pros.length === 0) return <Empty>Loading H.O.M.E. professionals...</Empty>;
   if (visiblePros.length === 0) return <Empty>No professionals awaiting verification.</Empty>;
   return (
     <div style={{ padding: 20 }}>
@@ -4574,8 +4574,8 @@ function HomeProsPanel({ pros, loading, onApprove }: {
           {p.headline && <div style={{ fontSize: 13, color: INK, marginTop: 2 }}>{p.headline}</div>}
           <div style={{ ...S.muted, marginTop: 4 }}>
             {p.license_number ? `Licence: ${p.license_number}` : "No licence number"}
-            {p.parishes?.length ? ` Â· ${p.parishes.join(", ")}` : ""}
-            {p.phone ? ` Â· ${p.phone}` : ""}
+            {p.parishes?.length ? ` · ${p.parishes.join(", ")}` : ""}
+            {p.phone ? ` · ${p.phone}` : ""}
           </div>
         </div>
       ))}
@@ -4629,7 +4629,7 @@ function HomeListingsPanel({ listings, loading }: { listings: HomeProperty[]; lo
 
   const fld: React.CSSProperties = { ...S.fieldInput, width: "100%", marginBottom: 10, boxSizing: "border-box" };
 
-  if (loading && rows.length === 0) return <Empty>Loading H.O.M.E. listingsâ€¦</Empty>;
+  if (loading && rows.length === 0) return <Empty>Loading H.O.M.E. listings...</Empty>;
   if (rows.length === 0) return <Empty>No active property listings found.</Empty>;
 
   return (
@@ -4683,7 +4683,7 @@ function HomeListingsPanel({ listings, loading }: { listings: HomeProperty[]; lo
             <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
               <button type="button" onClick={() => void saveEdit()} disabled={busy}
                 style={{ ...S.authBtn, width: "auto", padding: "10px 22px", ...(busy ? S.btnOff : null) }}>
-                {busy ? "Savingâ€¦" : "Save changes"}
+                {busy ? "Saving..." : "Save changes"}
               </button>
               <button type="button" onClick={() => setEditing(null)}
                 style={{ padding: "10px 18px", border: "1px solid rgba(18,16,12,.2)", borderRadius: 999, background: "#fff", fontSize: ".88rem", cursor: "pointer" }}>
@@ -4705,7 +4705,7 @@ function HomeListingsPanel({ listings, loading }: { listings: HomeProperty[]; lo
             <div style={{ display: "flex", gap: 10 }}>
               <button type="button" onClick={() => void confirmDelete()} disabled={busy}
                 style={{ ...S.rejectBtn, padding: "10px 20px", borderRadius: 999, ...(busy ? S.btnOff : null) }}>
-                {busy ? "Deletingâ€¦" : "Delete"}
+                {busy ? "Deleting..." : "Delete"}
               </button>
               <button type="button" onClick={() => setDeleteId(null)}
                 style={{ padding: "10px 18px", border: "1px solid rgba(18,16,12,.2)", borderRadius: 999, background: "#fff", fontSize: ".88rem", cursor: "pointer" }}>
@@ -5111,7 +5111,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
     setKycReviewing(true);
     try {
       const { error } = await supabase.rpc("fl_admin_cms_kyc_review", { p_token: token, p_kyc_id: kyc.id, p_status: status, p_notes: kycNotes || null });
-      if (error) { alert("KYC review failed: " + (error.message || String(error))); return; }
+      if (error) { alert("KYC review could not be saved. Please try again."); return; }
       setKyc(prev => prev ? { ...prev, status, reviewer_notes: kycNotes || null, reviewed_at: new Date().toISOString() } : prev);
       if (selected) setMatters(prev => prev.map(m => m.id === selected ? { ...m, kyc_status: status } : m));
     } finally {
@@ -5265,7 +5265,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
   }, {});
   const phaseList = Object.entries(phases).sort(([a], [b]) => Number(a) - Number(b));
 
-  if (loading) return <div style={{ padding: 20, color: MUTED }}>Loading CMS mattersâ€¦</div>;
+  if (loading) return <div style={{ padding: 20, color: MUTED }}>Loading CMS matters...</div>;
 
   return (
     <div style={{ display: "flex", height: isMobile ? "auto" : "calc(100vh - 260px)", minHeight: isMobile ? 0 : 500, overflow: "hidden", flexDirection: isMobile ? "column" : "row" }}>
@@ -5336,7 +5336,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
             Select a matter to view details
           </div>
         ) : detailLoading ? (
-          <div style={{ padding: 40, color: MUTED }}>Loadingâ€¦</div>
+          <div style={{ padding: 40, color: MUTED }}>Loading...</div>
         ) : activeMatter ? (
           <>
             {/* Matter header */}
@@ -5369,7 +5369,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                     })()}
                   </div>
                   <div style={{ fontSize: 12.5, color: MUTED, marginTop: 2 }}>
-                    {activeMatter.client_name} Â· {activeMatter.client_email}
+                    {activeMatter.client_name} · {activeMatter.client_email}
                   </div>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
@@ -5428,7 +5428,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                       }}
                       style={{ fontSize: 12, padding: "5px 10px", borderRadius: 8, border: "1px solid #8a6a22", background: (activeSummary as { sent_at?: string }).sent_at ? "rgba(200,166,92,.12)" : "#8a6a22", color: (activeSummary as { sent_at?: string }).sent_at ? "#8a6a22" : "#fff", cursor: sendBusy ? "default" : "pointer", fontWeight: 600, opacity: sendBusy ? 0.7 : 1 }}
                     >
-                      {sendBusy ? "Sendingâ€¦" : (activeSummary as { sent_at?: string }).sent_at ? "â†º Resend to Client" : "âœ‰ Send to Client"}
+                      {sendBusy ? "Sending..." : (activeSummary as { sent_at?: string }).sent_at ? "â†º Resend to Client" : "âœ‰ Send to Client"}
                     </button>
                   )}
                   {sendResult && (
@@ -5465,7 +5465,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                     title="Permanently delete this client's login, profile, matters, files, and messages â€” everywhere"
                     style={{ fontSize: 12, padding: "5px 10px", borderRadius: 8, border: "1px solid #d33", background: "#fff", color: "#d33", cursor: purging ? "default" : "pointer", fontWeight: 600 }}
                   >
-                    {purging ? "Deletingâ€¦" : "Delete client & all data"}
+                    {purging ? "Deleting..." : "Delete client & all data"}
                   </button>
                 </div>
               </div>
@@ -5562,7 +5562,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                                     />
                                     <button type="button" onClick={() => void saveEditStep(m.id)} disabled={savingEditStep || !editingStepName.trim()}
                                       style={{ padding: "3px 10px", borderRadius: 7, border: "none", background: GREEN, color: CREAM, fontSize: 12, fontWeight: 600, cursor: "pointer", opacity: savingEditStep ? 0.5 : 1 }}>
-                                      {savingEditStep ? "â€¦" : "Save"}
+                                      {savingEditStep ? "..." : "Save"}
                                     </button>
                                     <button type="button" onClick={() => { setEditingStepId(null); setEditingStepName(""); }}
                                       style={{ padding: "3px 8px", borderRadius: 7, border: `1px solid rgba(18,16,12,.15)`, background: "#fff", color: MUTED, fontSize: 12, cursor: "pointer" }}>
@@ -5577,7 +5577,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                                       fontWeight: m.status === "done" ? 600 : 400,
                                       textDecoration: m.status === "not_applicable" ? "line-through" : "none",
                                     }}>
-                                      {m.status === "done" && <span style={{ fontSize: 12, color: "#2e7d32" }}>âœ…</span>}
+                                      {m.status === "done" && <span style={{ fontSize: 12, color: "#2e7d32" }}>âœ...</span>}
                                       {m.status === "not_applicable" && <span style={{ fontSize: 12 }}>â€”</span>}
                                       <span style={{ cursor: "default" }}>
                                         {m.name}
@@ -5622,7 +5622,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                                   <div style={{ display: "flex", gap: 6 }}>
                                     <button type="button" onClick={() => void saveNote(m.id)} disabled={savingNote}
                                       style={{ padding: "5px 14px", borderRadius: 7, border: "none", background: GREEN, color: CREAM, fontSize: 12, fontWeight: 600, cursor: "pointer", opacity: savingNote ? 0.5 : 1 }}>
-                                      {savingNote ? "â€¦" : "Save"}
+                                      {savingNote ? "..." : "Save"}
                                     </button>
                                     <button type="button" onClick={() => { setAddingNoteForId(null); setNoteText(""); }}
                                       style={{ padding: "5px 10px", borderRadius: 7, border: `1px solid rgba(18,16,12,.15)`, background: "#fff", color: MUTED, fontSize: 12, cursor: "pointer" }}>
@@ -5653,12 +5653,12 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                                 value={newStepName}
                                 onChange={e => setNewStepName(e.target.value)}
                                 onKeyDown={e => { if (e.key === "Enter") void addStep(); if (e.key === "Escape") { setAddingStepPhase(null); setNewStepName(""); setStepScope("matter"); } }}
-                                placeholder="Step nameâ€¦"
+                                placeholder="Step name..."
                                 style={{ flex: 1, fontSize: 13, padding: "6px 10px", borderRadius: 8, border: `1px solid ${GOLD}`, outline: "none" }}
                               />
                               <button type="button" onClick={() => void addStep()} disabled={savingStep || !newStepName.trim()}
                                 style={{ padding: "6px 14px", borderRadius: 8, border: "none", background: GREEN, color: CREAM, fontSize: 13, fontWeight: 600, cursor: "pointer", opacity: savingStep || !newStepName.trim() ? 0.5 : 1 }}>
-                                {savingStep ? "â€¦" : "Add"}
+                                {savingStep ? "..." : "Add"}
                               </button>
                             </div>
                           </div>
@@ -5703,12 +5703,12 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                       onChange={e => setMsgText(e.target.value)}
                       onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void sendMessage(); } }}
                       rows={2}
-                      placeholder="Reply to clientâ€¦ (Enter to send)"
+                      placeholder="Reply to client... (Enter to send)"
                       style={{ flex: 1, resize: "none", borderRadius: 10, border: "1px solid rgba(18,16,12,.2)", padding: "9px 12px", fontSize: 13.5, fontFamily: "inherit", outline: "none" }}
                     />
                     <button onClick={() => void sendMessage()} disabled={sending || !msgText.trim()}
                       style={{ background: GREEN, color: CREAM, border: "none", borderRadius: 10, padding: "10px 18px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
-                      {sending ? "â€¦" : "Send"}
+                      {sending ? "..." : "Send"}
                     </button>
                   </div>
                 </div>
@@ -5725,7 +5725,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                       background: uploading ? "#eee" : GREEN, color: uploading ? MUTED : CREAM,
                       borderRadius: 999, padding: "8px 16px", fontSize: 12.5, fontWeight: 700,
                     }}>
-                      {uploading ? "Uploadingâ€¦" : "â†‘ Upload file to client"}
+                      {uploading ? "Uploading..." : "â†‘ Upload file to client"}
                     </label>
                   </div>
                   {files.length === 0 ? (
@@ -5737,8 +5737,8 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 13.5, fontWeight: 600, color: INK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.file_name}</div>
                         <div style={{ fontSize: 11.5, color: MUTED }}>
-                          {f.uploader_type === "client" ? activeMatter.client_name : "Ferguson Law"} Â· {fmtDate(f.created_at)}
-                          {f.file_size ? ` Â· ${(f.file_size / 1024).toFixed(1)} KB` : ""}
+                          {f.uploader_type === "client" ? activeMatter.client_name : "Ferguson Law"} · {fmtDate(f.created_at)}
+                          {f.file_size ? ` · ${(f.file_size / 1024).toFixed(1)} KB` : ""}
                         </div>
                       </div>
                       <span style={{ fontSize: 12, color: "#8a6a22", fontWeight: 600 }}>â†“</span>
@@ -5770,7 +5770,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                             const { error } = await supabase.rpc("fl_admin_cms_kyc_admin_override", {
                               p_token: token, p_matter_id: activeMatter.id, p_status: "approved",
                             });
-                            if (error) { alert("Error: " + error.message); return; }
+                            if (error) { alert("An error occurred. Please try again or refresh the page."); return; }
                             setMatters(prev => prev.map(m => m.id === activeMatter.id ? { ...m, kyc_status: "approved" } : m));
                             alert("KYC marked as approved.");
                           }}
@@ -5928,7 +5928,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                       <div style={S.field}>
                         <label style={S.fieldLabel}>Reviewer notes</label>
                         <textarea value={kycNotes} onChange={e => setKycNotes(e.target.value)} rows={3}
-                          style={{ ...S.fieldInput, resize: "vertical", fontFamily: "inherit" }} placeholder="Notes for the compliance fileâ€¦" />
+                          style={{ ...S.fieldInput, resize: "vertical", fontFamily: "inherit" }} placeholder="Notes for the compliance file..." />
                       </div>
                       <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
                         <button onClick={() => void reviewKyc("approved")} disabled={kycReviewing}
@@ -5961,7 +5961,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                       style={{ fontSize: 12.5, padding: "8px 10px", borderRadius: 8, border: "1px solid rgba(18,16,12,.2)" }} />
                     <button onClick={() => void addPayment()} disabled={addingPayment || !payAmount.trim()}
                       style={{ gridColumn: "1/-1", background: GREEN, color: CREAM, border: "none", borderRadius: 8, padding: "9px", fontSize: 12.5, fontWeight: 700, cursor: "pointer" }}>
-                      {addingPayment ? "Recordingâ€¦" : "Record payment"}
+                      {addingPayment ? "Recording..." : "Record payment"}
                     </button>
                   </div>
                   {payments.length === 0 ? (
@@ -5970,10 +5970,10 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                     <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 10, border: "1px solid rgba(18,16,12,.1)", background: "#fff", marginBottom: 8 }}>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: 13.5, fontWeight: 700, color: INK, textTransform: "capitalize" }}>
-                          {p.kind} Â· JMD ${p.amount_jmd.toLocaleString("en-JM")}
+                          {p.kind} · JMD ${p.amount_jmd.toLocaleString("en-JM")}
                         </div>
                         <div style={{ fontSize: 11.5, color: MUTED }}>
-                          {p.method?.replace("_"," ") || "â€”"}{p.reference ? ` Â· ${p.reference}` : ""} Â· {fmtDate(p.created_at)}
+                          {p.method?.replace("_"," ") || "â€”"}{p.reference ? ` · ${p.reference}` : ""} · {fmtDate(p.created_at)}
                         </div>
                         {p.receipt_number && (
                           <div style={{ fontSize: 11.5, color: "#2f7a52", fontWeight: 600, marginTop: 2, display: "flex", alignItems: "center", gap: 8 }}>
@@ -6074,7 +6074,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                 ) : (
                   <>
                     <input value={clientQuery} onChange={e => setClientQuery(e.target.value)}
-                      placeholder="Search by email (or enter name below)â€¦"
+                      placeholder="Search by email (or enter name below)..."
                       style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid rgba(18,16,12,.2)", fontSize: 13, outline: "none" }} />
                     {clientHits.length > 0 && (
                       <div style={{ position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, background: "#fff", border: "1px solid rgba(18,16,12,.15)", borderRadius: 10, boxShadow: "0 6px 18px rgba(0,0,0,.1)", zIndex: 5, maxHeight: 180, overflowY: "auto" }}>
@@ -6141,7 +6141,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
             <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
               <button onClick={() => void createMatter()} disabled={creating || (!newClientId.trim() && !newClientName.trim() && !newClientLabel.trim())}
                 style={{ flex: 1, background: GREEN, color: CREAM, border: "none", borderRadius: 10, padding: "12px", fontSize: 14, fontWeight: 700, cursor: "pointer", opacity: creating || (!newClientId.trim() && !newClientName.trim()) ? 0.6 : 1 }}>
-                {creating ? "Creatingâ€¦" : "Open Matter"}
+                {creating ? "Creating..." : "Open Matter"}
               </button>
               <button onClick={() => { setOpenMatter(false); setCreateError(null); }}
                 style={{ padding: "12px 20px", border: "1px solid rgba(18,16,12,.2)", borderRadius: 10, background: "#fff", fontSize: 13, cursor: "pointer" }}>
@@ -6191,7 +6191,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                   }}
                   style={{ padding: "7px 14px", borderRadius: 8, border: "1.5px solid #8a6a22", background: draftBusy ? "rgba(200,166,92,.08)" : "rgba(200,166,92,.06)", color: "#8a6a22", fontSize: 12.5, cursor: draftBusy ? "default" : "pointer", fontWeight: 700, whiteSpace: "nowrap" }}
                 >
-                  {draftBusy ? "Draftingâ€¦" : "âœ¦ Draft with AI"}
+                  {draftBusy ? "Drafting..." : "âœ¦ Draft with AI"}
                 </button>
                 <button onClick={() => setSummaryModal(false)} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: MUTED, lineHeight: 1 }}>âœ•</button>
               </div>
@@ -6220,7 +6220,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                   value={summaryFields.internal_notes}
                   onChange={e => setSummaryFields(prev => ({ ...prev, internal_notes: e.target.value }))}
                   rows={3}
-                  placeholder="Notes for your records onlyâ€¦"
+                  placeholder="Notes for your records only..."
                   style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1.5px dashed rgba(18,16,12,.18)", fontSize: 13.5, lineHeight: 1.6, resize: "vertical", outline: "none", fontFamily: "inherit", boxSizing: "border-box", background: "#fafafa" }}
                 />
               </div>
@@ -6254,7 +6254,7 @@ function CmsTab({ token, onUnreadChange }: { token: string; onUnreadChange?: (n:
                 }}
                 style={{ padding: "10px 28px", borderRadius: 10, border: "none", background: GREEN, color: CREAM, fontSize: 13.5, cursor: summaryBusy ? "default" : "pointer", fontWeight: 700, opacity: summaryBusy ? 0.7 : 1 }}
               >
-                {summaryBusy ? "Savingâ€¦" : "Save & Generate"}
+                {summaryBusy ? "Saving..." : "Save & Generate"}
               </button>
             </div>
           </div>
@@ -6330,7 +6330,7 @@ function MeetingRow({ meeting: m, token, onJoinIframe, onChange }: {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
         <div>
           <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: INK }}>{m.name ?? "Client"}</p>
-          <p style={{ margin: "2px 0 0", fontSize: 12, color: MUTED }}>{m.service} Â· {when}</p>
+          <p style={{ margin: "2px 0 0", fontSize: 12, color: MUTED }}>{m.service} · {when}</p>
         </div>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
           {m.meeting_url ? (
@@ -6349,17 +6349,17 @@ function MeetingRow({ meeting: m, token, onJoinIframe, onChange }: {
             <span style={{ fontSize: 12, color: MUTED, fontStyle: "italic" }}>No link yet</span>
           )}
           <button onClick={() => void resend()} disabled={!!busy} style={{ ...BTN, opacity: busy ? 0.6 : 1 }}>
-            {busy === "resend" ? "Sendingâ€¦" : "Resend link"}
+            {busy === "resend" ? "Sending..." : "Resend link"}
           </button>
           <button onClick={() => void recreate()} disabled={!!busy} style={{ ...BTN, opacity: busy ? 0.6 : 1 }}>
-            {busy === "recreate" ? "Generatingâ€¦" : "New link"}
+            {busy === "recreate" ? "Generating..." : "New link"}
           </button>
           <button onClick={() => setRescheduling(v => !v)} disabled={!!busy} style={{ ...BTN, opacity: busy ? 0.6 : 1 }}>
             Reschedule
           </button>
           <button onClick={() => void cancel()} disabled={!!busy}
             style={{ ...BTN, color: "#a23b3b", borderColor: "rgba(162,59,59,.3)", opacity: busy ? 0.6 : 1 }}>
-            {busy === "cancel" ? "Cancellingâ€¦" : "Cancel"}
+            {busy === "cancel" ? "Cancelling..." : "Cancel"}
           </button>
         </div>
       </div>
@@ -6369,9 +6369,9 @@ function MeetingRow({ meeting: m, token, onJoinIframe, onChange }: {
             style={{ border: "1px solid rgba(18,16,12,.2)", borderRadius: 7, padding: "7px 10px", fontSize: 13 }} />
           <button onClick={() => void reschedule()} disabled={!newTime || !!busy}
             style={{ ...BTN, background: GOLD, color: CREAM, opacity: !newTime || busy ? 0.6 : 1 }}>
-            {busy === "reschedule" ? "Movingâ€¦" : "Confirm new time"}
+            {busy === "reschedule" ? "Moving..." : "Confirm new time"}
           </button>
-          <span style={{ fontSize: 11.5, color: MUTED }}>Jamaica time Â· client is emailed the new time.</span>
+          <span style={{ fontSize: 11.5, color: MUTED }}>Jamaica time · client is emailed the new time.</span>
         </div>
       )}
       {err && <p style={{ margin: "8px 0 0", fontSize: 12, color: "#a23b3b" }}>{err}</p>}
@@ -6474,12 +6474,12 @@ function ZoomSetupTab({ token, appts = [] }: { token: string; appts?: Appointmen
           disabled={creating}
           style={{ background: GOLD, color: CREAM, border: "none", borderRadius: 8, padding: "12px 24px", fontWeight: 700, fontSize: 14, cursor: "pointer", opacity: creating ? 0.7 : 1, alignSelf: "flex-start" }}
         >
-          {creating ? "Creating meetingâ€¦" : "Create instant meeting"}
+          {creating ? "Creating meeting..." : "Create instant meeting"}
         </button>
         {instantMeeting && (
           <div style={{ background: "#f0f7f0", border: "1px solid #b2dfb5", borderRadius: 10, padding: "16px 20px" }}>
             <p style={{ margin: "0 0 10px", fontWeight: 700, fontSize: 14, color: "#1e5c22" }}>
-              Meeting ready{instantMeeting.provider === "daily" ? " Â· embedded below" : ""}{instantMeeting.provider === "jitsi" ? " Â· via Jitsi Meet" : ""}
+              Meeting ready{instantMeeting.provider === "daily" ? " · embedded below" : ""}{instantMeeting.provider === "jitsi" ? " · via Jitsi Meet" : ""}
             </p>
             {(instantMeeting.provider === "zoom" || instantMeeting.provider === "jitsi") && (
               <a href={instantMeeting.url} target="_blank" rel="noopener noreferrer"
@@ -6503,7 +6503,7 @@ function ZoomSetupTab({ token, appts = [] }: { token: string; appts?: Appointmen
         <p style={{ fontWeight: 700, fontSize: 15, marginBottom: 4, color: INK }}>Upcoming consultations</p>
         <p style={{ fontSize: 12, color: MUTED, margin: "0 0 16px" }}>Resend the link, generate a fresh one, move the time, or cancel â€” the client is emailed automatically for each.</p>
         {loadingUpcoming ? (
-          <p style={{ fontSize: 13, color: MUTED }}>Loadingâ€¦</p>
+          <p style={{ fontSize: 13, color: MUTED }}>Loading...</p>
         ) : upcoming.length === 0 ? (
           <p style={{ fontSize: 13, color: MUTED }}>No upcoming confirmed bookings. Video call links appear here automatically when clients book and pay.</p>
         ) : (
@@ -6562,7 +6562,7 @@ function ZoomSetupTab({ token, appts = [] }: { token: string; appts?: Appointmen
             </div>
           ))}
           <button onClick={() => void testConnection()} disabled={testing} style={{ marginTop: 8, background: GOLD, color: CREAM, border: "none", borderRadius: 10, padding: "11px 24px", fontWeight: 700, fontSize: 14, cursor: "pointer", opacity: testing ? 0.7 : 1 }}>
-            {testing ? "Testingâ€¦" : "Test Connection"}
+            {testing ? "Testing..." : "Test Connection"}
           </button>
         </div>
       )}
@@ -6607,13 +6607,13 @@ function TesterFeedbackTab({ token }: { token: string }) {
               <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                 <span style={{ background: "#f0ede6", borderRadius: 6, padding: "3px 10px", fontSize: 12, fontWeight: 600, color: "#10211c" }}>{r.persona?.split(" â€” ")[0]}</span>
                 {r.device_type && <span style={{ background: "#f0ede6", borderRadius: 6, padding: "3px 10px", fontSize: 12, color: "#555" }}>{r.device_type}</span>}
-                <span style={{ background: "#c9a86a", color: "#10211c", borderRadius: 6, padding: "3px 10px", fontSize: 12, fontWeight: 700 }}>{"â˜…".repeat(r.rating)}</span>
+                <span style={{ background: "#c9a86a", color: "#10211c", borderRadius: 6, padding: "3px 10px", fontSize: 12, fontWeight: 700 }}>{"â˜...".repeat(r.rating)}</span>
               </div>
             </div>
             <div style={{ fontSize: 11.5, color: "#888", marginBottom: 8 }}>
-              {r.site_tested && <span>{r.site_tested} &nbsp;Â·&nbsp; </span>}
+              {r.site_tested && <span>{r.site_tested} &nbsp;·&nbsp; </span>}
               {new Date(r.created_at).toLocaleDateString("en-JM", { day: "numeric", month: "short", year: "numeric" })}
-              {r.would_use !== null && <span> &nbsp;Â·&nbsp; Would use: <strong>{r.would_use ? "Yes" : "No"}</strong></span>}
+              {r.would_use !== null && <span> &nbsp;·&nbsp; Would use: <strong>{r.would_use ? "Yes" : "No"}</strong></span>}
             </div>
             {r.what_worked && <p style={{ fontSize: 13, color: "#333", margin: "6px 0 0" }}><strong>Worked:</strong> {r.what_worked}</p>}
             {r.what_didnt && <p style={{ fontSize: 13, color: "#333", margin: "6px 0 0" }}><strong>Didn&apos;t work:</strong> {r.what_didnt}</p>}

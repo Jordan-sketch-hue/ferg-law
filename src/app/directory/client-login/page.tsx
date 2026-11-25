@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +33,7 @@ function ClientLoginForm() {
     setBusy(true);
     try {
       const { error } = await createClient().auth.signInWithPassword({ email: email.trim(), password });
-      if (error) { setErr(error.message); setBusy(false); return; }
+      if (error) { const m = error.message ?? ""; if (m.includes("egress")||m.includes("quota")||m.includes("402")) { setErr("We are aware of a temporary service disruption. Please try again shortly or contact us at (876) 320-0235."); } else if (m.includes("Invalid login")||m.includes("invalid_credentials")) { setErr("Incorrect email or password. Please try again."); } else { setErr("Unable to sign in. Please try again or contact us at (876) 320-0235."); } setBusy(false); return; }
       window.location.href = fromBooking ? "/directory/client?new=true" : "/directory/client";
     } catch {
       setErr("Could not reach the server. Please check your connection and try again.");
@@ -72,9 +72,9 @@ function ClientLoginForm() {
     // Account created — sign in immediately, no confirmation email
     const { error: signInErr } = await createClient().auth.signInWithPassword({ email: email.trim(), password });
     if (signInErr) {
-      setErr(signInErr.message);
-      setBusy(false);
-      return;
+      const m2 = signInErr.message ?? ""; if (m2.includes("egress")||m2.includes("quota")||m2.includes("402")) { setErr("We are aware of a temporary service disruption. Please try again shortly or contact us at (876) 320-0235."); } else { setErr("Account created but we could not sign you in automatically. Please sign in manually."); } setBusy(false); return;
+
+
     }
     window.location.href = fromBooking ? "/directory/client?new=true" : "/directory/client";
   }
