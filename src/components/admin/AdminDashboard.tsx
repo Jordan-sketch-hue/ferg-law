@@ -200,11 +200,11 @@ interface HomeProperty {
   status: string;
 }
 
-type Tab = "overview" | "leads" | "bookings" | "clients" | "matters" | "cms" | "calendar" | "chats" | "invites" | "directory" | "availability" | "home_pros" | "home_listings" | "email" | "inquiries" | "referrals" | "recycle_bin" | "workflows" | "zoom" | "feedback" | "analytics" | "ebook_leads" | "site_content";
+type Tab = "overview" | "leads" | "bookings" | "clients" | "matters" | "cms" | "calendar" | "chats" | "invites" | "directory" | "availability" | "home_pros" | "home_listings" | "email" | "inquiries" | "referrals" | "recycle_bin" | "workflows" | "zoom" | "feedback" | "analytics" | "ebook_leads" | "site_content" | "qr_codes";
 // ── Admin tab groups ──────────────────────────────────────────────────────────
 type TabGroup = "dashboard" | "crm" | "email" | "directory" | "home";
 const TAB_GROUPS: Record<TabGroup, { label: string; tabs: Tab[] }> = {
-  dashboard: { label: "Dashboard", tabs: ["overview","analytics","calendar","zoom","site_content"] },
+  dashboard: { label: "Dashboard", tabs: ["overview","analytics","calendar","zoom","site_content","qr_codes"] },
   crm:       { label: "CRM",       tabs: ["leads","bookings","clients","matters","chats","cms","ebook_leads"] },
   email:     { label: "Email",     tabs: ["email","feedback"] },
   directory: { label: "Directory", tabs: ["invites","directory","availability","referrals","workflows"] },
@@ -290,6 +290,39 @@ function fmtTime(iso: string | null): string {
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
+
+const QR_ITEMS = [
+  { label: "Main Website", url: "https://fergusonlawja.com", desc: "Homepage — share for general inquiries" },
+  { label: "Directory / Join", url: "https://fergusonlawja.com/directory/join", desc: "Professional directory sign-up page" },
+  { label: "NYC 2026 — Diaspora", url: "https://fergusonlawja.com/nyc2026?utm_source=qr&utm_campaign=nyc2026", desc: "Diaspora landing page for NYC outreach" },
+  { label: "Book a Consultation", url: "https://fergusonlawja.com/booking", desc: "Direct booking link" },
+];
+
+function QrCodesTab() {
+  const [copied, setCopied] = useState<string | null>(null);
+  const copy = (url: string) => { void navigator.clipboard.writeText(url); setCopied(url); setTimeout(() => setCopied(null), 1800); };
+  return (
+    <div style={{ maxWidth: 900, margin: "0 auto", padding: "24px 20px" }}>
+      <div style={{ fontFamily: "var(--serif, Georgia, serif)", fontSize: "1.1rem", fontWeight: 700, color: GREEN, marginBottom: 6 }}>QR Codes</div>
+      <div style={{ fontSize: ".82rem", color: MUTED, marginBottom: 28 }}>Print or screen-share these codes at events, in presentations, or on printed materials.</div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 20 }}>
+        {QR_ITEMS.map((item) => (
+          <div key={item.url} style={{ background: "#fff", border: "1px solid rgba(18,16,12,.08)", borderRadius: 14, padding: "20px", display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
+            <img src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(item.url)}&color=102A1E&bgcolor=ffffff&margin=6`} alt={item.label} width={160} height={160} style={{ borderRadius: 10, border: "1px solid rgba(18,16,12,.06)" }} />
+            <div style={{ textAlign: "center", width: "100%" }}>
+              <div style={{ fontWeight: 700, fontSize: ".88rem", color: GREEN, marginBottom: 2 }}>{item.label}</div>
+              <div style={{ fontSize: ".74rem", color: MUTED, marginBottom: 8 }}>{item.desc}</div>
+              <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
+                <a href={item.url} target="_blank" rel="noopener" style={{ fontSize: ".76rem", fontWeight: 600, color: GREEN, background: "rgba(16,42,30,.07)", border: "1px solid rgba(16,42,30,.12)", borderRadius: 6, padding: "5px 12px", textDecoration: "none" }}>Open</a>
+                <button type="button" onClick={() => copy(item.url)} style={{ fontSize: ".76rem", fontWeight: 600, color: "#8a6a22", background: "rgba(200,166,92,.1)", border: "1px solid rgba(200,166,92,.3)", borderRadius: 6, padding: "5px 12px", cursor: "pointer" }}>{copied === item.url ? "Copied!" : "Copy link"}</button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 export default function AdminDashboard() {
   const [token, setToken] = useState<string | null>(null);
   const [checking, setChecking] = useState(true);
@@ -916,7 +949,7 @@ export default function AdminDashboard() {
           <div style={{ display:"flex", gap:6, padding:"7px 10px", background:"rgba(18,16,12,.02)", overflowX:"auto", scrollbarWidth:"none" as React.CSSProperties["scrollbarWidth"] }}>
             {TAB_GROUPS[group].tabs.map((t) => {
               const isActive = tab === t;
-              const label = t==="overview"?"Overview":t==="cms"?(cmsUnread>0?"CMS ("+cmsUnread+")":"CMS"):t==="home_pros"?"Pros":t==="home_listings"?"Listings":t==="inquiries"?"Inquiries":t==="analytics"?"Analytics":t==="ebook_leads"?"Ebook Leads":t==="site_content"?"Site Content":t==="referrals"?"Referrals":t==="recycle_bin"?"🗑 Bin":t==="workflows"?"Workflows":t==="zoom"?"Meetings":t==="feedback"?"Feedback":t.charAt(0).toUpperCase()+t.slice(1);
+              const label = t==="overview"?"Overview":t==="cms"?(cmsUnread>0?"CMS ("+cmsUnread+")":"CMS"):t==="home_pros"?"Pros":t==="home_listings"?"Listings":t==="inquiries"?"Inquiries":t==="analytics"?"Analytics":t==="ebook_leads"?"Ebook Leads":t==="site_content"?"Site Content":t==="qr_codes"?"QR Codes":t==="referrals"?"Referrals":t==="recycle_bin"?"🗑 Bin":t==="workflows"?"Workflows":t==="zoom"?"Meetings":t==="feedback"?"Feedback":t.charAt(0).toUpperCase()+t.slice(1);
               const raw = t==="leads"?leads.length:t==="bookings"?appts.length:t==="clients"?clients.length:t==="matters"?matters.length:t==="chats"?convos.length:t==="email"?emails.filter(e=>!e.read).length:t==="invites"?invites.length:t==="directory"?listings.length:t==="availability"?availability.length:t==="home_pros"?homePros.length:t==="home_listings"?homeListings.length:t==="inquiries"?inquiries.filter(i=>i.status==="new").length:t==="recycle_bin"?binItems.length:0;
               const count = Math.max(0, raw - (seenCounts[t] ?? 0));
               return (
@@ -972,6 +1005,7 @@ export default function AdminDashboard() {
           {tab === "analytics" && token && <AnalyticsTab token={token} />}
           {tab === "ebook_leads" && token && <EbookLeadsTab token={token} />}
           {tab === "site_content" && token && <SiteContentTab token={token} />}
+          {tab === "qr_codes" && <QrCodesTab />}
         </div>
       </div>
     </div>
@@ -2843,7 +2877,7 @@ function OverviewPanel({ leads, appts, convos, matters, homePros, emails, inquir
         </div>
       )}
 
-            {/* QR CARD — NYC2026 Diaspora Landing Page */}
+      {/* QR CARD — NYC2026 Diaspora Landing Page */}
       <div style={{ background: "#fff", border: "1px solid rgba(18,16,12,.08)", borderLeft: "3px solid #C8A65C", borderRadius: 12, marginBottom: 12, overflow: "hidden" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px", borderBottom: showNycQr ? "1px solid rgba(18,16,12,.07)" : "none" }}>
           <div>
@@ -2911,7 +2945,7 @@ function OverviewPanel({ leads, appts, convos, matters, homePros, emails, inquir
           </div>
         )}
       </div>
-            <AttentionOverview
+      <AttentionOverview
         appts={appts}
         token={token}
         accountEmail={accountEmail}
