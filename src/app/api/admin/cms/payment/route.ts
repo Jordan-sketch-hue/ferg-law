@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
       .select("title, matter_type, client_id")
       .eq("id", receipt.matter_id)
       .single();
-    if (matterRow) {
+    if (matterRow && matterRow.client_id) {
       const { data: userRes } = await admin.auth.admin.getUserById(matterRow.client_id as string);
       const email = userRes?.user?.email;
       if (email) {
